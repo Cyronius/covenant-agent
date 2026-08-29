@@ -208,6 +208,10 @@ EFFECT_UNDECLARED <effect>
 `<site>` is `line:<n>` with the 1-based source line. Parsers report syntax
 errors as structured `PARSE_ERROR line:<n> <detail>`, never Python exceptions.
 
+`UNBOUND` covers registers *and* constant symbols: a `C` symbol with no
+binding in the task context is an unbound symbol (there is no separate
+`UNKNOWN_CONST` diagnostic).
+
 ## 10. Compilation
 
 `core/compile.py` lowers the AST to a single `async function main(rt)` in

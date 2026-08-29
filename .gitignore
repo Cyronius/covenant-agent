@@ -1,0 +1,8 @@
+# bulk generated corpora stay out of git; the curriculum reference set and
+# holdout reservation are tracked explicitly
+data/*.jsonl
+!data/curriculum_tasks.jsonl
+data/holdout/*.jsonl
+__pycache__/
+*.pyc
+.pytest_cache/

@@ -1,0 +1,11 @@
+{
+ "n": 1000,
+ "resamples": 5,
+ "instr_mean": 6.133,
+ "instr_p50": 6,
+ "instr_p95": 14,
+ "ac_tokens_p50": 25,
+ "ac_tokens_p95": 62,
+ "ratio_median": 0.625,
+ "ratio_mean": 0.5813623943964922
+}
