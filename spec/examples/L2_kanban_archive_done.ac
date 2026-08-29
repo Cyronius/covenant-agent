@@ -1,0 +1,10 @@
+# L2_kanban_archive_done  (level 2, world kanban)
+# request: Archive every completed card that isn't archived yet.
+# $0: STR = 'done' — the completed status
+# $1: BOOL = False — false
+
+CALL @list_cards -> r0
+FILTER r0 @card.status EQ $0 AND @card.archived EQ $1 -> r1
+FOREACH r1 -> r2
+  CALL @archive_card r2 -> r3
+STOP

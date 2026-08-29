@@ -1,0 +1,8 @@
+# L1_kanban_msg_assignee  (level 1, world kanban)
+# request: Find who card 2 is assigned to and message them that the deadline moved up.
+# $0: ID:card = 'card_2' — card 2
+# $1: STR = 'The deadline for your card moved up.' — message text
+
+CALL @get_card $0 -> r0
+CALL @send_message r0.@card.assignee $1
+STOP

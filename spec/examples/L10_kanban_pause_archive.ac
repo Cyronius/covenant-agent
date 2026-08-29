@@ -1,0 +1,11 @@
+# L10_kanban_pause_archive  (level 10, world kanban)
+# request: Find the overdue unarchived cards, report back, then archive them.
+# $0: BOOL = False — false
+
+CALL @list_cards -> r0
+FILTER r0 @card.due LT NOW AND @card.archived EQ $0 -> r1
+PAUSE
+# --- continuation segment (after PAUSE) ---
+FOREACH r1 -> r2
+  CALL @archive_card r2 -> r3
+STOP

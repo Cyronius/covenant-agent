@@ -1,0 +1,10 @@
+# L9_kanban_tidy  (level 9, world kanban)
+# request: Tidy up the board.
+# $0: STR = 'done' — the completed status
+# $1: BOOL = False — false
+
+CALL @list_cards -> r0
+FILTER r0 @card.status EQ $0 AND @card.archived EQ $1 -> r1
+FOREACH r1 -> r2
+  CALL @archive_card r2 -> r3
+STOP

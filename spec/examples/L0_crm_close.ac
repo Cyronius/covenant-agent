@@ -1,0 +1,6 @@
+# L0_crm_close  (level 0, world crm)
+# request: Close ticket 2.
+# $0: ID:ticket = 'ticket_2' — ticket 2
+
+CALL @close_ticket $0 -> r0
+STOP

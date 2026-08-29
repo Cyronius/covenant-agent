@@ -1,0 +1,13 @@
+# L6_projects_transfer_inactive  (level 6, world projects)
+# request: Transfer the active projects owned by inactive members to those members' managers.
+# $0: BOOL = False — false
+# $1: STR = 'active' — the active status
+
+CALL @list_projects -> r0
+CALL @list_members -> r1
+FILTER r1 @user.active EQ $0 -> r2
+FOREACH r2 -> r3
+  FILTER r0 @project.owner EQ r3.@user.id AND @project.status EQ $1 -> r4
+  FOREACH r4 -> r5
+    CALL @transfer_project r5 r3.@user.manager -> r6
+STOP

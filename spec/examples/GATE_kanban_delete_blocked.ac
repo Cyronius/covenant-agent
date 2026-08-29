@@ -1,0 +1,7 @@
+# GATE_kanban_delete_blocked  (level 0, world kanban)
+# request: Delete card 4.
+# $0: ID:card = 'card_4' — card 4
+# expected status: effect_blocked
+
+CALL @delete_card $0
+STOP

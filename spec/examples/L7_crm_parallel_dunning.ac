@@ -1,0 +1,15 @@
+# L7_crm_parallel_dunning  (level 7, world crm)
+# request: Pull up Initech and all invoices at the same time, then re-send every unpaid Initech invoice and email them a summary.
+# $0: ID:customer = 'customer_2' — Initech
+# $1: BOOL = False — false
+# $2: STR = 'We re-sent your unpaid invoices.' — summary text
+
+PARALLEL
+  CALL @get_customer $0 -> r0
+  CALL @list_invoices -> r1
+FILTER r1 @invoice.customer EQ $0 AND @invoice.paid EQ $1 -> r2
+FOREACH r2 -> r3
+  CALL @send_invoice r3
+GET r0.@customer.email -> r4
+CALL @send_email r4 $2
+STOP

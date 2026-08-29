@@ -1,0 +1,6 @@
+# L0_kanban_delete  (level 0, world kanban)
+# request: Delete card 4.
+# $0: ID:card = 'card_4' — card 4
+
+CALL @delete_card $0
+STOP

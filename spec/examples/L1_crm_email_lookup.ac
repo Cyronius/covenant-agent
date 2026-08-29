@@ -1,0 +1,9 @@
+# L1_crm_email_lookup  (level 1, world crm)
+# request: Look up Initech's email address and send them a payment reminder.
+# $0: ID:customer = 'customer_2' — Initech
+# $1: STR = 'Your payment is past due.' — reminder text
+
+CALL @get_customer $0 -> r0
+GET r0.@customer.email -> r1
+CALL @send_email r1 $1
+STOP

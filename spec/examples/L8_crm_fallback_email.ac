@@ -1,0 +1,17 @@
+# L8_crm_fallback_email  (level 8, world crm)
+# request: Send customer 9 their invoice reminder; if their account can't be fetched, alert the billing desk instead.
+# $0: ID:customer = 'customer_9' — customer 9
+# $1: STATUS = 'OK' — the OK status
+# $2: STR = 'Your invoice is due.' — reminder text
+# $3: STR = 'billing@corp.test' — the billing desk address
+# $4: STR = 'Could not fetch customer 9.' — alert text
+# injected errors: [{'name': 'get_customer', 'code': 'NOT_FOUND', 'times': -1}]
+
+TRY -> r0
+  CALL @get_customer $0 -> r1
+IF r0 EQ $1
+  GET r1.@customer.email -> r2
+  CALL @send_email r2 $2
+ELSE
+  CALL @send_email $3 $4
+STOP

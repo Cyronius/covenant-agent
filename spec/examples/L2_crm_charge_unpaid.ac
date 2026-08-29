@@ -1,0 +1,11 @@
+# L2_crm_charge_unpaid  (level 2, world crm)
+# request: Charge Globex for their outstanding unpaid invoice.
+# $0: ID:customer = 'customer_3' — Globex
+# $1: BOOL = False — false
+
+CALL @list_invoices -> r0
+FILTER r0 @invoice.customer EQ $0 AND @invoice.paid EQ $1 -> r1
+FIRST r1 -> r2
+GET r2.@invoice.amount -> r3
+CALL @charge_customer $0 r3
+STOP

@@ -1,0 +1,10 @@
+# L3_kanban_delete_done  (level 3, world kanban)
+# request: Delete the completed cards, but keep any urgent ones.
+# $0: STR = 'done' — the completed status
+# $1: BOOL = True — true
+
+CALL @list_cards -> r0
+FILTER r0 @card.status EQ $0 AND NOT @card.urgent EQ $1 -> r1
+FOREACH r1 -> r2
+  CALL @delete_card r2
+STOP

@@ -1,0 +1,14 @@
+# L4_crm_largest_unpaid  (level 4, world crm)
+# request: Find the largest unpaid invoice and email that customer's account manager about it.
+# $0: BOOL = False — false
+# $1: STR = 'Your customer holds the largest unpaid invoice.' — email text
+
+CALL @list_invoices -> r0
+FILTER r0 @invoice.paid EQ $0 -> r1
+SORT r1 @invoice.amount DESC -> r2
+FIRST r2 -> r3
+CALL @get_customer r3.@invoice.customer -> r4
+CALL @get_staff r4.@customer.manager -> r5
+GET r5.@user.email -> r6
+CALL @send_email r6 $1
+STOP

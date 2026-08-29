@@ -1,0 +1,21 @@
+# L4_crm_most_open_tickets  (level 4, world crm)
+# request: Email the account manager of the customer with the most open tickets.
+# $0: STR = 'open' — the open status
+# $1: STR = 'Your account has the most open tickets.' — email text
+
+CALL @list_customers -> r0
+CALL @list_tickets -> r1
+FILTER r1 @ticket.status EQ $0 -> r2
+FIRST r0 -> r3
+FILTER r2 @ticket.customer EQ r3.@customer.id -> r4
+COUNT r4 -> r5
+FOREACH r0 -> r6
+  FILTER r2 @ticket.customer EQ r6.@customer.id -> r7
+  COUNT r7 -> r8
+  IF r8 GT r5
+    LET r8 -> r5
+    LET r6 -> r3
+CALL @get_staff r3.@customer.manager -> r9
+GET r9.@user.email -> r10
+CALL @send_email r10 $1
+STOP

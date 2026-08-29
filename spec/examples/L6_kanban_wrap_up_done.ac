@@ -1,0 +1,12 @@
+# L6_kanban_wrap_up_done  (level 6, world kanban)
+# request: For each finished card still on the board, let its assignee know it's being archived, then archive it.
+# $0: STR = 'done' — the completed status
+# $1: BOOL = False — false
+# $2: STR = 'Your finished card is being archived.' — message text
+
+CALL @list_cards -> r0
+FILTER r0 @card.status EQ $0 AND @card.archived EQ $1 -> r1
+FOREACH r1 -> r2
+  CALL @send_message r2.@card.assignee $2
+  CALL @archive_card r2 -> r3
+STOP

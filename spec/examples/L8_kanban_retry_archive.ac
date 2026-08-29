@@ -1,0 +1,8 @@
+# L8_kanban_retry_archive  (level 8, world kanban)
+# request: Archive card 1 — the board API has been flaky, so retry if it fails.
+# $0: ID:card = 'card_1' — card 1
+# injected errors: [{'name': 'archive_card', 'code': 'RATE_LIMITED', 'times': 2}]
+
+TRY RETRY 3 -> r0
+  CALL @archive_card $0 -> r1
+STOP

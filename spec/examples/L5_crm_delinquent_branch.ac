@@ -1,0 +1,16 @@
+# L5_crm_delinquent_branch  (level 5, world crm)
+# request: Check Initech's account: if they're delinquent, alert the billing desk; otherwise send them their renewal notice.
+# $0: ID:customer = 'customer_2' — Initech
+# $1: BOOL = True — true
+# $2: STR = 'billing@corp.test' — the billing desk address
+# $3: STR = 'Initech is delinquent.' — billing alert text
+# $4: STR = 'Time to renew your plan.' — renewal notice text
+
+CALL @get_customer $0 -> r0
+GET r0.@customer.delinquent -> r1
+IF r1 EQ $1
+  CALL @send_email $2 $3
+ELSE
+  GET r0.@customer.email -> r2
+  CALL @send_email r2 $4
+STOP

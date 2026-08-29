@@ -1,0 +1,10 @@
+# L9_projects_cleanup  (level 9, world projects)
+# request: Clean up the old projects.
+# $0: TIME = 1744448000 — 180 days ago (staleness cutoff)
+# $1: STR = 'active' — the active status
+
+CALL @list_projects -> r0
+FILTER r0 @project.last_activity LT $0 AND @project.status EQ $1 -> r1
+FOREACH r1 -> r2
+  CALL @archive_project r2 -> r3
+STOP

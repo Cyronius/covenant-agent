@@ -1,0 +1,12 @@
+# L7_projects_parallel_transfer  (level 7, world projects)
+# request: Fetch the Data warehouse project and the member list together, then hand the project to the first active member.
+# $0: ID:project = 'project_3' — the Data warehouse project
+# $1: BOOL = True — true
+
+PARALLEL
+  CALL @get_project $0 -> r0
+  CALL @list_members -> r1
+FILTER r1 @user.active EQ $1 -> r2
+FIRST r2 -> r3
+CALL @transfer_project r0 r3 -> r4
+STOP

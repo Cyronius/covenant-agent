@@ -1,0 +1,13 @@
+# L7_kanban_parallel_check  (level 7, world kanban)
+# request: Fetch the board and Bob's profile together; if Bob has any overdue cards, send him a heads-up.
+# $0: ID:user = 'user_1' — Bob
+# $1: STR = 'You have overdue cards.' — heads-up text
+
+PARALLEL
+  CALL @list_cards -> r0
+  CALL @get_user $0 -> r1
+FILTER r0 @card.assignee EQ $0 AND @card.due LT NOW -> r2
+COUNT r2 -> r3
+IF r3 GT 0
+  CALL @send_message r1 $1
+STOP

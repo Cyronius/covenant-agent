@@ -1,0 +1,8 @@
+# L1_projects_notify_owner  (level 1, world projects)
+# request: Notify the owner of the Data warehouse project that it is due for review.
+# $0: ID:project = 'project_3' — the Data warehouse project
+# $1: STR = 'Your project is due for review.' — notification text
+
+CALL @get_project $0 -> r0
+CALL @notify_member r0.@project.owner $1
+STOP

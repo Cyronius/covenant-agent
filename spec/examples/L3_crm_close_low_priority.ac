@@ -1,0 +1,11 @@
+# L3_crm_close_low_priority  (level 3, world crm)
+# request: Close every open ticket below priority 3, unless it belongs to Northwind.
+# $0: STR = 'open' — the open status
+# $1: INT = 3 — priority 3
+# $2: ID:customer = 'customer_1' — Northwind
+
+CALL @list_tickets -> r0
+FILTER r0 @ticket.status EQ $0 AND @ticket.priority LT $1 AND NOT @ticket.customer EQ $2 -> r1
+FOREACH r1 -> r2
+  CALL @close_ticket r2 -> r3
+STOP

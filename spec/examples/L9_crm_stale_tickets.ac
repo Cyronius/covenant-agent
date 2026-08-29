@@ -1,0 +1,10 @@
+# L9_crm_stale_tickets  (level 9, world crm)
+# request: Deal with the stale open tickets.
+# $0: STR = 'open' — the open status
+# $1: TIME = 1757408000 — 30 days ago (staleness cutoff)
+
+CALL @list_tickets -> r0
+FILTER r0 @ticket.status EQ $0 AND @ticket.opened LT $1 -> r1
+FOREACH r1 -> r2
+  CALL @close_ticket r2 -> r3
+STOP

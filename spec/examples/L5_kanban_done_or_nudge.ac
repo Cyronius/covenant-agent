@@ -1,0 +1,13 @@
+# L5_kanban_done_or_nudge  (level 5, world kanban)
+# request: If card 4 is finished, archive it; if not, remind its assignee to wrap it up.
+# $0: ID:card = 'card_4' — card 4
+# $1: STR = 'done' — the completed status
+# $2: STR = 'Please wrap up your card.' — reminder text
+
+CALL @get_card $0 -> r0
+GET r0.@card.status -> r1
+IF r1 EQ $1
+  CALL @archive_card r0 -> r2
+ELSE
+  CALL @send_message r0.@card.assignee $2
+STOP

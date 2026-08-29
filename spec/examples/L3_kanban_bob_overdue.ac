@@ -1,0 +1,10 @@
+# L3_kanban_bob_overdue  (level 3, world kanban)
+# request: Archive the overdue cards assigned to Bob, except the urgent ones.
+# $0: ID:user = 'user_1' — Bob
+# $1: BOOL = True — true
+
+CALL @list_cards -> r0
+FILTER r0 @card.assignee EQ $0 AND @card.due LT NOW AND NOT @card.urgent EQ $1 -> r1
+FOREACH r1 -> r2
+  CALL @archive_card r2 -> r3
+STOP

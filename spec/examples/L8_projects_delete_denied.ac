@@ -1,0 +1,13 @@
+# L8_projects_delete_denied  (level 8, world projects)
+# request: Try to delete the Legacy CMS project; if it fails, notify Noor about the failure.
+# $0: ID:project = 'project_4' — the Legacy CMS project
+# $1: STATUS = 'OK' — the OK status
+# $2: ID:user = 'user_3' — Noor
+# $3: STR = 'Deleting the Legacy CMS project failed.' — failure notification
+# injected errors: [{'name': 'delete_project', 'code': 'PERMISSION_DENIED', 'times': -1}]
+
+TRY -> r0
+  CALL @delete_project $0
+IF NOT r0 EQ $1
+  CALL @notify_member $2 $3
+STOP

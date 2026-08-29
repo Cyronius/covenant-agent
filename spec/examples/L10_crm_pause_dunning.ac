@@ -1,0 +1,11 @@
+# L10_crm_pause_dunning  (level 10, world crm)
+# request: Work out which invoices are overdue and unpaid, check in, then re-send each of them.
+# $0: BOOL = False — false
+
+CALL @list_invoices -> r0
+FILTER r0 @invoice.paid EQ $0 AND @invoice.due LT NOW -> r1
+PAUSE
+# --- continuation segment (after PAUSE) ---
+FOREACH r1 -> r2
+  CALL @send_invoice r2
+STOP

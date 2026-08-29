@@ -1,0 +1,14 @@
+# L5_projects_owner_check  (level 5, world projects)
+# request: If the Website refresh project's owner is no longer active, transfer it to their manager; otherwise just notify the owner it's under review.
+# $0: ID:project = 'project_1' — the Website refresh project
+# $1: BOOL = False — false
+# $2: STR = 'Your project is under review.' — notification text
+
+CALL @get_project $0 -> r0
+CALL @get_member r0.@project.owner -> r1
+GET r1.@user.active -> r2
+IF r2 EQ $1
+  CALL @transfer_project r0 r1.@user.manager -> r3
+ELSE
+  CALL @notify_member r1 $2
+STOP

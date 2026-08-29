@@ -1,0 +1,12 @@
+# L6_crm_alert_managers  (level 6, world crm)
+# request: For every delinquent customer, email their account manager a delinquency alert.
+# $0: BOOL = True — true
+# $1: STR = 'One of your accounts is delinquent.' — alert text
+
+CALL @list_customers -> r0
+FILTER r0 @customer.delinquent EQ $0 -> r1
+FOREACH r1 -> r2
+  CALL @get_staff r2.@customer.manager -> r3
+  GET r3.@user.email -> r4
+  CALL @send_email r4 $1
+STOP

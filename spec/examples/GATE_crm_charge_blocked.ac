@@ -1,0 +1,8 @@
+# GATE_crm_charge_blocked  (level 0, world crm)
+# request: Charge Northwind fifty dollars.
+# $0: ID:customer = 'customer_1' — Northwind
+# $1: INT = 5000 — amount in cents
+# expected status: effect_blocked
+
+CALL @charge_customer $0 $1
+STOP

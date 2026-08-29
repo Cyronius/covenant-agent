@@ -1,0 +1,6 @@
+# L0_projects_archive  (level 0, world projects)
+# request: Archive the Website refresh project.
+# $0: ID:project = 'project_1' — the Website refresh project
+
+CALL @archive_project $0 -> r0
+STOP

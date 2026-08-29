@@ -1,0 +1,15 @@
+# L10_projects_pause_handover  (level 10, world projects)
+# request: Identify the inactive members, pause for review, then move each of their active projects to their manager.
+# $0: BOOL = False — false
+# $1: STR = 'active' — the active status
+
+CALL @list_members -> r0
+FILTER r0 @user.active EQ $0 -> r1
+PAUSE
+# --- continuation segment (after PAUSE) ---
+CALL @list_projects -> r2
+FOREACH r1 -> r3
+  FILTER r2 @project.owner EQ r3.@user.id AND @project.status EQ $1 -> r4
+  FOREACH r4 -> r5
+    CALL @transfer_project r5 r3.@user.manager -> r6
+STOP

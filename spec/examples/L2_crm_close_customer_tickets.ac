@@ -1,0 +1,10 @@
+# L2_crm_close_customer_tickets  (level 2, world crm)
+# request: Close all of Initech's open tickets.
+# $0: ID:customer = 'customer_2' — Initech
+# $1: STR = 'open' — the open status
+
+CALL @list_tickets -> r0
+FILTER r0 @ticket.customer EQ $0 AND @ticket.status EQ $1 -> r1
+FOREACH r1 -> r2
+  CALL @close_ticket r2 -> r3
+STOP

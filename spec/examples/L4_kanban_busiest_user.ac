@@ -1,0 +1,20 @@
+# L4_kanban_busiest_user  (level 4, world kanban)
+# request: Message whoever has the most unfinished cards on the board.
+# $0: STR = 'done' — the completed status
+# $1: BOOL = False — false
+# $2: STR = 'You have the most unfinished cards.' — message text
+
+CALL @list_users -> r0
+CALL @list_cards -> r1
+FILTER r1 NOT @card.status EQ $0 AND @card.archived EQ $1 -> r2
+FIRST r0 -> r3
+FILTER r2 @card.assignee EQ r3.@user.id -> r4
+COUNT r4 -> r5
+FOREACH r0 -> r6
+  FILTER r2 @card.assignee EQ r6.@user.id -> r7
+  COUNT r7 -> r8
+  IF r8 GT r5
+    LET r8 -> r5
+    LET r6 -> r3
+CALL @send_message r3 $2
+STOP
