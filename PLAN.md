@@ -2,7 +2,7 @@
 
 **Status:** Draft v1 — 2026-08-29
 **Audience:** Claude Code (implementation agent) and the project owner
-**Language:** Python for models, data generation, and harness. JavaScript only for the compiled program target and the sandbox runtime.
+**Language:** Python is research scaffolding only — models, data generation, and the measurement harness. It is disposable. The shipping agent stack is TypeScript (see §0.2); JavaScript is the compiled program target and the sandbox runtime.
 
 ---
 
@@ -13,6 +13,13 @@ Test one question as cheaply as possible:
 > Given an English request and arbitrary tool schemas, can a small neural network reliably construct the correct executable program?
 
 Everything in this document is in service of that question. Anything that does not move it forward is deferred (see §12).
+
+**Project goal (owner, 2026-08-29):** a planner that runs in the end-user's
+**browser**. Parameter budget **0–300M, as small as possible** — the
+experiments exist to find the smallest model that clears the accuracy bar.
+Qwen-class 0.5B+ models are baselines (R2), not candidates; they exceed the
+budget. Size, download weight, and in-browser latency are first-class
+success criteria alongside goal_success.
 
 This plan replaces the earlier 38-section draft. It keeps the foundation, the size curve, constrained decoding, compiler/execution feedback, tool grounding, English robustness, effect-typed safety, and real-trace distillation. It drops modular blocks, routers, Neural IR, Mixture of Widths, attention sparsity, and diffusion-style construction as premature.
 
@@ -29,6 +36,47 @@ This plan replaces the earlier 38-section draft. It keeps the foundation, the si
 | H7 | Real-agent traces close the synthetic-to-real gap | R8 |
 
 Strategy: try hard to disprove each one cheaply. Surviving hypotheses feed the next prototype.
+
+### 0.1 Relationship to Covenant
+
+Agent Core is a from-scratch rewrite of the ideas in
+[Covenant](https://github.com/Cyronius/covenant), the experimental AI-first
+language. We have wide latitude to diverge from it; the divergences below are
+deliberate, not drift.
+
+**Kept from Covenant:**
+- Machine-first IR — no human authors it; deterministic structure with one
+  valid way to write everything.
+- Explicit declared effects, statically computable and enforced at runtime.
+- Canonical form with round-trip guarantees (our round-trip tests are the
+  analogue of Covenant's canonical text printer).
+
+**Deliberately dropped:**
+- SSA snippets with generated names → numbered registers `r0…r15`. A tiny
+  model needs a tiny, fixed vocabulary.
+- Node IDs, symbol graph, query engine — retrieval infrastructure for large
+  codebases; irrelevant to single-program generation.
+- WASM target (Deno/Node/browser via bytecode) → direct JavaScript. The
+  execution model here is SandwichTS-style: generated JS calling tool stubs
+  in a browser iframe/worker or Node sandbox (§0.2). WASM adds a toolchain
+  for no benefit at this program size.
+
+If a future change re-imports a dropped concept, note here which result
+motivated it (§14 applies).
+
+### 0.2 End-state stack (TypeScript)
+
+The production agent stack is TypeScript. The deliverable is a TS pipeline —
+parse → typecheck → effects → compile to JS (or interpret the IR directly) →
+effect gate → PAUSE protocol — running in the browser (iframe/worker,
+SandwichTS-style) or server-side Node. The Python `core/` is the reference
+implementation used to iterate on the IR cheaply; it never ships.
+
+**Timing:** port after R1 passes. R1 may force IR revisions; porting a moving
+IR is wasted work. When the port lands, add differential tests: the TS and
+Python compilers must emit byte-identical JS for every `spec/examples/`
+program and for property-generated programs from F4. Until then, no
+production code depends on the Python pipeline.
 
 ---
 
@@ -205,7 +253,14 @@ Task families of increasing difficulty. Each level needs ≥1,000 generated exam
 - Mean and p95 tokens per task vs. the JS equivalent.
 - Catalog of every case where the IR was awkward. Candidate missing primitives are listed for review, not added automatically.
 
-**Pass:** ≥95% compile cleanly; median tokens ≤ 40% of the JS equivalent.
+**Pass:** ≥95% compile cleanly; median AC tokens **under the planner's own
+vocabulary** (one token per IR keyword/symbol — the vocabulary R3 trains
+with) ≤ 40% of the JS equivalent under a standard subword tokenizer.
+*(Restated by owner 2026-08-30, motivated by R1: the original "same
+tokenizer both sides" wording measured GPT-2's vocabulary — which splits
+every IR symbol in two and has no relation to the planner's actual
+emission cost. Both counts are stored per task in `results/r1_metrics.jsonl`;
+original-wording result 0.545, restated result 0.269. See results/R1.md.)*
 **Fail action:** revise F1 and rerun. **Nothing downstream proceeds until R1 passes.**
 **Depends on:** Foundation.
 
@@ -223,11 +278,18 @@ Task families of increasing difficulty. Each level needs ≥1,000 generated exam
 
 **Measure:** goal_success per level, p50/p95 latency on the **target hardware** (state it explicitly in the results file), tokens out, memory footprint.
 
+**Deployment target (owner decision, 2026-08-29):** the planner runs in the
+end-user's **browser**. Model download size and in-browser inference are the
+binding constraints, not server latency. A 0.6B model (~300+ MB even
+quantized) does not fit a web-app download budget, so R2 accuracy alone
+cannot kill the custom-model track; the Qwen numbers are the bar to beat,
+not a stop condition.
+
 **Decision gate (write the answer in `results/R2.md` before continuing):**
 
-1. Define the latency target and size target now. Example: "p95 ≤ 150 ms end-to-end on a 4-core CPU, ≤ 200 MB resident." Whatever it is, write it down.
-2. If Condition B reaches ≥95% on Levels 0–8 **and** meets the latency target → **stop the custom-model track.** Ship the fine-tuned model with the harness, effect gate, and PAUSE runtime. R7 and R8 still apply.
-3. Otherwise, record the gap (accuracy and/or latency) that R3–R6 must close.
+1. Define the targets now: model download budget, in-browser p95 latency (proxy-measured on the dev CPU until a WASM/WebGPU runtime exists), resident memory. Whatever they are, write them down.
+2. Condition B's per-level goal_success is the **reference bar**: R3's pass criterion is defined relative to it, and a custom model justifies itself by approaching that accuracy within the browser budget.
+3. If some off-the-shelf model meets the browser budget **and** ≥95% on Levels 0–8, then — and only then — stop the custom track and ship it with the harness, effect gate, and PAUSE runtime. Otherwise record the gap (accuracy and/or size/latency) that R3–R6 must close.
 
 **Depends on:** Foundation. Runs in parallel with R1.
 

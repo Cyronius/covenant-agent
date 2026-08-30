@@ -88,10 +88,46 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str) -> dict:
     return task
 
 
+MUTATING_EFFECTS = {"WRITE", "DELETE", "SEND", "PAY", "EXTERNAL"}
+
+
+def is_noop(task: dict) -> bool:
+    """A task whose reference declares mutating effects yet leaves the world
+    untouched (template artifact, e.g. "close the closed tickets")."""
+    return (task["expected_status"] == "ok"
+            and task["expected_state"] == task["state"]
+            and bool(MUTATING_EFFECTS & set(task["effects"])))
+
+
+def build_schedule(args) -> list[int]:
+    if args.levels:
+        weights = {}
+        for part in args.levels.split(","):
+            lvl, w = part.split(":")
+            weights[int(lvl)] = float(w)
+        total = sum(weights.values())
+        quotas = {l: args.n * w / total for l, w in weights.items()}
+        counts = {l: int(q) for l, q in quotas.items()}
+        short = args.n - sum(counts.values())
+        by_remainder = sorted(quotas, key=lambda l: quotas[l] - counts[l],
+                              reverse=True)
+        for l in by_remainder[:short]:
+            counts[l] += 1
+        schedule = [l for l in sorted(counts) for _ in range(counts[l])]
+        random.Random(args.seed).shuffle(schedule)
+        return schedule
+    levels = (list(range(11)) if args.level == "all"
+              else [int(args.level)])
+    return [levels[i % len(levels)] for i in range(args.n)]
+
+
 def main():
     ap = argparse.ArgumentParser(prog="data.gen")
-    ap.add_argument("--level", required=True,
+    ap.add_argument("--level",
                     help="0-10, or 'all' for an even mix")
+    ap.add_argument("--levels",
+                    help="weighted mix 'lvl:weight,...' e.g. "
+                         "'0:5,2:12,3:12'; overrides --level")
     ap.add_argument("--n", type=int, required=True)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--out", required=True)
@@ -99,28 +135,38 @@ def main():
                     help="generate from reserved worlds/tools (R5 eval only)")
     ap.add_argument("--teacher", default="template")
     ap.add_argument("--max-attempts", type=int, default=25)
+    ap.add_argument("--drop-noops", action="store_true",
+                    help="resample tasks whose reference has mutating "
+                         "effects but leaves the state unchanged")
     args = ap.parse_args()
+    if not args.level and not args.levels:
+        ap.error("one of --level / --levels is required")
 
-    levels = (list(range(11)) if args.level == "all"
-              else [int(args.level)])
+    schedule = build_schedule(args)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
 
     written = 0
     failures = 0
+    noops = 0
     seed_cursor = args.seed
     with open(out, "w") as f:
         while written < args.n:
-            level = levels[written % len(levels)]
+            level = schedule[written]
             task = None
             for _ in range(args.max_attempts):
                 seed_cursor += 1
                 try:
-                    task = gen_one(level, seed_cursor, args.holdout,
-                                   args.teacher)
-                    break
+                    candidate = gen_one(level, seed_cursor, args.holdout,
+                                        args.teacher)
                 except (programs.SampleError, ReferenceError):
                     failures += 1
+                    continue
+                if args.drop_noops and is_noop(candidate):
+                    noops += 1
+                    continue
+                task = candidate
+                break
             if task is None:
                 print(f"FATAL: level {level} failed "
                       f"{args.max_attempts} consecutive attempts",
@@ -129,8 +175,10 @@ def main():
             f.write(json.dumps(task) + "\n")
             written += 1
             if written % 200 == 0:
-                print(f"{written}/{args.n} (resamples: {failures})")
-    print(f"wrote {written} tasks -> {out} (resamples: {failures})")
+                print(f"{written}/{args.n} (resamples: {failures}, "
+                      f"noops dropped: {noops})")
+    print(f"wrote {written} tasks -> {out} "
+          f"(resamples: {failures}, noops dropped: {noops})")
 
 
 if __name__ == "__main__":

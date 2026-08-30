@@ -1,0 +1,45 @@
+# Agent Core GBNF (llama.cpp grammar) — R2 Condition A syntax constraint.
+# Derived from spec/agent_core.md §3. Deliberately permissive where GBNF
+# cannot track context (indentation discipline, block-head/body pairing,
+# register binding): those violations are caught by core/parser + typecheck,
+# which is the point — this grammar only removes free-text failure modes.
+# The optional EFFECTS header is omitted (references omit it too).
+
+root      ::= line* termline
+line      ::= indent? (instr | "STOP" | "PAUSE" | ret) nl
+termline  ::= ("STOP" | "PAUSE" | ret) nl
+ret       ::= "RETURN " operand
+indent    ::= "  " | "    " | "      " | "        "
+nl        ::= "\n"
+
+instr     ::= let | get | set | call | filterin | mapin | countin | sortin | selectin | firstin | foreachin | ifin | "ELSE" | "PARALLEL" | tryin
+
+let       ::= "LET " operand arrow
+get       ::= "GET " reg "." field arrow
+set       ::= "SET " reg " " field " " operand arrow
+call      ::= "CALL " tool (" " operand)* (arrow)?
+filterin  ::= "FILTER " reg " " pred arrow
+mapin     ::= "MAP " reg " " field arrow
+countin   ::= "COUNT " reg arrow
+sortin    ::= "SORT " reg " " field " " ("ASC" | "DESC") arrow
+selectin  ::= "SELECT " reg " " operand arrow
+firstin   ::= "FIRST " reg arrow
+foreachin ::= "FOREACH " reg arrow
+ifin      ::= "IF " cond
+tryin     ::= "TRY " ("RETRY " num " ")? "-> " reg
+
+arrow     ::= " -> " reg
+
+pred      ::= clause ((" AND " | " OR ") clause)*
+clause    ::= ("NOT ")? field " " cmp " " operand
+cond      ::= ccl ((" AND " | " OR ") ccl)*
+ccl       ::= ("NOT ")? operand " " cmp " " operand
+cmp       ::= "EQ" | "LT" | "GT" | "CONTAINS"
+
+operand   ::= regfield | reg | const | "NOW" | "NULL" | num
+regfield  ::= reg "." field
+reg       ::= "r1" [0-5] | "r" [0-9]
+tool      ::= "T" num
+field     ::= "F" num
+const     ::= "C" num
+num       ::= [0-9] [0-9]?

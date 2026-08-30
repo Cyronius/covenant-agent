@@ -226,6 +226,12 @@ JavaScript. Requirements:
 - `TRY`/`RETRY` compiles to a loop with `try`/`catch` on `rt.ToolError`.
 - `PAUSE` compiles to `return rt.pause({r0: r0, …})` over the registers bound
   at that point.
+- **Iframe/worker-portable** (SandwichTS-compatible): the emitted JS must run
+  unchanged as an async function handed only its tool stubs — no ambient
+  authority (no DOM, storage, network, `require`, globals), all effects via
+  the injected `rt`, `PAUSE` mappable to a MessagePort round-trip, and no
+  unbounded loops that would defeat a watchdog kill-switch. Only the `rt`
+  adapter may differ between the Node `vm` harness and a browser worker.
 
 ## 11. Worked example
 

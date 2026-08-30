@@ -3,6 +3,11 @@
 data/*.jsonl
 !data/curriculum_tasks.jsonl
 data/holdout/*.jsonl
+data/r1_batches/
+data/r1_authored/
+.claude/plans/
 __pycache__/
 *.pyc
 .pytest_cache/
+baselines/qwen/models/
+.codegraph/
