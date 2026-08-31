@@ -6,8 +6,13 @@
 # The optional EFFECTS header is omitted (references omit it too).
 
 root      ::= line* termline
-line      ::= indent? (instr | "STOP" | "PAUSE" | ret) nl
+line      ::= indent? (instr | "STOP" | ret) nl
 termline  ::= ("STOP" | "PAUSE" | ret) nl
+# PAUSE is only a terminator (never in `line`): keeping it in `line` makes
+# "PAUSE\n" ambiguous (line vs termline), and llama.cpp's grammar sampler
+# then masks EOG after it, forcing overgeneration past the PAUSE — every
+# L10 task failed with UNREACHABLE until this split. STOP stays in `line`
+# for early exits inside IF bodies.
 ret       ::= "RETURN " operand
 indent    ::= "  " | "    " | "      " | "        "
 nl        ::= "\n"
