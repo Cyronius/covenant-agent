@@ -1,5 +1,5 @@
 {
- "note": "S0 eval-only domains \u2014 NEVER in training data. Split seed 20260831 over 142 validated themes.",
+ "note": "S0 eval-only domains \u2014 NEVER in training data. Split seed 20260831 over 142 validated themes. coursebuilder added 2026-08-31 (mirrors the real mobi-cbiv product surface; eval-only).",
  "reserved_eval_domains": [
   "ad_platform",
   "animal_shelter",
@@ -11,6 +11,7 @@
   "ci_cd",
   "coffee_roastery",
   "comic_publisher",
+  "coursebuilder",
   "courthouse",
   "donor_relations",
   "driving_school",

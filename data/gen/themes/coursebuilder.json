@@ -1,0 +1,111 @@
+{
+  "domain": "coursebuilder",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "instructor",
+    "noun": ["instructor", "instructors"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "lesson",
+    "noun": ["lesson", "lessons"],
+    "ref_field": "instructor",
+    "ref_phrase": "authored by {name}",
+    "name_field": "title",
+    "titles": ["Goal Setting for Frontline Performance",
+               "Closing with Confidence", "Handling Difficult Customers",
+               "The Multi-Barrier Approach", "Cash Drawer Fundamentals",
+               "Compliance Essentials", "Active Listening Basics",
+               "Onboarding Week One", "Safety First on the Floor",
+               "Product Knowledge Deep Dive", "Coaching Conversations",
+               "Time Management for Managers", "De-escalation Techniques",
+               "Warm Transfers Done Right"],
+    "bools": [
+      {"field": "needs_proofread", "true_phrase": "flagged-for-proofread",
+       "false_phrase": "proofread-clean", "placement": "pre"},
+      {"field": "has_quiz", "true_phrase": "quiz-backed",
+       "false_phrase": "quizless", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "review_stage", "values": ["draft", "in_review", "published"],
+      "phrases": {"draft": ["draft", "pre"],
+                  "in_review": ["in review", "post"],
+                  "published": ["published", "pre"]}
+    },
+    "times": [
+      {"field": "publish_due", "kind": "time_now",
+       "lt_phrase": ["past its publish date", "post"],
+       "gt_phrase": ["not yet due to publish", "post"]},
+      {"field": "last_edited", "kind": "time_cutoff",
+       "phrase": "not edited in more than {d} days"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_lessons",
+                   "desc": "List every lesson in the course library."},
+    "get_child": {"name": "get_lesson",
+                  "desc": "Fetch a single lesson by its id."},
+    "list_parent": {"name": "list_instructors",
+                    "desc": "List all instructors with authoring access."},
+    "get_parent": {"name": "get_instructor",
+                   "desc": "Fetch one instructor by id."},
+    "delete_child": {"name": "retire_lesson",
+                     "desc": "Permanently retire a lesson and remove it from the library. Cannot be undone.",
+                     "verbs": ["retire {obj}", "pull {obj} from the library"]},
+    "set_enum": {"name": "set_review_stage",
+                 "desc": "Move a lesson to a review stage (draft, in_review, or published).",
+                 "verbs": ["move {obj} {to_value}", "put {obj} {to_value}"],
+                 "value_phrases": {"draft": "back to draft",
+                                   "in_review": "into review",
+                                   "published": "live"}},
+    "set_bool": {"name": "flag_for_proofread",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a lesson so the editorial team proofreads it.",
+                 "verbs": ["flag {obj} for proofreading",
+                           "send {obj} to the proofread queue"]},
+    "set_ref": {"name": "reassign_lesson",
+                "desc": "Hand a lesson to a different instructor.",
+                "verbs": ["reassign {obj} {to_name}", "hand {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notify_instructor",
+             "desc": "Send an in-app notification to an instructor.",
+             "child_verbs": ["notify the author of {obj}",
+                             "ping whoever wrote {obj}"],
+             "direct_verbs": ["notify {name}", "ping {name}"],
+             "pair_verbs": ["notify", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the lesson with the earliest publish date",
+    "ord_phrase": "the lesson with the {ord} earliest publish date",
+    "pre_filter": {"enum_value": "draft", "phrase": "draft"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the stale drafts.",
+                 "The draft pile is getting old, deal with it."],
+     "hint": "flag drafts untouched for a long while for proofreading",
+     "clauses": [{"enum_value": "draft"},
+                 {"time_index": 1, "days": 90}],
+     "action": "set_bool"},
+    {"request": ["Clean up the lesson library.",
+                 "The library needs a tidy-up."],
+     "hint": "retire published lessons that are long unedited",
+     "clauses": [{"enum_value": "published"},
+                 {"time_index": 1, "days": 180}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your lesson needs attention.",
+                   "Please review your lesson before it goes live.",
+                   "An editorial note on your lesson.",
+                   "Your lesson is waiting on a revision."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}
