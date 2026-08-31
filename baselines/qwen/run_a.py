@@ -116,7 +116,12 @@ def main():
     ap.add_argument("--ctx", type=int, default=4096)
     ap.add_argument("--threads", type=int, default=None)
     ap.add_argument("--max-tokens", type=int, default=250)
+    ap.add_argument("--domains", default=None, metavar="DIR",
+                    help="register generated domain themes (S0 suites)")
     args = ap.parse_args()
+    if args.domains:
+        from data.gen.domains import register_domains
+        register_domains(args.domains)
 
     from llama_cpp import Llama, LlamaGrammar
     grammar = None
