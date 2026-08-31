@@ -1,0 +1,105 @@
+{
+  "domain": "public_health",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "operator",
+    "noun": ["operator", "operators"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "citation",
+    "noun": ["citation", "citations"],
+    "ref_field": "operator",
+    "ref_phrase": "for {name}",
+    "name_field": "violation",
+    "titles": ["Improper food storage temperature", "Unsanitary food prep surface",
+               "Expired food product on shelf", "Handwashing station not stocked",
+               "Pest activity observed", "Cross-contamination risk",
+               "Improper waste disposal", "Missing certified food handler",
+               "Cold storage unit malfunction", "Dirty utensils in service area",
+               "Inadequate ventilation in kitchen", "Chemical stored near food prep"],
+    "bools": [
+      {"field": "repeat_offense", "true_phrase": "repeat",
+       "false_phrase": "first-time", "placement": "pre"},
+      {"field": "closure_ordered", "true_phrase": "closed",
+       "false_phrase": "open", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["issued", "contested", "resolved"],
+      "phrases": {"issued": ["issued", "pre"],
+                  "contested": ["contested", "pre"],
+                  "resolved": ["resolved", "pre"]}
+    },
+    "times": [
+      {"field": "issued_on", "kind": "time_cutoff",
+       "phrase": "issued more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_citations",
+                   "desc": "list all citations"},
+    "get_child": {"name": "get_citation",
+                  "desc": "fetch one citation by id"},
+    "list_parent": {"name": "list_operators",
+                    "desc": "list all establishment operators"},
+    "get_parent": {"name": "get_operator",
+                   "desc": "fetch one operator by id"},
+    "delete_child": {"name": "purge_citation",
+                     "desc": "delete a citation rec, no undo",
+                     "verbs": ["purge {obj}", "wipe {obj}"]},
+    "set_enum": {"name": "set_citation_status",
+                 "desc": "chg citation status",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"issued": "back to issued",
+                                   "contested": "as contested",
+                                   "resolved": "as resolved"}},
+    "set_bool": {"name": "flag_repeat_offense",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag a repeat violation",
+                 "verbs": ["flag {obj} as repeat", "mark {obj} repeat"]},
+    "set_ref": {"name": "reassign_operator",
+                "desc": "move citation to diff operator",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "call_operator",
+             "desc": "call the operator",
+             "child_verbs": ["call the operator for {obj}",
+                             "ring the operator on {obj}"],
+             "direct_verbs": ["call {name}", "ring {name}"],
+             "pair_verbs": ["call", "ring"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the citation issued longest ago",
+    "ord_phrase": "the citation with the {ord} longest time since issue",
+    "pre_filter": {"enum_value": "contested", "phrase": "contested"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the resolved backlog.",
+                 "Old resolved citations need to go."],
+     "hint": "purge resolved citations issued more than 500 days ago",
+     "clauses": [{"enum_value": "resolved"},
+                 {"time_index": 0, "days": 500}],
+     "action": "delete_child"},
+    {"request": ["Flag the repeat offenders.",
+                 "Some of these places keep messing up."],
+     "hint": "flag issued citations issued more than 60 days ago as repeat offenses",
+     "clauses": [{"enum_value": "issued"},
+                 {"time_index": 0, "days": 60}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["citation needs review",
+                   "pls address your citation",
+                   "citation status changed",
+                   "follow-up may be required"],
+    "agg_msgs": ["you have the most open citations",
+                 "flagging this to you direct",
+                 "you lead this count"],
+    "fail_msgs": ["op failed",
+                  "citation update didnt go thru",
+                  "last action failed"]
+  }
+}

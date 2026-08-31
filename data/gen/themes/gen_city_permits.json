@@ -1,0 +1,109 @@
+{
+  "domain": "city_permits",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "applicant",
+    "noun": ["applicant", "applicants"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "building_permit",
+    "noun": ["building permit", "building permits"],
+    "ref_field": "applicant",
+    "ref_phrase": "filed by {name}",
+    "name_field": "scope_of_work",
+    "titles": ["Single-family home addition", "Kitchen remodel", "Bathroom remodel",
+               "Deck construction", "Garage conversion", "Roof replacement",
+               "Fence installation", "Solar panel installation",
+               "Electrical panel upgrade", "Plumbing repipe",
+               "Commercial tenant improvement", "New construction - single family",
+               "Swimming pool installation", "Retaining wall construction"],
+    "bools": [
+      {"field": "inspection_passed", "true_phrase": "passed inspection",
+       "false_phrase": "not yet inspected", "placement": "post"},
+      {"field": "expedited", "true_phrase": "expedited",
+       "false_phrase": "standard processing", "placement": "pre"},
+      {"field": "flagged_for_review", "true_phrase": "flagged for review",
+       "false_phrase": "not flagged", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["submitted", "under_review", "approved", "denied"],
+      "phrases": {"submitted": ["submitted", "pre"],
+                  "under_review": ["under review", "pre"],
+                  "approved": ["approved", "pre"],
+                  "denied": ["denied", "pre"]}
+    },
+    "times": [
+      {"field": "filed", "kind": "time_cutoff",
+       "phrase": "filed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lspermits",
+                   "desc": "Returns the complete set of building permit applications currently tracked by the permits office. This call is useful when staff need a full overview before narrowing in on any single filing."},
+    "get_child": {"name": "getpermit",
+                  "desc": "Returns the full record for one building permit application identified by its id. Call this once you already know which specific filing you want to inspect in detail."},
+    "list_parent": {"name": "lsappl",
+                    "desc": "Returns every applicant account on file with the permits office, including both individuals and firms. This is typically used to browse filers before pulling up a particular applicant's history."},
+    "get_parent": {"name": "getappl",
+                   "desc": "Returns the full record for one applicant identified by their id. Use this when you need contact and history details for a specific filer."},
+    "delete_child": {"name": "delpermit",
+                     "desc": "Permanently removes a building permit application from the system and cannot be reversed once it runs. This should only be used for filings that were entered in error or withdrawn entirely.",
+                     "verbs": ["delete {obj}", "purge {obj} from the system"]},
+    "set_enum": {"name": "setphase",
+                 "desc": "Updates a building permit's phase to submitted, under review, approved, or denied depending on where it stands. This should be called whenever review status changes so the applicant-facing portal stays current.",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"submitted": "back to submitted",
+                                   "under_review": "as under review",
+                                   "approved": "as approved",
+                                   "denied": "as denied"}},
+    "set_bool": {"name": "flagrev",
+                 "bool_index": 2, "value": true,
+                 "desc": "Marks a building permit application as flagged for additional review by senior staff. This is used whenever something about the filing looks unusual and warrants a second look.",
+                 "verbs": ["flag {obj} for review", "mark {obj} for review"]},
+    "set_ref": {"name": "moveappl",
+                "desc": "Reassigns a building permit application to a different applicant's account in the system. This is typically needed when a filing was originally logged under the wrong name.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "callappl",
+             "desc": "Places a note to call an applicant regarding one of their building permit applications, logged as an outbound contact. This is the standard channel for updates that need a more personal touch than an email.",
+             "child_verbs": ["call the applicant behind {obj}",
+                             "reach out to the applicant behind {obj}"],
+             "direct_verbs": ["call {name}", "reach out to {name}"],
+             "pair_verbs": ["call", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the building permit filed longest ago",
+    "ord_phrase": "the building permit with the {ord} longest time since filing",
+    "pre_filter": {"enum_value": "under_review", "phrase": "under review"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the dead applications.",
+                 "The permit files need cleaning up."],
+     "hint": "delete denied permits filed more than 365 days ago",
+     "clauses": [{"enum_value": "denied"},
+                 {"time_index": 0, "days": 365}],
+     "action": "delete_child"},
+    {"request": ["Flag the stale reviews.",
+                 "Something needs to happen with the old ones still under review."],
+     "hint": "flag under-review permits filed more than 180 days ago for review",
+     "clauses": [{"enum_value": "under_review"},
+                 {"time_index": 0, "days": 180}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your building permit application needs attention.",
+                   "Please review your building permit application.",
+                   "A note about your building permit application.",
+                   "Your building permit application may require action."],
+    "agg_msgs": ["You currently have the most filings on this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

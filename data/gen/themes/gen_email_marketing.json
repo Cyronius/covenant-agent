@@ -1,0 +1,86 @@
+{
+  "domain": "email_marketing",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "send",
+    "noun": ["send", "sends"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "subject_line",
+    "titles": ["Don't miss our fall sale", "Your cart is waiting",
+               "Last chance: 20% off ends tonight", "New arrivals just dropped",
+               "You left something behind", "Exclusive early access inside",
+               "Your weekly digest is here", "We miss you, come back",
+               "Flash sale: 24 hours only", "Your order has shipped",
+               "Thanks for subscribing", "Big news from our team"],
+    "bools": [
+      {"field": "suppressed", "true_phrase": "suppressed", "false_phrase": "deliverable", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage",
+      "values": ["queued", "sending", "delivered", "bounced"],
+      "phrases": {"queued": ["queued", "pre"],
+                  "sending": ["sending", "pre"],
+                  "delivered": ["delivered", "pre"],
+                  "bounced": ["bounced", "pre"]}
+    },
+    "times": [
+      {"field": "scheduled_for", "kind": "time_now",
+       "lt_phrase": ["overdue", "post"],
+       "gt_phrase": ["not due yet", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_sends", "desc": "list all sends for a campaing"},
+    "get_child": {"name": "get_send", "desc": "get one send by id"},
+    "list_parent": {"name": "list_clients", "desc": "list clients"},
+    "get_parent": {"name": "get_client", "desc": "get one client"},
+    "delete_child": {"name": "delete_send", "desc": "nukes a send record, cant undo it",
+                     "verbs": ["nuke {obj}", "purge {obj}"]},
+    "set_enum": {"name": "set_send_stage", "desc": "change stage of a send (queued/sending/delivered/bounced)",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"queued": "to queued", "sending": "to sending",
+                                   "delivered": "to delivered", "bounced": "to bounced"}},
+    "set_bool": {"name": "flag_send_suppressed", "bool_index": 0, "value": true,
+                 "desc": "suppress a send so it wont go out",
+                 "verbs": ["suppress {obj}", "block {obj}"]},
+    "set_ref": {"name": "move_send_client", "desc": "reassign a send to a different client",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "ping_client", "desc": "pings the client dashboard about a send",
+             "child_verbs": ["notify the client behind {obj}", "flag {obj} to the client"],
+             "direct_verbs": ["notify {name}", "ping {name}"],
+             "pair_verbs": ["notify", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the send with the earliest scheduled time",
+    "ord_phrase": "the send with the {ord} earliest scheduled time",
+    "pre_filter": {"enum_value": "queued", "phrase": "queued"}
+  },
+  "ambiguous": [
+    {"request": ["clean up the bounce pile", "this list has junk in it, fix it"],
+     "hint": "delete bounced sends that are overdue",
+     "clauses": [{"enum_value": "bounced"}, {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["stop the ones that shouldnt go out", "hold back whats overdue"],
+     "hint": "suppress queued sends that are overdue",
+     "clauses": [{"enum_value": "queued"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["this send needs a look", "check on this send", "heads up about this send",
+                   "this send might need fixing"],
+    "agg_msgs": ["you got the most sends on this client", "flagging this to you directly",
+                 "you lead this client's send count"],
+    "fail_msgs": ["the requested operation failed", "that change didnt go through",
+                  "last operation wasnt applied"]
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "domain": "passport_office",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "applicant",
+    "noun": ["applicant", "applicants"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "application",
+    "noun": ["application", "applications"],
+    "ref_field": "applicant",
+    "ref_phrase": "for {name}",
+    "name_field": "service_type",
+    "titles": ["First-time passport", "Passport renewal", "Name change update",
+               "Lost passport replacement", "Stolen passport replacement",
+               "Damaged passport replacement", "Emergency travel document",
+               "Second passport request", "Child passport application",
+               "Passport card application", "Expedited renewal", "Visa pages addition"],
+    "bools": [
+      {"field": "expedited", "true_phrase": "expedited",
+       "false_phrase": "standard", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["submitted", "in_process", "approved", "denied"],
+      "phrases": {"submitted": ["submitted", "pre"],
+                  "in_process": ["in process", "pre"],
+                  "approved": ["approved", "pre"],
+                  "denied": ["denied", "pre"]}
+    },
+    "times": [
+      {"field": "submitted_on", "kind": "time_cutoff",
+       "phrase": "submitted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listApplications",
+                   "desc": "list all pssprt apps"},
+    "get_child": {"name": "getApplication",
+                  "desc": "fetch one app by id"},
+    "list_parent": {"name": "listApplicants",
+                    "desc": "list all applicants on file"},
+    "get_parent": {"name": "getApplicant",
+                   "desc": "fetch one applicant by id"},
+    "delete_child": {"name": "purgeApplication",
+                     "desc": "wipe an app rec, no undo",
+                     "verbs": ["purge {obj}", "toss {obj} out"]},
+    "set_enum": {"name": "setApplicationStatus",
+                 "desc": "chg app status",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"submitted": "back to submitted",
+                                   "in_process": "as in process",
+                                   "approved": "as approved",
+                                   "denied": "as denied"}},
+    "set_bool": {"name": "flagExpedited",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag an app rush",
+                 "verbs": ["expedite {obj}", "rush {obj}"]},
+    "set_ref": {"name": "reassignApplicant",
+                "desc": "move app to another applicant",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailApplicant",
+             "desc": "send applicant an email",
+             "child_verbs": ["email the applicant on {obj}",
+                             "ping the applicant for {obj}"],
+             "direct_verbs": ["email {name}", "message {name}"],
+             "pair_verbs": ["email", "message"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the application submitted longest ago",
+    "ord_phrase": "the application with the {ord} longest wait since submission",
+    "pre_filter": {"enum_value": "in_process", "phrase": "in process"}
+  },
+  "ambiguous": [
+    {"request": ["Clear the backlog of failed apps.",
+                 "The old rejected apps are piling up, handle them."],
+     "hint": "purge denied applications submitted more than 180 days ago",
+     "clauses": [{"enum_value": "denied"},
+                 {"time_index": 0, "days": 180}],
+     "action": "delete_child"},
+    {"request": ["Rush the applications that need it.",
+                 "Some of these need to move faster."],
+     "hint": "expedite applications still submitted that have been waiting more than 30 days",
+     "clauses": [{"enum_value": "submitted"},
+                 {"time_index": 0, "days": 30}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your application needs attention.",
+                   "Please review your passport application.",
+                   "An update is required on your application.",
+                   "Your application may be delayed."],
+    "agg_msgs": ["You have the most applications pending.",
+                 "Flagging this to you directly.",
+                 "You lead this queue."],
+    "fail_msgs": ["The application update could not be completed.",
+                  "That request failed to process.",
+                  "The last action on this application did not go through."]
+  }
+}

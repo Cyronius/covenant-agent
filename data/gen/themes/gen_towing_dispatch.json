@@ -1,0 +1,102 @@
+{
+  "domain": "towing_dispatch",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "operator",
+    "noun": ["operator", "operators"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "tow_call",
+    "noun": ["tow call", "tow calls"],
+    "ref_field": "operator",
+    "ref_phrase": "assigned to {name}",
+    "name_field": "reason",
+    "titles": ["Dead battery", "Flat tire no spare", "Engine won't start",
+               "Collision on highway", "Ran out of gas", "Vehicle in ditch",
+               "Illegal parking impound", "Transmission failure", "Overheated engine",
+               "Locked keys inside", "Blown tire on shoulder", "Rollover recovery"],
+    "bools": [
+      {"field": "hazard", "true_phrase": "hazard scene",
+       "false_phrase": "clear scene", "placement": "pre"},
+      {"field": "flatbed_required", "true_phrase": "needs flatbed",
+       "false_phrase": "hook ok", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status", "values": ["dispatched", "en_route", "on_scene", "completed"],
+      "phrases": {"dispatched": ["dispatched", "pre"],
+                  "en_route": ["en route", "pre"],
+                  "on_scene": ["on scene", "pre"],
+                  "completed": ["completed", "pre"]}
+    },
+    "times": [
+      {"field": "requested", "kind": "time_now",
+       "lt_phrase": ["called in a while back", "post"],
+       "gt_phrase": ["just called in", "post"]},
+      {"field": "dispatched_at", "kind": "time_cutoff",
+       "phrase": "dispatched more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listCalls", "desc": "list all tow calls, whatevers open"},
+    "get_child": {"name": "getCall", "desc": "get one call by id"},
+    "list_parent": {"name": "listOps", "desc": "list the tow operators"},
+    "get_parent": {"name": "getOp", "desc": "get one operator by id"},
+    "delete_child": {"name": "killCall",
+                     "desc": "kill a call rec for good, no undo",
+                     "verbs": ["kill {obj}", "scrap {obj}"]},
+    "set_enum": {"name": "setCallStatus",
+                 "desc": "chg call status, dispatched/enroute/onscene/done",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"dispatched": "back to dispatched",
+                                   "en_route": "as en route",
+                                   "on_scene": "as on scene",
+                                   "completed": "as completed"}},
+    "set_bool": {"name": "flagHazard",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag a call as a hazard scene, ppl could get hurt",
+                 "verbs": ["flag {obj} hazard", "mark {obj} a hazard scene"]},
+    "set_ref": {"name": "reassignOp",
+                "desc": "bounce a call to another operator",
+                "verbs": ["bounce {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "pageOp",
+             "desc": "page an operator w/ a msg",
+             "child_verbs": ["page the operator on {obj}", "ping the operator on {obj}"],
+             "direct_verbs": ["page {name}", "ping {name}"],
+             "pair_verbs": ["page", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the tow call with the earliest request time",
+    "ord_phrase": "the tow call with the {ord} earliest request time",
+    "pre_filter": {"enum_value": "dispatched", "phrase": "dispatched"}
+  },
+  "ambiguous": [
+    {"request": ["Flag anything sketchy out there.",
+                 "Deal with the risky calls."],
+     "hint": "flag dispatched calls as hazard scenes",
+     "clauses": [{"enum_value": "dispatched"}],
+     "action": "set_bool"},
+    {"request": ["Clear the dead calls off the board.",
+                 "Purge whatever's stale."],
+     "hint": "delete completed calls dispatched more than a set number of days ago",
+     "clauses": [{"enum_value": "completed"},
+                 {"time_index": 1, "days": 10}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["yo ur tow call needs a look",
+                   "check the status on ur call",
+                   "note on ur tow call",
+                   "call might need followup"],
+    "agg_msgs": ["ur on top of this list",
+                 "flagging this to u",
+                 "u lead this count rn"],
+    "fail_msgs": ["op failed lol",
+                  "that didnt go thru",
+                  "last action bombed"]
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "domain": "bookstore",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "reader",
+    "noun": ["reader", "readers"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "special_order",
+    "noun": ["special order", "special orders"],
+    "ref_field": "reader",
+    "ref_phrase": "for {name}",
+    "name_field": "title",
+    "titles": ["The Silent Orchard", "Mapping the Dark Coast",
+               "A History of Quiet Towns", "The Cartographer's Daughter",
+               "Letters from the Interior", "The Last Lighthouse Keeper",
+               "Riverbend Chronicles", "The Glassblower's Apprentice",
+               "Songs of the Salt Marsh", "The Clockmaker's Riddle",
+               "Wanderers of the North Road", "The Forgotten Atlas"],
+    "bools": [
+      {"field": "out_of_print", "true_phrase": "out of print",
+       "false_phrase": "in print", "placement": "post"},
+      {"field": "gift_receipt", "true_phrase": "gift receipt",
+       "false_phrase": "standard receipt", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["requested", "ordered", "arrived", "picked_up"],
+      "phrases": {"requested": ["requested", "pre"],
+                  "ordered": ["ordered", "pre"],
+                  "arrived": ["arrived", "pre"],
+                  "picked_up": ["picked up", "pre"]}
+    },
+    "times": [
+      {"field": "eta", "kind": "time_now",
+       "lt_phrase": ["past eta", "post"],
+       "gt_phrase": ["still on the way", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lst_so",
+                   "desc": "List every special order on file."},
+    "get_child": {"name": "get_so",
+                  "desc": "Fetch one special order by its id."},
+    "list_parent": {"name": "lst_rdr",
+                    "desc": "List all readers registered with the store."},
+    "get_parent": {"name": "get_rdr",
+                   "desc": "Fetch one reader by id."},
+    "delete_child": {"name": "rm_so",
+                     "desc": "Permanently remove a special order record. Not reversible.",
+                     "verbs": ["remove {obj}", "cancel {obj} for good"]},
+    "set_enum": {"name": "set_so_stat",
+                 "desc": "Change a special order's status (requested, ordered, arrived, or picked up).",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"requested": "back to requested",
+                                   "ordered": "to ordered",
+                                   "arrived": "to arrived",
+                                   "picked_up": "to picked up"}},
+    "set_bool": {"name": "flg_oop",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a special order's title as out of print.",
+                 "verbs": ["flag {obj} out of print", "mark {obj} out of print"]},
+    "set_ref": {"name": "mv_rdr",
+                "desc": "Move a special order to a different reader's account.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "msg_rdr",
+             "desc": "Send a message to a reader about their order.",
+             "child_verbs": ["message the reader for {obj}",
+                             "notify the reader for {obj}"],
+             "direct_verbs": ["message {name}", "notify {name}"],
+             "pair_verbs": ["message", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the special order with the earliest eta",
+    "ord_phrase": "the special order with the {ord} earliest eta",
+    "pre_filter": {"enum_value": "ordered", "phrase": "ordered"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the stale orders.",
+                 "The special order shelf needs sorting."],
+     "hint": "remove ordered special orders already past their eta",
+     "clauses": [{"enum_value": "ordered"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Flag the ones we can't get anymore.",
+                 "Sort out what's overdue."],
+     "hint": "flag ordered special orders already past their eta as out of print",
+     "clauses": [{"enum_value": "ordered"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your special order needs a look.",
+                   "Please check on your pending order.",
+                   "A note about your book order.",
+                   "Your order may need your attention."],
+    "agg_msgs": ["You have the most open orders right now.",
+                 "Flagging this backlog to you directly.",
+                 "You lead this count."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That update could not be completed.",
+                  "The last change did not go through."]
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "domain": "bike_share",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "technician",
+    "noun": ["technician", "technicians"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "work_order",
+    "noun": ["work order", "work orders"],
+    "ref_field": "technician",
+    "ref_phrase": "assigned to {name}",
+    "name_field": "issue",
+    "titles": ["Jammed dock latch", "Flat tire fleet-wide", "Kiosk screen dead",
+               "Payment reader offline", "Bent bike rack", "Solar panel fault",
+               "Broken pedal", "Chain slipping", "Station overflow",
+               "Vandalized kiosk", "Dead battery bank", "Loose dock sensor"],
+    "bools": [
+      {"field": "safety_hazard", "true_phrase": "hazard",
+       "false_phrase": "non-hazard", "placement": "pre"},
+      {"field": "parts_needed", "true_phrase": "needs parts",
+       "false_phrase": "parts on hand", "placement": "post"},
+      {"field": "warranty_covered", "true_phrase": "under warranty",
+       "false_phrase": "out of warranty", "placement": "post"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["reported", "dispatched", "in_progress", "resolved"],
+      "phrases": {"reported": ["reported", "pre"],
+                  "dispatched": ["dispatched", "pre"],
+                  "in_progress": ["being worked", "post"],
+                  "resolved": ["resolved", "pre"]}
+    },
+    "times": [
+      {"field": "reported_at", "kind": "time_now",
+       "lt_phrase": ["reported a while back", "post"],
+       "gt_phrase": ["just reported", "post"]},
+      {"field": "dispatched_at", "kind": "time_cutoff",
+       "phrase": "dispatched more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lsOrders", "desc": "list wo, all stations"},
+    "get_child": {"name": "getOrder", "desc": "get one wo by id"},
+    "list_parent": {"name": "lsTechs", "desc": "list the techs"},
+    "get_parent": {"name": "getTech", "desc": "get one tech by id"},
+    "delete_child": {"name": "rmOrder",
+                     "desc": "kill a wo rec, gone for good",
+                     "verbs": ["kill {obj}", "nuke {obj}"]},
+    "set_enum": {"name": "setOrderPhase",
+                 "desc": "chg wo phase, reported/dispatched/wip/resolved",
+                 "verbs": ["set {obj} {to_value}", "bump {obj} {to_value}"],
+                 "value_phrases": {"reported": "back to reported",
+                                   "dispatched": "to dispatched",
+                                   "in_progress": "to in progress",
+                                   "resolved": "to resolved"}},
+    "set_bool": {"name": "flagHazard",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag a wo as hazard, ppl could get hurt",
+                 "verbs": ["flag {obj} hazard", "mark {obj} unsafe"]},
+    "set_ref": {"name": "reassignTech",
+                "desc": "bounce a wo to another tech",
+                "verbs": ["bounce {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "pingTech",
+             "desc": "ping a tech, fyi msg",
+             "child_verbs": ["ping the tech on {obj}", "nudge the tech on {obj}"],
+             "direct_verbs": ["ping {name}", "nudge {name}"],
+             "pair_verbs": ["ping", "nudge"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the work order with the earliest report time",
+    "ord_phrase": "the work order with the {ord} earliest report time",
+    "pre_filter": {"enum_value": "reported", "phrase": "reported"}
+  },
+  "ambiguous": [
+    {"request": ["Deal with the safety stuff.",
+                 "Handle whatever's dangerous out there."],
+     "hint": "flag reported work orders as hazards",
+     "clauses": [{"enum_value": "reported"}],
+     "action": "set_bool"},
+    {"request": ["Clear out the dead tickets.",
+                 "Backlog's a mess, kill the old stuff."],
+     "hint": "delete resolved work orders dispatched more than a set number of days ago",
+     "clauses": [{"enum_value": "resolved"},
+                 {"time_index": 1, "days": 7}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["yo ur work order needs a look",
+                   "check ur wo status",
+                   "note on ur wo",
+                   "wo might need followup"],
+    "agg_msgs": ["ur on top of this list",
+                 "flagging this to u",
+                 "u lead this count rn"],
+    "fail_msgs": ["op failed lol",
+                  "that didnt go thru",
+                  "last action bombed"]
+  }
+}

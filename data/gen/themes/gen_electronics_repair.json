@@ -1,0 +1,108 @@
+{
+  "domain": "electronics_repair",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "intake",
+    "noun": ["intake", "intakes"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "device",
+    "titles": ["Laptop screen crack", "Phone battery swap",
+               "Tablet charging port", "Desktop won't boot",
+               "Game console overheating", "Smartwatch water damage",
+               "Headphone jack repair", "Monitor no signal",
+               "Keyboard liquid spill", "Camera lens jam",
+               "Router firmware issue", "Printer paper jam"],
+    "bools": [
+      {"field": "under_warranty", "true_phrase": "under warranty",
+       "false_phrase": "out of warranty", "placement": "post"},
+      {"field": "data_backed_up", "true_phrase": "backed up",
+       "false_phrase": "not backed up", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["received", "in_repair", "ready"],
+      "phrases": {"received": ["received", "pre"],
+                  "in_repair": ["in repair", "pre"],
+                  "ready": ["ready for pickup", "post"]}
+    },
+    "times": [
+      {"field": "promised", "kind": "time_now",
+       "lt_phrase": ["overdue", "post"],
+       "gt_phrase": ["not yet due", "post"]},
+      {"field": "dropped_off", "kind": "time_cutoff",
+       "phrase": "dropped off more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_intakes",
+                   "desc": "lists all the device intakes we got on file"},
+    "get_child": {"name": "get_intake",
+                  "desc": "grabs one intake rec by id"},
+    "list_parent": {"name": "list_clients",
+                    "desc": "all clients we got on file"},
+    "get_parent": {"name": "get_client",
+                   "desc": "grabs one client by id"},
+    "delete_child": {"name": "nuke_intake",
+                     "desc": "kills an intake rec for good, cant undo it",
+                     "verbs": ["nuke {obj}", "toss {obj}"]},
+    "set_enum": {"name": "set_intake_state",
+                 "desc": "chnages intake state, recieved/in_repair/ready",
+                 "verbs": ["set {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"received": "back to received",
+                                   "in_repair": "to in repair",
+                                   "ready": "to ready for pickup"}},
+    "set_bool": {"name": "flag_backed_up",
+                 "bool_index": 1, "value": true,
+                 "desc": "marks a device as backed up already",
+                 "verbs": ["flag {obj} backed up", "mark {obj} as backed up"]},
+    "set_ref": {"name": "reassign_client",
+                "desc": "moves an intake to a diff client acct",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "text_client",
+             "desc": "texts the client bout their device",
+             "child_verbs": ["text the client for {obj}",
+                             "hit up the client for {obj}"],
+             "direct_verbs": ["text {name}", "hit up {name}"],
+             "pair_verbs": ["text", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the intake with the earliest promised date",
+    "ord_phrase": "the intake with the {ord} earliest promised date",
+    "pre_filter": {"enum_value": "in_repair", "phrase": "in repair"}
+  },
+  "ambiguous": [
+    {"request": ["clean up the shop backlog",
+                 "bench's a mess, sort it"],
+     "hint": "nuke in_repair intakes already past their promised date",
+     "clauses": [{"enum_value": "in_repair"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["flag the stale ones",
+                 "deal with what's been sitting too long"],
+     "hint": "flag in_repair intakes dropped off more than 45 days ago as backed up",
+     "clauses": [{"enum_value": "in_repair"},
+                 {"time_index": 1, "days": 45}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your device intake needs a look.",
+                   "Please check on your repair status.",
+                   "A note about your device drop-off.",
+                   "Your intake may need your attention."],
+    "agg_msgs": ["You have the most devices in the queue.",
+                 "Flagging this backlog to you directly.",
+                 "You lead this repair count."],
+    "fail_msgs": ["the last update didnt go thru",
+                  "that action failed",
+                  "op did not complete"]
+  }
+}

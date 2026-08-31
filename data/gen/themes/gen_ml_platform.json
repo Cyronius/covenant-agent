@@ -1,0 +1,84 @@
+{
+  "domain": "ml_platform",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "researcher",
+    "noun": ["researcher", "researchers"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "job",
+    "noun": ["job", "jobs"],
+    "ref_field": "researcher",
+    "ref_phrase": "owned by {name}",
+    "name_field": "experiment_name",
+    "titles": ["resnet50-finetune-v3", "bert-distill-run2", "gpt-sft-batch7",
+               "diffusion-ablation-a", "contrastive-pretrain-v1", "lora-rank-sweep",
+               "tokenizer-retrain-v2", "rlhf-reward-model-v4", "vision-encoder-warmup",
+               "speech-asr-finetune", "embedding-eval-run3", "quantization-calibration"],
+    "bools": [
+      {"field": "gpu_preemptible", "true_phrase": "preemptible", "false_phrase": "reserved", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase",
+      "values": ["pending", "training", "completed", "failed"],
+      "phrases": {"pending": ["pending", "pre"],
+                  "training": ["training", "pre"],
+                  "completed": ["completed", "pre"],
+                  "failed": ["failed", "pre"]}
+    },
+    "times": [
+      {"field": "started", "kind": "time_now",
+       "lt_phrase": ["already started", "post"],
+       "gt_phrase": ["not started yet", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listJobs", "desc": "list training jobs"},
+    "get_child": {"name": "getJob", "desc": "get one job by id"},
+    "list_parent": {"name": "listResearchers", "desc": "list researchers"},
+    "get_parent": {"name": "getResearcher", "desc": "get one researcher"},
+    "delete_child": {"name": "deleteJob", "desc": "kill a job rec, no undo",
+                     "verbs": ["delete {obj}", "kill {obj}"]},
+    "set_enum": {"name": "setJobPhase", "desc": "change job phase",
+                 "verbs": ["set {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"pending": "to pending", "training": "to training",
+                                   "completed": "to completed", "failed": "to failed"}},
+    "set_bool": {"name": "setJobPreemptible", "bool_index": 0, "value": true,
+                 "desc": "make a job preemptible",
+                 "verbs": ["make {obj} preemptible", "mark {obj} preemptible"]},
+    "set_ref": {"name": "reassignJobOwner", "desc": "move a job to another researcher",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailResearcher", "desc": "email a researcher about a job",
+             "child_verbs": ["email the researcher behind {obj}", "notify the researcher behind {obj}"],
+             "direct_verbs": ["email {name}", "notify {name}"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the job with the earliest start time",
+    "ord_phrase": "the job with the {ord} earliest start time",
+    "pre_filter": {"enum_value": "training", "phrase": "training"}
+  },
+  "ambiguous": [
+    {"request": ["clear the dead jobs", "clean up whats failed"],
+     "hint": "delete failed jobs already started",
+     "clauses": [{"enum_value": "failed"}, {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["free up reserved capacity", "make the stalled ones preemptible"],
+     "hint": "make pending jobs already started preemptible",
+     "clauses": [{"enum_value": "pending"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["check on this job", "this job needs a look", "heads up about this job",
+                   "this job might need a restart"],
+    "agg_msgs": ["you have the most jobs for this researcher", "flagging this to you directly",
+                 "you lead this researcher's job count"],
+    "fail_msgs": ["the requested operation failed", "that change did not go through",
+                  "the last operation was not applied"]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "domain": "farm_mgmt",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "grower",
+    "noun": ["grower", "growers"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "planting",
+    "noun": ["planting", "plantings"],
+    "ref_field": "grower",
+    "ref_phrase": "for {name}",
+    "name_field": "crop",
+    "titles": ["Sweet corn", "Winter wheat", "Soybeans", "Alfalfa hay",
+               "Russet potatoes", "Field tomatoes", "Butternut squash",
+               "Sunflowers", "Green beans", "Silage corn", "Spring barley",
+               "Pumpkins", "Sorghum", "Oats"],
+    "bools": [
+      {"field": "at_risk", "true_phrase": "at-risk",
+       "false_phrase": "on-track", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["planted", "growing", "harvested", "fallow"],
+      "phrases": {"planted": ["newly planted", "pre"],
+                  "growing": ["growing", "pre"],
+                  "harvested": ["harvested", "pre"],
+                  "fallow": ["lying fallow", "post"]}
+    },
+    "times": [
+      {"field": "harvest_target", "kind": "time_now",
+       "lt_phrase": ["overdue for harvest", "post"],
+       "gt_phrase": ["not yet due", "post"]},
+      {"field": "planted_on", "kind": "time_cutoff",
+       "phrase": "planted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_plantings",
+                   "desc": "List every planting on record."},
+    "get_child": {"name": "get_planting",
+                  "desc": "Fetch one planting by its id."},
+    "list_parent": {"name": "list_growers",
+                    "desc": "List all registered growers."},
+    "get_parent": {"name": "get_grower",
+                   "desc": "Fetch one grower by id."},
+    "delete_child": {"name": "remove_planting",
+                     "desc": "Permanently remove a planting record from the log. Not reversible.",
+                     "verbs": ["remove {obj}", "clear {obj} from the field log"]},
+    "set_enum": {"name": "set_planting_stage",
+                 "desc": "Change a planting's stage to planted, growing, harvested, or fallow.",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"planted": "back to planted",
+                                   "growing": "as growing",
+                                   "harvested": "as harvested",
+                                   "fallow": "as fallow"}},
+    "set_bool": {"name": "flag_at_risk",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a planting as at-risk.",
+                 "verbs": ["flag {obj} as at-risk", "mark {obj} at-risk"]},
+    "set_ref": {"name": "reassign_grower",
+                "desc": "Move a planting to a different grower's account.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "under {name}"},
+    "send": {"name": "text_grower",
+             "desc": "Send a text message to a grower.",
+             "child_verbs": ["text the grower of {obj}",
+                             "give the grower of {obj} a heads-up"],
+             "direct_verbs": ["text {name}", "send {name} a text"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the planting with the earliest harvest target",
+    "ord_phrase": "the planting with the {ord} earliest harvest target",
+    "pre_filter": {"enum_value": "growing", "phrase": "growing"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the risky plantings.",
+                 "The field log has some plantings that need flagging."],
+     "hint": "flag growing plantings already past their harvest target as at-risk",
+     "clauses": [{"enum_value": "growing"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"},
+    {"request": ["Clean out the old fallow records.",
+                 "The fallow plantings are piling up, clear them."],
+     "hint": "remove fallow plantings planted more than 400 days ago",
+     "clauses": [{"enum_value": "fallow"},
+                 {"time_index": 1, "days": 400}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your planting needs a look before it gets away from you.",
+                   "Please check on your planting soon.",
+                   "Field note: your planting needs review.",
+                   "This planting may need attention out in the field."],
+    "agg_msgs": ["You have the most plantings on this list.",
+                 "This one goes straight to you.",
+                 "You're leading this count right now."],
+    "fail_msgs": ["The change to this planting did not save.",
+                  "That update to the planting failed.",
+                  "The last edit to this planting record didn't go through."]
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "domain": "greenhouse",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "grow_batch",
+    "noun": ["grow batch", "grow batches"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "variety",
+    "titles": ["Beefsteak tomato", "Bibb lettuce", "Basil", "English cucumber",
+               "Bell pepper", "Marigold", "Petunia", "Strawberry", "Kale",
+               "Spinach", "Zinnia", "Impatiens", "Rosemary", "Thyme"],
+    "bools": [
+      {"field": "heated", "true_phrase": "heated",
+       "false_phrase": "unheated", "placement": "pre"},
+      {"field": "pest_flagged", "true_phrase": "flagged for pests",
+       "false_phrase": "clean", "placement": "post"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["seeded", "transplanted", "hardening", "shipped"],
+      "phrases": {"seeded": ["seeded", "pre"],
+                  "transplanted": ["transplanted", "pre"],
+                  "hardening": ["hardening off", "post"],
+                  "shipped": ["shipped", "pre"]}
+    },
+    "times": [
+      {"field": "ship_by", "kind": "time_now",
+       "lt_phrase": ["past its ship date", "post"],
+       "gt_phrase": ["not yet due to ship", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listGrowBatches",
+                   "desc": "list all grow batches"},
+    "get_child": {"name": "getGrowBatch",
+                  "desc": "fetch one grow batch by id"},
+    "list_parent": {"name": "listClients",
+                    "desc": "list all greenhouse clients"},
+    "get_parent": {"name": "getClient",
+                   "desc": "fetch one client by id"},
+    "delete_child": {"name": "scrapBatch",
+                     "desc": "kill a batch, no undo",
+                     "verbs": ["scrap {obj}", "toss {obj} from the bench"]},
+    "set_enum": {"name": "setBatchPhase",
+                 "desc": "change batch phase",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"seeded": "back to seeded",
+                                   "transplanted": "to transplanted",
+                                   "hardening": "to hardening off",
+                                   "shipped": "to shipped"}},
+    "set_bool": {"name": "flagPests",
+                 "bool_index": 1, "value": true,
+                 "desc": "flag a batch for pests",
+                 "verbs": ["flag {obj} for pests", "mark {obj} pest-flagged"]},
+    "set_ref": {"name": "reassignClient",
+                "desc": "move a batch to a different client",
+                "verbs": ["move {obj} {to_name}", "rebill {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailClient",
+             "desc": "email a greenhouse client",
+             "child_verbs": ["email the client for {obj}",
+                             "ping the client on {obj}"],
+             "direct_verbs": ["email {name}", "send {name} a note"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the grow batch with the earliest ship date",
+    "ord_phrase": "the grow batch with the {ord} earliest ship date",
+    "pre_filter": {"bool_index": 1, "value": false, "phrase": "clean"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the bench.",
+                 "The greenhouse bench is a mess, deal with it."],
+     "hint": "flag transplanted batches already past their ship date as pest-flagged",
+     "clauses": [{"enum_value": "transplanted"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"},
+    {"request": ["Clear out the dead batches.",
+                 "Get rid of the batches nobody wants."],
+     "hint": "scrap seeded batches already past their ship date",
+     "clauses": [{"enum_value": "seeded"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your grow batch needs a check.",
+                   "Please look in on this batch soon.",
+                   "Bench note: your batch needs review.",
+                   "This batch may need attention before it moves on."],
+    "agg_msgs": ["You're at the top of this batch list.",
+                 "This one's flagged straight to you.",
+                 "You lead this count right now."],
+    "fail_msgs": ["That change to the batch didn't take.",
+                  "The batch update failed to save.",
+                  "The last edit to this batch record failed."]
+  }
+}

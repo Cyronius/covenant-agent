@@ -1,0 +1,112 @@
+{
+  "domain": "cleaning_service",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "cleaning_visit",
+    "noun": ["cleaning visit", "cleaning visits"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "service_type",
+    "titles": ["Standard home cleaning", "Deep cleaning", "Move-out cleaning",
+               "Move-in cleaning", "Office cleaning", "Post-construction cleanup",
+               "Window washing", "Carpet shampooing", "One-time spring cleaning",
+               "Recurring biweekly cleaning", "Airbnb turnover cleaning",
+               "Green/eco cleaning service", "Post-event cleanup",
+               "Appliance deep clean"],
+    "bools": [
+      {"field": "supplies_provided", "true_phrase": "supplies provided",
+       "false_phrase": "bring your own supplies", "placement": "post"},
+      {"field": "pet_in_home", "true_phrase": "pet in home",
+       "false_phrase": "no pet in home", "placement": "post"},
+      {"field": "flagged_for_qa", "true_phrase": "flagged for quality review",
+       "false_phrase": "not flagged", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["requested", "confirmed", "completed", "cancelled"],
+      "phrases": {"requested": ["requested", "pre"],
+                  "confirmed": ["confirmed", "pre"],
+                  "completed": ["completed", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "visit_time", "kind": "time_now",
+       "lt_phrase": ["already finished", "post"],
+       "gt_phrase": ["still ahead", "post"]},
+      {"field": "requested_on", "kind": "time_cutoff",
+       "phrase": "requested more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_cleaning_visits",
+                   "desc": "Returns the complete list of cleaning visits currently on the schedule for this service. Use this whenever you need a full overview rather than a single visit's details."},
+    "get_child": {"name": "get_cleaning_visit",
+                  "desc": "Returns the full record for one cleaning visit identified by its id. Call this once you already know which specific visit you need details on."},
+    "list_parent": {"name": "list_clients",
+                    "desc": "Returns every client account registered with this cleaning service. This is useful for browsing the client roster before drilling into a specific account."},
+    "get_parent": {"name": "get_client",
+                   "desc": "Returns the full record for one client account identified by its id. Use this when you need contact details or history for a specific client."},
+    "delete_child": {"name": "delete_cleaning_visit",
+                     "desc": "Permanently deletes a cleaning visit record from the schedule and cannot be undone once it runs. Only use this for visits that were entered in error or cancelled entirely.",
+                     "verbs": ["delete {obj}", "remove {obj} from the schedule"]},
+    "set_enum": {"name": "set_visit_state",
+                 "desc": "Updates a cleaning visit's state to requested, confirmed, completed, or cancelled depending on where it stands. This should be called any time the visit's standing changes so the schedule stays accurate.",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"requested": "back to requested",
+                                   "confirmed": "as confirmed",
+                                   "completed": "as completed",
+                                   "cancelled": "as cancelled"}},
+    "set_bool": {"name": "flag_for_qa",
+                 "bool_index": 2, "value": true,
+                 "desc": "Marks a cleaning visit as flagged for a quality assurance review by a supervisor. This is used whenever something about the visit warrants a closer look afterward.",
+                 "verbs": ["flag {obj} for quality review", "mark {obj} for qa"]},
+    "set_ref": {"name": "reassign_client",
+                "desc": "Reassigns a cleaning visit to a different client's account in the system. This is typically needed when a visit was originally logged under the wrong name.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_client",
+             "desc": "Sends an email notification to a client regarding one of their cleaning visits. This is the standard channel for routine updates that do not require a phone call.",
+             "child_verbs": ["email the client behind {obj}",
+                             "notify the client tied to {obj}"],
+             "direct_verbs": ["email {name}", "send {name} an email"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the cleaning visit with the earliest visit time",
+    "ord_phrase": "the cleaning visit with the {ord} earliest visit time",
+    "pre_filter": {"enum_value": "confirmed", "phrase": "confirmed"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the old bookings.",
+                 "The visit history is cluttered, sort it out."],
+     "hint": "delete cancelled cleaning visits requested more than 120 days ago",
+     "clauses": [{"enum_value": "cancelled"},
+                 {"time_index": 1, "days": 120}],
+     "action": "delete_child"},
+    {"request": ["Check the ones that already happened.",
+                 "Something needs review on the completed visits."],
+     "hint": "flag confirmed cleaning visits whose visit time already passed for quality review",
+     "clauses": [{"enum_value": "confirmed"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your cleaning visit needs attention.",
+                   "Please review your upcoming cleaning visit.",
+                   "A note about your cleaning visit.",
+                   "Your cleaning visit may need rescheduling."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "domain": "hospital_ward",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "patient",
+    "noun": ["patient", "patients"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "admission",
+    "noun": ["admission", "admissions"],
+    "ref_field": "patient",
+    "ref_phrase": "for {name}",
+    "name_field": "diagnosis",
+    "titles": ["Community-acquired pneumonia", "Acute appendicitis",
+               "Congestive heart failure exacerbation", "Hip fracture",
+               "Diabetic ketoacidosis", "Stroke, ischemic",
+               "Postoperative recovery", "Sepsis",
+               "Chronic obstructive pulmonary disease flare", "Kidney stone",
+               "Gastrointestinal bleed", "Cellulitis"],
+    "bools": [
+      {"field": "isolation_required", "true_phrase": "in isolation",
+       "false_phrase": "not isolated", "placement": "pre"},
+      {"field": "fall_risk", "true_phrase": "a fall risk",
+       "false_phrase": "not a fall risk", "placement": "post"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["admitted", "in_treatment", "discharged", "transferred"],
+      "phrases": {"admitted": ["admitted", "pre"],
+                  "in_treatment": ["in treatment", "pre"],
+                  "discharged": ["discharged", "pre"],
+                  "transferred": ["transferred", "pre"]}
+    },
+    "times": [
+      {"field": "admitted_on", "kind": "time_cutoff",
+       "phrase": "admitted more than {d} days ago"},
+      {"field": "next_review", "kind": "time_now",
+       "lt_phrase": ["review already past", "post"],
+       "gt_phrase": ["review still ahead", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lsAdm",
+                   "desc": "List every admission on the ward."},
+    "get_child": {"name": "getAdm",
+                  "desc": "Fetch one admission by its id."},
+    "list_parent": {"name": "lsPt",
+                    "desc": "List all patients on the ward roster."},
+    "get_parent": {"name": "getPt",
+                   "desc": "Fetch one patient by id."},
+    "delete_child": {"name": "delAdm",
+                     "desc": "Permanently remove an admission record. Not reversible.",
+                     "verbs": ["delete {obj}", "wipe {obj} from the roster"]},
+    "set_enum": {"name": "setAdmStage",
+                 "desc": "Change an admission's stage (admitted, in treatment, discharged, or transferred).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"admitted": "back to admitted",
+                                   "in_treatment": "as in treatment",
+                                   "discharged": "as discharged",
+                                   "transferred": "as transferred"}},
+    "set_bool": {"name": "flagFallRisk",
+                 "bool_index": 1, "value": true,
+                 "desc": "Flag an admission as a fall risk.",
+                 "verbs": ["flag {obj} as a fall risk", "mark {obj} fall risk"]},
+    "set_ref": {"name": "reassignPt",
+                "desc": "Move an admission to a different patient's record.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notifyCareTeam",
+             "desc": "Send a message about a patient to the care team.",
+             "child_verbs": ["notify the care team about {obj}",
+                             "flag {obj} to the care team"],
+             "direct_verbs": ["notify the team about {name}", "flag {name} to the team"],
+             "pair_verbs": ["notify", "flag"]}
+  },
+  "sort": {
+    "time_index": 1,
+    "dir": "ASC",
+    "sup_phrase": "the admission with the earliest next review",
+    "ord_phrase": "the admission with the {ord} earliest next review",
+    "pre_filter": {"enum_value": "admitted", "phrase": "admitted"}
+  },
+  "ambiguous": [
+    {"request": ["Clear the outdated admission records.", "The roster's a mess, deal with it."],
+     "hint": "delete admissions still admitted and already past their next review",
+     "clauses": [{"enum_value": "admitted"},
+                 {"time_index": 1, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Handle the long-stay patients.", "Sort out who's been here too long."],
+     "hint": "flag as fall risk admissions still admitted and admitted more than 14 days ago",
+     "clauses": [{"enum_value": "admitted"},
+                 {"time_index": 0, "days": 14}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your admission needs attention.",
+                   "Please review this admission.",
+                   "A note about your admission.",
+                   "Your admission may need updating."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this admission to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

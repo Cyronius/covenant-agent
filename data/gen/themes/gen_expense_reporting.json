@@ -1,0 +1,103 @@
+{
+  "domain": "expense_reporting",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "employee",
+    "noun": ["employee", "employees"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "expense_claim",
+    "noun": ["expense claim", "expense claims"],
+    "ref_field": "employee",
+    "ref_phrase": "from {name}",
+    "name_field": "purpose",
+    "titles": ["Client dinner", "Airfare - regional office visit", "Hotel - conference stay",
+               "Rideshare to airport", "Office supplies purchase", "Team lunch",
+               "Mileage reimbursement", "Conference registration fee", "Software subscription",
+               "Parking fees", "Printing and copies", "Internet reimbursement"],
+    "bools": [
+      {"field": "policy_exception", "true_phrase": "policy exception",
+       "false_phrase": "within policy", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["submitted", "approved", "reimbursed", "denied"],
+      "phrases": {"submitted": ["awaiting review", "post"],
+                  "approved": ["approved", "pre"],
+                  "reimbursed": ["reimbursed", "pre"],
+                  "denied": ["denied", "pre"]}
+    },
+    "times": [
+      {"field": "submitted_on", "kind": "time_cutoff",
+       "phrase": "submitted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_expense_claims",
+                   "desc": "Retrieve the complete set of expense claims currently on record. This includes claims in every status, from newly submitted through fully reimbursed."},
+    "get_child": {"name": "get_expense_claim",
+                  "desc": "Look up a single expense claim using its unique identifier. Returns the full claim record as currently stored."},
+    "list_parent": {"name": "list_employees",
+                    "desc": "Retrieve the complete roster of employees eligible to file expense claims. This is the full employee directory used for reimbursement processing."},
+    "get_parent": {"name": "get_employee",
+                   "desc": "Look up a single employee record using its unique identifier. Returns the employee's full profile as currently stored."},
+    "delete_child": {"name": "delete_expense_claim",
+                     "desc": "Permanently erase an expense claim from the system, removing it from all reports and totals. This action cannot be undone once performed.",
+                     "verbs": ["delete {obj}", "erase {obj} from the ledger"]},
+    "set_enum": {"name": "set_expense_claim_status",
+                 "desc": "Update the review status of an expense claim to reflect where it stands in the approval workflow. Valid statuses are submitted, approved, reimbursed, and denied.",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"submitted": "back to submitted",
+                                   "approved": "as approved",
+                                   "reimbursed": "as reimbursed",
+                                   "denied": "as denied"}},
+    "set_bool": {"name": "flag_policy_exception",
+                 "bool_index": 0, "value": true,
+                 "desc": "Mark an expense claim as requiring a policy exception because it falls outside normal reimbursement limits. This is typically used when a manager grants a special allowance.",
+                 "verbs": ["flag {obj} as a policy exception", "mark {obj} as an exception"]},
+    "set_ref": {"name": "reassign_expense_claim",
+                "desc": "Move an expense claim onto a different employee's account, correcting cases where the claim was filed under the wrong person. Use this only to fix misattributed submissions.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_employee",
+             "desc": "Send an email notification to an employee regarding their expense claims. Use this to communicate status changes or requests for additional documentation.",
+             "child_verbs": ["email the employee behind {obj}",
+                             "follow up by email with the employee behind {obj}"],
+             "direct_verbs": ["email {name}", "send {name} an email"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the expense claim submitted longest ago",
+    "ord_phrase": "the expense claim with the {ord} oldest submission date",
+    "pre_filter": {"enum_value": "submitted", "phrase": "awaiting review"}
+  },
+  "ambiguous": [
+    {"request": ["Work through the stale submissions.",
+                 "These have been sitting untouched, clear them out."],
+     "hint": "delete submitted expense claims filed more than 90 days ago",
+     "clauses": [{"enum_value": "submitted"},
+                 {"time_index": 0, "days": 90}],
+     "action": "delete_child"},
+    {"request": ["Flag the old exceptions.",
+                 "Something about the aging denied ones needs marking."],
+     "hint": "flag as a policy exception the denied claims filed more than 90 days ago",
+     "clauses": [{"enum_value": "denied"},
+                 {"time_index": 0, "days": 90}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your expense claim needs attention.",
+                   "Please review your latest expense claim.",
+                   "A note about your expense claim.",
+                   "Your expense claim may need additional documentation."],
+    "agg_msgs": ["You're currently at the top of this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

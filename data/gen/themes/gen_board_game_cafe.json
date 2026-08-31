@@ -1,0 +1,107 @@
+{
+  "domain": "board_game_cafe",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "customer",
+    "noun": ["customer", "customers"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "reservation",
+    "noun": ["reservation", "reservations"],
+    "ref_field": "customer",
+    "ref_phrase": "for {name}",
+    "name_field": "game",
+    "titles": ["Copperlight Expedition", "Marrow Market", "Thistledown Trade Routes",
+               "Ashcairn Siege", "The Salt Road", "Hollow Crown Heist",
+               "Driftwood Traders", "Pinebrook Council", "Ironvale Uprising",
+               "Lantern District", "Kelp Forest Regatta", "Sablewood Conspiracy"],
+    "bools": [
+      {"field": "walk_in", "true_phrase": "walk-in",
+       "false_phrase": "booked ahead", "placement": "pre"},
+      {"field": "needs_teach", "true_phrase": "needs a rules teach",
+       "false_phrase": "knows the rules", "placement": "post"},
+      {"field": "large_party", "true_phrase": "large party",
+       "false_phrase": "small party", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["booked", "seated", "finished", "no_show"],
+      "phrases": {"booked": ["booked", "pre"],
+                  "seated": ["seated", "pre"],
+                  "finished": ["wrapped up", "post"],
+                  "no_show": ["a no-show", "post"]}
+    },
+    "times": [
+      {"field": "table_time", "kind": "time_now",
+       "lt_phrase": ["already past their table time", "post"],
+       "gt_phrase": ["not yet at their table time", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_reservations",
+                   "desc": "Returns the full list of table reservations currently on the books, spanning every status from booked through finished. This is intended for a complete sweep of the day's floor rather than a single lookup."},
+    "get_child": {"name": "get_reservation",
+                  "desc": "Retrieves a single table reservation by its identifier, including its current status and scheduled table time. Use this when one specific booking needs a closer look."},
+    "list_parent": {"name": "list_customers",
+                    "desc": "Returns every customer on file with the cafe, whether or not they currently have an active reservation. This is useful for building a full picture of the regular crowd."},
+    "get_parent": {"name": "get_customer",
+                   "desc": "Retrieves a single customer's record by id, including the name on file for that guest. It does not include any of their associated reservations."},
+    "delete_child": {"name": "cancel_reservation",
+                     "desc": "Cancels a table reservation and removes it from the floor plan entirely. This cannot be undone, so it should only be used once the cancellation is confirmed with the guest.",
+                     "verbs": ["cancel {obj}", "pull {obj} off the floor plan"]},
+    "set_enum": {"name": "set_reservation_status",
+                 "desc": "Advances or reverts a reservation's status among booked, seated, finished, and no-show. Front of house relies on this field to know exactly where a table stands during a shift.",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"booked": "back to booked",
+                                   "seated": "as seated",
+                                   "finished": "as finished",
+                                   "no_show": "as a no-show"}},
+    "set_bool": {"name": "flag_needs_teach",
+                 "bool_index": 1, "value": true,
+                 "desc": "Marks a reservation as needing a rules teach before play begins, so a game guide gets sent to the table. Floor staff check this flag before assigning who greets the group.",
+                 "verbs": ["flag {obj} as needing a rules teach", "mark {obj} as needing a teach"]},
+    "set_ref": {"name": "reassign_customer",
+                "desc": "Transfers a reservation from one customer's account to another, updating who the booking is under. This is typically used when a group's booking name changes at the door.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "text_customer",
+             "desc": "Sends a text message to the customer tied to a given reservation, or to a named customer directly. This is the cafe's standard way of confirming or adjusting a booking.",
+             "child_verbs": ["text the customer behind {obj}",
+                             "text the guest on {obj}"],
+             "direct_verbs": ["text {name}", "send {name} a text"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the reservation with the earliest table time",
+    "ord_phrase": "the reservation with the {ord} earliest table time",
+    "pre_filter": {"enum_value": "booked", "phrase": "booked"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the no-shows.",
+                 "The floor board's a mess, clean it up."],
+     "hint": "cancel booked reservations already past their table time",
+     "clauses": [{"enum_value": "booked"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Handle the rules-teach backlog.",
+                 "Deal with the tables that need a walkthrough."],
+     "hint": "flag seated reservations as needing a rules teach",
+     "clauses": [{"enum_value": "seated"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your reservation needs a status check.",
+                   "Front of house has a note on your table.",
+                   "There's an update on your reservation.",
+                   "Your table time may need adjusting."],
+    "agg_msgs": ["You have the most reservations on the books this week.",
+                 "You're our most frequent table booking right now.",
+                 "You hold the earliest table time today."],
+    "fail_msgs": ["The reservation update did not go through.",
+                  "That request was rejected by the floor system.",
+                  "The change could not be saved."]
+  }
+}

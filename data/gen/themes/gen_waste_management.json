@@ -1,0 +1,105 @@
+{
+  "domain": "waste_management",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "customer",
+    "noun": ["customer", "customers"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "pickup",
+    "noun": ["pickup", "pickups"],
+    "ref_field": "customer",
+    "ref_phrase": "for {name}",
+    "name_field": "service_type",
+    "titles": ["Weekly trash pickup", "Recycling pickup", "Yard waste pickup",
+               "Bulk item pickup", "Construction debris pickup",
+               "Missed pickup redo", "Extra bin pickup",
+               "Holiday schedule pickup", "Compost pickup",
+               "Electronics recycling pickup", "Appliance haul-away",
+               "Hazardous waste pickup", "Curbside cart delivery",
+               "Special event cleanup pickup"],
+    "bools": [
+      {"field": "missed", "true_phrase": "missed", "false_phrase": "not missed",
+       "placement": "pre"},
+      {"field": "contaminated", "true_phrase": "flagged as contaminated",
+       "false_phrase": "clean load", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status", "values": ["scheduled", "completed", "skipped"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "completed": ["completed", "pre"],
+                  "skipped": ["skipped", "pre"]}
+    },
+    "times": [
+      {"field": "pickup_time", "kind": "time_now",
+       "lt_phrase": ["already gone by", "post"],
+       "gt_phrase": ["still coming up", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_pickups",
+                   "desc": "list all the pickups we got on file"},
+    "get_child": {"name": "get_pickup", "desc": "grab one pickup by id"},
+    "list_parent": {"name": "list_customers",
+                    "desc": "list all customers on the route sheet"},
+    "get_parent": {"name": "get_customer", "desc": "grab one customer by id"},
+    "delete_child": {"name": "delete_pickup",
+                     "desc": "nukes a pickup record, cant be undone",
+                     "verbs": ["delete {obj}", "wipe {obj} off the route"]},
+    "set_enum": {"name": "set_pickup_status",
+                 "desc": "change pickup status - scheduled, completed or skipped, whatevers needed",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "completed": "as completed",
+                                   "skipped": "as skipped"}},
+    "set_bool": {"name": "flag_missed",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag a pickup as missed, driver didnt show",
+                 "verbs": ["flag {obj} as missed", "mark {obj} missed"]},
+    "set_ref": {"name": "reassign_customer",
+                "desc": "move a pickup to a diff customer acct",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "text_customer",
+             "desc": "text a customer bout their pickup",
+             "child_verbs": ["text the customer behind {obj}",
+                             "give the customer behind {obj} a heads up"],
+             "direct_verbs": ["text {name}", "send {name} a text"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the pickup with the earliest pickup time",
+    "ord_phrase": "the pickup with the {ord} earliest pickup time",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["clear out the old pickups",
+                 "get rid of stuff thats done with"],
+     "hint": "delete completed pickups whose pickup time already passed",
+     "clauses": [{"enum_value": "completed"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["deal with the no-shows",
+                 "handle the missed ones"],
+     "hint": "flag scheduled pickups whose pickup time already passed as missed",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your pickup needs a look.",
+                   "Heads up about your pickup.",
+                   "A note on your pickup.",
+                   "Your pickup might need rescheduling."],
+    "agg_msgs": ["You have the most on this list right now.",
+                 "Flagging this to you directly.",
+                 "You're leading this count."],
+    "fail_msgs": ["That didn't go through.",
+                  "The operation failed, try again.",
+                  "The last action didn't complete."]
+  }
+}

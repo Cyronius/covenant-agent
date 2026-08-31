@@ -1,0 +1,106 @@
+{
+  "domain": "toy_store",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "shopper",
+    "noun": ["shopper", "shoppers"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "preorder",
+    "noun": ["preorder", "preorders"],
+    "ref_field": "shopper",
+    "ref_phrase": "for {name}",
+    "name_field": "toy",
+    "titles": ["Building block mega set", "Remote control race car",
+               "Plush dragon", "Talking robot pet",
+               "Collectible card booster box", "Wooden train set",
+               "Action figure deluxe pack", "Puzzle cube 1000pc",
+               "Dollhouse mansion", "Drone starter kit",
+               "Board game bundle", "Science experiment kit"],
+    "bools": [
+      {"field": "gift_wrapped", "true_phrase": "gift wrapped",
+       "false_phrase": "not wrapped", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["reserved", "paid", "fulfilled"],
+      "phrases": {"reserved": ["reserved", "pre"],
+                  "paid": ["paid", "pre"],
+                  "fulfilled": ["fulfilled", "pre"]}
+    },
+    "times": [
+      {"field": "release", "kind": "time_now",
+       "lt_phrase": ["already released", "post"],
+       "gt_phrase": ["not out yet", "post"]},
+      {"field": "placed", "kind": "time_cutoff",
+       "phrase": "placed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listPreorders",
+                   "desc": "lists all the toy preorders we got"},
+    "get_child": {"name": "getPreorder",
+                  "desc": "grabs one preorder by id"},
+    "list_parent": {"name": "listShoppers",
+                    "desc": "all the shoppers on file"},
+    "get_parent": {"name": "getShopper",
+                   "desc": "grabs one shopper by id"},
+    "delete_child": {"name": "nukePreorder",
+                     "desc": "kills a preorder rec, cant undo",
+                     "verbs": ["nuke {obj}", "cancel {obj} for good"]},
+    "set_enum": {"name": "setPreorderStatus",
+                 "desc": "chnages preorder status, reserved/paid/fulfilled",
+                 "verbs": ["set {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"reserved": "back to reserved",
+                                   "paid": "to paid",
+                                   "fulfilled": "to fulfilled"}},
+    "set_bool": {"name": "flagGiftWrap",
+                 "bool_index": 0, "value": true,
+                 "desc": "marks a preorder as gift wrapped",
+                 "verbs": ["flag {obj} gift wrapped", "mark {obj} as wrapped"]},
+    "set_ref": {"name": "reassignShopper",
+                "desc": "moves a preorder to a diff shopper acct",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "textShopper",
+             "desc": "texts the shopper bout their preorder",
+             "child_verbs": ["text the shopper for {obj}",
+                             "hit up the shopper for {obj}"],
+             "direct_verbs": ["text {name}", "hit up {name}"],
+             "pair_verbs": ["text", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the preorder with the earliest release date",
+    "ord_phrase": "the preorder with the {ord} earliest release date",
+    "pre_filter": {"enum_value": "reserved", "phrase": "reserved"}
+  },
+  "ambiguous": [
+    {"request": ["clean up the preorder queue",
+                 "the reserved pile is a mess, sort it"],
+     "hint": "cancel reserved preorders whose release date already passed",
+     "clauses": [{"enum_value": "reserved"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["wrap up the old ones",
+                 "deal with what's been sitting too long"],
+     "hint": "flag paid preorders placed more than 21 days ago as gift wrapped",
+     "clauses": [{"enum_value": "paid"},
+                 {"time_index": 1, "days": 21}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["ur preorder needs a look.",
+                   "chk yr preorder pls.",
+                   "note on yr toy order.",
+                   "preorder may need action."],
+    "agg_msgs": ["u got the most preorders rn.",
+                 "flagging this to u.",
+                 "u lead this count."],
+    "fail_msgs": ["op failed.",
+                  "update didnt go thru.",
+                  "last action failed."]
+  }
+}

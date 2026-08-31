@@ -1,0 +1,101 @@
+{
+  "domain": "observability",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "service",
+    "noun": ["service", "services"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "rule",
+    "noun": ["rule", "rules"],
+    "ref_field": "service",
+    "ref_phrase": "on {name}",
+    "name_field": "condition_summary",
+    "titles": ["CPU above 90% for 5m", "Error rate spike over 5%", "Memory usage above 85%",
+               "p99 latency over 2s", "Disk usage above 90%", "Queue depth exceeds 10000",
+               "5xx rate above baseline", "Pod restart loop detected", "SSL cert expiring soon",
+               "Database connection pool exhausted", "Request rate anomaly",
+               "Health check failures streak"],
+    "bools": [
+      {"field": "muted", "true_phrase": "muted", "false_phrase": "active", "placement": "pre"},
+      {"field": "paging", "true_phrase": "pages on-call", "false_phrase": "silent", "placement": "post"}
+    ],
+    "enum": {
+      "field": "state",
+      "values": ["enabled", "disabled", "firing", "resolved"],
+      "phrases": {"enabled": ["enabled", "pre"],
+                  "disabled": ["disabled", "pre"],
+                  "firing": ["firing", "pre"],
+                  "resolved": ["resolved", "pre"]}
+    },
+    "times": [
+      {"field": "last_triggered", "kind": "time_now",
+       "lt_phrase": ["already triggered", "post"],
+       "gt_phrase": ["never triggered", "post"]},
+      {"field": "last_reviewed", "kind": "time_cutoff",
+       "phrase": "not reviewed in over {d} days"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "ls_rules",
+                   "desc": "Returns every alert rule configured on a service. Use this to see the full rule set before making any single change."},
+    "get_child": {"name": "get_rule",
+                  "desc": "Retrieves one alert rule by its id. It returns every field currently stored for that rule."},
+    "list_parent": {"name": "ls_svcs",
+                    "desc": "Returns every service registered in the observability platform. Use this to look up a service before inspecting its rules."},
+    "get_parent": {"name": "get_svc",
+                   "desc": "Retrieves one service by its id. It returns the service's full registered metadata."},
+    "delete_child": {"name": "rm_rule",
+                     "desc": "Deletes an alert rule permanently from the service's configuration. Once removed, the rule cannot be recovered.",
+                     "verbs": ["delete {obj}", "remove {obj} from the service"]},
+    "set_enum": {"name": "set_rule_state",
+                 "desc": "Updates a rule's state to enabled, disabled, firing, or resolved. This overwrites whatever state the rule was previously in.",
+                 "verbs": ["set {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"enabled": "to enabled", "disabled": "to disabled",
+                                   "firing": "to firing", "resolved": "to resolved"}},
+    "set_bool": {"name": "mute_rule", "bool_index": 0, "value": true,
+                 "desc": "Mutes an alert rule so it stops paging on-call. This is meant for rules that are known-noisy or under investigation.",
+                 "verbs": ["mute {obj}", "silence {obj}"]},
+    "set_ref": {"name": "mv_rule",
+                "desc": "Moves an alert rule to a different service. This is used when a rule was configured against the wrong service.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "ping_svc",
+             "desc": "Sends a notification about a rule to the service's owning team. This is the standard channel for surfacing an alert rule issue.",
+             "child_verbs": ["notify the owner of {obj}", "alert the owner of {obj}"],
+             "direct_verbs": ["notify {name}", "alert {name}"],
+             "pair_verbs": ["notify", "alert"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "DESC",
+    "sup_phrase": "the rule with the most recent trigger",
+    "ord_phrase": "the rule with the {ord} most recent trigger",
+    "pre_filter": {"enum_value": "firing", "phrase": "firing"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the dead rules nobody's looked at.",
+                 "This service has stale alert rules, clean them up."],
+     "hint": "delete disabled rules not reviewed in over 90 days",
+     "clauses": [{"enum_value": "disabled"}, {"time_index": 1, "days": 90}],
+     "action": "delete_child"},
+    {"request": ["Quiet down whatever's already gone off.", "Mute the noisy ones that already fired."],
+     "hint": "mute firing rules that already triggered",
+     "clauses": [{"enum_value": "firing"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["This rule needs a look. It may be misconfigured or overdue for review.",
+                   "Check on this alert rule before it causes more noise.",
+                   "Heads up about this rule and its current state.",
+                   "This rule may need adjusting given its recent activity."],
+    "agg_msgs": ["You own the most rules on this service. Flagging this to you directly.",
+                 "You lead this service's rule count right now.",
+                 "This count currently points to you."],
+    "fail_msgs": ["The requested operation failed. Nothing was changed.",
+                  "That change did not go through as expected.",
+                  "The last operation was not applied to the rule."]
+  }
+}

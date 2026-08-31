@@ -1,0 +1,101 @@
+{
+  "domain": "academic_journal",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "author",
+    "noun": ["author", "authors"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "submission",
+    "noun": ["submission", "submissions"],
+    "ref_field": "author",
+    "ref_phrase": "from {name}",
+    "name_field": "paper_title",
+    "titles": ["Deep Learning for Protein Structure Prediction",
+               "A Survey of Quantum Error Correction",
+               "Longitudinal Study of Urban Air Quality",
+               "New Bounds on Graph Coloring",
+               "Neural Mechanisms of Working Memory",
+               "Climate Feedback Loops in Polar Ice",
+               "Statistical Methods for Sparse Data",
+               "Ethics of Autonomous Vehicle Decision-Making",
+               "Comparative Genomics of Deep-Sea Microbes",
+               "Efficient Algorithms for Large-Scale Graphs",
+               "Behavioral Economics of Retirement Savings",
+               "Machine Translation for Low-Resource Languages",
+               "Topological Phases in Quantum Matter",
+               "History of Post-War Trade Policy"],
+    "bools": [
+      {"field": "needs_revision", "true_phrase": "needing revision",
+       "false_phrase": "not needing revision", "placement": "post"},
+      {"field": "open_access", "true_phrase": "open access",
+       "false_phrase": "subscription only", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["under_review", "accepted", "rejected"],
+      "phrases": {"under_review": ["under review", "pre"],
+                  "accepted": ["accepted", "pre"],
+                  "rejected": ["rejected", "pre"]}
+    },
+    "times": [
+      {"field": "submitted_on", "kind": "time_cutoff",
+       "phrase": "submitted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listSubmissions", "desc": "list all the paper submissions on file, every status"},
+    "get_child": {"name": "getSubmission", "desc": "grab one submission by its id"},
+    "list_parent": {"name": "listAuthors", "desc": "list all authors weve got on file"},
+    "get_parent": {"name": "getAuthor", "desc": "grab one author record by id"},
+    "delete_child": {"name": "nukeSubmission",
+                     "desc": "wipes a submission rec for good, cant be undone",
+                     "verbs": ["nuke {obj}", "delete {obj} for good"]},
+    "set_enum": {"name": "setSubmissionStatus",
+                 "desc": "chnage a submissions status (under review/accepted/rejected)",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"under_review": "back to under review",
+                                   "accepted": "as accepted",
+                                   "rejected": "as rejected"}},
+    "set_bool": {"name": "flagNeedsRevision",
+                 "bool_index": 0, "value": true,
+                 "desc": "flags a submission as needing revision",
+                 "verbs": ["flag {obj} as needing revision", "mark {obj} needing revision"]},
+    "set_ref": {"name": "moveAuthor",
+                "desc": "moves a submission to a diff author",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "callAuthor",
+             "desc": "calls up an author about their submission",
+             "child_verbs": ["call the author behind {obj}", "ring up the author on {obj}"],
+             "direct_verbs": ["call {name}", "phone {name}"],
+             "pair_verbs": ["call", "contact"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the submission with the earliest submission date",
+    "ord_phrase": "the submission with the {ord} earliest submission date",
+    "pre_filter": {"enum_value": "under_review", "phrase": "under review"}
+  },
+  "ambiguous": [
+    {"request": ["clean up the dead submissions", "sort out the submission pile"],
+     "hint": "delete rejected submissions submitted more than 180 days ago",
+     "clauses": [{"enum_value": "rejected"},
+                 {"time_index": 0, "days": 180}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["your submission needs attention",
+                   "please review your paper submission",
+                   "a note about your submission",
+                   "your submission might need revision"],
+    "agg_msgs": ["you currently top this list",
+                 "flagging this to you directly",
+                 "you lead this count right now"],
+    "fail_msgs": ["the requested operation failed",
+                  "that action couldnt be completed",
+                  "the last operation didnt go through"]
+  }
+}

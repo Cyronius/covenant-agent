@@ -1,0 +1,107 @@
+{
+  "domain": "radio_station",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "advertiser",
+    "noun": ["advertiser", "advertisers"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "spot",
+    "noun": ["spot", "spots"],
+    "ref_field": "advertiser",
+    "ref_phrase": "for {name}",
+    "name_field": "campaign",
+    "titles": ["Sunrise Diner Weekly Special", "Harbor Ford Fall Clearance",
+               "Blue Ridge Realty Open House", "Mattress Barn Midnight Sale",
+               "Coastal Credit Union Rate Drop", "Downtown Dental Smile Month",
+               "Prairie Grain Co-op Harvest Push", "Riverside Furniture Warehouse Blowout",
+               "Northgate Tire Roadside Promo", "Copper Kettle Brewpub Trivia Night",
+               "Sunbelt HVAC Tune-Up Special", "Lakeside Marina Season Opener"],
+    "bools": [
+      {"field": "live_read", "true_phrase": "live read",
+       "false_phrase": "pre-recorded", "placement": "pre"},
+      {"field": "makegood", "true_phrase": "makegood owed",
+       "false_phrase": "paid in full", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status", "values": ["booked", "aired", "bumped"],
+      "phrases": {"booked": ["booked", "pre"],
+                  "aired": ["aired", "pre"],
+                  "bumped": ["bumped", "pre"]}
+    },
+    "times": [
+      {"field": "air_time", "kind": "time_now",
+       "lt_phrase": ["already aired", "post"],
+       "gt_phrase": ["not yet aired", "post"]},
+      {"field": "booked_on", "kind": "time_cutoff",
+       "phrase": "booked more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listSpots",
+                   "desc": "List every ad spot on the station's log."},
+    "get_child": {"name": "getSpot",
+                  "desc": "Fetch one ad spot by its id."},
+    "list_parent": {"name": "listAdvertisers",
+                    "desc": "List all advertisers with an account at the station."},
+    "get_parent": {"name": "getAdvertiser",
+                   "desc": "Fetch one advertiser by id."},
+    "delete_child": {"name": "pullSpot",
+                     "desc": "Remove an ad spot from the log entirely.",
+                     "verbs": ["pull {obj}", "cut {obj} from the log"]},
+    "set_enum": {"name": "setSpotStatus",
+                 "desc": "Change an ad spot's status (booked, aired, or bumped).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"booked": "back to booked",
+                                   "aired": "as aired",
+                                   "bumped": "as bumped"}},
+    "set_bool": {"name": "flagMakegood",
+                 "bool_index": 1, "value": true,
+                 "desc": "Flag an ad spot as owing a makegood.",
+                 "verbs": ["flag {obj} for a makegood", "mark {obj} as owing a makegood"]},
+    "set_ref": {"name": "reassignAdvertiser",
+                "desc": "Move an ad spot to a different advertiser's account.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "callAdvertiser",
+             "desc": "Call an advertiser about their ad spot.",
+             "child_verbs": ["call the advertiser behind {obj}",
+                             "ring the advertiser for {obj}"],
+             "direct_verbs": ["call {name}", "ring {name}"],
+             "pair_verbs": ["call", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the spot with the earliest air time",
+    "ord_phrase": "the spot with the {ord} earliest air time",
+    "pre_filter": {"enum_value": "booked", "phrase": "booked"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the aired backlog.",
+                 "The spot log's a mess, clean it up."],
+     "hint": "pull aired spots booked more than 30 days ago",
+     "clauses": [{"enum_value": "aired"},
+                 {"time_index": 1, "days": 30}],
+     "action": "delete_child"},
+    {"request": ["Handle the bumped inventory.",
+                 "Deal with the spots that got dropped."],
+     "hint": "flag bumped spots as owing a makegood",
+     "clauses": [{"enum_value": "bumped"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your spot needs a scheduling check.",
+                   "There's an update on your ad spot.",
+                   "Traffic has flagged your spot for review.",
+                   "Your spot may need a makegood."],
+    "agg_msgs": ["You have the most spots booked this week.",
+                 "You're our top-billing advertiser right now.",
+                 "You lead the log in scheduled spots."],
+    "fail_msgs": ["The spot update did not go through.",
+                  "That request was rejected by the traffic system.",
+                  "The change could not be saved."]
+  }
+}

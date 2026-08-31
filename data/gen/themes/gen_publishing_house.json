@@ -1,0 +1,100 @@
+{
+  "domain": "publishing_house",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "author",
+    "noun": ["author", "authors"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "manuscript",
+    "noun": ["manuscript", "manuscripts"],
+    "ref_field": "author",
+    "ref_phrase": "by {name}",
+    "name_field": "working_title",
+    "titles": ["The Glass Orchard", "Salt and Silence", "A Quiet Reckoning",
+               "The Last Cartographer", "Ember and Ash", "The Paper Kingdom",
+               "Northlight", "The Hollow Crown", "Songs for the Drowned",
+               "The Unraveling", "Winter's Ledger", "A House of Mirrors",
+               "The Cartographer's Daughter", "Blue Hour"],
+    "bools": [
+      {"field": "debut", "true_phrase": "debut",
+       "false_phrase": "returning author", "placement": "pre"},
+      {"field": "illustrated", "true_phrase": "illustrated",
+       "false_phrase": "text-only", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["submitted", "editing", "typeset", "published"],
+      "phrases": {"submitted": ["submitted", "pre"],
+                  "editing": ["in editing", "post"],
+                  "typeset": ["typeset", "pre"],
+                  "published": ["published", "pre"]}
+    },
+    "times": [
+      {"field": "submitted_on", "kind": "time_cutoff",
+       "phrase": "submitted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listManuscripts",
+                   "desc": "List every manuscript currently on file."},
+    "get_child": {"name": "getManuscript",
+                  "desc": "Fetch one manuscript by its id."},
+    "list_parent": {"name": "listAuthors",
+                    "desc": "List all authors under contract with the house."},
+    "get_parent": {"name": "getAuthor",
+                   "desc": "Fetch one author by id."},
+    "delete_child": {"name": "deleteManuscript",
+                     "desc": "Permanently remove a manuscript record. Not reversible.",
+                     "verbs": ["delete {obj}", "remove {obj} from the catalog"]},
+    "set_enum": {"name": "setManuscriptStage",
+                 "desc": "Change a manuscript's stage (submitted, editing, typeset, or published).",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"submitted": "back to submitted",
+                                   "editing": "into editing",
+                                   "typeset": "to typeset",
+                                   "published": "to published"}},
+    "set_bool": {"name": "flagDebut",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a manuscript as a debut work.",
+                 "verbs": ["flag {obj} as a debut", "mark {obj} debut"]},
+    "set_ref": {"name": "reassignAuthor",
+                "desc": "Move a manuscript to a different author's record.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "messageAuthor",
+             "desc": "Send a message to the author on file.",
+             "child_verbs": ["message the author of {obj}",
+                             "reach out to the author behind {obj}"],
+             "direct_verbs": ["message {name}", "reach out to {name}"],
+             "pair_verbs": ["message", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the manuscript with the oldest submission date",
+    "ord_phrase": "the manuscript with the {ord} oldest submission date",
+    "pre_filter": {"enum_value": "submitted", "phrase": "submitted"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the abandoned submissions.",
+                 "The slush pile needs a purge."],
+     "hint": "delete manuscripts still submitted and untouched for more than 180 days",
+     "clauses": [{"enum_value": "submitted"},
+                 {"time_index": 0, "days": 180}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your manuscript needs a status update.",
+                   "Please check on your upcoming manuscript review.",
+                   "A note about your manuscript.",
+                   "Your manuscript may need revision."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this manuscript to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested update could not be completed.",
+                  "That action did not go through.",
+                  "The last operation failed to save."]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "domain": "ski_resort",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "contractor",
+    "noun": ["contractor", "contractors"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "work_order",
+    "noun": ["work order", "work orders"],
+    "ref_field": "contractor",
+    "ref_phrase": "assigned to {name}",
+    "name_field": "lift_name",
+    "titles": ["Summit Quad", "Powderhorn Triple", "Eagle Ridge Express", "Basin Double",
+               "Timberline T-Bar", "Glacier Gondola", "Northface Six-Pack",
+               "Meadow Run Poma", "Ridgeline Chair", "Bowl View Quad",
+               "Alpine Traverse Lift", "Frostline Express"],
+    "bools": [
+      {"field": "avalanche_zone", "true_phrase": "in an avalanche zone",
+       "false_phrase": "outside avalanche zones", "placement": "post"},
+      {"field": "parts_ordered", "true_phrase": "parts on order",
+       "false_phrase": "no parts ordered", "placement": "post"},
+      {"field": "priority_repair", "true_phrase": "priority repair",
+       "false_phrase": "routine repair", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["queued", "in_progress", "completed"],
+      "phrases": {"queued": ["queued", "pre"],
+                  "in_progress": ["in progress", "pre"],
+                  "completed": ["completed", "pre"]}
+    },
+    "times": [
+      {"field": "inspection_due", "kind": "time_now",
+       "lt_phrase": ["overdue for inspection", "post"],
+       "gt_phrase": ["not yet due", "post"]},
+      {"field": "opened_on", "kind": "time_cutoff",
+       "phrase": "opened more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listwo",
+                   "desc": "This tool pulls every open lift maintenance work order currently on the resort's board, regardless of phase or priority. Use it any time a full picture of outstanding lift work is required before making decisions."},
+    "get_child": {"name": "getwo",
+                  "desc": "This tool fetches a single lift maintenance work order using its id and returns every field recorded against it. It is the correct choice whenever only one specific work order needs to be inspected rather than the whole board."},
+    "list_parent": {"name": "listctr",
+                    "desc": "This tool lists every maintenance contractor currently under agreement with the resort, including those with no open work orders. Use it to see the full roster of firms available for assignment."},
+    "get_parent": {"name": "getctr",
+                   "desc": "This tool fetches a single maintenance contractor record by id, returning their assignment history. It should be used when details on one specific contractor are required."},
+    "delete_child": {"name": "killwo",
+                     "desc": "This tool permanently deletes a lift maintenance work order from the resort's system and the action cannot be undone once it is submitted. Use it only when a work order was created in error or is being fully superseded.",
+                     "verbs": ["kill {obj}", "scrub {obj} from the board"]},
+    "set_enum": {"name": "setwophase",
+                 "desc": "This tool changes the phase of a lift maintenance work order between queued, in progress, and completed, moving it through the resort's repair workflow. Use it whenever a work order's standing needs to be updated to reflect real progress.",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"queued": "back to queued",
+                                   "in_progress": "to in progress",
+                                   "completed": "to completed"}},
+    "set_bool": {"name": "flagpriority",
+                 "bool_index": 2, "value": true,
+                 "desc": "This tool marks a lift maintenance work order as a priority repair, pushing it above routine work on the resort's board. Use it when a lift fault poses a safety or opening-day risk.",
+                 "verbs": ["flag {obj} as priority", "bump {obj} to priority"]},
+    "set_ref": {"name": "movewo",
+                "desc": "This tool reassigns a lift maintenance work order from its current contractor to a different one entirely, updating who is responsible for the repair. Use it when a contractor drops a job or a better-suited firm becomes available.",
+                "verbs": ["reassign {obj} {to_name}", "hand {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "pingctr",
+             "desc": "This tool sends a message to a maintenance contractor, either about a specific work order or as a direct note. Use it to keep contractors informed of new assignments or urgent status changes.",
+             "child_verbs": ["notify the contractor on {obj}",
+                             "ping the contractor behind {obj}"],
+             "direct_verbs": ["notify {name}", "ping {name}"],
+             "pair_verbs": ["notify", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the work order with the most overdue inspection",
+    "ord_phrase": "the work order with the {ord} most overdue inspection",
+    "pre_filter": {"enum_value": "queued", "phrase": "queued"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the lift backlog.", "The board's a mess, deal with it."],
+     "hint": "delete queued work orders overdue for inspection",
+     "clauses": [{"enum_value": "queued"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Handle the urgent lift stuff.", "Deal with the pressing repairs."],
+     "hint": "flag queued work orders overdue for inspection as priority repairs",
+     "clauses": [{"enum_value": "queued"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["This work order requires your attention.",
+                   "Please review the status of this work order.",
+                   "A note regarding your assigned work order.",
+                   "This work order may need to be rescheduled."],
+    "agg_msgs": ["Your firm currently tops this list.",
+                 "This is being flagged to you directly.",
+                 "Your firm leads this count right now."],
+    "fail_msgs": ["The requested operation could not be completed.",
+                  "That action failed to go through.",
+                  "The system was unable to complete the last operation."]
+  }
+}

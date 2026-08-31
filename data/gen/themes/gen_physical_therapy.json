@@ -1,0 +1,95 @@
+{
+  "domain": "physical_therapy",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "patient",
+    "noun": ["patient", "patients"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "therapy_block",
+    "noun": ["therapy block", "therapy blocks"],
+    "ref_field": "patient",
+    "ref_phrase": "for {name}",
+    "name_field": "focus_area",
+    "titles": ["Post-surgical knee rehab", "Lower back strengthening",
+               "Rotator cuff recovery", "Balance and fall prevention",
+               "Sports injury recovery", "Post-stroke mobility",
+               "ACL rehab protocol", "Neck and cervical therapy",
+               "Hip replacement recovery", "Plantar fasciitis treatment",
+               "Tennis elbow rehab", "Pediatric gait training",
+               "Chronic pain management block"],
+    "bools": [
+      {"field": "home_exercise_assigned", "true_phrase": "home exercises assigned",
+       "false_phrase": "no home exercises yet", "placement": "post"},
+      {"field": "insurance_capped", "true_phrase": "at insurance visit cap",
+       "false_phrase": "under visit cap", "placement": "pre"},
+      {"field": "needs_re_eval", "true_phrase": "due for re-eval",
+       "false_phrase": "not due for re-eval", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["active", "on_hold", "discharged"],
+      "phrases": {"active": ["active", "pre"],
+                  "on_hold": ["on hold", "pre"],
+                  "discharged": ["discharged", "pre"]}
+    },
+    "times": [
+      {"field": "next_session", "kind": "time_now",
+       "lt_phrase": ["already passed", "post"],
+       "gt_phrase": ["still upcoming", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lstBlk", "desc": "list all therapy blocks"},
+    "get_child": {"name": "getBlk", "desc": "fetch one block by id"},
+    "list_parent": {"name": "lstPt", "desc": "list all patients"},
+    "get_parent": {"name": "getPt", "desc": "fetch one patient by id"},
+    "delete_child": {"name": "delBlk", "desc": "drop a therapy block, no undo",
+                     "verbs": ["drop {obj}", "kill {obj}"]},
+    "set_enum": {"name": "setBlkStage", "desc": "chg block stage: active/on_hold/discharged",
+                 "verbs": ["set {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"active": "to active",
+                                   "on_hold": "on hold",
+                                   "discharged": "to discharged"}},
+    "set_bool": {"name": "flagReEval", "bool_index": 2, "value": true,
+                 "desc": "flag block as due for re-eval",
+                 "verbs": ["flag {obj} for re-eval", "mark {obj} due"]},
+    "set_ref": {"name": "movePt", "desc": "reassign block to another patient",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "pingPt", "desc": "send a message to a patient",
+             "child_verbs": ["ping the patient on {obj}", "nudge the patient on {obj}"],
+             "direct_verbs": ["ping {name}", "message {name}"],
+             "pair_verbs": ["ping", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the therapy block with the soonest next session",
+    "ord_phrase": "the therapy block with the {ord} soonest next session",
+    "pre_filter": {"enum_value": "active", "phrase": "active"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the dead blocks.", "The caseload list needs trimming."],
+     "hint": "delete discharged therapy blocks",
+     "clauses": [{"enum_value": "discharged"}],
+     "action": "delete_child"},
+    {"request": ["Flag whoever is overdue.", "Deal with the ones falling behind."],
+     "hint": "flag active therapy blocks whose next session already passed as due for re-eval",
+     "clauses": [{"enum_value": "active"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your therapy block needs a quick look.",
+                   "There is a session update on your therapy block.",
+                   "A note from the clinic about your therapy block.",
+                   "Your next session may need rescheduling."],
+    "agg_msgs": ["This patient has the most active blocks right now.",
+                 "Flagging this caseload item straight to you.",
+                 "This patient tops the current count."],
+    "fail_msgs": ["That action did not go through.",
+                  "The requested change failed.",
+                  "The operation could not be completed."]
+  }
+}

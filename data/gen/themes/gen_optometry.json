@@ -1,0 +1,100 @@
+{
+  "domain": "optometry",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "patient",
+    "noun": ["patient", "patients"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "eye_exam",
+    "noun": ["eye exam", "eye exams"],
+    "ref_field": "patient",
+    "ref_phrase": "for {name}",
+    "name_field": "exam_type",
+    "titles": ["Comprehensive eye exam", "Contact lens fitting", "Glaucoma screening",
+               "Diabetic retinopathy screening", "Pediatric vision exam",
+               "LASIK consultation", "Cataract evaluation", "Dry eye evaluation",
+               "Color vision test", "Visual field test", "Retinal imaging",
+               "Pre-op cataract workup", "Follow-up vision recheck"],
+    "bools": [
+      {"field": "dilation_required", "true_phrase": "requiring dilation",
+       "false_phrase": "no dilation needed", "placement": "post"},
+      {"field": "referred_out", "true_phrase": "referred to a specialist",
+       "false_phrase": "managed in-house", "placement": "post"}
+    ],
+    "enum": {
+      "field": "outcome", "values": ["scheduled", "performed", "needs_followup"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "performed": ["completed", "pre"],
+                  "needs_followup": ["flagged for follow-up", "pre"]}
+    },
+    "times": [
+      {"field": "exam_time", "kind": "time_now",
+       "lt_phrase": ["already done", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "prescription_issued", "kind": "time_cutoff",
+       "phrase": "prescribed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listEyeExams", "desc": "List every eye exam on record."},
+    "get_child": {"name": "getEyeExam", "desc": "Fetch one eye exam by its id."},
+    "list_parent": {"name": "listPatients",
+                    "desc": "List all patients registered with the practice."},
+    "get_parent": {"name": "getPatient", "desc": "Fetch one patient by id."},
+    "delete_child": {"name": "deleteEyeExam",
+                     "desc": "Permanently remove an eye exam record. Not reversible.",
+                     "verbs": ["delete {obj}", "erase {obj} from the record"]},
+    "set_enum": {"name": "setExamOutcome",
+                 "desc": "Change an eye exam's outcome (scheduled, completed, or flagged for follow-up).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "performed": "as completed",
+                                   "needs_followup": "as needing follow-up"}},
+    "set_bool": {"name": "flagReferral",
+                 "bool_index": 1, "value": true,
+                 "desc": "Flag an eye exam as referred out to a specialist.",
+                 "verbs": ["refer {obj} out", "flag {obj} for referral"]},
+    "set_ref": {"name": "reassignPatient",
+                "desc": "Move an eye exam to a different patient's record.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailPatient",
+             "desc": "Send an email to a patient.",
+             "child_verbs": ["email the patient for {obj}",
+                             "give the patient on {obj} a heads-up"],
+             "direct_verbs": ["email {name}", "send {name} an email"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the eye exam with the soonest exam time",
+    "ord_phrase": "the eye exam with the {ord} soonest exam time",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the exam backlog.", "The exam list is a mess, deal with it."],
+     "hint": "delete eye exams already marked completed",
+     "clauses": [{"enum_value": "performed"}],
+     "action": "delete_child"},
+    {"request": ["Flag the ones that need a specialist.", "Handle the exams that look concerning."],
+     "hint": "flag eye exams needing follow-up whose prescription is more than 400 days old as referred out",
+     "clauses": [{"enum_value": "needs_followup"}, {"time_index": 1, "days": 400}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your eye exam is coming up.",
+                   "There is an update on your eye exam.",
+                   "Please confirm your eye exam details.",
+                   "Your vision records need a quick review."],
+    "agg_msgs": ["You have the most exams on file right now.",
+                 "This flags you as the top patient on this list.",
+                 "You currently lead this count."],
+    "fail_msgs": ["The system could not complete that request.",
+                  "That change did not save.",
+                  "The action failed to go through."]
+  }
+}

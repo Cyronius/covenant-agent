@@ -1,0 +1,106 @@
+{
+  "domain": "procurement",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "vendor",
+    "noun": ["vendor", "vendors"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "purchase_order",
+    "noun": ["purchase order", "purchase orders"],
+    "ref_field": "vendor",
+    "ref_phrase": "with {name}",
+    "name_field": "description",
+    "titles": ["Office furniture restock", "Laptop hardware refresh", "Raw material shipment",
+               "Packaging supplies", "Janitorial supplies order", "Fleet vehicle maintenance parts",
+               "Server rack components", "Safety equipment order", "Catering services",
+               "Printer toner restock", "Construction materials", "Uniform supply order"],
+    "bools": [
+      {"field": "delayed", "true_phrase": "delayed",
+       "false_phrase": "on schedule", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["pending", "approved", "shipped", "closed"],
+      "phrases": {"pending": ["pending", "pre"],
+                  "approved": ["approved", "pre"],
+                  "shipped": ["shipped", "pre"],
+                  "closed": ["closed out", "post"]}
+    },
+    "times": [
+      {"field": "expected_delivery", "kind": "time_now",
+       "lt_phrase": ["already overdue", "post"],
+       "gt_phrase": ["still on schedule", "post"]},
+      {"field": "placed", "kind": "time_cutoff",
+       "phrase": "placed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_po",
+                   "desc": "List every purchase order on file."},
+    "get_child": {"name": "get_po",
+                  "desc": "Fetch one purchase order by its id."},
+    "list_parent": {"name": "list_vnd",
+                    "desc": "List all vendors in the procurement system."},
+    "get_parent": {"name": "get_vnd",
+                   "desc": "Fetch one vendor by id."},
+    "delete_child": {"name": "rm_po",
+                     "desc": "Permanently remove a purchase order record. Not reversible.",
+                     "verbs": ["remove {obj}", "cancel {obj} outright"]},
+    "set_enum": {"name": "set_po_stg",
+                 "desc": "Change a purchase order's stage (pending, approved, shipped, or closed).",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"pending": "back to pending",
+                                   "approved": "to approved",
+                                   "shipped": "to shipped",
+                                   "closed": "to closed"}},
+    "set_bool": {"name": "flag_ob",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a purchase order as delayed.",
+                 "verbs": ["flag {obj} as delayed", "mark {obj} delayed"]},
+    "set_ref": {"name": "mv_po",
+                "desc": "Move a purchase order to a different vendor.",
+                "verbs": ["move {obj} {to_name}", "re-source {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "msg_vnd",
+             "desc": "Send a message to a vendor.",
+             "child_verbs": ["message the vendor on {obj}",
+                             "give the vendor on {obj} a call"],
+             "direct_verbs": ["call {name}", "message {name}"],
+             "pair_verbs": ["call", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the purchase order with the soonest expected delivery",
+    "ord_phrase": "the purchase order with the {ord} soonest expected delivery",
+    "pre_filter": {"bool_index": 0, "value": false, "phrase": "not delayed"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the dead orders.",
+                 "This backlog's a mess, clear it."],
+     "hint": "delete pending purchase orders placed more than 60 days ago",
+     "clauses": [{"enum_value": "pending"},
+                 {"time_index": 1, "days": 60}],
+     "action": "delete_child"},
+    {"request": ["Handle the late shipments.",
+                 "Sort out the ones running behind."],
+     "hint": "flag as delayed the shipped purchase orders already past their expected delivery",
+     "clauses": [{"enum_value": "shipped"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your purchase order needs attention.",
+                   "Please review your latest purchase order.",
+                   "A note about your purchase order.",
+                   "Your purchase order may need revision."],
+    "agg_msgs": ["You're currently at the top of this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

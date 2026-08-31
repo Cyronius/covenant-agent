@@ -1,0 +1,103 @@
+{
+  "domain": "wedding_planning",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "couple",
+    "noun": ["couple", "couples"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "vendor_booking",
+    "noun": ["vendor booking", "vendor bookings"],
+    "ref_field": "couple",
+    "ref_phrase": "for {name}",
+    "name_field": "vendor_type",
+    "titles": ["Florist Booking", "Photographer Booking", "DJ Booking",
+               "Caterer Booking", "Venue Booking", "Officiant Booking",
+               "Videographer Booking", "Cake Baker Booking", "Hair and Makeup Booking",
+               "Transportation Booking", "Rentals Booking", "String Quartet Booking",
+               "Lighting Booking", "Wedding Planner Consultation"],
+    "bools": [
+      {"field": "needs_follow_up", "true_phrase": "flagged for follow-up",
+       "false_phrase": "no follow-up needed", "placement": "post"},
+      {"field": "contract_signed", "true_phrase": "contract signed",
+       "false_phrase": "contract pending", "placement": "post"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["researching", "booked", "confirmed", "completed"],
+      "phrases": {"researching": ["being researched", "post"],
+                  "booked": ["booked", "pre"],
+                  "confirmed": ["confirmed", "pre"],
+                  "completed": ["completed", "pre"]}
+    },
+    "times": [
+      {"field": "service_date", "kind": "time_now",
+       "lt_phrase": ["already done", "post"],
+       "gt_phrase": ["still ahead", "post"]},
+      {"field": "inquired_on", "kind": "time_cutoff",
+       "phrase": "inquired more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_vendor_bookings",
+                   "desc": "list all vendor bookings"},
+    "get_child": {"name": "get_vendor_booking",
+                  "desc": "fetch one booking by id"},
+    "list_parent": {"name": "list_couples",
+                    "desc": "list all couples on file"},
+    "get_parent": {"name": "get_couple",
+                   "desc": "fetch one couple by id"},
+    "delete_child": {"name": "delete_vendor_booking",
+                     "desc": "wipe a booking rec, no undo",
+                     "verbs": ["delete {obj}", "remove {obj} from the plan"]},
+    "set_enum": {"name": "set_booking_stage",
+                 "desc": "change booking stage (researching/booked/confirmed/completed)",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"researching": "back to researching",
+                                   "booked": "to booked",
+                                   "confirmed": "to confirmed",
+                                   "completed": "to completed"}},
+    "set_bool": {"name": "flag_follow_up",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag a booking that needs follow-up",
+                 "verbs": ["flag {obj} for follow-up", "mark {obj} needs follow-up"]},
+    "set_ref": {"name": "reassign_couple",
+                "desc": "move a booking to a different couple's plan",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_couple",
+             "desc": "email the couple on file",
+             "child_verbs": ["email the couple for {obj}",
+                             "notify the couple behind {obj}"],
+             "direct_verbs": ["email {name}", "notify {name}"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the vendor booking with the soonest service date",
+    "ord_phrase": "the vendor booking with the {ord} soonest service date",
+    "pre_filter": {"enum_value": "booked", "phrase": "booked"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the stale research list.",
+                 "These vendor leads are getting old, deal with them."],
+     "hint": "flag researching-stage bookings inquired more than 30 days ago for follow-up",
+     "clauses": [{"enum_value": "researching"},
+                 {"time_index": 1, "days": 30}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["vendor booking needs a look",
+                   "check on this booking plz",
+                   "note on your vendor booking",
+                   "this booking might need follow-up"],
+    "agg_msgs": ["you're first on this list",
+                 "flagging this booking to you directly",
+                 "you lead this count right now"],
+    "fail_msgs": ["update failed",
+                  "that action didn't go through",
+                  "last change didn't save"]
+  }
+}

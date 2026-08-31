@@ -1,0 +1,104 @@
+{
+  "domain": "insurance",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "policyholder",
+    "noun": ["policyholder", "policyholders"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "claim",
+    "noun": ["claim", "claims"],
+    "ref_field": "policyholder",
+    "ref_phrase": "from {name}",
+    "name_field": "claim_type",
+    "titles": ["Auto collision", "Water damage", "Fire damage", "Theft loss",
+               "Wind damage", "Liability claim", "Medical payments claim", "Vandalism",
+               "Hail damage", "Total loss vehicle", "Personal property loss", "Flood damage"],
+    "bools": [
+      {"field": "fraud_flag", "true_phrase": "flagged for fraud review",
+       "false_phrase": "cleared", "placement": "post"},
+      {"field": "expedited", "true_phrase": "expedited",
+       "false_phrase": "standard", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["filed", "under_review", "approved", "denied"],
+      "phrases": {"filed": ["newly filed", "pre"],
+                  "under_review": ["under review", "post"],
+                  "approved": ["approved", "pre"],
+                  "denied": ["denied", "pre"]}
+    },
+    "times": [
+      {"field": "incident_date", "kind": "time_cutoff",
+       "phrase": "from an incident more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_claims",
+                   "desc": "List every claim on file."},
+    "get_child": {"name": "get_claim",
+                  "desc": "Fetch one claim by its id."},
+    "list_parent": {"name": "list_policyholders",
+                    "desc": "List all policyholders on record."},
+    "get_parent": {"name": "get_policyholder",
+                   "desc": "Fetch one policyholder by id."},
+    "delete_child": {"name": "purge_claim",
+                     "desc": "Permanently remove a claim record. Not reversible.",
+                     "verbs": ["purge {obj}", "wipe {obj} from the system"]},
+    "set_enum": {"name": "set_claim_status",
+                 "desc": "Change a claim's status (filed, under review, approved, or denied).",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"filed": "back to filed",
+                                   "under_review": "to under review",
+                                   "approved": "as approved",
+                                   "denied": "as denied"}},
+    "set_bool": {"name": "flag_fraud_review",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a claim for fraud review.",
+                 "verbs": ["flag {obj} for fraud review", "mark {obj} for fraud review"]},
+    "set_ref": {"name": "reassign_claim",
+                "desc": "Move a claim to a different policyholder's account.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "call_policyholder",
+             "desc": "Place a call to a policyholder.",
+             "child_verbs": ["call the policyholder on {obj}",
+                             "reach out to the policyholder on {obj}"],
+             "direct_verbs": ["call {name}", "reach {name}"],
+             "pair_verbs": ["call", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the claim from the oldest incident",
+    "ord_phrase": "the claim with the {ord} oldest incident",
+    "pre_filter": {"enum_value": "filed", "phrase": "newly filed"}
+  },
+  "ambiguous": [
+    {"request": ["Clean out the dead denials.",
+                 "These denied ones are just clutter now."],
+     "hint": "delete denied claims from incidents more than 365 days ago",
+     "clauses": [{"enum_value": "denied"},
+                 {"time_index": 0, "days": 365}],
+     "action": "delete_child"},
+    {"request": ["Take a closer look at the old backlog.",
+                 "Something about the aging under-review ones needs flagging."],
+     "hint": "flag for fraud review the under-review claims from incidents more than 365 days ago",
+     "clauses": [{"enum_value": "under_review"},
+                 {"time_index": 0, "days": 365}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your claim needs attention.",
+                   "Please review your open claim.",
+                   "A note about your claim.",
+                   "Your claim may need additional documentation."],
+    "agg_msgs": ["You're currently at the top of this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

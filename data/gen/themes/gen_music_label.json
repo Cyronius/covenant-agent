@@ -1,0 +1,103 @@
+{
+  "domain": "music_label",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "artist",
+    "noun": ["artist", "artists"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "release",
+    "noun": ["release", "releases"],
+    "ref_field": "artist",
+    "ref_phrase": "by {name}",
+    "name_field": "title",
+    "titles": ["Midnight Static", "Neon Horizon", "Concrete Bloom",
+               "Glass Tide", "Velvet Circuit", "Paper Moon Sessions",
+               "Afterglow", "Static Bloom", "Wildfire Season",
+               "Low Orbit", "Silver Lining EP", "Broken Compass",
+               "Hollow Bloom", "Ashes to Amber"],
+    "bools": [
+      {"field": "explicit", "true_phrase": "explicit",
+       "false_phrase": "clean", "placement": "pre"},
+      {"field": "radio_edit", "true_phrase": "has a radio edit",
+       "false_phrase": "no radio edit", "placement": "post"},
+      {"field": "lead_single", "true_phrase": "lead single",
+       "false_phrase": "album cut", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["demo", "mastering", "scheduled", "released"],
+      "phrases": {"demo": ["in demo", "pre"],
+                  "mastering": ["in mastering", "pre"],
+                  "scheduled": ["scheduled for release", "post"],
+                  "released": ["released", "pre"]}
+    },
+    "times": [
+      {"field": "drop_date", "kind": "time_now",
+       "lt_phrase": ["already out", "post"],
+       "gt_phrase": ["not out yet", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lst_rls",
+                   "desc": "Returns the complete roster of track releases currently tracked in the label's release calendar system. Use this when you need a full overview of every release regardless of its current production stage."},
+    "get_child": {"name": "get_rls",
+                  "desc": "Retrieves a single release record identified by its unique release id. This is the appropriate call when you already know which specific release you need details on."},
+    "list_parent": {"name": "lst_art",
+                    "desc": "Returns the full list of artists currently signed to or associated with the label's roster. This includes every artist on file, independent of how many releases they currently have."},
+    "get_parent": {"name": "get_art",
+                   "desc": "Retrieves a single artist record identified by their unique artist id. Use this call when you already know exactly which artist you are looking up."},
+    "delete_child": {"name": "rm_rls",
+                     "desc": "Permanently deletes a release record from the label's system, and this action cannot be undone once it has been executed. Use this only when a release entry was created in error or must be scrubbed entirely.",
+                     "verbs": ["delete {obj}", "scrub {obj} from the catalog"]},
+    "set_enum": {"name": "set_rls_stg",
+                 "desc": "Updates the production stage of a release to reflect where it currently sits in the pipeline, moving it between demo, mastering, scheduled, and released. This keeps the release calendar accurate for everyone downstream.",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"demo": "back to demo",
+                                   "mastering": "into mastering",
+                                   "scheduled": "to scheduled",
+                                   "released": "to released"}},
+    "set_bool": {"name": "flag_expl",
+                 "bool_index": 0, "value": true,
+                 "desc": "Marks a release as containing explicit content so that storefronts and playlists can apply the correct content warning. This flag should be set any time a release contains explicit lyrics.",
+                 "verbs": ["flag {obj} as explicit", "mark {obj} explicit"]},
+    "set_ref": {"name": "mv_art",
+                "desc": "Reassigns a release from one artist to a different artist on the roster, which is useful when a release was logged under the wrong act. This updates the ownership record but leaves all other release details untouched.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notif_art",
+             "desc": "Sends a direct notification to the artist associated with a release, which is typically used to alert them about a status change. This does not go through management and reaches the artist's own contact channel directly.",
+             "child_verbs": ["notify the artist behind {obj}",
+                             "give the artist of {obj} a heads-up"],
+             "direct_verbs": ["notify {name}", "reach out to {name}"],
+             "pair_verbs": ["notify", "message"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the release with the soonest drop date",
+    "ord_phrase": "the release with the {ord} soonest drop date",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["Clean out the dead demos.",
+                 "The demo pile needs a purge."],
+     "hint": "delete releases still in demo stage whose drop date has already passed",
+     "clauses": [{"enum_value": "demo"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your release needs a status update.",
+                   "Please check in on your upcoming release.",
+                   "A note regarding your release.",
+                   "Your release schedule may need adjusting."],
+    "agg_msgs": ["You currently top this release list.",
+                 "Flagging this release to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested update could not be completed.",
+                  "That release action failed to process.",
+                  "The last operation on this release did not go through."]
+  }
+}

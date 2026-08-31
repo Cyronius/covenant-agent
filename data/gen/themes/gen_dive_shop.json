@@ -1,0 +1,97 @@
+{
+  "domain": "dive_shop",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "diver",
+    "noun": ["diver", "divers"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "excursion",
+    "noun": ["excursion", "excursions"],
+    "ref_field": "diver",
+    "ref_phrase": "for {name}",
+    "name_field": "site_name",
+    "titles": ["Coral Canyon Wall", "Shipwreck Alley", "Manta Point", "Blue Hole Drop",
+               "Turtle Reef Ledge", "Kelp Forest Drift", "Cavern's Mouth",
+               "Sunken Barge Site", "Reef Shark Alley", "Anchor Bay Wall",
+               "Lionfish Pinnacle", "Sandbar Channel"],
+    "bools": [
+      {"field": "nitrox_fill", "true_phrase": "nitrox",
+       "false_phrase": "air fill", "placement": "pre"},
+      {"field": "solo_waiver", "true_phrase": "solo-waivered",
+       "false_phrase": "buddy required", "placement": "post"}
+    ],
+    "enum": {
+      "field": "state", "values": ["booked", "completed", "scrubbed"],
+      "phrases": {"booked": ["booked", "pre"],
+                  "completed": ["completed", "pre"],
+                  "scrubbed": ["scrubbed", "pre"]}
+    },
+    "times": [
+      {"field": "departure", "kind": "time_now",
+       "lt_phrase": ["already gone out", "post"],
+       "gt_phrase": ["still coming up", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_excursions",
+                   "desc": "lists all the dive excursions on the books, evry one of em"},
+    "get_child": {"name": "get_excursion",
+                  "desc": "grabs one excursion by id"},
+    "list_parent": {"name": "list_divers",
+                    "desc": "all divers on file at the shop"},
+    "get_parent": {"name": "get_diver",
+                   "desc": "one diver record by id"},
+    "delete_child": {"name": "scrub_excursion",
+                     "desc": "kills an excursion for good, cant undo it",
+                     "verbs": ["scrub {obj}", "yank {obj} off the board"]},
+    "set_enum": {"name": "set_excursion_state",
+                 "desc": "changes excursion state (booked/completed/scrubbed)",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"booked": "back to booked",
+                                   "completed": "as completed",
+                                   "scrubbed": "as scrubbed"}},
+    "set_bool": {"name": "flag_nitrox",
+                 "bool_index": 0, "value": true,
+                 "desc": "flags an excursion as a nitrox fill",
+                 "verbs": ["flag {obj} for nitrox", "mark {obj} nitrox"]},
+    "set_ref": {"name": "rebook_diver",
+                "desc": "moves an excursion to a different diver's account",
+                "verbs": ["move {obj} {to_name}", "rebook {obj} {to_name}"],
+                "to_template": "under {name}"},
+    "send": {"name": "text_diver",
+             "desc": "sends a text to a diver",
+             "child_verbs": ["text the diver on {obj}",
+                             "give the diver on {obj} a heads up"],
+             "direct_verbs": ["text {name}", "shoot {name} a text"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the excursion with the earliest departure",
+    "ord_phrase": "the excursion with the {ord} earliest departure",
+    "pre_filter": {"enum_value": "booked", "phrase": "booked"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the dive board.", "The board's a mess, deal with it."],
+     "hint": "scrub booked excursions already departed",
+     "clauses": [{"enum_value": "booked"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["your excursion needs a look.",
+                   "check your upcoming excursion.",
+                   "quick note on your excursion.",
+                   "your excursion might need rebooking."],
+    "agg_msgs": ["your on top of this list.",
+                 "flagging this to you direct.",
+                 "you lead this count rn."],
+    "fail_msgs": ["that didnt go through.",
+                  "operation failed, try again.",
+                  "last action didnt complete."]
+  }
+}

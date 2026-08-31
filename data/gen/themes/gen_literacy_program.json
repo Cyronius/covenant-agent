@@ -1,0 +1,94 @@
+{
+  "domain": "literacy_program",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "learner",
+    "noun": ["learner", "learners"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "session",
+    "noun": ["session", "sessions"],
+    "ref_field": "learner",
+    "ref_phrase": "for {name}",
+    "name_field": null,
+    "titles": [],
+    "bools": [
+      {"field": "needs_tutor", "true_phrase": "needs a tutor",
+       "false_phrase": "has a tutor", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status", "values": ["scheduled", "held", "missed", "cancelled"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "held": ["held", "pre"],
+                  "missed": ["missed", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "meet_time", "kind": "time_now",
+       "lt_phrase": ["already happened", "post"],
+       "gt_phrase": ["still coming up", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_sessions",
+                   "desc": "lists all the reading circle sessions, all of em"},
+    "get_child": {"name": "get_session",
+                  "desc": "grabs one session by id"},
+    "list_parent": {"name": "list_learners",
+                    "desc": "all learners signed up for the program"},
+    "get_parent": {"name": "get_learner",
+                   "desc": "one learner record by id"},
+    "delete_child": {"name": "kill_session",
+                     "desc": "nukes a session record, cant be undone",
+                     "verbs": ["kill {obj}", "nuke {obj}"]},
+    "set_enum": {"name": "set_session_status",
+                 "desc": "changes session status (scheduled/held/missed/cancelled)",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "held": "as held",
+                                   "missed": "as missed",
+                                   "cancelled": "as cancelled"}},
+    "set_bool": {"name": "flag_needs_tutor",
+                 "bool_index": 0, "value": true,
+                 "desc": "flags a session as needing a tutor assigned",
+                 "verbs": ["flag {obj} as needing a tutor", "mark {obj} needs a tutor"]},
+    "set_ref": {"name": "move_session",
+                "desc": "moves a session to a diff learner",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_learner",
+             "desc": "sends an email to a learner, uses the addr on file",
+             "child_verbs": ["email the learner in {obj}", "follow up with the learner in {obj}"],
+             "direct_verbs": ["email {name}", "send {name} a note"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the session with the earliest meet time",
+    "ord_phrase": "the session with the {ord} earliest meet time",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["clean up the missed session pile.",
+                 "reading circle sessions are a mess, sort it out"],
+     "hint": "flag scheduled sessions whose meet time already passed as needing a tutor",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["hey ur session needs a look",
+                   "check ur reading session pls",
+                   "note about ur session",
+                   "ur session might need rescheduling"],
+    "agg_msgs": ["ur on top of this list",
+                 "flagging this to u directly",
+                 "u lead this count rn"],
+    "fail_msgs": ["op failed",
+                  "that didnt go thru",
+                  "last change didnt save"]
+  }
+}

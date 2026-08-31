@@ -1,0 +1,103 @@
+{
+  "domain": "blood_drive",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "donor",
+    "noun": ["donor", "donors"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "donation",
+    "noun": ["donation", "donations"],
+    "ref_field": "donor",
+    "ref_phrase": "from {name}",
+    "name_field": "drive_site",
+    "titles": ["Downtown Community Center Drive", "Riverside High School Drive",
+               "County Fairgrounds Drive", "Memorial Hospital Drive",
+               "Central Library Drive", "University Student Union Drive",
+               "Fire Station 12 Drive", "Grace Chapel Drive",
+               "Corporate Campus Drive", "Northside Mall Drive",
+               "VFW Hall Drive", "Mobile Bloodmobile Route"],
+    "bools": [
+      {"field": "first_time_donor", "true_phrase": "first-time",
+       "false_phrase": "repeat", "placement": "pre"},
+      {"field": "deferred", "true_phrase": "deferred",
+       "false_phrase": "eligible", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["scheduled", "screened", "donated", "cancelled"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "screened": ["screened", "pre"],
+                  "donated": ["donated", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "slot_time", "kind": "time_now",
+       "lt_phrase": ["already past", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "booked_at", "kind": "time_cutoff",
+       "phrase": "booked more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listDonations",
+                   "desc": "List every donation slot on the drive calendar."},
+    "get_child": {"name": "getDonation",
+                  "desc": "Fetch one donation slot by its id."},
+    "list_parent": {"name": "listDonors",
+                    "desc": "List all registered blood donors."},
+    "get_parent": {"name": "getDonor",
+                   "desc": "Fetch one donor by id."},
+    "delete_child": {"name": "removeDonation",
+                     "desc": "Permanently remove a donation slot record. Not reversible.",
+                     "verbs": ["remove {obj}", "wipe {obj} from the calendar"]},
+    "set_enum": {"name": "setDonationStage",
+                 "desc": "Change a donation slot's stage (scheduled, screened, donated, or cancelled).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "screened": "as screened",
+                                   "donated": "as donated",
+                                   "cancelled": "as cancelled"}},
+    "set_bool": {"name": "flagDeferred",
+                 "bool_index": 1, "value": true,
+                 "desc": "Flag a donor's slot as deferred.",
+                 "verbs": ["flag {obj} as deferred", "mark {obj} deferred"]},
+    "set_ref": {"name": "reassignDonor",
+                "desc": "Move a donation slot to a different donor's account.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "under {name}"},
+    "send": {"name": "textDonor",
+             "desc": "Send an SMS to a blood donor.",
+             "child_verbs": ["text the donor behind {obj}", "give the donor behind {obj} a heads-up"],
+             "direct_verbs": ["text {name}", "send {name} an SMS"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the donation with the earliest slot time",
+    "ord_phrase": "the donation with the {ord} earliest slot time",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the drive-day backlog.",
+                 "The donation calendar is a mess, deal with it."],
+     "hint": "flag scheduled donations already past their slot time as deferred",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your donation slot needs attention.",
+                   "Please review your upcoming donation.",
+                   "A note about your donation slot.",
+                   "Your donation slot may need rescheduling."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

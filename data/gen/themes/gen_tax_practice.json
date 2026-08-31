@@ -1,0 +1,103 @@
+{
+  "domain": "tax_practice",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "tax_filing",
+    "noun": ["tax filing", "tax filings"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": null,
+    "titles": [],
+    "bools": [
+      {"field": "extension_filed", "true_phrase": "on extension",
+       "false_phrase": "no extension filed", "placement": "post"},
+      {"field": "audit_risk", "true_phrase": "flagged for audit risk",
+       "false_phrase": "low risk", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status", "values": ["gathering", "prepared", "filed", "amended"],
+      "phrases": {"gathering": ["gathering documents", "post"],
+                  "prepared": ["prepared", "pre"],
+                  "filed": ["filed", "pre"],
+                  "amended": ["amended", "pre"]}
+    },
+    "times": [
+      {"field": "due_date", "kind": "time_now",
+       "lt_phrase": ["already past due", "post"],
+       "gt_phrase": ["not yet due", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_tax_filings",
+                   "desc": "Retrieve the complete set of tax filings currently being tracked across all clients. This includes filings at every stage, from initial document gathering through final amendment."},
+    "get_child": {"name": "get_tax_filing",
+                  "desc": "Look up a single tax filing using its unique identifier. Returns the full filing record exactly as it is currently stored."},
+    "list_parent": {"name": "list_clients",
+                    "desc": "Retrieve the complete roster of clients the practice currently prepares filings for. This is the full client directory used across all engagements."},
+    "get_parent": {"name": "get_client",
+                   "desc": "Look up a single client record using its unique identifier. Returns the client's full profile as currently stored."},
+    "delete_child": {"name": "delete_tax_filing",
+                     "desc": "Permanently erase a tax filing from the system, removing it from every report and summary. This action cannot be reversed once it has been performed.",
+                     "verbs": ["delete {obj}", "erase {obj} from the record"]},
+    "set_enum": {"name": "set_tax_filing_status",
+                 "desc": "Update the preparation status of a tax filing to reflect where it stands in the workflow. Valid statuses are gathering, prepared, filed, and amended.",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"gathering": "back to gathering",
+                                   "prepared": "as prepared",
+                                   "filed": "as filed",
+                                   "amended": "as amended"}},
+    "set_bool": {"name": "flag_audit_risk",
+                 "bool_index": 1, "value": true,
+                 "desc": "Mark a tax filing as carrying elevated audit risk based on the figures it contains. This is typically used after a preparer reviews unusual deductions or discrepancies.",
+                 "verbs": ["flag {obj} for audit risk", "mark {obj} as audit risk"]},
+    "set_ref": {"name": "reassign_tax_filing",
+                "desc": "Move a tax filing onto a different client's account, correcting cases where the filing was created under the wrong entity. Use this only to fix misattributed filings.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notify_client",
+             "desc": "Send a portal notification to a client regarding their tax filings. Use this to communicate status changes or requests for missing documents.",
+             "child_verbs": ["notify the client behind {obj}",
+                             "send the client behind {obj} a portal message"],
+             "direct_verbs": ["notify {name}", "send {name} a portal message"],
+             "pair_verbs": ["notify", "message"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the tax filing with the soonest due date",
+    "ord_phrase": "the tax filing with the {ord} soonest due date",
+    "pre_filter": {"bool_index": 0, "value": true, "phrase": "on extension"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the dead filings.",
+                 "Purge whatever never went anywhere."],
+     "hint": "delete gathering filings already past their due date",
+     "clauses": [{"enum_value": "gathering"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Flag the risky backlog.",
+                 "Something about the past-due prepared ones needs marking."],
+     "hint": "flag as audit risk the prepared filings already past their due date",
+     "clauses": [{"enum_value": "prepared"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your tax filing needs attention.",
+                   "Please review your latest tax filing.",
+                   "A note about your tax filing.",
+                   "Your tax filing may need additional documentation."],
+    "agg_msgs": ["You're currently at the top of this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

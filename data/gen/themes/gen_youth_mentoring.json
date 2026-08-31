@@ -1,0 +1,103 @@
+{
+  "domain": "youth_mentoring",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "mentor",
+    "noun": ["mentor", "mentors"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "match",
+    "noun": ["match", "matches"],
+    "ref_field": "mentor",
+    "ref_phrase": "paired with {name}",
+    "name_field": "focus_area",
+    "titles": ["Academic tutoring support", "Career exploration guidance",
+               "Social skills coaching", "Athletic mentorship",
+               "Creative arts mentorship", "College application coaching",
+               "Conflict resolution support", "Financial literacy coaching",
+               "Health and wellness guidance", "Leadership development",
+               "Technology and coding mentorship", "Family reunification support"],
+    "bools": [
+      {"field": "background_checked", "true_phrase": "cleared",
+       "false_phrase": "pending clearance", "placement": "pre"},
+      {"field": "needs_new_mentor", "true_phrase": "needs reassignment",
+       "false_phrase": "stable", "placement": "post"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["proposed", "active", "paused", "closed"],
+      "phrases": {"proposed": ["proposed", "pre"],
+                  "active": ["active", "pre"],
+                  "paused": ["paused", "pre"],
+                  "closed": ["closed", "pre"]}
+    },
+    "times": [
+      {"field": "last_meeting", "kind": "time_now",
+       "lt_phrase": ["overdue for contact", "post"],
+       "gt_phrase": ["recently met", "post"]},
+      {"field": "started_at", "kind": "time_cutoff",
+       "phrase": "started more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_matches",
+                   "desc": "Retrieves every mentor-youth match currently tracked by the program, whether it is proposed, active, paused, or closed. Use this when you need a full picture of the caseload rather than a single match."},
+    "get_child": {"name": "get_match",
+                  "desc": "Retrieves the full detail for a single mentor-youth match using its id. This is the right call once you already know which match you need to inspect."},
+    "list_parent": {"name": "list_mentors",
+                    "desc": "Retrieves the full roster of mentors enrolled in the program, including those not currently paired with a youth. Use this to look up a mentor before creating or referencing a match."},
+    "get_parent": {"name": "get_mentor",
+                   "desc": "Retrieves the full detail for a single mentor using their id. This is useful whenever you already have a mentor id and need their record."},
+    "delete_child": {"name": "delete_match",
+                     "desc": "Permanently deletes a mentor-youth match record from the program's system, and the action cannot be reversed once it runs. This should only be used for records created in error, not for matches that simply ended.",
+                     "verbs": ["delete {obj}", "erase {obj} from the caseload"]},
+    "set_enum": {"name": "set_match_phase",
+                 "desc": "Changes a match's phase to proposed, active, paused, or closed so the caseload reflects where the pairing currently stands. Use this whenever a match moves forward, pauses, or wraps up.",
+                 "verbs": ["mark {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"proposed": "back to proposed",
+                                   "active": "as active",
+                                   "paused": "as paused",
+                                   "closed": "as closed"}},
+    "set_bool": {"name": "flag_needs_new_mentor",
+                 "bool_index": 1, "value": true,
+                 "desc": "Flags a match as needing reassignment to a new mentor, which coordinators use when a pairing is not working out. This should be reserved for matches that genuinely need to be restarted.",
+                 "verbs": ["flag {obj} as needing reassignment", "mark {obj} for reassignment"]},
+    "set_ref": {"name": "reassign_mentor",
+                "desc": "Moves a match onto a different mentor's caseload, which is useful when a pairing needs to be handled by someone else entirely. This does not change anything else recorded about the match.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_mentor",
+             "desc": "Sends an email to a mentor's address on file, letting them know about a status change or asking them to check in with their match. This is the main way coordinators reach mentors outside of scheduled meetings.",
+             "child_verbs": ["email the mentor on {obj}", "follow up with the mentor on {obj}"],
+             "direct_verbs": ["email {name}", "send {name} a note"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the match overdue for contact the longest",
+    "ord_phrase": "the match with the {ord} longest gap since last meeting",
+    "pre_filter": {"enum_value": "active", "phrase": "active"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the stale matches.",
+                 "Some of these matches have gone quiet, deal with it."],
+     "hint": "flag active matches overdue for contact as needing reassignment",
+     "clauses": [{"enum_value": "active"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your match needs an update from you.",
+                   "Please review your current match.",
+                   "A note about your mentoring match.",
+                   "Your match may need attention."],
+    "agg_msgs": ["You are at the top of this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested action could not be completed.",
+                  "That operation did not go through.",
+                  "The last change was not saved."]
+  }
+}

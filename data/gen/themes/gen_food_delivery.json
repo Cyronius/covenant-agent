@@ -1,0 +1,109 @@
+{
+  "domain": "food_delivery",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "driver",
+    "noun": ["driver", "drivers"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "delivery_run",
+    "noun": ["delivery run", "delivery runs"],
+    "ref_field": "driver",
+    "ref_phrase": "for {name}",
+    "name_field": "order_type",
+    "titles": ["Family combo order", "Lunch special order", "Catering order",
+               "Grocery order", "Pharmacy order", "Late-night order",
+               "Breakfast order", "Bulk office order", "Single-item order",
+               "Weekend brunch order", "Holiday order", "Standing weekly order",
+               "Bundled multi-stop order", "Rush order"],
+    "bools": [
+      {"field": "contactless", "true_phrase": "contactless",
+       "false_phrase": "hand-off required", "placement": "pre"},
+      {"field": "tip_prepaid", "true_phrase": "tip prepaid",
+       "false_phrase": "tip pending", "placement": "post"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["assigned", "picked_up", "in_transit", "delivered"],
+      "phrases": {"assigned": ["assigned", "pre"],
+                  "picked_up": ["picked up", "pre"],
+                  "in_transit": ["in transit", "pre"],
+                  "delivered": ["delivered", "pre"]}
+    },
+    "times": [
+      {"field": "eta", "kind": "time_now",
+       "lt_phrase": ["already past its eta", "post"],
+       "gt_phrase": ["still within its eta", "post"]},
+      {"field": "assigned_at", "kind": "time_cutoff",
+       "phrase": "assigned more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listDeliveryRuns",
+                   "desc": "List every delivery run currently on the board."},
+    "get_child": {"name": "getDeliveryRun",
+                  "desc": "Fetch one delivery run by its id."},
+    "list_parent": {"name": "listDrivers",
+                    "desc": "List all drivers registered with the service."},
+    "get_parent": {"name": "getDriver",
+                   "desc": "Fetch one driver by id."},
+    "delete_child": {"name": "cancelRun",
+                     "desc": "Permanently remove a delivery run from the board. Not reversible.",
+                     "verbs": ["cancel {obj}", "scrub {obj} from the board"]},
+    "set_enum": {"name": "setRunStage",
+                 "desc": "Change a delivery run's stage to assigned, picked up, in transit, or delivered.",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"assigned": "back to assigned",
+                                   "picked_up": "to picked up",
+                                   "in_transit": "to in transit",
+                                   "delivered": "to delivered"}},
+    "set_bool": {"name": "flagContactless",
+                 "bool_index": 0, "value": true,
+                 "desc": "Mark a delivery run as contactless.",
+                 "verbs": ["flag {obj} as contactless", "mark {obj} contactless"]},
+    "set_ref": {"name": "reassignDriver",
+                "desc": "Move a delivery run to a different driver.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "textDriver",
+             "desc": "Send a text message to a driver.",
+             "child_verbs": ["text the driver on {obj}",
+                             "give the driver on {obj} a heads-up"],
+             "direct_verbs": ["text {name}", "send {name} a text"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the delivery run with the earliest eta",
+    "ord_phrase": "the delivery run with the {ord} earliest eta",
+    "pre_filter": {"enum_value": "in_transit", "phrase": "in transit"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the board.",
+                 "The delivery board is a mess, deal with it."],
+     "hint": "flag in-transit runs already past their eta as contactless",
+     "clauses": [{"enum_value": "in_transit"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"},
+    {"request": ["Clear out the stale assignments.",
+                 "Get rid of runs nobody picked up."],
+     "hint": "cancel assigned runs assigned more than 3 days ago",
+     "clauses": [{"enum_value": "assigned"},
+                 {"time_index": 1, "days": 3}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your delivery run needs attention.",
+                   "Please check your delivery run.",
+                   "A note about your delivery run.",
+                   "Your delivery run may need rerouting."],
+    "agg_msgs": ["You're at the top of this run list.",
+                 "This one's flagged straight to you.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested change to the run failed.",
+                  "That update to the run didn't go through.",
+                  "The last edit to this run record failed to save."]
+  }
+}

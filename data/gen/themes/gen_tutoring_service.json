@@ -1,0 +1,93 @@
+{
+  "domain": "tutoring_service",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "session",
+    "noun": ["session", "sessions"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "subject",
+    "titles": ["Algebra II tutoring", "SAT math prep", "Essay writing workshop",
+               "Chemistry homework help", "Calculus AB review",
+               "Reading comprehension boost", "Spanish conversation practice",
+               "Physics problem sets", "ACT science prep",
+               "Geometry proofs review", "Statistics tutoring",
+               "Study skills coaching", "Middle school pre-algebra",
+               "AP Biology review"],
+    "bools": [
+      {"field": "needs_makeup", "true_phrase": "needing a makeup",
+       "false_phrase": "not needing a makeup", "placement": "post"}
+    ],
+    "enum": {
+      "field": "state", "values": ["scheduled", "held", "cancelled"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "held": ["held", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "slot", "kind": "time_now",
+       "lt_phrase": ["already happened", "post"],
+       "gt_phrase": ["still to come", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_sessions", "desc": "list all tutoring sesions on file"},
+    "get_child": {"name": "get_session", "desc": "grab one session by id"},
+    "list_parent": {"name": "list_clients", "desc": "list all clients we tutor"},
+    "get_parent": {"name": "get_client", "desc": "grab one client record"},
+    "delete_child": {"name": "nuke_session",
+                     "desc": "wipes a session rec for good, cant undo it",
+                     "verbs": ["nuke {obj}", "delete {obj} for good"]},
+    "set_enum": {"name": "set_session_state",
+                 "desc": "chnage a sessions state (scheduled/held/cancelled)",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "held": "as held",
+                                   "cancelled": "as cancelled"}},
+    "set_bool": {"name": "flag_makeup",
+                 "bool_index": 0, "value": true,
+                 "desc": "flags a session as needing a makeup",
+                 "verbs": ["flag {obj} needs a makeup", "mark {obj} needing a makeup"]},
+    "set_ref": {"name": "move_client",
+                "desc": "moves a session to a diff client",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_client",
+             "desc": "fires off an email to a client",
+             "child_verbs": ["email the client in {obj}", "ping the client on {obj}"],
+             "direct_verbs": ["email {name}", "send {name} an email"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the session with the earliest slot",
+    "ord_phrase": "the session with the {ord} earliest slot",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["figure out the sessions that got missed", "deal with the sessions that slipped through"],
+     "hint": "flag scheduled sessions already past their slot as needing a makeup",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["your session needs attention",
+                   "please review your upcoming session",
+                   "a note about your session",
+                   "your session might need rescheduling"],
+    "agg_msgs": ["you currently top this list",
+                 "flagging this to you directly",
+                 "you lead this count right now"],
+    "fail_msgs": ["the requested operation failed",
+                  "that action couldnt be completed",
+                  "the last operation didnt go through"]
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "domain": "freight_forwarding",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "shipper",
+    "noun": ["shipper", "shippers"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "shipment",
+    "noun": ["shipment", "shipments"],
+    "ref_field": "shipper",
+    "ref_phrase": "for {name}",
+    "name_field": "cargo",
+    "titles": ["Palletized electronics", "Frozen seafood", "Auto parts container",
+               "Bulk grain", "Pharmaceutical cold chain", "Textile rolls",
+               "Machinery parts", "Furniture crate", "Chemical drums",
+               "Retail apparel", "Steel coil", "Produce reefer load"],
+    "bools": [
+      {"field": "hazmat", "true_phrase": "hazmat",
+       "false_phrase": "non-hazmat", "placement": "pre"},
+      {"field": "customs_hold", "true_phrase": "held at customs",
+       "false_phrase": "cleared customs", "placement": "post"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["booked", "in_transit", "customs", "delivered"],
+      "phrases": {"booked": ["booked", "pre"],
+                  "in_transit": ["in transit", "pre"],
+                  "customs": ["held in customs", "post"],
+                  "delivered": ["delivered", "pre"]}
+    },
+    "times": [
+      {"field": "departure", "kind": "time_now",
+       "lt_phrase": ["already departed", "post"],
+       "gt_phrase": ["not yet departed", "post"]},
+      {"field": "booked_at", "kind": "time_cutoff",
+       "phrase": "booked more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_shipments",
+                   "desc": "List every shipment in the system."},
+    "get_child": {"name": "get_shipment",
+                  "desc": "Fetch one shipment by its id."},
+    "list_parent": {"name": "list_shippers",
+                    "desc": "List all freight forwarding shippers."},
+    "get_parent": {"name": "get_shipper",
+                   "desc": "Fetch one shipper by id."},
+    "delete_child": {"name": "cancel_shipment",
+                     "desc": "Permanently remove a shipment record. Not reversible.",
+                     "verbs": ["cancel {obj}", "scrap {obj} from the manifest"]},
+    "set_enum": {"name": "set_shipment_stage",
+                 "desc": "Change a shipment's stage (booked, in transit, customs, or delivered).",
+                 "verbs": ["mark {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"booked": "back to booked",
+                                   "in_transit": "as in transit",
+                                   "customs": "as held in customs",
+                                   "delivered": "as delivered"}},
+    "set_bool": {"name": "flag_hazmat",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a shipment as hazmat cargo.",
+                 "verbs": ["flag {obj} as hazmat", "mark {obj} hazmat"]},
+    "set_ref": {"name": "rebill_shipper",
+                "desc": "Move a shipment to a different shipper's account.",
+                "verbs": ["move {obj} {to_name}", "rebill {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_shipper",
+             "desc": "Send an email update to a freight shipper.",
+             "child_verbs": ["email the shipper of {obj}",
+                             "send the shipper of {obj} an update"],
+             "direct_verbs": ["email {name}", "send {name} an update"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the shipment with the earliest departure",
+    "ord_phrase": "the shipment with the {ord} earliest departure",
+    "pre_filter": {"enum_value": "booked", "phrase": "booked"}
+  },
+  "ambiguous": [
+    {"request": ["Handle the hazmat backlog.",
+                 "Sort out shipments that need a hazmat flag."],
+     "hint": "flag in-transit shipments as hazmat",
+     "clauses": [{"enum_value": "in_transit"},
+                 {"bool_index": 0, "value": false}],
+     "action": "set_bool"},
+    {"request": ["Clear out the stale bookings.",
+                 "The booking queue is a mess, deal with it."],
+     "hint": "cancel booked shipments that have already departed",
+     "clauses": [{"enum_value": "booked"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your shipment needs attention.",
+                   "Please review your shipment status.",
+                   "A note about your shipment.",
+                   "Your shipment may be delayed."],
+    "agg_msgs": ["You have the most shipments on this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

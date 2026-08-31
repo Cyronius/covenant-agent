@@ -31,9 +31,14 @@ from harness.context import build_context, serialize_context  # noqa: E402
 from harness.taskbuild import ReferenceError, build_task  # noqa: E402
 from runtime.worlds import get_world  # noqa: E402
 
-GENERATOR_VERSION = "0.1.0"
+GENERATOR_VERSION = "0.2.0"
 RESERVED = json.loads(
     (ROOT / "data" / "holdout" / "reserved.json").read_text())
+_DOMAIN_SPLIT = ROOT / "data" / "holdout" / "reserved_domains.json"
+if _DOMAIN_SPLIT.exists():
+    RESERVED["worlds"] = sorted(
+        set(RESERVED["worlds"])
+        | set(json.loads(_DOMAIN_SPLIT.read_text())["reserved_eval_domains"]))
 
 
 def gen_one(level: int, seed: int, holdout: bool, teacher: str) -> dict:
@@ -138,7 +143,14 @@ def main():
     ap.add_argument("--drop-noops", action="store_true",
                     help="resample tasks whose reference has mutating "
                          "effects but leaves the state unchanged")
+    ap.add_argument("--domains", default=None, metavar="DIR",
+                    help="register generated domain themes from DIR before "
+                         "generating (S0 multi-domain worldgen)")
     args = ap.parse_args()
+    if args.domains:
+        from data.gen.domains import register_domains
+        registered = register_domains(args.domains)
+        print(f"registered {len(registered)} generated domains")
     if not args.level and not args.levels:
         ap.error("one of --level / --levels is required")
 

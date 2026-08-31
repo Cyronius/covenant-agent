@@ -1,0 +1,105 @@
+{
+  "domain": "comic_publisher",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "creator",
+    "noun": ["creator", "creators"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "issue",
+    "noun": ["issue", "issues"],
+    "ref_field": "creator",
+    "ref_phrase": "by {name}",
+    "name_field": "title",
+    "titles": ["Iron Meridian #1", "The Hollow Choir #4", "Nightglass Vol. 2",
+               "Static Halo #7", "The Last Panel #1", "Copperline #3",
+               "Ferrous Saints #12", "The Quiet Ward #2", "Skybound Debt #5",
+               "Wraith Season #1", "The Ink Covenant #8", "Lowtide City #6"],
+    "bools": [
+      {"field": "lettered", "true_phrase": "lettered",
+       "false_phrase": "unlettered", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["scripted", "penciled", "inked", "colored"],
+      "phrases": {"scripted": ["scripted", "pre"],
+                  "penciled": ["penciled", "pre"],
+                  "inked": ["inked", "pre"],
+                  "colored": ["colored", "pre"]}
+    },
+    "times": [
+      {"field": "ship_date", "kind": "time_now",
+       "lt_phrase": ["already shipped", "post"],
+       "gt_phrase": ["not yet shipped", "post"]},
+      {"field": "scripted_on", "kind": "time_cutoff",
+       "phrase": "scripted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lsIssues",
+                   "desc": "List every issue in the production pipeline."},
+    "get_child": {"name": "getIssue",
+                  "desc": "Fetch one issue by its id."},
+    "list_parent": {"name": "lsCreators",
+                    "desc": "List all creators under contract with the publisher."},
+    "get_parent": {"name": "getCreator",
+                   "desc": "Fetch one creator by id."},
+    "delete_child": {"name": "dropIssue",
+                     "desc": "Drop an issue from the pipeline entirely.",
+                     "verbs": ["drop {obj}", "pull {obj} from the pipeline"]},
+    "set_enum": {"name": "setPhase",
+                 "desc": "Change an issue's production phase.",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scripted": "back to scripted",
+                                   "penciled": "to penciled",
+                                   "inked": "to inked",
+                                   "colored": "to colored"}},
+    "set_bool": {"name": "flagLettered",
+                 "bool_index": 0, "value": true,
+                 "desc": "Mark an issue as lettered.",
+                 "verbs": ["mark {obj} lettered", "flag {obj} as lettered"]},
+    "set_ref": {"name": "moveCreator",
+                "desc": "Move an issue to a different creator's slate.",
+                "verbs": ["move {obj} {to_name}", "hand {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "pingCreator",
+             "desc": "Message the creator attached to an issue.",
+             "child_verbs": ["message the creator on {obj}",
+                             "ping the creator behind {obj}"],
+             "direct_verbs": ["message {name}", "ping {name}"],
+             "pair_verbs": ["message", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the issue with the earliest ship date",
+    "ord_phrase": "the issue with the {ord} earliest ship date",
+    "pre_filter": {"enum_value": "inked", "phrase": "inked"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the stalled scripts.",
+                 "The pipeline's backed up, clean it out."],
+     "hint": "drop scripted issues scripted more than 90 days ago",
+     "clauses": [{"enum_value": "scripted"},
+                 {"time_index": 1, "days": 90}],
+     "action": "delete_child"},
+    {"request": ["Handle the lettering backlog.",
+                 "Deal with the unlettered issues."],
+     "hint": "flag colored issues as lettered",
+     "clauses": [{"enum_value": "colored"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your issue needs a phase check.",
+                   "Editorial has a note on your issue.",
+                   "There's an update on your issue's schedule.",
+                   "Your issue may need a ship date change."],
+    "agg_msgs": ["You have the most issues in the pipeline.",
+                 "You're leading the slate in active issues.",
+                 "You hold the earliest ship date on the board."],
+    "fail_msgs": ["The issue update did not go through.",
+                  "That request was rejected by the production system.",
+                  "The change could not be saved."]
+  }
+}

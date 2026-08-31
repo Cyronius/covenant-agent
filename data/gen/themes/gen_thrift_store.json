@@ -1,0 +1,111 @@
+{
+  "domain": "thrift_store",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "donor",
+    "noun": ["donor", "donors"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "donation",
+    "noun": ["donation", "donations"],
+    "ref_field": "donor",
+    "ref_phrase": "from {name}",
+    "name_field": "item",
+    "titles": ["Winter coat bundle", "Vintage vinyl records",
+               "Children's board games", "Ceramic dinnerware set",
+               "Used bicycle", "Wooden bookshelf", "Designer handbag",
+               "Camping tent", "Wall art prints", "Kitchen appliance lot",
+               "Vintage typewriter", "Baby clothes lot"],
+    "bools": [
+      {"field": "needs_cleaning", "true_phrase": "needs cleaning",
+       "false_phrase": "sale-ready", "placement": "post"},
+      {"field": "tax_receipt_issued", "true_phrase": "receipt issued",
+       "false_phrase": "no receipt yet", "placement": "post"},
+      {"field": "damaged", "true_phrase": "damaged",
+       "false_phrase": "undamaged", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["received", "sorted", "priced", "shelved"],
+      "phrases": {"received": ["received", "pre"],
+                  "sorted": ["sorted", "pre"],
+                  "priced": ["priced", "pre"],
+                  "shelved": ["shelved", "pre"]}
+    },
+    "times": [
+      {"field": "pickup_date", "kind": "time_now",
+       "lt_phrase": ["already past", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "received_on", "kind": "time_cutoff",
+       "phrase": "received more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_donations",
+                   "desc": "This tool returns every donation currently logged in the thrift store's intake system. It is useful for getting a full view of what has come in and where each item stands."},
+    "get_child": {"name": "get_donation",
+                  "desc": "This tool fetches a single donation record using its unique identifier. Use it when you already know which donation you need details on."},
+    "list_parent": {"name": "list_donors",
+                    "desc": "This tool lists every donor who has given items to the thrift store. It provides a complete roster of the donor community."},
+    "get_parent": {"name": "get_donor",
+                   "desc": "This tool retrieves the record for one donor given its id. It returns the donor's name and any notes on file."},
+    "delete_child": {"name": "delete_donation",
+                     "desc": "This tool permanently removes a donation record from the system, and the removal cannot be undone. It should be used only when an item was logged in error or has been discarded.",
+                     "verbs": ["delete {obj}", "discard {obj}"]},
+    "set_enum": {"name": "set_donation_state",
+                 "desc": "This tool moves a donation between received, sorted, priced, and shelved states. It is the primary way to track an item's progress through intake processing.",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"received": "back to received",
+                                   "sorted": "to sorted",
+                                   "priced": "to priced",
+                                   "shelved": "to shelved"}},
+    "set_bool": {"name": "flag_damaged",
+                 "bool_index": 2, "value": true,
+                 "desc": "This tool marks a donation as damaged and unsuitable for the sales floor as-is. It is typically used during initial sorting when an item's condition is assessed.",
+                 "verbs": ["flag {obj} as damaged", "mark {obj} damaged"]},
+    "set_ref": {"name": "reassign_donor",
+                "desc": "This tool reattributes a donation from one donor to another. Use it when an item was logged under the wrong donor's name.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "message_donor",
+             "desc": "This tool sends a message to a donor regarding one of their donations. It is the standard way to follow up about drop-off logistics or thank a donor directly.",
+             "child_verbs": ["message the donor for {obj}",
+                             "notify the donor for {obj}"],
+             "direct_verbs": ["message {name}", "notify {name}"],
+             "pair_verbs": ["message", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the donation with the earliest pickup date",
+    "ord_phrase": "the donation with the {ord} earliest pickup date",
+    "pre_filter": {"enum_value": "received", "phrase": "received"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the stale intake pile.",
+                 "The received bin needs sorting."],
+     "hint": "delete received donations whose pickup date already passed",
+     "clauses": [{"enum_value": "received"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Flag the questionable ones.",
+                 "Sort out what's been sitting too long."],
+     "hint": "flag sorted donations received more than 90 days ago as damaged",
+     "clauses": [{"enum_value": "sorted"},
+                 {"time_index": 1, "days": 90}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your donation needs a quick look.",
+                   "Please check on your recent donation.",
+                   "A note about your donated item.",
+                   "Your donation may need follow-up."],
+    "agg_msgs": ["You have given the most items recently.",
+                 "Flagging this to you directly.",
+                 "You lead this donor's item count."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That update could not be completed.",
+                  "The last change did not go through."]
+  }
+}

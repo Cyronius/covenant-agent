@@ -1,0 +1,82 @@
+{
+  "domain": "dns_mgmt",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "zone",
+    "noun": ["zone", "zones"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "record",
+    "noun": ["record", "records"],
+    "ref_field": "zone",
+    "ref_phrase": "in {name}",
+    "name_field": null,
+    "titles": [],
+    "bools": [
+      {"field": "proxied", "true_phrase": "proxied", "false_phrase": "direct", "placement": "pre"},
+      {"field": "dnssec_signed", "true_phrase": "DNSSEC-signed", "false_phrase": "unsigned", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status",
+      "values": ["active", "pending", "propagating", "disabled"],
+      "phrases": {"active": ["active", "pre"],
+                  "pending": ["pending", "pre"],
+                  "propagating": ["propagating", "pre"],
+                  "disabled": ["disabled", "pre"]}
+    },
+    "times": [
+      {"field": "updated", "kind": "time_now",
+       "lt_phrase": ["stale", "post"],
+       "gt_phrase": ["just changed", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listRecords", "desc": "list dns records in a zone"},
+    "get_child": {"name": "getRecord", "desc": "fetch one record"},
+    "list_parent": {"name": "listZones", "desc": "list all zones"},
+    "get_parent": {"name": "getZone", "desc": "fetch one zone"},
+    "delete_child": {"name": "deleteRecord", "desc": "del record, no undo",
+                     "verbs": ["delete {obj}", "remove {obj} from the zone"]},
+    "set_enum": {"name": "setRecordStatus", "desc": "change record status",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"active": "to active", "pending": "to pending",
+                                   "propagating": "to propagating", "disabled": "to disabled"}},
+    "set_bool": {"name": "setRecordProxied", "bool_index": 0, "value": true,
+                 "desc": "toggle proxy on",
+                 "verbs": ["proxy {obj}", "route {obj} through the proxy"]},
+    "set_ref": {"name": "moveRecordZone", "desc": "move record to another zone",
+                "verbs": ["move {obj} {to_name}", "re-zone {obj} {to_name}"],
+                "to_template": "into {name}"},
+    "send": {"name": "pingZoneContact", "desc": "email the zone contact",
+             "child_verbs": ["email the contact for {obj}", "notify the contact for {obj}"],
+             "direct_verbs": ["email {name}", "notify {name}"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "DESC",
+    "sup_phrase": "the record with the most recent update",
+    "ord_phrase": "the record with the {ord} most recent update",
+    "pre_filter": {"enum_value": "active", "phrase": "active"}
+  },
+  "ambiguous": [
+    {"request": ["clean up dead records", "this zone's a mess, sort it"],
+     "hint": "delete disabled records that are stale",
+     "clauses": [{"enum_value": "disabled"}, {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["lock these down", "secure the zone already"],
+     "hint": "flag active stale records as DNSSEC-signed",
+     "clauses": [{"enum_value": "active"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["This record needs a look.", "Check on this DNS record.",
+                   "Heads up about this record.", "This record may need updating."],
+    "agg_msgs": ["You have the most records in this zone.",
+                 "Flagging this to you directly.", "You lead this zone's record count."],
+    "fail_msgs": ["The requested operation failed.", "That change did not go through.",
+                  "The last operation was not applied."]
+  }
+}

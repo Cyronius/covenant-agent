@@ -1,0 +1,86 @@
+{
+  "domain": "game_studio",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "tester",
+    "noun": ["tester", "testers"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "session",
+    "noun": ["session", "sessions"],
+    "ref_field": "tester",
+    "ref_phrase": "with {name}",
+    "name_field": "focus_notes",
+    "titles": ["Combat balance pass", "Tutorial flow check", "Boss fight difficulty",
+               "Loot drop rates", "UI readability pass", "Controller input lag check",
+               "Multiplayer matchmaking test", "Level 3 pacing review",
+               "Inventory usability check", "Audio mix feedback",
+               "Save/load stability check", "Performance on low-end hardware"],
+    "bools": [
+      {"field": "crash_reported", "true_phrase": "crashed", "false_phrase": "no crash", "placement": "pre"},
+      {"field": "remote_session", "true_phrase": "remote", "false_phrase": "in-studio", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state",
+      "values": ["scheduled", "in_progress", "completed", "no_show"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "in_progress": ["in progress", "pre"],
+                  "completed": ["completed", "pre"],
+                  "no_show": ["no-show", "pre"]}
+    },
+    "times": [
+      {"field": "slot", "kind": "time_now",
+       "lt_phrase": ["already happened", "post"],
+       "gt_phrase": ["still upcoming", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "ls_sess", "desc": "lists playtest sessions"},
+    "get_child": {"name": "get_sess", "desc": "gets a session by id"},
+    "list_parent": {"name": "ls_testers", "desc": "lists testers"},
+    "get_parent": {"name": "get_tester", "desc": "gets a tester by id"},
+    "delete_child": {"name": "rm_sess", "desc": "deletes a sesion, no undo",
+                     "verbs": ["delete {obj}", "wipe {obj}"]},
+    "set_enum": {"name": "set_sess_state", "desc": "changes session state",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "to scheduled", "in_progress": "to in progress",
+                                   "completed": "to completed", "no_show": "to no-show"}},
+    "set_bool": {"name": "flag_crash", "bool_index": 0, "value": true,
+                 "desc": "marks a session as crashed",
+                 "verbs": ["flag {obj} as crashed", "mark {obj} crashed"]},
+    "set_ref": {"name": "mv_sess", "desc": "moves a session to another tester",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "ping_tester", "desc": "pings a tester about a session",
+             "child_verbs": ["ping the tester on {obj}", "notify the tester on {obj}"],
+             "direct_verbs": ["ping {name}", "notify {name}"],
+             "pair_verbs": ["ping", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the session with the earliest slot",
+    "ord_phrase": "the session with the {ord} earliest slot",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["flag whatever broke", "find the sessions that crashed and mark em"],
+     "hint": "flag completed sessions already past their slot as crashed",
+     "clauses": [{"enum_value": "completed"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"},
+    {"request": ["clear out the no shows", "get rid of testers who never showed"],
+     "hint": "delete no_show sessions already past their slot",
+     "clauses": [{"enum_value": "no_show"}, {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["this session needs a look", "check on this session",
+                   "heads up about this session", "this session might need rescheduling"],
+    "agg_msgs": ["you got the most sessions with this tester", "flagging this to you directly",
+                 "you lead this tester's session count"],
+    "fail_msgs": ["the requested operation failed", "that change didnt go through",
+                  "last operation wasnt applied"]
+  }
+}

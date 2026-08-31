@@ -1,0 +1,108 @@
+{
+  "domain": "apiary",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "beekeeper",
+    "noun": ["beekeeper", "beekeepers"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "hive_inspection",
+    "noun": ["hive inspection", "hive inspections"],
+    "ref_field": "beekeeper",
+    "ref_phrase": "for {name}",
+    "name_field": "hive_name",
+    "titles": ["Hive 1 - Meadow yard", "Hive 2 - Meadow yard",
+               "Hive 3 - Orchard yard", "Hive 4 - Orchard yard",
+               "Hive 5 - Clover field", "Hive 6 - Clover field",
+               "Hive 7 - Backyard", "Hive 8 - Backyard",
+               "Hive 9 - Rooftop", "Hive 10 - Rooftop",
+               "Nuc colony A", "Nuc colony B",
+               "Observation hive", "Overwinter hive"],
+    "bools": [
+      {"field": "queen_seen", "true_phrase": "queen spotted",
+       "false_phrase": "queen not seen", "placement": "post"},
+      {"field": "treated", "true_phrase": "mite-treated",
+       "false_phrase": "untreated", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["healthy", "weak", "queenless", "swarmed"],
+      "phrases": {"healthy": ["healthy", "pre"],
+                  "weak": ["weak", "pre"],
+                  "queenless": ["queenless", "pre"],
+                  "swarmed": ["swarmed", "pre"]}
+    },
+    "times": [
+      {"field": "checked_on", "kind": "time_cutoff",
+       "phrase": "inspected more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listInspections",
+                   "desc": "list all hive inspections, lowkey the whole log"},
+    "get_child": {"name": "getInspection",
+                  "desc": "grab one inspection by id"},
+    "list_parent": {"name": "listBeekeepers",
+                    "desc": "list all beekeepers in the system"},
+    "get_parent": {"name": "getBeekeeper",
+                   "desc": "grab one beekeeper by id"},
+    "delete_child": {"name": "wipeInspection",
+                     "desc": "delete an inspection rec, no undo",
+                     "verbs": ["wipe {obj}", "toss {obj} out"]},
+    "set_enum": {"name": "setHiveState",
+                 "desc": "change hive state (healthy/weak/queenless/swarmed)",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"healthy": "back to healthy",
+                                   "weak": "as weak",
+                                   "queenless": "as queenless",
+                                   "swarmed": "as swarmed"}},
+    "set_bool": {"name": "flagQueenSeen",
+                 "bool_index": 0, "value": true,
+                 "desc": "mark queen as spotted on an inspection",
+                 "verbs": ["flag {obj} queen spotted", "mark {obj} queen seen"]},
+    "set_ref": {"name": "moveBeekeeper",
+                "desc": "move an inspection to a diff beekeeper",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "pingBeekeeper",
+             "desc": "shoot a beekeeper a msg",
+             "child_verbs": ["ping the beekeeper on {obj}",
+                             "give the beekeeper on {obj} a heads-up"],
+             "direct_verbs": ["ping {name}", "message {name}"],
+             "pair_verbs": ["ping", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the hive inspection with the oldest check date",
+    "ord_phrase": "the hive inspection with the {ord} oldest check date",
+    "pre_filter": {"enum_value": "healthy", "phrase": "healthy"}
+  },
+  "ambiguous": [
+    {"request": ["sort out the hive log",
+                 "apiary log's a mess, deal w it"],
+     "hint": "flag weak hives not inspected in over 30 days for a queen check",
+     "clauses": [{"enum_value": "weak"},
+                 {"time_index": 0, "days": 30}],
+     "action": "set_bool"},
+    {"request": ["clear out old swarmed records",
+                 "get rid of stale swarmed hive logs"],
+     "hint": "wipe swarmed hive inspections not checked in over 90 days",
+     "clauses": [{"enum_value": "swarmed"},
+                 {"time_index": 0, "days": 90}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["hive needs a look",
+                   "check on this hive soon",
+                   "hive update needed",
+                   "this hive might need attention"],
+    "agg_msgs": ["ur top of this hive list",
+                 "flagging this one to u",
+                 "u lead this count rn"],
+    "fail_msgs": ["op failed",
+                  "that didnt save",
+                  "update failed, try again"]
+  }
+}

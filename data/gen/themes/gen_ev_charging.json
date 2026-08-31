@@ -1,0 +1,98 @@
+{
+  "domain": "ev_charging",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "fleet",
+    "noun": ["fleet", "fleets"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "session",
+    "noun": ["session", "sessions"],
+    "ref_field": "fleet",
+    "ref_phrase": "for {name}",
+    "name_field": null,
+    "titles": [],
+    "bools": [
+      {"field": "fault", "true_phrase": "faulted",
+       "false_phrase": "nominal", "placement": "pre"},
+      {"field": "fast_charge", "true_phrase": "DC fast charging",
+       "false_phrase": "Level 2 charging", "placement": "post"}
+    ],
+    "enum": {
+      "field": "state", "values": ["queued", "charging", "completed", "faulted"],
+      "phrases": {"queued": ["queued", "pre"],
+                  "charging": ["charging", "pre"],
+                  "completed": ["completed", "pre"],
+                  "faulted": ["faulted", "pre"]}
+    },
+    "times": [
+      {"field": "started", "kind": "time_now",
+       "lt_phrase": ["already started", "post"],
+       "gt_phrase": ["not yet started", "post"]},
+      {"field": "plugged_in", "kind": "time_cutoff",
+       "phrase": "plugged in more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_sessions",
+                   "desc": "This tool retrieves every charging session currently tracked by the network. It returns the full list regardless of station or fleet."},
+    "get_child": {"name": "get_session",
+                  "desc": "This tool fetches a single charging session using its unique identifier. It returns the complete session record for that id."},
+    "list_parent": {"name": "list_fleets",
+                    "desc": "This tool lists every fleet account registered on the charging network. It includes both individual and business fleet accounts."},
+    "get_parent": {"name": "get_fleet",
+                   "desc": "This tool fetches a single fleet account using its unique identifier. It returns the full account record."},
+    "delete_child": {"name": "purge_session",
+                     "desc": "This tool permanently removes a charging session record from the network. The deletion cannot be undone once it is executed.",
+                     "verbs": ["purge {obj}", "wipe {obj} from the log"]},
+    "set_enum": {"name": "set_session_state",
+                 "desc": "This tool changes a charging session's state among queued, charging, completed, and faulted. It is used to correct or advance the session's recorded lifecycle.",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"queued": "back to queued",
+                                   "charging": "as charging",
+                                   "completed": "as completed",
+                                   "faulted": "as faulted"}},
+    "set_bool": {"name": "flag_fault",
+                 "bool_index": 0, "value": true,
+                 "desc": "This tool flags a charging session as faulted due to a hardware or connectivity problem. It is typically used after a station reports an error code.",
+                 "verbs": ["flag {obj} as faulted", "mark {obj} faulted"]},
+    "set_ref": {"name": "transfer_fleet",
+                "desc": "This tool moves a charging session to a different fleet account, for example when billing was attributed incorrectly. The session's history and energy totals remain attached to the record.",
+                "verbs": ["move {obj} {to_name}", "transfer {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_fleet",
+             "desc": "This tool sends an email notification to the fleet account associated with a session. It is used to alert fleets about session status or billing issues.",
+             "child_verbs": ["email the fleet behind {obj}", "notify the fleet behind {obj}"],
+             "direct_verbs": ["email {name}", "notify {name}"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the session with the earliest start time",
+    "ord_phrase": "the session with the {ord} earliest start time",
+    "pre_filter": {"enum_value": "charging", "phrase": "charging"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the stuck sessions.",
+                 "The queue has stale sessions, deal with it."],
+     "hint": "delete queued sessions plugged in more than a set number of days",
+     "clauses": [{"enum_value": "queued"},
+                 {"time_index": 1, "days": 3}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your charging session requires attention at this time.",
+                   "Please review the current status of your session.",
+                   "There is an update regarding your charging session.",
+                   "Your session may need to be restarted."],
+    "agg_msgs": ["Your fleet currently tops this list.",
+                 "This is being flagged to your fleet directly.",
+                 "Your fleet leads this count right now."],
+    "fail_msgs": ["The requested operation could not be completed successfully.",
+                  "That action failed to go through as expected.",
+                  "The last operation did not complete."]
+  }
+}

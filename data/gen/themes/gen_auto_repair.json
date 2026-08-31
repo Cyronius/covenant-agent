@@ -1,0 +1,96 @@
+{
+  "domain": "auto_repair",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "customer",
+    "noun": ["customer", "customers"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "repair_order",
+    "noun": ["repair order", "repair orders"],
+    "ref_field": "customer",
+    "ref_phrase": "for {name}",
+    "name_field": "complaint",
+    "titles": ["Check engine light on", "Brakes grinding", "AC not cooling",
+               "Battery won't hold charge", "Oil leak under engine", "Transmission slipping",
+               "Steering wheel shakes", "Tire pressure sensor fault", "Radiator overheating",
+               "Starter clicking, no start", "Exhaust rattling", "Windshield wiper failure"],
+    "bools": [
+      {"field": "warranty", "true_phrase": "under warranty",
+       "false_phrase": "customer pay", "placement": "post"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["estimate", "in_progress", "ready", "picked_up"],
+      "phrases": {"estimate": ["awaiting estimate", "pre"],
+                  "in_progress": ["in the shop", "post"],
+                  "ready": ["ready for pickup", "post"],
+                  "picked_up": ["picked up", "pre"]}
+    },
+    "times": [
+      {"field": "dropped_off", "kind": "time_cutoff",
+       "phrase": "dropped off more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_repair_orders",
+                   "desc": "List every repair order on file."},
+    "get_child": {"name": "get_repair_order",
+                  "desc": "Fetch one repair order by its id."},
+    "list_parent": {"name": "list_customers",
+                    "desc": "List all customers registered with the shop."},
+    "get_parent": {"name": "get_customer",
+                   "desc": "Fetch one customer by id."},
+    "delete_child": {"name": "void_repair_order",
+                     "desc": "Permanently remove a repair order record. Not reversible.",
+                     "verbs": ["void {obj}", "scrap {obj} from the shop log"]},
+    "set_enum": {"name": "set_repair_stage",
+                 "desc": "Change a repair order's stage (estimate, in progress, ready, or picked up).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"estimate": "back to awaiting estimate",
+                                   "in_progress": "as in progress",
+                                   "ready": "as ready for pickup",
+                                   "picked_up": "as picked up"}},
+    "set_bool": {"name": "flag_warranty",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a repair order as covered under warranty.",
+                 "verbs": ["flag {obj} as warranty work", "mark {obj} under warranty"]},
+    "set_ref": {"name": "rebill_customer",
+                "desc": "Move a repair order to a different customer's account.",
+                "verbs": ["move {obj} {to_name}", "rebill {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "text_customer",
+             "desc": "Send a text message to a customer.",
+             "child_verbs": ["text the customer on {obj}", "give the customer on {obj} a heads-up"],
+             "direct_verbs": ["text {name}", "send {name} a text"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the repair order dropped off the longest ago",
+    "ord_phrase": "the repair order with the {ord} longest wait since drop-off",
+    "pre_filter": {"enum_value": "estimate", "phrase": "awaiting estimate"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the old estimates.",
+                 "Estimates pile is stale, deal with it."],
+     "hint": "delete repair orders still awaiting estimate that were dropped off more than a set number of days ago",
+     "clauses": [{"enum_value": "estimate"},
+                 {"time_index": 0, "days": 5}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your repair order needs attention.",
+                   "Please check your repair order status.",
+                   "A note about your vehicle's repair order.",
+                   "Your repair order may need review."],
+    "agg_msgs": ["You top this list right now.",
+                 "Flagging this to you directly.",
+                 "You lead this count currently."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

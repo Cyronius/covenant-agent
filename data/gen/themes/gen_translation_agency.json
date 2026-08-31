@@ -1,0 +1,101 @@
+{
+  "domain": "translation_agency",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "translation_job",
+    "noun": ["translation job", "translation jobs"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "document_title",
+    "titles": ["User Manual Localization", "Marketing Brochure Translation",
+               "Legal Contract Translation", "Website Copy Localization",
+               "Medical Report Translation", "Software UI Strings",
+               "Subtitle Translation", "Patent Filing Translation",
+               "Financial Statement Translation", "Employee Handbook Translation",
+               "Product Packaging Translation", "Academic Paper Translation",
+               "Immigration Document Translation", "App Store Listing Localization"],
+    "bools": [
+      {"field": "certified", "true_phrase": "certified",
+       "false_phrase": "uncertified", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["queued", "in_translation", "in_review", "delivered"],
+      "phrases": {"queued": ["queued", "pre"],
+                  "in_translation": ["in translation", "post"],
+                  "in_review": ["in review", "post"],
+                  "delivered": ["delivered", "pre"]}
+    },
+    "times": [
+      {"field": "deadline", "kind": "time_now",
+       "lt_phrase": ["past deadline", "post"],
+       "gt_phrase": ["not yet due", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_translation_jobs",
+                   "desc": "Returns the complete set of translation jobs currently tracked in the agency's project system, spanning every phase from intake through delivery. Use this whenever a full picture of the active job queue is needed."},
+    "get_child": {"name": "get_translation_job",
+                  "desc": "Retrieves a single translation job record using its unique job identifier, returning every field currently stored for that job. This is the right call when the specific job in question is already known."},
+    "list_parent": {"name": "list_clients",
+                    "desc": "Returns the full roster of clients the agency currently has on file, regardless of how many jobs each one has open. Use this to get an overview of the entire client base."},
+    "get_parent": {"name": "get_client",
+                   "desc": "Retrieves a single client record using its unique client identifier, returning the client's stored contact and account details. This is appropriate when the specific client is already known."},
+    "delete_child": {"name": "delete_translation_job",
+                     "desc": "Permanently removes a translation job record from the agency's system, an action that cannot be reversed once completed. This should only be used when a job entry was created in error or must be purged entirely.",
+                     "verbs": ["delete {obj}", "purge {obj} from the queue"]},
+    "set_enum": {"name": "set_job_phase",
+                 "desc": "Updates the phase of a translation job to reflect its current position in the pipeline, moving it between queued, in translation, in review, and delivered. Keeping this current ensures downstream reporting reflects the true state of the workload.",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"queued": "back to queued",
+                                   "in_translation": "into translation",
+                                   "in_review": "into review",
+                                   "delivered": "to delivered"}},
+    "set_bool": {"name": "flag_certified",
+                 "bool_index": 0, "value": true,
+                 "desc": "Marks a translation job as requiring or having received certified translation status, which some legal and immigration documents require. This flag should be set whenever the client has requested a certified translation.",
+                 "verbs": ["flag {obj} as certified", "mark {obj} certified"]},
+    "set_ref": {"name": "reassign_client",
+                "desc": "Reassigns a translation job from one client account to a different one, which is useful when a job was logged under the wrong account. This updates ownership only and leaves every other job detail untouched.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_client",
+             "desc": "Sends a direct email to the client associated with a translation job, typically to notify them of a status change or request. This message goes straight to the client's own contact address on file.",
+             "child_verbs": ["email the client for {obj}",
+                             "notify the client behind {obj}"],
+             "direct_verbs": ["email {name}", "notify {name}"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the translation job with the earliest deadline",
+    "ord_phrase": "the translation job with the {ord} earliest deadline",
+    "pre_filter": {"enum_value": "in_translation", "phrase": "in translation"}
+  },
+  "ambiguous": [
+    {"request": ["Clean out the dead queue.",
+                 "The queued jobs pile is stale, deal with it."],
+     "hint": "delete queued translation jobs already past their deadline",
+     "clauses": [{"enum_value": "queued"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your translation job needs a status update.",
+                   "Please review your upcoming translation job.",
+                   "A note about your translation job.",
+                   "Your translation job may need reassignment."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this job to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested update could not be completed.",
+                  "That action did not go through.",
+                  "The last operation failed to save."]
+  }
+}

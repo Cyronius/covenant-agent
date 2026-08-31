@@ -1,0 +1,95 @@
+{
+  "domain": "medical_lab",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "provider",
+    "noun": ["ordering provider", "ordering providers"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "specimen_batch",
+    "noun": ["specimen batch", "specimen batches"],
+    "ref_field": "provider",
+    "ref_phrase": "from {name}",
+    "name_field": "test_panel",
+    "titles": ["Complete blood count panel", "Basic metabolic panel", "Lipid panel",
+               "Urinalysis batch", "COVID PCR batch", "Thyroid function panel",
+               "Hemoglobin A1c batch", "Blood culture batch", "Liver function panel",
+               "Coagulation panel", "Toxicology screen batch", "Genetic testing batch",
+               "Allergy panel batch"],
+    "bools": [
+      {"field": "stat_priority", "true_phrase": "STAT priority",
+       "false_phrase": "routine priority", "placement": "pre"},
+      {"field": "sample_compromised", "true_phrase": "compromised sample",
+       "false_phrase": "sample intact", "placement": "pre"},
+      {"field": "results_released", "true_phrase": "results released",
+       "false_phrase": "results held", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status", "values": ["received", "processing", "verified", "reported"],
+      "phrases": {"received": ["received", "pre"],
+                  "processing": ["in processing", "pre"],
+                  "verified": ["verified", "pre"],
+                  "reported": ["reported", "pre"]}
+    },
+    "times": [
+      {"field": "collected_at", "kind": "time_now",
+       "lt_phrase": ["already collected", "post"],
+       "gt_phrase": ["not yet collected", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_batches", "desc": "list specimen batches"},
+    "get_child": {"name": "get_batch", "desc": "fetch one batch by id"},
+    "list_parent": {"name": "list_providers", "desc": "list ordering providers"},
+    "get_parent": {"name": "get_provider", "desc": "fetch one provider by id"},
+    "delete_child": {"name": "purge_batch", "desc": "wipe a batch rec, no undo",
+                     "verbs": ["purge {obj}", "wipe {obj}"]},
+    "set_enum": {"name": "set_batch_status", "desc": "chg batch status",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"received": "back to received",
+                                   "processing": "to processing",
+                                   "verified": "to verified",
+                                   "reported": "to reported"}},
+    "set_bool": {"name": "flag_compromised", "bool_index": 1, "value": true,
+                 "desc": "flag a batch as compromised",
+                 "verbs": ["flag {obj} compromised", "mark {obj} bad sample"]},
+    "set_ref": {"name": "reassign_provider", "desc": "move batch to another provider",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "fax_provider", "desc": "send a fax to ordering provider",
+             "child_verbs": ["fax the provider on {obj}", "notify the provider on {obj}"],
+             "direct_verbs": ["fax {name}", "notify {name}"],
+             "pair_verbs": ["fax", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the specimen batch with the earliest collection time",
+    "ord_phrase": "the specimen batch with the {ord} earliest collection time",
+    "pre_filter": {"enum_value": "received", "phrase": "received"}
+  },
+  "ambiguous": [
+    {"request": ["Clear the bad samples.", "Get rid of the compromised batches."],
+     "hint": "delete specimen batches flagged as compromised",
+     "clauses": [{"bool_index": 1, "value": true}],
+     "action": "delete_child"},
+    {"request": ["Sort out the backlog.", "The queue is a mess, handle it."],
+     "hint": "flag processing specimen batches collected more than a day ago as compromised",
+     "clauses": [{"enum_value": "processing"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["batch needs review",
+                   "update on your specimen batch",
+                   "flagging an issue w/ your batch",
+                   "batch may need recollection"],
+    "agg_msgs": ["you have the most batches queued rn",
+                 "flagging this one to you",
+                 "you lead this count"],
+    "fail_msgs": ["op failed",
+                  "update didn't save",
+                  "action didn't go through"]
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "domain": "dietitian",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "meal_plan",
+    "noun": ["meal plan", "meal plans"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "plan_focus",
+    "titles": ["Weight management plan", "Diabetic meal plan",
+               "Sports performance nutrition plan", "Gluten-free meal plan",
+               "Postpartum nutrition plan", "Heart-healthy meal plan",
+               "Pediatric picky-eater plan", "Renal diet plan",
+               "Vegan transition plan", "PCOS nutrition plan",
+               "GI-friendly elimination plan", "Muscle-gain meal plan",
+               "Senior nutrition plan"],
+    "bools": [
+      {"field": "grocery_list_sent", "true_phrase": "grocery list sent",
+       "false_phrase": "grocery list not sent", "placement": "post"},
+      {"field": "needs_macro_update", "true_phrase": "due for a macro update",
+       "false_phrase": "macros up to date", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "plan_status", "values": ["draft", "active", "paused", "archived"],
+      "phrases": {"draft": ["a draft", "pre"],
+                  "active": ["active", "pre"],
+                  "paused": ["paused", "pre"],
+                  "archived": ["archived", "pre"]}
+    },
+    "times": [
+      {"field": "checkin_time", "kind": "time_now",
+       "lt_phrase": ["already passed", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "plan_created", "kind": "time_cutoff",
+       "phrase": "built more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listPlans", "desc": "list all the meal plans we got"},
+    "get_child": {"name": "getPlan", "desc": "grab a plan by id"},
+    "list_parent": {"name": "listClients", "desc": "list clients on file"},
+    "get_parent": {"name": "getClient", "desc": "grab a client by id"},
+    "delete_child": {"name": "trashPlan", "desc": "deletes a plan for good, no undos",
+                     "verbs": ["trash {obj}", "delete {obj}"]},
+    "set_enum": {"name": "setPlanStatus", "desc": "flips plan status - draft/active/paused/archived",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"draft": "back to draft",
+                                   "active": "to active",
+                                   "paused": "to paused",
+                                   "archived": "to archived"}},
+    "set_bool": {"name": "flagMacroUpdate", "bool_index": 1, "value": true,
+                 "desc": "flags a plan as needing new macros",
+                 "verbs": ["flag {obj} for a macro update", "mark {obj} needs macros"]},
+    "set_ref": {"name": "moveClient", "desc": "shifts a plan to a diff client",
+                "verbs": ["move {obj} {to_name}", "shift {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailClient", "desc": "fires an email off to a client",
+             "child_verbs": ["email the client on {obj}", "give the client on {obj} a nudge"],
+             "direct_verbs": ["email {name}", "message {name}"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the meal plan with the soonest check-in time",
+    "ord_phrase": "the meal plan with the {ord} soonest check-in time",
+    "pre_filter": {"enum_value": "active", "phrase": "active"}
+  },
+  "ambiguous": [
+    {"request": ["Clean out the old plans.", "The plan list needs a purge."],
+     "hint": "delete archived meal plans",
+     "clauses": [{"enum_value": "archived"}],
+     "action": "delete_child"},
+    {"request": ["Flag whoever needs new macros.", "Handle the stale plans."],
+     "hint": "flag active meal plans built more than 120 days ago as due for a macro update",
+     "clauses": [{"enum_value": "active"}, {"time_index": 1, "days": 120}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["hey, update on your meal plan",
+                   "quick note on your plan",
+                   "your meal plan might need a tweak",
+                   "heads up on your upcoming check-in"],
+    "agg_msgs": ["you've got the most plans on this list",
+                 "flagging this straight to you",
+                 "you're leading this count"],
+    "fail_msgs": ["that didn't save",
+                  "couldn't finish that one",
+                  "the update failed"]
+  }
+}

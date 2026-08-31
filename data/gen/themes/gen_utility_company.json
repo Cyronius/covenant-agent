@@ -1,0 +1,100 @@
+{
+  "domain": "utility_company",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "account",
+    "noun": ["account", "accounts"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "meter_reading",
+    "noun": ["meter reading", "meter readings"],
+    "ref_field": "account",
+    "ref_phrase": "on {name}'s account",
+    "name_field": null,
+    "titles": [],
+    "bools": [
+      {"field": "estimated", "true_phrase": "estimated", "false_phrase": "actual",
+       "placement": "pre"},
+      {"field": "anomalous", "true_phrase": "flagged as anomalous",
+       "false_phrase": "within normal range", "placement": "post"},
+      {"field": "billed", "true_phrase": "billed", "false_phrase": "unbilled",
+       "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["pending", "verified", "disputed"],
+      "phrases": {"pending": ["pending", "pre"],
+                  "verified": ["verified", "pre"],
+                  "disputed": ["disputed", "pre"]}
+    },
+    "times": [
+      {"field": "reading_time", "kind": "time_now",
+       "lt_phrase": ["already taken", "post"],
+       "gt_phrase": ["not yet due", "post"]},
+      {"field": "logged", "kind": "time_cutoff",
+       "phrase": "logged more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lsrdg", "desc": "list meter readings"},
+    "get_child": {"name": "getrdg", "desc": "fetch one reading by id"},
+    "list_parent": {"name": "lsacct", "desc": "list all accounts"},
+    "get_parent": {"name": "getacct", "desc": "fetch one account by id"},
+    "delete_child": {"name": "delrdg", "desc": "delete a reading rec, no undo",
+                     "verbs": ["delete {obj}", "wipe {obj} from the log"]},
+    "set_enum": {"name": "setrdgstate",
+                 "desc": "set reading state: pending/verified/disputed",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"pending": "back to pending",
+                                   "verified": "as verified",
+                                   "disputed": "as disputed"}},
+    "set_bool": {"name": "flaganom",
+                 "bool_index": 1, "value": true,
+                 "desc": "flag a reading as anomalous",
+                 "verbs": ["flag {obj} as anomalous", "mark {obj} anomalous"]},
+    "set_ref": {"name": "movacct",
+                "desc": "move a reading to a diff account",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "txtacct",
+             "desc": "text an account holder",
+             "child_verbs": ["text the account behind {obj}",
+                             "notify the account tied to {obj}"],
+             "direct_verbs": ["text {name}", "send {name} a text"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "DESC",
+    "sup_phrase": "the meter reading with the most recent reading time",
+    "ord_phrase": "the meter reading with the {ord} most recent reading time",
+    "pre_filter": {"enum_value": "pending", "phrase": "pending"}
+  },
+  "ambiguous": [
+    {"request": ["clean up the old disputed readings",
+                 "the disputed readings are piling up, handle it"],
+     "hint": "delete disputed readings logged more than 200 days ago",
+     "clauses": [{"enum_value": "disputed"},
+                 {"time_index": 1, "days": 200}],
+     "action": "delete_child"},
+    {"request": ["check for meter issues",
+                 "something's off with some meters, deal with it"],
+     "hint": "flag pending readings whose reading time has already passed as anomalous",
+     "clauses": [{"enum_value": "pending"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your meter reading needs review.",
+                   "Please check your latest meter reading.",
+                   "A note about your meter reading.",
+                   "Your meter reading may require follow-up."],
+    "agg_msgs": ["You have the most flagged readings right now.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "domain": "notary_office",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "requester",
+    "noun": ["requester", "requesters"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "notarization_request",
+    "noun": ["notarization request", "notarization requests"],
+    "ref_field": "requester",
+    "ref_phrase": "from {name}",
+    "name_field": "document_type",
+    "titles": ["Power of attorney", "Real estate deed", "Loan signing", "Affidavit",
+               "Living will", "Vehicle title transfer", "Business contract",
+               "Adoption paperwork", "Passport application support", "Divorce settlement",
+               "Last will and testament", "Notarized consent letter"],
+    "bools": [
+      {"field": "id_verified", "true_phrase": "ID verified",
+       "false_phrase": "ID pending", "placement": "post"},
+      {"field": "witness_required", "true_phrase": "needs a witness",
+       "false_phrase": "no witness needed", "placement": "post"},
+      {"field": "mobile_service", "true_phrase": "mobile visit",
+       "false_phrase": "in-office", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["pending", "scheduled", "completed", "rejected"],
+      "phrases": {"pending": ["pending", "pre"],
+                  "scheduled": ["scheduled", "pre"],
+                  "completed": ["completed", "pre"],
+                  "rejected": ["rejected", "pre"]}
+    },
+    "times": [
+      {"field": "requested_on", "kind": "time_cutoff",
+       "phrase": "requested more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listRequests",
+                   "desc": "List every notarization request on file."},
+    "get_child": {"name": "getRequest",
+                  "desc": "Fetch one notarization request by its id."},
+    "list_parent": {"name": "listRequesters",
+                    "desc": "List everyone who has requested notary services."},
+    "get_parent": {"name": "getRequester",
+                   "desc": "Fetch one requester by id."},
+    "delete_child": {"name": "purgeRequest",
+                     "desc": "Permanently remove a notarization request. Not reversible.",
+                     "verbs": ["purge {obj}", "wipe {obj} from the log"]},
+    "set_enum": {"name": "setRequestState",
+                 "desc": "Change a notarization request's state (pending, scheduled, completed, or rejected).",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"pending": "back to pending",
+                                   "scheduled": "to scheduled",
+                                   "completed": "as completed",
+                                   "rejected": "as rejected"}},
+    "set_bool": {"name": "flagIdVerified",
+                 "bool_index": 0, "value": true,
+                 "desc": "Mark a requester's ID as verified for a notarization request.",
+                 "verbs": ["mark {obj} ID verified", "flag {obj} as ID verified"]},
+    "set_ref": {"name": "reassignRequester",
+                "desc": "Move a notarization request to a different requester's account.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "textRequester",
+             "desc": "Send a text message to a requester.",
+             "child_verbs": ["text the requester on {obj}",
+                             "give the requester on {obj} a heads-up"],
+             "direct_verbs": ["text {name}", "send {name} a text"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the notarization request submitted longest ago",
+    "ord_phrase": "the notarization request with the {ord} oldest request date",
+    "pre_filter": {"enum_value": "pending", "phrase": "pending"}
+  },
+  "ambiguous": [
+    {"request": ["Clean out the dead requests.",
+                 "These never got picked up, clear them."],
+     "hint": "delete pending notarization requests filed more than 30 days ago",
+     "clauses": [{"enum_value": "pending"},
+                 {"time_index": 0, "days": 30}],
+     "action": "delete_child"},
+    {"request": ["Verify the old backlog.",
+                 "Some of these have been sitting, check their ID status."],
+     "hint": "flag as ID verified the scheduled requests filed more than 30 days ago",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "days": 30}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your notarization request needs attention.",
+                   "Please review your notarization request.",
+                   "A note about your notarization request.",
+                   "Your notarization request may need rescheduling."],
+    "agg_msgs": ["You're currently at the top of this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

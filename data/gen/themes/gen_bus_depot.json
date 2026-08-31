@@ -1,0 +1,102 @@
+{
+  "domain": "bus_depot",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "driver",
+    "noun": ["driver", "drivers"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "run",
+    "noun": ["run", "runs"],
+    "ref_field": "driver",
+    "ref_phrase": "driven by {name}",
+    "name_field": "route",
+    "titles": ["Route 12 Downtown Loop", "Route 4 Airport Express", "Route 30 University Line",
+               "Route 7 Riverside", "Route 21 Crosstown", "Route 55 Night Owl",
+               "Route 9 Hospital Shuttle", "Route 18 Industrial Park", "Route 2 Main Street",
+               "Route 44 Suburban Loop", "Route 66 Express", "Route 15 School Special"],
+    "bools": [
+      {"field": "overcrowded", "true_phrase": "over capacity",
+       "false_phrase": "within capacity", "placement": "post"},
+      {"field": "wheelchair_lift", "true_phrase": "lift-equipped",
+       "false_phrase": "no lift", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["scheduled", "in_service", "completed", "cancelled"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "in_service": ["in service", "pre"],
+                  "completed": ["completed", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "depart", "kind": "time_now",
+       "lt_phrase": ["already departed", "post"],
+       "gt_phrase": ["not yet departed", "post"]},
+      {"field": "scheduled_at", "kind": "time_cutoff",
+       "phrase": "scheduled more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_runs", "desc": "list all runs"},
+    "get_child": {"name": "get_run", "desc": "get run by id"},
+    "list_parent": {"name": "list_drivers", "desc": "list depot drivers"},
+    "get_parent": {"name": "get_driver", "desc": "get driver by id"},
+    "delete_child": {"name": "scrap_run",
+                     "desc": "del run rec, no undo",
+                     "verbs": ["scrap {obj}", "drop {obj} from the board"]},
+    "set_enum": {"name": "set_run_state",
+                 "desc": "chg run state",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "in_service": "as in service",
+                                   "completed": "as completed",
+                                   "cancelled": "as cancelled"}},
+    "set_bool": {"name": "flag_overcrowded",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag run overcrowded",
+                 "verbs": ["flag {obj} overcrowded", "mark {obj} over capacity"]},
+    "set_ref": {"name": "reassign_driver",
+                "desc": "move run to another driver",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "page_driver",
+             "desc": "page driver w/ msg",
+             "child_verbs": ["page the driver of {obj}", "ping the driver of {obj}"],
+             "direct_verbs": ["page {name}", "ping {name}"],
+             "pair_verbs": ["page", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the run with the earliest departure",
+    "ord_phrase": "the run with the {ord} earliest departure",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["Flag anything running full.",
+                 "Deal with the packed runs."],
+     "hint": "flag scheduled runs as overcrowded",
+     "clauses": [{"enum_value": "scheduled"}],
+     "action": "set_bool"},
+    {"request": ["Clean up the run board.",
+                 "Board's a mess, sort it."],
+     "hint": "scrap cancelled runs scheduled more than a set number of days ago",
+     "clauses": [{"enum_value": "cancelled"},
+                 {"time_index": 1, "days": 14}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["run needs attention",
+                   "check run status",
+                   "note on your run",
+                   "run may be delayed"],
+    "agg_msgs": ["you top this list",
+                 "flagging to you direct",
+                 "you lead this count"],
+    "fail_msgs": ["op failed",
+                  "action not completed",
+                  "last op failed"]
+  }
+}

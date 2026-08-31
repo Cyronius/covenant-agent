@@ -1,0 +1,105 @@
+{
+  "domain": "dojo",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "student",
+    "noun": ["student", "students"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "grading",
+    "noun": ["grading", "gradings"],
+    "ref_field": "student",
+    "ref_phrase": "for {name}",
+    "name_field": "belt_target",
+    "titles": ["Yellow Belt Grading", "Orange Belt Grading", "Green Belt Grading",
+               "Blue Belt Grading", "Purple Belt Grading", "Brown Belt Grading",
+               "1st Dan Black Belt Grading", "2nd Dan Black Belt Grading",
+               "3rd Dan Black Belt Grading", "Junior Red Belt Grading",
+               "Senior Brown Belt Grading", "Master Class Grading"],
+    "bools": [
+      {"field": "sparring_required", "true_phrase": "requires sparring",
+       "false_phrase": "no sparring required", "placement": "post"},
+      {"field": "re_grade", "true_phrase": "re-grade",
+       "false_phrase": "first attempt", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "outcome", "values": ["pending", "passed", "failed"],
+      "phrases": {"pending": ["pending", "pre"],
+                  "passed": ["passed", "pre"],
+                  "failed": ["failed", "pre"]}
+    },
+    "times": [
+      {"field": "test_date", "kind": "time_now",
+       "lt_phrase": ["already tested", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "registered_on", "kind": "time_cutoff",
+       "phrase": "registered more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listGradings",
+                   "desc": "This tool returns every belt grading currently on the dojo's schedule, spanning all ranks and outcomes. Use it whenever a complete view of upcoming and past gradings is needed to plan the next testing cycle."},
+    "get_child": {"name": "getGrading",
+                  "desc": "This tool retrieves a single belt grading record by its id, including the student, target belt, and current outcome. Use it when only one specific grading needs to be examined in detail."},
+    "list_parent": {"name": "listStudents",
+                    "desc": "This tool lists every student enrolled at the dojo, whether or not they currently have a grading scheduled. Use it to see the full student roster before assigning or reviewing gradings."},
+    "get_parent": {"name": "getStudent",
+                   "desc": "This tool fetches a single student record by id, returning their contact details and grading history. Use it when details on one specific student are required."},
+    "delete_child": {"name": "purgeGrading",
+                     "desc": "This tool permanently deletes a belt grading record from the dojo's system, and the action cannot be reversed once submitted. Use it only when a grading was scheduled in error or has been fully superseded.",
+                     "verbs": ["purge {obj}", "wipe {obj} from the schedule"]},
+    "set_enum": {"name": "setGradingOutcome",
+                 "desc": "This tool changes the outcome of a belt grading between pending, passed, and failed, recording the result of the test. Use it once a grading session has actually been run and a result needs to be logged.",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"pending": "back to pending",
+                                   "passed": "as passed",
+                                   "failed": "as failed"}},
+    "set_bool": {"name": "flagRegrade",
+                 "bool_index": 1, "value": true,
+                 "desc": "This tool marks a belt grading as a re-grade rather than a first attempt, which affects how the result is recorded. Use it whenever a student is retesting for a belt they previously failed.",
+                 "verbs": ["flag {obj} as a re-grade", "mark {obj} retest"]},
+    "set_ref": {"name": "reassignStudent",
+                "desc": "This tool moves a belt grading from its currently listed student to a different one entirely. Use it when a grading was logged against the wrong student and needs correcting.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailStudent",
+             "desc": "This tool sends an email to a student, either about a specific grading or as a direct note. Use it to keep students informed of scheduling changes or results.",
+             "child_verbs": ["email the student behind {obj}",
+                             "notify the student on {obj}"],
+             "direct_verbs": ["email {name}", "send {name} a note"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the grading with the earliest test date",
+    "ord_phrase": "the grading with the {ord} earliest test date",
+    "pre_filter": {"enum_value": "pending", "phrase": "pending"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the grading backlog.", "The schedule's a mess, deal with it."],
+     "hint": "delete pending gradings already past their test date",
+     "clauses": [{"enum_value": "pending"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Handle the retest situation.", "Deal with the re-grades that need flagging."],
+     "hint": "flag pending gradings already past their test date as re-grades",
+     "clauses": [{"enum_value": "pending"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["This grading requires your attention.",
+                   "Please review the status of your grading.",
+                   "A note regarding your grading.",
+                   "Your grading may need to be rescheduled."],
+    "agg_msgs": ["You currently top this list.",
+                 "This is being flagged to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation could not be completed.",
+                  "That action failed to go through.",
+                  "The system was unable to complete the last operation."]
+  }
+}

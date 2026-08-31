@@ -1,0 +1,110 @@
+{
+  "domain": "winery",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "vineyard",
+    "noun": ["vineyard", "vineyards"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "barrel_lot",
+    "noun": ["barrel lot", "barrel lots"],
+    "ref_field": "vineyard",
+    "ref_phrase": "from {name}",
+    "name_field": "varietal",
+    "titles": ["Cabernet Sauvignon", "Pinot Noir", "Chardonnay", "Merlot",
+               "Syrah", "Zinfandel", "Sauvignon Blanc", "Malbec", "Riesling",
+               "Grenache", "Tempranillo", "Viognier", "Petit Verdot",
+               "Sangiovese"],
+    "bools": [
+      {"field": "new_oak", "true_phrase": "new oak",
+       "false_phrase": "neutral oak", "placement": "pre"},
+      {"field": "organic", "true_phrase": "organic",
+       "false_phrase": "conventional", "placement": "pre"},
+      {"field": "topped_off", "true_phrase": "topped off",
+       "false_phrase": "needs topping", "placement": "post"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["fermenting", "aging", "blending", "bottled"],
+      "phrases": {"fermenting": ["fermenting", "pre"],
+                  "aging": ["aging", "pre"],
+                  "blending": ["in blending", "post"],
+                  "bottled": ["bottled", "pre"]}
+    },
+    "times": [
+      {"field": "bottle_target", "kind": "time_now",
+       "lt_phrase": ["past its bottling target", "post"],
+       "gt_phrase": ["not yet due for bottling", "post"]},
+      {"field": "pressed_on", "kind": "time_cutoff",
+       "phrase": "pressed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "ls_lots",
+                   "desc": "list all barrel lots"},
+    "get_child": {"name": "get_lot",
+                  "desc": "fetch one lot by id"},
+    "list_parent": {"name": "ls_vineyards",
+                    "desc": "list all source vineyards"},
+    "get_parent": {"name": "get_vineyard",
+                   "desc": "fetch one vineyard by id"},
+    "delete_child": {"name": "dump_lot",
+                     "desc": "kill a lot for good",
+                     "verbs": ["dump {obj}", "pour out {obj}"]},
+    "set_enum": {"name": "set_lot_stage",
+                 "desc": "change lot stage",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"fermenting": "back to fermenting",
+                                   "aging": "to aging",
+                                   "blending": "to blending",
+                                   "bottled": "to bottled"}},
+    "set_bool": {"name": "flag_topped",
+                 "bool_index": 2, "value": true,
+                 "desc": "mark a barrel lot as topped off",
+                 "verbs": ["flag {obj} as topped off", "mark {obj} topped off"]},
+    "set_ref": {"name": "move_vineyard",
+                "desc": "move a lot to a diff source vineyard",
+                "verbs": ["move {obj} {to_name}", "re-source {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "msg_vineyard",
+             "desc": "send a note to a source vineyard",
+             "child_verbs": ["message the vineyard behind {obj}",
+                             "ping the vineyard behind {obj}"],
+             "direct_verbs": ["message {name}", "ping {name}"],
+             "pair_verbs": ["message", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the barrel lot with the earliest bottling target",
+    "ord_phrase": "the barrel lot with the {ord} earliest bottling target",
+    "pre_filter": {"enum_value": "aging", "phrase": "aging"}
+  },
+  "ambiguous": [
+    {"request": ["sort out the cellar backlog",
+                 "cellar's a mess, deal with it"],
+     "hint": "flag aging lots already past their bottling target as topped off",
+     "clauses": [{"enum_value": "aging"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"},
+    {"request": ["clear out old fermenting logs",
+                 "get rid of stale fermenting lots"],
+     "hint": "dump fermenting lots pressed more than 30 days ago",
+     "clauses": [{"enum_value": "fermenting"},
+                 {"time_index": 1, "days": 30}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["lot needs a look",
+                   "check this barrel lot",
+                   "lot update needed",
+                   "this lot may need review"],
+    "agg_msgs": ["top of this list",
+                 "flagged straight to you",
+                 "you lead this count"],
+    "fail_msgs": ["op failed",
+                  "update didn't save",
+                  "change didn't go through"]
+  }
+}

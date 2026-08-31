@@ -1,0 +1,103 @@
+{
+  "domain": "photo_studio",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "shoot",
+    "noun": ["shoot", "shoots"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "shoot_type",
+    "titles": ["Engagement Session", "Newborn Session", "Family Portrait",
+               "Senior Portraits", "Headshot Session", "Product Photography",
+               "Real Estate Shoot", "Maternity Session", "Boudoir Session",
+               "Fashion Lookbook", "Pet Portrait Session", "Event Coverage",
+               "Branding Session", "Graduation Portraits"],
+    "bools": [
+      {"field": "rush", "true_phrase": "rush",
+       "false_phrase": "standard", "placement": "pre"},
+      {"field": "outdoor", "true_phrase": "outdoor",
+       "false_phrase": "studio", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["booked", "shot", "editing", "delivered"],
+      "phrases": {"booked": ["booked", "pre"],
+                  "shot": ["shot", "pre"],
+                  "editing": ["in editing", "post"],
+                  "delivered": ["delivered", "pre"]}
+    },
+    "times": [
+      {"field": "shoot_time", "kind": "time_now",
+       "lt_phrase": ["already happened", "post"],
+       "gt_phrase": ["still coming up", "post"]},
+      {"field": "booked_on", "kind": "time_cutoff",
+       "phrase": "booked more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listShoots",
+                   "desc": "lists every shoot we got, all of em"},
+    "get_child": {"name": "getShoot",
+                  "desc": "grabs one shoot by id"},
+    "list_parent": {"name": "listClients",
+                    "desc": "lists all our clients on file"},
+    "get_parent": {"name": "getClient",
+                   "desc": "grabs a client rec by id"},
+    "delete_child": {"name": "nukeShoot",
+                     "desc": "kills a shoot rec for good, no undo btw",
+                     "verbs": ["nuke {obj}", "trash {obj} permanently"]},
+    "set_enum": {"name": "setShootStatus",
+                 "desc": "changes a shoots status, booked/shot/editing/delivered whatever fits",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"booked": "back to booked",
+                                   "shot": "to shot",
+                                   "editing": "into editing",
+                                   "delivered": "to delivered"}},
+    "set_bool": {"name": "flagRush",
+                 "bool_index": 0, "value": true,
+                 "desc": "flags a shoot as rush priority",
+                 "verbs": ["flag {obj} as rush", "mark {obj} rush"]},
+    "set_ref": {"name": "reassignClient",
+                "desc": "moves a shoot over to a diff client, happens sometimes",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "textClient",
+             "desc": "texts the client bout their shoot",
+             "child_verbs": ["text the client for {obj}",
+                             "ping the client behind {obj}"],
+             "direct_verbs": ["text {name}", "ping {name}"],
+             "pair_verbs": ["text", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the shoot with the soonest shoot time",
+    "ord_phrase": "the shoot with the {ord} soonest shoot time",
+    "pre_filter": {"enum_value": "booked", "phrase": "booked"}
+  },
+  "ambiguous": [
+    {"request": ["sort out the editing backlog",
+                 "the edit pile is outta control, handle it"],
+     "hint": "flag shoots still in editing that were booked more than 45 days ago as rush",
+     "clauses": [{"enum_value": "editing"},
+                 {"time_index": 1, "days": 45}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["ur shoot needs a look",
+                   "hey check on your shoot plz",
+                   "quick note bout ur shoot",
+                   "this shoot might need attention"],
+    "agg_msgs": ["ur on top of this list rn",
+                 "flagging this one to you directly",
+                 "you lead this count atm"],
+    "fail_msgs": ["that didnt go through",
+                  "operation failed, try again",
+                  "last update didnt save"]
+  }
+}

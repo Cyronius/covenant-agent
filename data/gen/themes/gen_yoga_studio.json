@@ -1,0 +1,95 @@
+{
+  "domain": "yoga_studio",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "account",
+    "noun": ["account", "accounts"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "session",
+    "noun": ["session", "sessions"],
+    "ref_field": "account",
+    "ref_phrase": "for {name}",
+    "name_field": "class_type",
+    "titles": ["Vinyasa Flow", "Restorative Yoga", "Power Yoga", "Yin Yoga",
+               "Hot Yoga Sculpt", "Prenatal Yoga", "Chair Yoga", "Ashtanga Practice",
+               "Candlelight Flow", "Breathwork & Meditation", "Backbend Workshop",
+               "Beginner Flow"],
+    "bools": [
+      {"field": "mat_provided", "true_phrase": "mat provided",
+       "false_phrase": "bring your own mat", "placement": "post"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["scheduled", "held", "scrubbed"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "held": ["held", "pre"],
+                  "scrubbed": ["scrubbed", "pre"]}
+    },
+    "times": [
+      {"field": "start_time", "kind": "time_now",
+       "lt_phrase": ["already started", "post"],
+       "gt_phrase": ["not started yet", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lstsess",
+                   "desc": "lists all the class sessions on the books"},
+    "get_child": {"name": "getsess",
+                  "desc": "grabs one session by id"},
+    "list_parent": {"name": "lstacct",
+                    "desc": "all accounts on file"},
+    "get_parent": {"name": "getacct",
+                   "desc": "one account record by id"},
+    "delete_child": {"name": "killsess",
+                     "desc": "kills a session for good, cant undo it",
+                     "verbs": ["kill {obj}", "yank {obj} off the calendar"]},
+    "set_enum": {"name": "setsessphase",
+                 "desc": "changes session phase (scheduled/held/scrubbed)",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "held": "as held",
+                                   "scrubbed": "as scrubbed"}},
+    "set_bool": {"name": "flagmat",
+                 "bool_index": 0, "value": true,
+                 "desc": "flags a session as mat-provided",
+                 "verbs": ["flag {obj} for mats", "mark {obj} mat-provided"]},
+    "set_ref": {"name": "movesess",
+                "desc": "moves a session to a different account",
+                "verbs": ["move {obj} {to_name}", "shift {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "callacct",
+             "desc": "calls an account's contact number",
+             "child_verbs": ["call the account behind {obj}",
+                             "ring the account on {obj}"],
+             "direct_verbs": ["call {name}", "ring {name}"],
+             "pair_verbs": ["call", "ring"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the session with the earliest start time",
+    "ord_phrase": "the session with the {ord} earliest start time",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the class calendar.", "Calendar's a mess, deal with it."],
+     "hint": "scrub scheduled sessions already started",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["your session needs a look.",
+                   "check your upcoming session.",
+                   "quick note on your session.",
+                   "your session might need rescheduling."],
+    "agg_msgs": ["your on top of this list.",
+                 "flagging this to you direct.",
+                 "you lead this count rn."],
+    "fail_msgs": ["that didnt go through.",
+                  "operation failed, try again.",
+                  "last action didnt complete."]
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "domain": "ad_platform",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "advertiser",
+    "noun": ["advertiser", "advertisers"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "placement",
+    "noun": ["placement", "placements"],
+    "ref_field": "advertiser",
+    "ref_phrase": "for {name}",
+    "name_field": "creative_name",
+    "titles": ["Summer Sale Banner", "Holiday Countdown", "Back to School Promo",
+               "New Product Launch", "Flash Discount Strip", "Retargeting Carousel",
+               "Brand Awareness Video", "Homepage Takeover", "Sidebar Skyscraper",
+               "Mobile Interstitial", "Native Feed Card", "End of Season Clearance"],
+    "bools": [
+      {"field": "above_fold", "true_phrase": "above-the-fold", "false_phrase": "below-the-fold", "placement": "pre"},
+      {"field": "frequency_capped", "true_phrase": "frequency-capped", "false_phrase": "uncapped", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status",
+      "values": ["draft", "live", "paused", "archived"],
+      "phrases": {"draft": ["draft", "pre"],
+                  "live": ["live", "pre"],
+                  "paused": ["paused", "pre"],
+                  "archived": ["archived", "pre"]}
+    },
+    "times": [
+      {"field": "goes_live", "kind": "time_now",
+       "lt_phrase": ["already live", "post"],
+       "gt_phrase": ["not live yet", "post"]},
+      {"field": "last_optimized", "kind": "time_cutoff",
+       "phrase": "not optimized in over {d} days"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "ls_plc", "desc": "List every ad placement for an advertiser."},
+    "get_child": {"name": "get_plc", "desc": "Fetch one ad placement by id."},
+    "list_parent": {"name": "ls_adv", "desc": "List all advertisers on the platform."},
+    "get_parent": {"name": "get_adv", "desc": "Fetch one advertiser by id."},
+    "delete_child": {"name": "rm_plc", "desc": "Permanently remove an ad placement. Not reversible.",
+                     "verbs": ["remove {obj}", "archive {obj} for good"]},
+    "set_enum": {"name": "set_plc_status",
+                 "desc": "Change a placement's status (draft, live, paused, or archived).",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"draft": "to draft", "live": "to live",
+                                   "paused": "to paused", "archived": "to archived"}},
+    "set_bool": {"name": "cap_plc", "bool_index": 1, "value": true,
+                 "desc": "Apply a frequency cap to an ad placement.",
+                 "verbs": ["cap {obj}", "frequency-cap {obj}"]},
+    "set_ref": {"name": "mv_plc", "desc": "Move a placement to a different advertiser.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "ping_adv", "desc": "Send an email to the advertiser's account contact.",
+             "child_verbs": ["email the advertiser behind {obj}", "alert the advertiser behind {obj}"],
+             "direct_verbs": ["email {name}", "notify {name}"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the placement with the earliest go-live time",
+    "ord_phrase": "the placement with the {ord} earliest go-live time",
+    "pre_filter": {"enum_value": "live", "phrase": "live"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the abandoned drafts.", "Get rid of the placements nobody finished."],
+     "hint": "delete draft placements not optimized in over 45 days",
+     "clauses": [{"enum_value": "draft"}, {"time_index": 1, "days": 45}],
+     "action": "delete_child"},
+    {"request": ["Cap the ones that are already running.", "Rein in spend on live placements."],
+     "hint": "frequency-cap live placements that already went live",
+     "clauses": [{"enum_value": "live"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["This placement needs a look.", "Check on this placement.",
+                   "Heads up about this placement.", "This placement may need adjusting."],
+    "agg_msgs": ["You have the most placements for this advertiser.",
+                 "Flagging this to you directly.", "You lead this advertiser's placement count."],
+    "fail_msgs": ["The requested operation failed.", "That change did not go through.",
+                  "The last operation was not applied."]
+  }
+}

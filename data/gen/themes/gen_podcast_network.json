@@ -1,0 +1,101 @@
+{
+  "domain": "podcast_network",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "host",
+    "noun": ["host", "hosts"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "episode",
+    "noun": ["episode", "episodes"],
+    "ref_field": "host",
+    "ref_phrase": "hosted by {name}",
+    "name_field": "title",
+    "titles": ["The Long Commute", "Behind the Mic", "Off Script",
+               "Late Night Signal", "The Deep Cut", "Unscripted Hour",
+               "The Rewind", "After the Interview", "The Sideline",
+               "Static and Noise", "The Backlog", "Open Mic Night",
+               "The Debrief", "Signal Lost"],
+    "bools": [
+      {"field": "needs_review", "true_phrase": "flagged for review",
+       "false_phrase": "not yet reviewed", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["drafting", "recording", "editing", "published"],
+      "phrases": {"drafting": ["draft", "pre"],
+                  "recording": ["being recorded", "post"],
+                  "editing": ["in editing", "post"],
+                  "published": ["published", "pre"]}
+    },
+    "times": [
+      {"field": "air_date", "kind": "time_now",
+       "lt_phrase": ["already aired", "post"],
+       "gt_phrase": ["not aired yet", "post"]},
+      {"field": "recorded_on", "kind": "time_cutoff",
+       "phrase": "recorded more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_episodes",
+                   "desc": "list all eps in the system, every one of em"},
+    "get_child": {"name": "get_episode",
+                  "desc": "grab one ep by id"},
+    "list_parent": {"name": "list_hosts",
+                    "desc": "list all the hosts we got on file"},
+    "get_parent": {"name": "get_host",
+                   "desc": "grab a host record by id"},
+    "delete_child": {"name": "nuke_episode",
+                     "desc": "kills an ep record for good, cant undo it",
+                     "verbs": ["nuke {obj}", "delete {obj} for good"]},
+    "set_enum": {"name": "set_episode_state",
+                 "desc": "change an eps state (draft/recording/editing/published), just pick one",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"drafting": "back to draft",
+                                   "recording": "into recording",
+                                   "editing": "into editing",
+                                   "published": "to published"}},
+    "set_bool": {"name": "flag_review",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag an ep that needs another look before it goes out",
+                 "verbs": ["flag {obj} for review", "mark {obj} needs review"]},
+    "set_ref": {"name": "reassign_host",
+                "desc": "swap an ep over to a different host, happens more than u think",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_host",
+             "desc": "shoot the host an email about their ep",
+             "child_verbs": ["email the host of {obj}",
+                             "ping the host behind {obj}"],
+             "direct_verbs": ["email {name}", "ping {name}"],
+             "pair_verbs": ["email", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the episode with the soonest air date",
+    "ord_phrase": "the episode with the {ord} soonest air date",
+    "pre_filter": {"enum_value": "editing", "phrase": "in editing"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the stalled episodes.",
+                 "Some of these have been sitting forever, handle it."],
+     "hint": "flag episodes still in editing that were recorded more than 60 days ago for review",
+     "clauses": [{"enum_value": "editing"},
+                 {"time_index": 1, "days": 60}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["your ep needs a look",
+                   "hey check on your episode plz",
+                   "quick note bout ur episode",
+                   "this episode might need attention"],
+    "agg_msgs": ["ur on top of this list rn",
+                 "flagging this one to you directly",
+                 "you lead this count atm"],
+    "fail_msgs": ["that didnt go through",
+                  "operation failed, try again",
+                  "last update didnt save"]
+  }
+}

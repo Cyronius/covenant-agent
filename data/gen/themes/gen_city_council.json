@@ -1,0 +1,112 @@
+{
+  "domain": "city_council",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "sponsor",
+    "noun": ["sponsor", "sponsors"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "motion",
+    "noun": ["motion", "motions"],
+    "ref_field": "sponsor",
+    "ref_phrase": "sponsored by {name}",
+    "name_field": "title",
+    "titles": ["Rezoning of Elm Street corridor", "Budget amendment for parks funding",
+               "Ordinance on short-term rentals", "Resolution supporting bike lanes",
+               "Franchise agreement renewal", "Noise ordinance update",
+               "Affordable housing incentive", "Traffic calming measures",
+               "Public art installation approval", "Waste collection contract renewal",
+               "Downtown parking fee adjustment", "Community center funding request"],
+    "bools": [
+      {"field": "public_hearing_required", "true_phrase": "requires a public hearing",
+       "false_phrase": "no hearing required", "placement": "post"},
+      {"field": "emergency", "true_phrase": "emergency",
+       "false_phrase": "routine", "placement": "pre"},
+      {"field": "controversial", "true_phrase": "contested",
+       "false_phrase": "uncontested", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["introduced", "in_committee", "adopted", "tabled"],
+      "phrases": {"introduced": ["introduced", "pre"],
+                  "in_committee": ["in committee", "pre"],
+                  "adopted": ["adopted", "pre"],
+                  "tabled": ["tabled", "pre"]}
+    },
+    "times": [
+      {"field": "vote_date", "kind": "time_now",
+       "lt_phrase": ["already voted on", "post"],
+       "gt_phrase": ["not yet voted on", "post"]},
+      {"field": "introduced_on", "kind": "time_cutoff",
+       "phrase": "introduced more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lst_mtn",
+                   "desc": "List every motion currently on the council agenda."},
+    "get_child": {"name": "get_mtn",
+                  "desc": "Fetch one motion by its agenda id."},
+    "list_parent": {"name": "lst_spn",
+                    "desc": "List all council members who sponsor motions."},
+    "get_parent": {"name": "get_spn",
+                   "desc": "Fetch one sponsor by id."},
+    "delete_child": {"name": "del_mtn",
+                     "desc": "Permanently remove a motion from the agenda. Not reversible.",
+                     "verbs": ["delete {obj}", "strike {obj} from the agenda"]},
+    "set_enum": {"name": "set_mtn_st",
+                 "desc": "Change a motion's state (introduced, in committee, adopted, or tabled).",
+                 "verbs": ["mark {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"introduced": "back to introduced",
+                                   "in_committee": "into committee",
+                                   "adopted": "as adopted",
+                                   "tabled": "as tabled"}},
+    "set_bool": {"name": "flag_emrg",
+                 "bool_index": 1, "value": true,
+                 "desc": "Flag a motion as an emergency item.",
+                 "verbs": ["flag {obj} as emergency", "mark {obj} emergency"]},
+    "set_ref": {"name": "mv_spn",
+                "desc": "Move a motion to a different sponsor.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "nfy_spn",
+             "desc": "Send a message to a council sponsor.",
+             "child_verbs": ["notify the sponsor of {obj}",
+                             "message the sponsor for {obj}"],
+             "direct_verbs": ["notify {name}", "message {name}"],
+             "pair_verbs": ["notify", "message"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the motion with the earliest vote date",
+    "ord_phrase": "the motion with the {ord} earliest vote date",
+    "pre_filter": {"enum_value": "in_committee", "phrase": "in committee"}
+  },
+  "ambiguous": [
+    {"request": ["Clear the tabled motions.",
+                 "Old tabled items need to go."],
+     "hint": "delete tabled motions introduced more than 300 days ago",
+     "clauses": [{"enum_value": "tabled"},
+                 {"time_index": 1, "days": 300}],
+     "action": "delete_child"},
+    {"request": ["Fast-track the urgent items.",
+                 "Some of these need emergency handling."],
+     "hint": "flag introduced motions introduced more than 45 days ago as emergency",
+     "clauses": [{"enum_value": "introduced"},
+                 {"time_index": 1, "days": 45}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your motion needs attention.",
+                   "Please review your agenda item.",
+                   "An update is required on your motion.",
+                   "Your motion may need revision."],
+    "agg_msgs": ["You have the most motions on this agenda.",
+                 "Flagging this to you directly.",
+                 "You lead this count."],
+    "fail_msgs": ["The requested council action failed.",
+                  "That motion could not be updated.",
+                  "The last action did not go through."]
+  }
+}

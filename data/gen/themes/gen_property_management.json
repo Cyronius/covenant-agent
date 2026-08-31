@@ -1,0 +1,109 @@
+{
+  "domain": "property_management",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "landlord",
+    "noun": ["landlord", "landlords"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "lease",
+    "noun": ["lease", "leases"],
+    "ref_field": "landlord",
+    "ref_phrase": "held by {name}",
+    "name_field": "property",
+    "titles": ["Maple Street Duplex - Unit A", "Riverside Commons - Unit 12",
+               "Oakwood Apartments - Unit 3C", "Sunset Terrace - Unit 7",
+               "Birchwood Flats - Unit 2B", "Elm Street House",
+               "Harbor View Condos - Unit 5", "Pinecrest Apartments - Unit 9D",
+               "Cedar Court - Unit 1", "Lakeside Townhomes - Unit 4",
+               "Meadowbrook Apartments - Unit 6A", "Willow Lane Cottage",
+               "Granite Hill Flats - Unit 8", "Downtown Lofts - Unit 3"],
+    "bools": [
+      {"field": "renewal_pending", "true_phrase": "up for renewal",
+       "false_phrase": "not up for renewal", "placement": "post"},
+      {"field": "co_signed", "true_phrase": "co-signed",
+       "false_phrase": "not co-signed", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["draft", "active", "terminated"],
+      "phrases": {"draft": ["in draft", "pre"],
+                  "active": ["active", "pre"],
+                  "terminated": ["terminated", "pre"]}
+    },
+    "times": [
+      {"field": "move_in", "kind": "time_now",
+       "lt_phrase": ["already begun", "post"],
+       "gt_phrase": ["not yet begun", "post"]},
+      {"field": "signed", "kind": "time_cutoff",
+       "phrase": "signed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listLeases",
+                   "desc": "Retrieves the full roster of lease agreements currently on file for this management company. Use it when you need to see every lease at once rather than looking up a single record."},
+    "get_child": {"name": "getLease",
+                  "desc": "Retrieves a single lease agreement using its unique identifier. This is the appropriate call when you already know which lease you want and just need its current details."},
+    "list_parent": {"name": "listLandlords",
+                    "desc": "Retrieves every landlord account registered with this property management company. Useful for browsing ownership records before drilling into a specific landlord's leases."},
+    "get_parent": {"name": "getLandlord",
+                   "desc": "Retrieves a single landlord account by its identifier. Use this to pull up ownership and contact details for one landlord specifically."},
+    "delete_child": {"name": "deleteLease",
+                     "desc": "Permanently deletes a lease agreement from the system, which cannot be undone once submitted. Only use this for records that should no longer exist in any report or filing.",
+                     "verbs": ["delete {obj}", "erase {obj} from the records"]},
+    "set_enum": {"name": "setLeaseStage",
+                 "desc": "Updates a lease agreement's stage to draft, active, or terminated, reflecting where it currently stands. This should be called any time the lease's standing changes so downstream reports stay accurate.",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"draft": "back to draft",
+                                   "active": "as active",
+                                   "terminated": "as terminated"}},
+    "set_bool": {"name": "flagRenewalPending",
+                 "bool_index": 0, "value": true,
+                 "desc": "Marks a lease agreement as being up for renewal in the near future. This helps the renewals team prioritize which agreements need outreach first.",
+                 "verbs": ["flag {obj} as up for renewal", "mark {obj} for renewal"]},
+    "set_ref": {"name": "reassignLandlord",
+                "desc": "Transfers a lease agreement to a different landlord's portfolio within the system. Use this when ownership of the underlying property changes hands.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailLandlord",
+             "desc": "Sends an email notification to a landlord regarding one of their properties. This is the standard channel for routine updates that do not require a phone call.",
+             "child_verbs": ["email the landlord behind {obj}",
+                             "notify the landlord tied to {obj}"],
+             "direct_verbs": ["email {name}", "send {name} an email"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the lease with the earliest move-in date",
+    "ord_phrase": "the lease with the {ord} earliest move-in date",
+    "pre_filter": {"enum_value": "active", "phrase": "active"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the old paperwork.",
+                 "The lease files are a mess, sort it out."],
+     "hint": "delete terminated leases signed more than 400 days ago",
+     "clauses": [{"enum_value": "terminated"},
+                 {"time_index": 1, "days": 400}],
+     "action": "delete_child"},
+    {"request": ["Get ahead of the renewals.",
+                 "Deal with the leases coming up for renewal."],
+     "hint": "flag active leases whose move-in date has already passed as up for renewal",
+     "clauses": [{"enum_value": "active"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your lease agreement needs attention.",
+                   "Please review your current lease agreement.",
+                   "A note about your lease agreement.",
+                   "Your lease agreement may require action."],
+    "agg_msgs": ["You currently hold the most leases in this portfolio.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

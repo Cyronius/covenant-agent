@@ -1,0 +1,106 @@
+{
+  "domain": "hr_recruiting",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "candidate",
+    "noun": ["candidate", "candidates"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "application",
+    "noun": ["application", "applications"],
+    "ref_field": "candidate",
+    "ref_phrase": "from {name}",
+    "name_field": "position",
+    "titles": ["Software Engineer", "Registered Nurse", "Warehouse Associate",
+               "Marketing Coordinator", "Data Analyst", "Customer Support Rep",
+               "Accounts Payable Clerk", "Machine Operator", "Sales Development Rep",
+               "Executive Assistant", "Field Technician", "Product Manager"],
+    "bools": [
+      {"field": "stalled", "true_phrase": "stalled",
+       "false_phrase": "on track", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["screening", "interviewing", "offer", "rejected"],
+      "phrases": {"screening": ["screening", "pre"],
+                  "interviewing": ["in interviews", "post"],
+                  "offer": ["offered", "pre"],
+                  "rejected": ["rejected", "pre"]}
+    },
+    "times": [
+      {"field": "interview_slot", "kind": "time_now",
+       "lt_phrase": ["already past", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "submitted", "kind": "time_cutoff",
+       "phrase": "submitted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_applications",
+                   "desc": "List every job application on file."},
+    "get_child": {"name": "get_application",
+                  "desc": "Fetch one job application by its id."},
+    "list_parent": {"name": "list_candidates",
+                    "desc": "List all candidates in the recruiting pipeline."},
+    "get_parent": {"name": "get_candidate",
+                   "desc": "Fetch one candidate by id."},
+    "delete_child": {"name": "withdraw_application",
+                     "desc": "Permanently remove a job application. Not reversible.",
+                     "verbs": ["withdraw {obj}", "pull {obj} from the pipeline"]},
+    "set_enum": {"name": "set_application_stage",
+                 "desc": "Change an application's stage (screening, interviewing, offer, or rejected).",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"screening": "back to screening",
+                                   "interviewing": "to interviewing",
+                                   "offer": "to offer",
+                                   "rejected": "to rejected"}},
+    "set_bool": {"name": "flag_stalled",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag an application as stalled.",
+                 "verbs": ["flag {obj} as stalled", "mark {obj} stalled"]},
+    "set_ref": {"name": "reassign_application",
+                "desc": "Move an application to a different candidate's profile.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_candidate",
+             "desc": "Send an email to a candidate.",
+             "child_verbs": ["email the candidate behind {obj}",
+                             "give the candidate behind {obj} an update"],
+             "direct_verbs": ["email {name}", "send {name} an email"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the application with the soonest interview slot",
+    "ord_phrase": "the application with the {ord} soonest interview slot",
+    "pre_filter": {"enum_value": "interviewing", "phrase": "interviewing"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the dead applications.",
+                 "The pipeline's cluttered, clear it out."],
+     "hint": "delete rejected applications submitted more than 60 days ago",
+     "clauses": [{"enum_value": "rejected"},
+                 {"time_index": 1, "days": 60}],
+     "action": "delete_child"},
+    {"request": ["Deal with the stuck interviews.",
+                 "Some of these have gone quiet, handle it."],
+     "hint": "flag interviewing applications whose interview slot is already past as stalled",
+     "clauses": [{"enum_value": "interviewing"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your application needs an update.",
+                   "Please review your application status.",
+                   "There's a note on your application.",
+                   "Your application may require follow-up."],
+    "agg_msgs": ["You're currently at the top of this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

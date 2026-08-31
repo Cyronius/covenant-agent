@@ -1,0 +1,97 @@
+{
+  "domain": "cloud_infra",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "account",
+    "noun": ["account", "accounts"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "instance",
+    "noun": ["instance", "instances"],
+    "ref_field": "account",
+    "ref_phrase": "under {name}",
+    "name_field": "role_tag",
+    "titles": ["web-frontend-1", "web-frontend-2", "api-gateway", "auth-service",
+               "db-primary", "db-replica-1", "cache-node-1", "batch-worker-3",
+               "load-balancer", "search-indexer", "message-broker", "monitoring-agent",
+               "ci-runner-2", "staging-sandbox"],
+    "bools": [
+      {"field": "publicly_reachable", "true_phrase": "internet-facing",
+       "false_phrase": "private", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state",
+      "values": ["running", "stopped", "terminated", "rebooting"],
+      "phrases": {"running": ["running", "pre"],
+                  "stopped": ["stopped", "pre"],
+                  "terminated": ["terminated", "pre"],
+                  "rebooting": ["rebooting", "pre"]}
+    },
+    "times": [
+      {"field": "launched", "kind": "time_now",
+       "lt_phrase": ["already launched", "post"],
+       "gt_phrase": ["not launched yet", "post"]},
+      {"field": "last_patched", "kind": "time_cutoff",
+       "phrase": "not patched in over {d} days"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_instances",
+                   "desc": "List every compute instance in the account."},
+    "get_child": {"name": "get_instance",
+                  "desc": "Fetch one compute instance by its id."},
+    "list_parent": {"name": "list_accounts",
+                    "desc": "List all cloud accounts."},
+    "get_parent": {"name": "get_account",
+                   "desc": "Fetch one cloud account by id."},
+    "delete_child": {"name": "terminate_instance",
+                     "desc": "Permanently terminate a compute instance. Not reversible.",
+                     "verbs": ["terminate {obj}", "tear down {obj}"]},
+    "set_enum": {"name": "set_instance_state",
+                 "desc": "Change a compute instance's state (running, stopped, terminated, or rebooting).",
+                 "verbs": ["set {obj} {to_value}", "put {obj} {to_value}"],
+                 "value_phrases": {"running": "to running", "stopped": "to stopped",
+                                   "terminated": "to terminated", "rebooting": "to rebooting"}},
+    "set_bool": {"name": "set_instance_visibility", "bool_index": 0, "value": false,
+                 "desc": "Mark a compute instance as private, not reachable from the internet.",
+                 "verbs": ["lock down {obj}", "make {obj} private"]},
+    "set_ref": {"name": "reassign_instance_account",
+                "desc": "Move a compute instance to a different account.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_account_owner",
+             "desc": "Send an email to the account's billing contact.",
+             "child_verbs": ["email the owner of {obj}", "alert the owner of {obj}"],
+             "direct_verbs": ["email {name}", "notify {name}"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the instance with the earliest launch time",
+    "ord_phrase": "the instance with the {ord} earliest launch time",
+    "pre_filter": {"enum_value": "running", "phrase": "running"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the dead weight in this account.",
+                 "This account is cluttered with old instances, deal with it."],
+     "hint": "terminate instances that are terminated and haven't been patched in 90+ days",
+     "clauses": [{"enum_value": "terminated"}, {"time_index": 1, "days": 90}],
+     "action": "delete_child"},
+    {"request": ["Lock down anything exposed that shouldn't be.",
+                 "Audit this account for stray public instances."],
+     "hint": "make running instances that are already launched private",
+     "clauses": [{"enum_value": "running"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your instance needs attention.", "Please review this compute instance.",
+                   "A note about your instance.", "This instance may need action."],
+    "agg_msgs": ["You own the most instances on this account.",
+                 "Flagging this to you directly.", "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.", "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

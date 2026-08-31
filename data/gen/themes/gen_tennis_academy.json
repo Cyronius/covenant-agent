@@ -1,0 +1,100 @@
+{
+  "domain": "tennis_academy",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "club",
+    "noun": ["club", "clubs"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "session",
+    "noun": ["session", "sessions"],
+    "ref_field": "club",
+    "ref_phrase": "with {name}",
+    "name_field": "focus",
+    "titles": ["Serve Mechanics Clinic", "Baseline Rally Drills", "Footwork Ladder Circuit",
+               "Doubles Net Play", "Return of Serve Workshop", "Match Play Simulation",
+               "Topspin Forehand Session", "Volley Precision Drills",
+               "Junior Fundamentals Camp", "Slice Backhand Clinic",
+               "Tiebreak Pressure Drills", "Serve-and-Volley Practice"],
+    "bools": [
+      {"field": "private_lesson", "true_phrase": "private",
+       "false_phrase": "group", "placement": "pre"},
+      {"field": "ball_machine", "true_phrase": "ball-machine assisted",
+       "false_phrase": "live-fed", "placement": "post"},
+      {"field": "makeup_session", "true_phrase": "makeup",
+       "false_phrase": "regular", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["booked", "held", "scrubbed"],
+      "phrases": {"booked": ["booked", "pre"],
+                  "held": ["held", "pre"],
+                  "scrubbed": ["scrubbed", "pre"]}
+    },
+    "times": [
+      {"field": "court_time", "kind": "time_now",
+       "lt_phrase": ["already on court", "post"],
+       "gt_phrase": ["not yet on court", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_sessions",
+                   "desc": "list booked court sessions"},
+    "get_child": {"name": "get_session",
+                  "desc": "fetch one session by id"},
+    "list_parent": {"name": "list_clubs",
+                    "desc": "list partner clubs"},
+    "get_parent": {"name": "get_club",
+                   "desc": "fetch one partner club"},
+    "delete_child": {"name": "scratch_session",
+                     "desc": "wipe a session, no undo",
+                     "verbs": ["scratch {obj}", "wipe {obj} from the book"]},
+    "set_enum": {"name": "set_session_state",
+                 "desc": "change session state",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"booked": "back to booked",
+                                   "held": "as held",
+                                   "scrubbed": "as scrubbed"}},
+    "set_bool": {"name": "flag_makeup",
+                 "bool_index": 2, "value": true,
+                 "desc": "flag a session as a makeup",
+                 "verbs": ["flag {obj} as makeup", "mark {obj} makeup"]},
+    "set_ref": {"name": "reassign_club",
+                "desc": "move a session to a different club",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notify_club",
+             "desc": "notify a partner club",
+             "child_verbs": ["notify the club behind {obj}",
+                             "flag the club on {obj}"],
+             "direct_verbs": ["notify {name}", "flag {name}"],
+             "pair_verbs": ["notify", "flag"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the session with the earliest court time",
+    "ord_phrase": "the session with the {ord} earliest court time",
+    "pre_filter": {"enum_value": "booked", "phrase": "booked"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the court schedule.", "The schedule's a mess, handle it."],
+     "hint": "scratch booked sessions already on court",
+     "clauses": [{"enum_value": "booked"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your session needs attention.",
+                   "Please review your upcoming session.",
+                   "A note about your session.",
+                   "Your session may need rescheduling."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

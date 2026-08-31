@@ -1,0 +1,93 @@
+{
+  "domain": "trucking_fleet",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "driver",
+    "noun": ["driver", "drivers"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "haul",
+    "noun": ["haul", "hauls"],
+    "ref_field": "driver",
+    "ref_phrase": "assigned to {name}",
+    "name_field": "load",
+    "titles": ["Refrigerated produce", "Flatbed lumber", "Livestock trailer",
+               "Tanker fuel load", "Dry van electronics", "Oversize wind blade",
+               "Construction equipment", "Bulk cement", "Auto hauler",
+               "Household goods", "Paper rolls", "Scrap metal load"],
+    "bools": [
+      {"field": "overweight", "true_phrase": "overweight",
+       "false_phrase": "within limit", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["assigned", "loading", "en_route", "delivered"],
+      "phrases": {"assigned": ["assigned", "pre"],
+                  "loading": ["loading", "pre"],
+                  "en_route": ["on the road", "post"],
+                  "delivered": ["delivered", "pre"]}
+    },
+    "times": [
+      {"field": "pickup", "kind": "time_now",
+       "lt_phrase": ["already picked up", "post"],
+       "gt_phrase": ["not yet picked up", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listHauls", "desc": "list all hauls"},
+    "get_child": {"name": "getHaul", "desc": "get haul by id"},
+    "list_parent": {"name": "listDrivers", "desc": "list fleet drivers"},
+    "get_parent": {"name": "getDriver", "desc": "get driver by id"},
+    "delete_child": {"name": "dropHaul",
+                     "desc": "del haul record, no undo",
+                     "verbs": ["drop {obj}", "scrap {obj} from the board"]},
+    "set_enum": {"name": "setHaulStatus",
+                 "desc": "chg haul status",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"assigned": "back to assigned",
+                                   "loading": "as loading",
+                                   "en_route": "as en route",
+                                   "delivered": "as delivered"}},
+    "set_bool": {"name": "flagOverweight",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag haul overweight",
+                 "verbs": ["flag {obj} overweight", "mark {obj} overweight"]},
+    "set_ref": {"name": "reassignDriver",
+                "desc": "move haul to another driver",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "pageDriver",
+             "desc": "page driver w/ msg",
+             "child_verbs": ["page the driver of {obj}", "ping the driver of {obj}"],
+             "direct_verbs": ["page {name}", "ping {name}"],
+             "pair_verbs": ["page", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the haul with the earliest pickup",
+    "ord_phrase": "the haul with the {ord} earliest pickup",
+    "pre_filter": {"enum_value": "assigned", "phrase": "assigned"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the dispatch board.",
+                 "Board's a mess, sort it."],
+     "hint": "drop assigned hauls whose pickup already passed",
+     "clauses": [{"enum_value": "assigned"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your haul needs attention.",
+                   "Check your haul assignment.",
+                   "Note on your haul.",
+                   "Your haul may be delayed."],
+    "agg_msgs": ["You're on top of this list.",
+                 "Flagging this straight to you.",
+                 "You lead this count."],
+    "fail_msgs": ["Op failed.",
+                  "Action didn't go through.",
+                  "Last op failed."]
+  }
+}

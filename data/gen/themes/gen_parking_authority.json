@@ -1,0 +1,107 @@
+{
+  "domain": "parking_authority",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "permit_holder",
+    "noun": ["permit holder", "permit holders"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "permit",
+    "noun": ["permit", "permits"],
+    "ref_field": "permit_holder",
+    "ref_phrase": "held by {name}",
+    "name_field": "zone",
+    "titles": ["Downtown Zone A Residential", "Downtown Zone B Residential",
+               "Riverside Zone C Residential", "Hillcrest Zone D Residential",
+               "Commuter Lot 1", "Commuter Lot 2", "Visitor Guest Pass",
+               "Disabled Parking Permit", "Overnight Street Parking",
+               "Employee Garage Permit", "Contractor Work Zone Permit",
+               "Motorcycle Parking Permit", "Electric Vehicle Charging Zone",
+               "Seasonal Beach Lot Permit"],
+    "bools": [
+      {"field": "flagged_for_review", "true_phrase": "flagged for review",
+       "false_phrase": "not flagged", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "standing", "values": ["active", "expired", "revoked"],
+      "phrases": {"active": ["active", "pre"],
+                  "expired": ["expired", "pre"],
+                  "revoked": ["revoked", "pre"]}
+    },
+    "times": [
+      {"field": "expires", "kind": "time_now",
+       "lt_phrase": ["already expired", "post"],
+       "gt_phrase": ["still valid", "post"]},
+      {"field": "issued", "kind": "time_cutoff",
+       "phrase": "issued more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listPermits",
+                   "desc": "List every parking permit on file."},
+    "get_child": {"name": "getPermit",
+                  "desc": "Fetch one parking permit by its id."},
+    "list_parent": {"name": "listPermitHolders",
+                    "desc": "List all registered permit holders."},
+    "get_parent": {"name": "getPermitHolder",
+                   "desc": "Fetch one permit holder by id."},
+    "delete_child": {"name": "deletePermit",
+                     "desc": "Permanently remove a parking permit record. Not reversible.",
+                     "verbs": ["delete {obj}", "revoke and remove {obj}"]},
+    "set_enum": {"name": "setPermitStanding",
+                 "desc": "Change a permit's standing (active, expired, or revoked).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"active": "back to active",
+                                   "expired": "as expired",
+                                   "revoked": "as revoked"}},
+    "set_bool": {"name": "flagForReview",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a permit for manual review.",
+                 "verbs": ["flag {obj} for review", "mark {obj} for review"]},
+    "set_ref": {"name": "reassignHolder",
+                "desc": "Move a permit to a different holder's account.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailHolder",
+             "desc": "Send an email to a permit holder.",
+             "child_verbs": ["email the holder of {obj}",
+                             "give the holder of {obj} a heads-up"],
+             "direct_verbs": ["email {name}", "send {name} an email"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the permit with the earliest expiration",
+    "ord_phrase": "the permit with the {ord} earliest expiration",
+    "pre_filter": {"enum_value": "active", "phrase": "active"}
+  },
+  "ambiguous": [
+    {"request": ["Clean out the dead permits.",
+                 "The permit list has a lot of junk, deal with it."],
+     "hint": "delete expired permits issued more than 500 days ago",
+     "clauses": [{"enum_value": "expired"},
+                 {"time_index": 1, "days": 500}],
+     "action": "delete_child"},
+    {"request": ["Check on the ones about to lapse.",
+                 "Handle the permits that look like they're expiring."],
+     "hint": "flag active permits whose expiration has already passed for review",
+     "clauses": [{"enum_value": "active"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your parking permit needs attention.",
+                   "Please review your parking permit.",
+                   "A note about your parking permit.",
+                   "Your parking permit may need renewal."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "domain": "moving_company",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "customer",
+    "noun": ["customer", "customers"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "move_job",
+    "noun": ["move job", "move jobs"],
+    "ref_field": "customer",
+    "ref_phrase": "for {name}",
+    "name_field": "job_type",
+    "titles": ["Local apartment move", "Long-distance household move",
+               "Office relocation", "Piano moving", "Storage unit move-out",
+               "Full-service packing and move", "Studio move",
+               "Senior downsizing move", "Cross-country move",
+               "Same-day rush move", "Furniture-only move",
+               "Warehouse relocation", "College dorm move", "Estate cleanout move"],
+    "bools": [
+      {"field": "needs_followup", "true_phrase": "needs follow-up",
+       "false_phrase": "no follow-up needed", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status", "values": ["quoted", "scheduled", "completed", "cancelled"],
+      "phrases": {"quoted": ["quoted", "pre"],
+                  "scheduled": ["scheduled", "pre"],
+                  "completed": ["completed", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "move_date", "kind": "time_now",
+       "lt_phrase": ["already happened", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "quoted_on", "kind": "time_cutoff",
+       "phrase": "quoted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lsjobs", "desc": "List every move job on the schedule."},
+    "get_child": {"name": "getjob", "desc": "Fetch one move job by its id."},
+    "list_parent": {"name": "lscust", "desc": "List all customers on file."},
+    "get_parent": {"name": "getcust", "desc": "Fetch one customer by id."},
+    "delete_child": {"name": "deljob",
+                     "desc": "Permanently remove a move job record. Not reversible.",
+                     "verbs": ["delete {obj}", "cancel and remove {obj}"]},
+    "set_enum": {"name": "setjobstatus",
+                 "desc": "Change a move job's status (quoted, scheduled, completed, or cancelled).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"quoted": "back to quoted",
+                                   "scheduled": "as scheduled",
+                                   "completed": "as completed",
+                                   "cancelled": "as cancelled"}},
+    "set_bool": {"name": "flagfollowup",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a move job as needing follow-up.",
+                 "verbs": ["flag {obj} for follow-up", "mark {obj} needs follow-up"]},
+    "set_ref": {"name": "movcust",
+                "desc": "Move a move job to a different customer's account.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "txtcust",
+             "desc": "Send a text message to a customer.",
+             "child_verbs": ["text the customer behind {obj}",
+                             "give the customer behind {obj} a heads-up"],
+             "direct_verbs": ["text {name}", "send {name} a text"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the move job with the earliest move date",
+    "ord_phrase": "the move job with the {ord} earliest move date",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the dead quotes.",
+                 "The quote list is cluttered, deal with it."],
+     "hint": "delete quoted move jobs quoted more than 60 days ago",
+     "clauses": [{"enum_value": "quoted"},
+                 {"time_index": 1, "days": 60}],
+     "action": "delete_child"},
+    {"request": ["Check on the ones that already happened.",
+                 "Follow up on jobs that should be done by now."],
+     "hint": "flag scheduled move jobs whose move date already passed as needing follow-up",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your move job needs attention.",
+                   "Please review your upcoming move job.",
+                   "A note about your move job.",
+                   "Your move job may need rescheduling."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

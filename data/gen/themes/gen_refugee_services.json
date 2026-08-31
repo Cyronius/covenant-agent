@@ -1,0 +1,94 @@
+{
+  "domain": "refugee_services",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "agency",
+    "noun": ["agency", "agencies"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "referral",
+    "noun": ["referral", "referrals"],
+    "ref_field": "agency",
+    "ref_phrase": "from {name}",
+    "name_field": "service_need",
+    "titles": ["Housing placement", "Employment authorization filing",
+               "ESL class enrollment", "Medical screening",
+               "School enrollment for children", "Legal aid consultation",
+               "Cash assistance application", "Interpreter services",
+               "Trauma counseling", "Food assistance signup",
+               "Transportation assistance", "Cultural orientation session"],
+    "bools": [
+      {"field": "urgent", "true_phrase": "urgent",
+       "false_phrase": "standard", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["received", "screening", "placed", "closed"],
+      "phrases": {"received": ["received", "pre"],
+                  "screening": ["in screening", "pre"],
+                  "placed": ["placed", "pre"],
+                  "closed": ["closed", "pre"]}
+    },
+    "times": [
+      {"field": "received_at", "kind": "time_cutoff",
+       "phrase": "received more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "ls_ref", "desc": "list referrals"},
+    "get_child": {"name": "get_ref", "desc": "get one referral"},
+    "list_parent": {"name": "ls_agc", "desc": "list agencies"},
+    "get_parent": {"name": "get_agc", "desc": "get one agency"},
+    "delete_child": {"name": "rm_ref",
+                     "desc": "del referral rec",
+                     "verbs": ["rm {obj}", "purge {obj}"]},
+    "set_enum": {"name": "set_ref_st",
+                 "desc": "set referral status",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"received": "back to received",
+                                   "screening": "into screening",
+                                   "placed": "as placed",
+                                   "closed": "as closed"}},
+    "set_bool": {"name": "flag_urg",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag referral urgent",
+                 "verbs": ["flag {obj} urgent", "mark {obj} urgent"]},
+    "set_ref": {"name": "mv_ref_agc",
+                "desc": "move referral to diff agency",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "note_agc",
+             "desc": "log note to agency",
+             "child_verbs": ["send a note to the agency behind {obj}", "notify the agency behind {obj}"],
+             "direct_verbs": ["notify {name}", "send {name} a note"],
+             "pair_verbs": ["notify", "log"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the referral received longest ago",
+    "ord_phrase": "the referral with the {ord} oldest referral date",
+    "pre_filter": {"enum_value": "received", "phrase": "received"}
+  },
+  "ambiguous": [
+    {"request": ["clear the backlog.",
+                 "referral queue is backed up, fix it."],
+     "hint": "delete referrals still marked received that came in more than 30 days ago",
+     "clauses": [{"enum_value": "received"},
+                 {"time_index": 0, "days": 30}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["your referral needs review.",
+                   "check this referral.",
+                   "note on your referral.",
+                   "your referral may need follow-up."],
+    "agg_msgs": ["you're on top of this list.",
+                 "flagging this to you directly.",
+                 "you lead this count."],
+    "fail_msgs": ["op failed.",
+                  "that didn't go through.",
+                  "last change didn't save."]
+  }
+}

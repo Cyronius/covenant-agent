@@ -1,0 +1,103 @@
+{
+  "domain": "radiology",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "referrer",
+    "noun": ["referring provider", "referring providers"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "imaging_order",
+    "noun": ["imaging order", "imaging orders"],
+    "ref_field": "referrer",
+    "ref_phrase": "from {name}",
+    "name_field": "study_type",
+    "titles": ["Chest X-ray", "MRI of the lumbar spine", "CT scan of the abdomen",
+               "Mammography screening", "Ultrasound of the abdomen", "Bone density scan",
+               "MRI of the brain", "CT angiogram", "Fluoroscopy study", "PET scan",
+               "Nuclear medicine bone scan", "MRI of the knee", "CT scan of the chest"],
+    "bools": [
+      {"field": "contrast_required", "true_phrase": "requiring contrast",
+       "false_phrase": "no contrast needed", "placement": "post"},
+      {"field": "critical_finding", "true_phrase": "flagged with a critical finding",
+       "false_phrase": "no critical finding", "placement": "post"}
+    ],
+    "enum": {
+      "field": "workflow_status", "values": ["ordered", "scheduled", "completed", "read"],
+      "phrases": {"ordered": ["newly ordered", "pre"],
+                  "scheduled": ["scheduled", "pre"],
+                  "completed": ["completed", "pre"],
+                  "read": ["read and finalized", "pre"]}
+    },
+    "times": [
+      {"field": "study_time", "kind": "time_now",
+       "lt_phrase": ["already performed", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "order_placed", "kind": "time_cutoff",
+       "phrase": "ordered more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lstImg",
+                   "desc": "Retrieve the complete list of imaging orders currently held by the radiology center, spanning every referring provider and every study status."},
+    "get_child": {"name": "getImg",
+                  "desc": "Look up a single imaging order using its unique identifier and return the full set of details currently recorded for that study."},
+    "list_parent": {"name": "lstRef",
+                    "desc": "Retrieve the complete list of referring providers currently on file with the radiology center, regardless of how many studies they have ordered."},
+    "get_parent": {"name": "getRef",
+                   "desc": "Look up a single referring provider using their unique identifier and return their complete current details."},
+    "delete_child": {"name": "delImg",
+                     "desc": "Permanently remove an imaging order from the system; once this action is confirmed the record cannot be recovered.",
+                     "verbs": ["delete {obj}", "erase {obj} from the queue"]},
+    "set_enum": {"name": "setImgStatus",
+                 "desc": "Update the status of an imaging order, moving it through the workflow from ordered, to scheduled, to completed, and finally to read and finalized.",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"ordered": "back to newly ordered",
+                                   "scheduled": "to scheduled",
+                                   "completed": "to completed",
+                                   "read": "to read and finalized"}},
+    "set_bool": {"name": "flagCritical", "bool_index": 1, "value": true,
+                 "desc": "Mark an imaging order as containing a critical finding so that it is escalated to the reading radiologist and referring provider without delay.",
+                 "verbs": ["flag {obj} critical", "mark {obj} as a critical finding"]},
+    "set_ref": {"name": "moveRef",
+                "desc": "Reassign an imaging order so that it is associated with a different referring provider than the one currently on file.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notifyRef",
+             "desc": "Send a notification to a referring provider regarding one of their imaging orders, using the center's standard results-delivery channel.",
+             "child_verbs": ["notify the referring provider on {obj}",
+                             "give the referring provider on {obj} a heads-up"],
+             "direct_verbs": ["notify {name}", "message {name}"],
+             "pair_verbs": ["notify", "message"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the imaging order with the soonest study time",
+    "ord_phrase": "the imaging order with the {ord} soonest study time",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["Clean out the finalized orders.", "The queue needs pruning."],
+     "hint": "delete imaging orders that have been read and finalized",
+     "clauses": [{"enum_value": "read"}],
+     "action": "delete_child"},
+    {"request": ["Escalate anything stale.", "The old orders need attention."],
+     "hint": "flag completed imaging orders placed more than 5 days ago as critical findings",
+     "clauses": [{"enum_value": "completed"}, {"time_index": 1, "days": 5}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["There is an update available regarding your imaging order.",
+                   "Please review the current status of your imaging order.",
+                   "Our radiology team has a note about your imaging order.",
+                   "Your imaging order may require rescheduling."],
+    "agg_msgs": ["This provider currently has the most orders on this list.",
+                 "This order is being escalated directly to your attention.",
+                 "You are currently at the top of this count."],
+    "fail_msgs": ["The requested update to this imaging order could not be processed.",
+                  "That change did not save to the system.",
+                  "The last action on this order did not complete successfully."]
+  }
+}

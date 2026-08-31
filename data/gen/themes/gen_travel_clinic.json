@@ -1,0 +1,105 @@
+{
+  "domain": "travel_clinic",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "account",
+    "noun": ["corporate account", "corporate accounts"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "immunization_visit",
+    "noun": ["immunization visit", "immunization visits"],
+    "ref_field": "account",
+    "ref_phrase": "billed to {name}",
+    "name_field": "vaccine_focus",
+    "titles": ["Yellow fever vaccination", "Typhoid vaccination visit",
+               "Hepatitis A and B series", "Malaria prophylaxis consult",
+               "Japanese encephalitis vaccination", "Rabies pre-exposure series",
+               "Routine travel vaccine update", "Meningococcal vaccination",
+               "Tetanus booster visit", "Cholera vaccination visit",
+               "Altitude sickness consult", "Pre-travel health screening",
+               "COVID travel vaccination"],
+    "bools": [
+      {"field": "itinerary_reviewed", "true_phrase": "itinerary reviewed",
+       "false_phrase": "itinerary not yet reviewed", "placement": "post"},
+      {"field": "prescription_given", "true_phrase": "prescription issued",
+       "false_phrase": "no prescription issued", "placement": "post"},
+      {"field": "needs_booster", "true_phrase": "flagged for a booster",
+       "false_phrase": "no booster needed", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "booking_status", "values": ["booked", "completed", "cancelled"],
+      "phrases": {"booked": ["booked", "pre"],
+                  "completed": ["completed", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "visit_time", "kind": "time_now",
+       "lt_phrase": ["already past", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "itinerary_submitted", "kind": "time_cutoff",
+       "phrase": "submitted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lstViz",
+                   "desc": "Retrieve the complete list of immunization visits currently on the clinic's books, across every corporate account and every visit status."},
+    "get_child": {"name": "getViz",
+                  "desc": "Look up a single immunization visit using its unique identifier and return the full set of details currently recorded for that visit."},
+    "list_parent": {"name": "lstAcct",
+                    "desc": "Retrieve the complete list of corporate accounts currently on file with the travel clinic, regardless of how many visits they have booked."},
+    "get_parent": {"name": "getAcct",
+                   "desc": "Look up a single corporate account using its unique identifier and return its complete current details."},
+    "delete_child": {"name": "delViz",
+                     "desc": "Permanently remove an immunization visit record from the system; once this action is confirmed the record cannot be recovered.",
+                     "verbs": ["delete {obj}", "erase {obj} from the schedule"]},
+    "set_enum": {"name": "setVizStatus",
+                 "desc": "Update the status of an immunization visit, moving it between booked, completed, and cancelled as travelers move through the clinic.",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"booked": "back to booked",
+                                   "completed": "as completed",
+                                   "cancelled": "as cancelled"}},
+    "set_bool": {"name": "flagBooster", "bool_index": 2, "value": true,
+                 "desc": "Mark an immunization visit as needing a booster dose so that the traveler is scheduled for a timely follow-up appointment.",
+                 "verbs": ["flag {obj} for a booster", "mark {obj} as needing a booster"]},
+    "set_ref": {"name": "moveAcct",
+                "desc": "Reassign an immunization visit so that it is billed to a different corporate account than the one currently on file.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notifyAcct",
+             "desc": "Send a notification to a corporate account's travel coordinator regarding one of their travelers' immunization visits.",
+             "child_verbs": ["notify the account on {obj}", "give the account on {obj} a heads-up"],
+             "direct_verbs": ["notify {name}", "message {name}"],
+             "pair_verbs": ["notify", "message"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the immunization visit with the soonest visit time",
+    "ord_phrase": "the immunization visit with the {ord} soonest visit time",
+    "pre_filter": {"enum_value": "booked", "phrase": "booked"}
+  },
+  "ambiguous": [
+    {"request": ["Clean out the cancelled visits.", "The schedule needs pruning."],
+     "hint": "delete cancelled immunization visits",
+     "clauses": [{"enum_value": "cancelled"}],
+     "action": "delete_child"},
+    {"request": ["Flag whoever's overdue for a follow-up.", "Handle the stale itineraries."],
+     "hint": "flag booked immunization visits whose itinerary was submitted more than 45 days ago as needing a booster",
+     "clauses": [{"enum_value": "booked"}, {"time_index": 1, "days": 45}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["There is an update available regarding your upcoming immunization visit.",
+                   "Please review the current status of your immunization visit.",
+                   "Our travel health team has a note about your visit.",
+                   "Your immunization visit may require rescheduling."],
+    "agg_msgs": ["This account currently has the most visits on this list.",
+                 "This visit is being flagged directly to your attention.",
+                 "You are currently at the top of this count."],
+    "fail_msgs": ["The requested update to this visit could not be processed.",
+                  "That change did not save to the system.",
+                  "The last action on this visit did not complete successfully."]
+  }
+}

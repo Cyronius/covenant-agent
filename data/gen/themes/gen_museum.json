@@ -1,0 +1,105 @@
+{
+  "domain": "museum",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "lender",
+    "noun": ["lender", "lenders"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "loan",
+    "noun": ["loan", "loans"],
+    "ref_field": "lender",
+    "ref_phrase": "from {name}",
+    "name_field": "artwork",
+    "titles": ["Untitled Bronze Study", "Harbor at Dusk", "Portrait of a Merchant",
+               "Fractured Vessel Series", "Reliquary Fragment", "Woven Tapestry No. 4",
+               "Still Life with Lemons", "Ceremonial Mask", "Ink Study of Cranes",
+               "Marble Torso", "Ancestral Loom", "Glass Cameo Brooch", "Woodcut Triptych"],
+    "bools": [
+      {"field": "insured", "true_phrase": "insured",
+       "false_phrase": "uninsured", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["requested", "approved", "in_transit", "returned"],
+      "phrases": {"requested": ["pending review", "pre"],
+                  "approved": ["cleared for transit", "pre"],
+                  "in_transit": ["in transit", "pre"],
+                  "returned": ["returned", "pre"]}
+    },
+    "times": [
+      {"field": "pickup", "kind": "time_now",
+       "lt_phrase": ["already past pickup", "post"],
+       "gt_phrase": ["still awaiting pickup", "post"]},
+      {"field": "requested_at", "kind": "time_cutoff",
+       "phrase": "requested more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_loans",
+                   "desc": "List every loan currently on the registrar's schedule."},
+    "get_child": {"name": "get_loan",
+                  "desc": "Fetch one loan record by its id."},
+    "list_parent": {"name": "list_lenders",
+                    "desc": "List all lenders on file with the museum."},
+    "get_parent": {"name": "get_lender",
+                   "desc": "Fetch one lender by id."},
+    "delete_child": {"name": "cancel_loan",
+                     "desc": "Cancel a loan and remove it from the registrar schedule.",
+                     "verbs": ["cancel {obj}", "pull {obj} from the schedule"]},
+    "set_enum": {"name": "set_loan_status",
+                 "desc": "Change a loan's status (requested, approved, in transit, or returned).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"requested": "back to requested",
+                                   "approved": "as approved",
+                                   "in_transit": "as in transit",
+                                   "returned": "as returned"}},
+    "set_bool": {"name": "flag_loan_insured",
+                 "bool_index": 0, "value": true,
+                 "desc": "Mark a loan as insured.",
+                 "verbs": ["flag {obj} as insured", "mark {obj} insured"]},
+    "set_ref": {"name": "reassign_lender",
+                "desc": "Move a loan to a different lender's record.",
+                "verbs": ["reassign {obj} {to_name}", "transfer {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notify_lender",
+             "desc": "Email a lender about their loan.",
+             "child_verbs": ["email the lender of {obj}",
+                             "send the lender of {obj} an update"],
+             "direct_verbs": ["email {name}", "send {name} a message"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the loan with the earliest pickup date",
+    "ord_phrase": "the loan with the {ord} earliest pickup date",
+    "pre_filter": {"enum_value": "approved", "phrase": "approved"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the loan schedule backlog.",
+                 "The loan list is a mess, deal with it."],
+     "hint": "cancel requested loans whose pickup date is already past",
+     "clauses": [{"enum_value": "requested"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Take care of the insurance gaps.",
+                 "Handle the uninsured items before transit."],
+     "hint": "flag in_transit loans as insured",
+     "clauses": [{"enum_value": "in_transit"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your loan is due for a condition check.",
+                   "The venue needs an update on your loan.",
+                   "A courier note has been added to your loan.",
+                   "Your loan's transit paperwork needs review."],
+    "agg_msgs": ["You have the most loans out to this venue.",
+                 "You're flagged as our top lender this quarter.",
+                 "You currently hold the longest-running loan."],
+    "fail_msgs": ["The loan update could not be processed.",
+                  "That request was rejected by the registrar system.",
+                  "The transfer did not go through."]
+  }
+}

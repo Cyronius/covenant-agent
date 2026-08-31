@@ -1,0 +1,100 @@
+{
+  "domain": "ci_cd",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "repo",
+    "noun": ["repo", "repos"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "build",
+    "noun": ["build", "builds"],
+    "ref_field": "repo",
+    "ref_phrase": "on {name}",
+    "name_field": "commit_message",
+    "titles": ["Fix flaky auth test", "Bump dependency versions", "Refactor payment retry logic",
+               "Add caching layer to search", "Fix null pointer in checkout flow",
+               "Update CI runner image", "Remove dead feature flag code",
+               "Improve build cache hit rate", "Patch security vulnerability in parser",
+               "Add integration tests for webhook handler", "Speed up docker image build",
+               "Revert breaking change to API client"],
+    "bools": [
+      {"field": "flaky", "true_phrase": "flaky", "false_phrase": "stable", "placement": "pre"},
+      {"field": "manual_trigger", "true_phrase": "manually triggered",
+       "false_phrase": "auto-triggered", "placement": "post"},
+      {"field": "cached", "true_phrase": "cache-hit", "false_phrase": "cold build", "placement": "post"}
+    ],
+    "enum": {
+      "field": "phase",
+      "values": ["queued", "running", "passed", "failed"],
+      "phrases": {"queued": ["queued", "pre"],
+                  "running": ["running", "pre"],
+                  "passed": ["passed", "pre"],
+                  "failed": ["failed", "pre"]}
+    },
+    "times": [
+      {"field": "started", "kind": "time_now",
+       "lt_phrase": ["already started", "post"],
+       "gt_phrase": ["not started yet", "post"]},
+      {"field": "last_success", "kind": "time_cutoff",
+       "phrase": "hasn't passed in over {d} days"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lsbuilds",
+                   "desc": "Returns every build recorded against the repo's pipeline history. Use this when you need the full build list rather than a single record."},
+    "get_child": {"name": "getbuild",
+                  "desc": "Retrieves one build by its id. It returns all fields the pipeline currently has for that build."},
+    "list_parent": {"name": "lsrepos",
+                    "desc": "Returns every repo the CI system currently tracks. Use this to enumerate repos before drilling into their builds."},
+    "get_parent": {"name": "getrepo",
+                   "desc": "Retrieves one repo by its id. It returns the repo's tracked metadata."},
+    "delete_child": {"name": "rmbuild",
+                     "desc": "Deletes a build record from the pipeline history permanently. There is no way to recover it once removed.",
+                     "verbs": ["delete {obj}", "wipe {obj} from the history"]},
+    "set_enum": {"name": "setphase",
+                 "desc": "Updates a build's phase to queued, running, passed, or failed. This overwrites whatever phase the build was previously in.",
+                 "verbs": ["set {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"queued": "to queued", "running": "to running",
+                                   "passed": "to passed", "failed": "to failed"}},
+    "set_bool": {"name": "flagbuild", "bool_index": 0, "value": true,
+                 "desc": "Marks a build as flaky, meaning its result can't be trusted on its own. This is meant for builds with inconsistent pass/fail history.",
+                 "verbs": ["flag {obj} as flaky", "mark {obj} unreliable"]},
+    "set_ref": {"name": "mvbuild",
+                "desc": "Reassigns a build record to a different repo. This is useful when a build was logged against the wrong repo.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "pingowner",
+             "desc": "Sends a text message to the repo's on-call contact about a build. This is the fastest way to get a human's attention on a build issue.",
+             "child_verbs": ["text the owner of {obj}", "page the owner of {obj}"],
+             "direct_verbs": ["text {name}", "page {name}"],
+             "pair_verbs": ["text", "page"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the build with the earliest start time",
+    "ord_phrase": "the build with the {ord} earliest start time",
+    "pre_filter": {"enum_value": "running", "phrase": "running"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the graveyard of dead builds.",
+                 "This repo has way too many old failed builds, handle it."],
+     "hint": "delete failed builds that haven't passed in over 60 days",
+     "clauses": [{"enum_value": "failed"}, {"time_index": 1, "days": 60}],
+     "action": "delete_child"},
+    {"request": ["Flag the unreliable ones.", "Figure out which builds keep breaking."],
+     "hint": "flag running builds that are already started as flaky",
+     "clauses": [{"enum_value": "running"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["This build needs a look.", "Check on this build's status.",
+                   "Heads up about this build.", "This build may need a rerun."],
+    "agg_msgs": ["You have the most builds in this repo.",
+                 "Flagging this to you directly.", "You lead this repo's build count."],
+    "fail_msgs": ["The requested operation failed.", "That change did not go through.",
+                  "The last operation was not applied."]
+  }
+}

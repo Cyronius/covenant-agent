@@ -1,0 +1,106 @@
+{
+  "domain": "swim_school",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "guardian",
+    "noun": ["guardian", "guardians"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "lane_booking",
+    "noun": ["lane booking", "lane bookings"],
+    "ref_field": "guardian",
+    "ref_phrase": "for {name}",
+    "name_field": "stroke_focus",
+    "titles": ["Freestyle Fundamentals", "Backstroke Technique", "Breaststroke Drill Set",
+               "Butterfly Introduction", "Survival Float Practice", "Turns & Starts Clinic",
+               "Endurance Lap Set", "Water Safety Basics", "Diving Block Practice",
+               "Relay Exchange Drills", "Kickboard Conditioning", "Open Water Prep"],
+    "bools": [
+      {"field": "private_lane", "true_phrase": "private lane",
+       "false_phrase": "shared lane", "placement": "pre"},
+      {"field": "certified_instructor", "true_phrase": "certified instructor",
+       "false_phrase": "assistant-led", "placement": "post"},
+      {"field": "makeup_booking", "true_phrase": "makeup",
+       "false_phrase": "regular", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["booked", "completed", "cancelled"],
+      "phrases": {"booked": ["booked", "pre"],
+                  "completed": ["completed", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "pool_time", "kind": "time_now",
+       "lt_phrase": ["already in the pool", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "booked_on", "kind": "time_cutoff",
+       "phrase": "booked more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_lane_bookings",
+                   "desc": "List every lane booking on the pool schedule."},
+    "get_child": {"name": "get_lane_booking",
+                  "desc": "Fetch one lane booking by its id."},
+    "list_parent": {"name": "list_guardians",
+                    "desc": "List all guardians registered with the swim school."},
+    "get_parent": {"name": "get_guardian",
+                   "desc": "Fetch one guardian by id."},
+    "delete_child": {"name": "cancel_lane_booking",
+                     "desc": "Permanently remove a lane booking from the schedule. Not reversible.",
+                     "verbs": ["cancel {obj}", "pull {obj} from the schedule"]},
+    "set_enum": {"name": "set_booking_status",
+                 "desc": "Change a lane booking's status (booked, completed, or cancelled).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"booked": "back to booked",
+                                   "completed": "as completed",
+                                   "cancelled": "as cancelled"}},
+    "set_bool": {"name": "flag_private_lane",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a lane booking as a private lane.",
+                 "verbs": ["flag {obj} as private", "mark {obj} private lane"]},
+    "set_ref": {"name": "reassign_guardian",
+                "desc": "Move a lane booking to a different guardian's account.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "under {name}"},
+    "send": {"name": "notify_guardian",
+             "desc": "Send a notification to a guardian.",
+             "child_verbs": ["notify the guardian behind {obj}",
+                             "give the guardian on {obj} a heads-up"],
+             "direct_verbs": ["notify {name}", "send {name} a note"],
+             "pair_verbs": ["notify", "message"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the lane booking with the earliest pool time",
+    "ord_phrase": "the lane booking with the {ord} earliest pool time",
+    "pre_filter": {"enum_value": "booked", "phrase": "booked"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the pool schedule.", "The schedule's a mess, clean it up."],
+     "hint": "cancel booked lane bookings already past pool time",
+     "clauses": [{"enum_value": "booked"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Handle the private lane requests.", "Deal with the private lanes that need flagging."],
+     "hint": "flag booked lane bookings already past pool time as private",
+     "clauses": [{"enum_value": "booked"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your lane booking needs attention.",
+                   "Please review your upcoming lane booking.",
+                   "A note about your lane booking.",
+                   "Your lane booking may need rescheduling."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

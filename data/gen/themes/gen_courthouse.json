@@ -1,0 +1,109 @@
+{
+  "domain": "courthouse",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "litigant",
+    "noun": ["litigant", "litigants"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "filing",
+    "noun": ["filing", "filings"],
+    "ref_field": "litigant",
+    "ref_phrase": "filed by {name}",
+    "name_field": "caption",
+    "titles": ["Motion to Dismiss", "Motion for Summary Judgment", "Notice of Appeal",
+               "Answer to Complaint", "Motion to Compel Discovery", "Request for Continuance",
+               "Motion for Default Judgment", "Petition for Injunctive Relief",
+               "Motion to Suppress Evidence", "Stipulation of Dismissal",
+               "Motion for Change of Venue", "Brief in Opposition"],
+    "bools": [
+      {"field": "sealed", "true_phrase": "sealed",
+       "false_phrase": "public", "placement": "pre"},
+      {"field": "expedited", "true_phrase": "expedited",
+       "false_phrase": "standard track", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["filed", "under_review", "ruled", "dismissed"],
+      "phrases": {"filed": ["newly filed", "pre"],
+                  "under_review": ["under review", "pre"],
+                  "ruled": ["ruled on", "pre"],
+                  "dismissed": ["dismissed", "pre"]}
+    },
+    "times": [
+      {"field": "hearing_date", "kind": "time_now",
+       "lt_phrase": ["already passed", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "docketed_on", "kind": "time_cutoff",
+       "phrase": "docketed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_filings",
+                   "desc": "List every filing on the court docket."},
+    "get_child": {"name": "get_filing",
+                  "desc": "Fetch one filing by its docket id."},
+    "list_parent": {"name": "list_litigants",
+                    "desc": "List all litigants of record in the court system."},
+    "get_parent": {"name": "get_litigant",
+                   "desc": "Fetch one litigant by id."},
+    "delete_child": {"name": "expunge_filing",
+                     "desc": "Permanently remove a filing from the docket. Not reversible.",
+                     "verbs": ["expunge {obj}", "strike {obj} from the docket"]},
+    "set_enum": {"name": "set_filing_stage",
+                 "desc": "Change a filing's docket stage (filed, under review, ruled, or dismissed).",
+                 "verbs": ["mark {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"filed": "back to filed",
+                                   "under_review": "to under review",
+                                   "ruled": "as ruled on",
+                                   "dismissed": "as dismissed"}},
+    "set_bool": {"name": "seal_filing",
+                 "bool_index": 0, "value": true,
+                 "desc": "Seal a filing from public view.",
+                 "verbs": ["seal {obj}", "mark {obj} sealed"]},
+    "set_ref": {"name": "reassign_filing",
+                "desc": "Move a filing to a different litigant's case record.",
+                "verbs": ["reassign {obj} {to_name}", "transfer {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notify_litigant",
+             "desc": "Send a case notice to a litigant.",
+             "child_verbs": ["notify the litigant on {obj}",
+                             "send a notice about {obj}"],
+             "direct_verbs": ["notify {name}", "send {name} a notice"],
+             "pair_verbs": ["notify", "serve"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the filing with the earliest hearing date",
+    "ord_phrase": "the filing with the {ord} earliest hearing date",
+    "pre_filter": {"enum_value": "under_review", "phrase": "under review"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the dead docket entries.",
+                 "The docket has stale filings, deal with them."],
+     "hint": "expunge dismissed filings docketed more than 90 days ago",
+     "clauses": [{"enum_value": "dismissed"},
+                 {"time_index": 1, "days": 90}],
+     "action": "delete_child"},
+    {"request": ["Lock down the sensitive filings.",
+                 "Handle the filings that shouldn't be public."],
+     "hint": "seal filings still under review whose hearing date has already passed",
+     "clauses": [{"enum_value": "under_review"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your case has an update.",
+                   "Please review the attached filing.",
+                   "A docket update requires your attention.",
+                   "Your filing status has changed."],
+    "agg_msgs": ["You have the most active filings on this docket.",
+                 "Flagging this case to you directly.",
+                 "You lead this docket count."],
+    "fail_msgs": ["The requested docket action failed.",
+                  "That filing could not be updated.",
+                  "The clerk's action did not go through."]
+  }
+}

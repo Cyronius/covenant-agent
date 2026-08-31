@@ -1,0 +1,99 @@
+{
+  "domain": "real_estate",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "brokerage",
+    "noun": ["brokerage", "brokerages"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "listing",
+    "noun": ["listing", "listings"],
+    "ref_field": "brokerage",
+    "ref_phrase": "with {name}",
+    "name_field": "address",
+    "titles": ["124 Maple Street", "88 Birchwood Court", "310 Hillcrest Avenue",
+               "47 Lakeview Drive", "902 Cedar Lane", "15 Orchard Way",
+               "670 Sunset Boulevard", "23 Willow Bend", "541 Riverside Road",
+               "12 Meadowbrook Circle", "789 Highland Terrace", "36 Pinecrest Court"],
+    "bools": [
+      {"field": "price_reduced", "true_phrase": "price-reduced",
+       "false_phrase": "at original price", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["active", "pending", "sold", "withdrawn"],
+      "phrases": {"active": ["active", "pre"],
+                  "pending": ["pending", "pre"],
+                  "sold": ["sold", "pre"],
+                  "withdrawn": ["withdrawn", "pre"]}
+    },
+    "times": [
+      {"field": "listed_on", "kind": "time_cutoff",
+       "phrase": "listed more than {d} days ago"},
+      {"field": "showing_time", "kind": "time_now",
+       "lt_phrase": ["already showed", "post"],
+       "gt_phrase": ["not yet shown", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listListings",
+                   "desc": "lists all listings, every brokerage"},
+    "get_child": {"name": "getListing",
+                  "desc": "grabs one listing by id"},
+    "list_parent": {"name": "listBrokerages",
+                    "desc": "lists brokerages on file"},
+    "get_parent": {"name": "getBrokerage",
+                   "desc": "grabs one brokerage by id"},
+    "delete_child": {"name": "purgeListing",
+                     "desc": "nukes a listing rec, cant undo",
+                     "verbs": ["purge {obj}", "nuke {obj} from the mls"]},
+    "set_enum": {"name": "setListingPhase",
+                 "desc": "sets listing phase - active/pending/sold/withdrawn",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"active": "back to active",
+                                   "pending": "as pending",
+                                   "sold": "as sold",
+                                   "withdrawn": "as withdrawn"}},
+    "set_bool": {"name": "flagPriceCut",
+                 "bool_index": 0, "value": true,
+                 "desc": "flags listing as price reduced",
+                 "verbs": ["flag {obj} as price-reduced", "mark {obj} price cut"]},
+    "set_ref": {"name": "reassignBrokerage",
+                "desc": "moves a listing to a diff brokerage",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "callBrokerage",
+             "desc": "calls the brokerage on file",
+             "child_verbs": ["call the brokerage of {obj}",
+                             "give the brokerage of {obj} a ring"],
+             "direct_verbs": ["call {name}", "phone {name}"],
+             "pair_verbs": ["call", "phone"]}
+  },
+  "sort": {
+    "time_index": 1,
+    "dir": "ASC",
+    "sup_phrase": "the listing with the earliest showing time",
+    "ord_phrase": "the listing with the {ord} earliest showing time",
+    "pre_filter": {"enum_value": "active", "phrase": "active"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the stale listings.", "The mls is cluttered, deal with it."],
+     "hint": "delete listings still active and listed more than 120 days ago",
+     "clauses": [{"enum_value": "active"},
+                 {"time_index": 0, "days": 120}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["your listing needs attention",
+                   "check your active listing",
+                   "note about your listing",
+                   "listing might need a price update"],
+    "agg_msgs": ["ur on top of this list",
+                 "flagging this listing to u",
+                 "u lead this count rn"],
+    "fail_msgs": ["op failed, try again",
+                  "that didnt go through",
+                  "last action didnt work"]
+  }
+}

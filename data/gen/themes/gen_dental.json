@@ -1,0 +1,106 @@
+{
+  "domain": "dental",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "patient",
+    "noun": ["patient", "patients"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "treatment_plan",
+    "noun": ["treatment plan", "treatment plans"],
+    "ref_field": "patient",
+    "ref_phrase": "for {name}",
+    "name_field": "procedure",
+    "titles": ["Composite filling - lower left molar", "Root canal - upper incisor",
+               "Crown placement", "Wisdom tooth extraction",
+               "Deep cleaning (scaling and root planing)", "Dental implant placement",
+               "Bridge fitting", "Teeth whitening", "Orthodontic consultation",
+               "Cavity filling - premolar", "Gum graft surgery", "Night guard fitting",
+               "Veneer application", "Bonding repair - front tooth"],
+    "bools": [
+      {"field": "insurance_verified", "true_phrase": "insurance verified",
+       "false_phrase": "insurance not verified", "placement": "pre"},
+      {"field": "needs_second_opinion", "true_phrase": "flagged for a second opinion",
+       "false_phrase": "cleared without a second opinion", "placement": "post"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["proposed", "approved", "in_progress", "completed"],
+      "phrases": {"proposed": ["proposed", "pre"],
+                  "approved": ["approved", "pre"],
+                  "in_progress": ["in progress", "pre"],
+                  "completed": ["completed", "pre"]}
+    },
+    "times": [
+      {"field": "visit_date", "kind": "time_now",
+       "lt_phrase": ["already past", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "estimate_created", "kind": "time_cutoff",
+       "phrase": "estimated more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_treatment_plans",
+                   "desc": "List every treatment plan on file."},
+    "get_child": {"name": "get_treatment_plan",
+                  "desc": "Fetch one treatment plan by its id."},
+    "list_parent": {"name": "list_patients",
+                    "desc": "List all patients registered with the practice."},
+    "get_parent": {"name": "get_patient",
+                   "desc": "Fetch one patient by id."},
+    "delete_child": {"name": "delete_treatment_plan",
+                     "desc": "Permanently remove a treatment plan record. Not reversible.",
+                     "verbs": ["delete {obj}", "remove {obj} from the chart"]},
+    "set_enum": {"name": "set_treatment_plan_phase",
+                 "desc": "Change a treatment plan's phase (proposed, approved, in progress, or completed).",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"proposed": "back to proposed",
+                                   "approved": "to approved",
+                                   "in_progress": "to in progress",
+                                   "completed": "to completed"}},
+    "set_bool": {"name": "flag_second_opinion",
+                 "bool_index": 1, "value": true,
+                 "desc": "Flag a treatment plan as needing a second opinion.",
+                 "verbs": ["flag {obj} for a second opinion", "mark {obj} for review"]},
+    "set_ref": {"name": "reassign_treatment_plan",
+                "desc": "Move a treatment plan to a different patient's chart.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "text_patient",
+             "desc": "Send a text message to a patient.",
+             "child_verbs": ["text the patient on {obj}",
+                             "give the patient on {obj} a heads-up"],
+             "direct_verbs": ["text {name}", "send {name} a text"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the treatment plan with the soonest visit date",
+    "ord_phrase": "the treatment plan with the {ord} soonest visit date",
+    "pre_filter": {"enum_value": "approved", "phrase": "approved"}
+  },
+  "ambiguous": [
+    {"request": ["Clean out the old treatment plans.", "The chart backlog needs cleanup."],
+     "hint": "delete completed treatment plans",
+     "clauses": [{"enum_value": "completed"}],
+     "action": "delete_child"},
+    {"request": ["Flag the stale estimates.", "Those old proposals need a second look."],
+     "hint": "flag proposed treatment plans whose estimate is more than 60 days old for a second opinion",
+     "clauses": [{"enum_value": "proposed"}, {"time_index": 1, "days": 60}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your treatment plan needs your attention.",
+                   "Please review your upcoming treatment plan.",
+                   "A note from the office about your treatment plan.",
+                   "Your treatment plan may need rescheduling."],
+    "agg_msgs": ["This patient currently has the most treatment plans on file.",
+                 "Flagging this chart directly to you.",
+                 "This patient leads the practice on this count."],
+    "fail_msgs": ["The requested update to this treatment plan could not be completed.",
+                  "That change did not save.",
+                  "The last action on this chart did not go through."]
+  }
+}

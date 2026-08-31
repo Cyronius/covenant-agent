@@ -1,0 +1,105 @@
+{
+  "domain": "cinema",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "distributor",
+    "noun": ["distributor", "distributors"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "screening",
+    "noun": ["screening", "screenings"],
+    "ref_field": "distributor",
+    "ref_phrase": "from {name}",
+    "name_field": "film",
+    "titles": ["The Hollow Reel", "Neon Static", "Last Light Over Harbor City",
+               "The Cartridge", "Blue Marquee", "Reels of Yesterday",
+               "Static Bloom", "The Projectionist's Son", "Midnight Matinee",
+               "Flicker and Fade", "The Last Double Feature", "Celluloid Ghosts"],
+    "bools": [
+      {"field": "subtitled", "true_phrase": "subtitled",
+       "false_phrase": "no subtitles", "placement": "pre"},
+      {"field": "sold_out", "true_phrase": "sold out",
+       "false_phrase": "seats available", "placement": "post"},
+      {"field": "digital_print", "true_phrase": "digital",
+       "false_phrase": "35mm print", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["scheduled", "confirmed", "cancelled"],
+      "phrases": {"scheduled": ["tentative", "pre"],
+                  "confirmed": ["confirmed", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "showtime", "kind": "time_now",
+       "lt_phrase": ["already screened", "post"],
+       "gt_phrase": ["not yet screened", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_screenings",
+                   "desc": "lists every screening on the board, all screens"},
+    "get_child": {"name": "get_screening",
+                  "desc": "grabs one screening rec by id"},
+    "list_parent": {"name": "list_distributors",
+                    "desc": "all distributors on file, no filter"},
+    "get_parent": {"name": "get_distributor",
+                   "desc": "one distributor rec by id"},
+    "delete_child": {"name": "kill_screening",
+                     "desc": "yanks a screening off the board, cant undo it",
+                     "verbs": ["kill {obj}", "pull {obj} off the board"]},
+    "set_enum": {"name": "set_screening_state",
+                 "desc": "flips screening btwn scheduled/confirmed/cancelled",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to tentative",
+                                   "confirmed": "as confirmed",
+                                   "cancelled": "as cancelled"}},
+    "set_bool": {"name": "flag_sold_out",
+                 "bool_index": 1, "value": true,
+                 "desc": "marks a screening sold out, no more seats",
+                 "verbs": ["mark {obj} sold out", "flag {obj} as sold out"]},
+    "set_ref": {"name": "reassign_distributor",
+                "desc": "moves screening to a diff distributor, quick fix",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_distributor",
+             "desc": "fires off an email to the distributor, fast",
+             "child_verbs": ["email the distributor of {obj}",
+                             "shoot the distributor of {obj} a note"],
+             "direct_verbs": ["email {name}", "send {name} a note"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the screening with the earliest showtime",
+    "ord_phrase": "the screening with the {ord} earliest showtime",
+    "pre_filter": {"enum_value": "confirmed", "phrase": "confirmed"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the board.",
+                 "The screen schedule's a mess, sort it."],
+     "hint": "kill scheduled screenings whose showtime already passed",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Deal with the packed shows.",
+                 "Handle the full houses."],
+     "hint": "flag confirmed screenings as sold out",
+     "clauses": [{"enum_value": "confirmed"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["your screening needs a look",
+                   "theres an update on your screening",
+                   "screening needs a status check",
+                   "your screening might need rescheduling"],
+    "agg_msgs": ["you got the most screenings booked rn",
+                 "youre topping the distributor list",
+                 "you got the longest-running slot"],
+    "fail_msgs": ["the update didnt go thru",
+                  "that action failed",
+                  "screening couldnt be updated"]
+  }
+}

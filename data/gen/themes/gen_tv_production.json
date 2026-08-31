@@ -1,0 +1,103 @@
+{
+  "domain": "tv_production",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "network",
+    "noun": ["network", "networks"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "shoot",
+    "noun": ["shoot", "shoots"],
+    "ref_field": "network",
+    "ref_phrase": "for {name}",
+    "name_field": "episode",
+    "titles": ["Pilot: First Light", "The Long Table Read", "Static on the Line",
+               "Backlot Blues", "The Understudy Cut", "Night Shoot at Pier 9",
+               "Rewrite on the Fly", "The Green Room", "Second Unit Sundown",
+               "Cross-Cut", "The Wrap Party Episode", "Rain Cover"],
+    "bools": [
+      {"field": "permit_secured", "true_phrase": "permitted",
+       "false_phrase": "no permit", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["prepped", "shooting", "wrapped", "scrapped"],
+      "phrases": {"prepped": ["in prep", "pre"],
+                  "shooting": ["shooting", "pre"],
+                  "wrapped": ["wrapped", "pre"],
+                  "scrapped": ["scrapped", "pre"]}
+    },
+    "times": [
+      {"field": "call_time", "kind": "time_now",
+       "lt_phrase": ["already called", "post"],
+       "gt_phrase": ["not yet called", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lsShoots",
+                   "desc": "list all shoot days"},
+    "get_child": {"name": "getShoot",
+                  "desc": "fetch one shoot day"},
+    "list_parent": {"name": "lsNetworks",
+                    "desc": "list all networks"},
+    "get_parent": {"name": "getNetwork",
+                   "desc": "fetch one network"},
+    "delete_child": {"name": "scrubShoot",
+                     "desc": "wipe a shoot day, no undo",
+                     "verbs": ["scrub {obj}", "wipe {obj} from the board"]},
+    "set_enum": {"name": "setShootStatus",
+                 "desc": "chg shoot status",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"prepped": "back to prep",
+                                   "shooting": "to shooting",
+                                   "wrapped": "as wrapped",
+                                   "scrapped": "as scrapped"}},
+    "set_bool": {"name": "flagPermit",
+                 "bool_index": 0, "value": true,
+                 "desc": "mark shoot permitted",
+                 "verbs": ["flag {obj} as permitted", "mark {obj} permit-secured"]},
+    "set_ref": {"name": "reassignNetwork",
+                "desc": "move shoot to diff network",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "pingNetwork",
+             "desc": "msg the network re: shoot",
+             "child_verbs": ["ping the network behind {obj}",
+                             "message the network for {obj}"],
+             "direct_verbs": ["ping {name}", "message {name}"],
+             "pair_verbs": ["message", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the shoot with the earliest call time",
+    "ord_phrase": "the shoot with the {ord} earliest call time",
+    "pre_filter": {"enum_value": "shooting", "phrase": "shooting"}
+  },
+  "ambiguous": [
+    {"request": ["Sort the scrapped days.",
+                 "Clean up the dead shoots."],
+     "hint": "scrub scrapped shoots whose call time already passed",
+     "clauses": [{"enum_value": "scrapped"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Handle the permit gaps.",
+                 "Deal with the unpermitted shoots."],
+     "hint": "flag shooting-status shoots as permitted",
+     "clauses": [{"enum_value": "shooting"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your shoot day needs a status check.",
+                   "There's an update on your scheduled shoot.",
+                   "Production has flagged your shoot for review.",
+                   "Your shoot may need a call time change."],
+    "agg_msgs": ["You have the most shoot days on the board.",
+                 "You're leading the network in active shoots.",
+                 "You hold the longest-running shoot block."],
+    "fail_msgs": ["The shoot update failed.",
+                  "That request was rejected by the scheduling board.",
+                  "The change did not save."]
+  }
+}

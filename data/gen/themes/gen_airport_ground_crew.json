@@ -1,0 +1,108 @@
+{
+  "domain": "airport_ground_crew",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "airline",
+    "noun": ["airline", "airlines"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "turnaround_task",
+    "noun": ["turnaround task", "turnaround tasks"],
+    "ref_field": "airline",
+    "ref_phrase": "for {name}",
+    "name_field": "task_type",
+    "titles": ["Aircraft fueling", "Baggage unloading", "Baggage loading",
+               "Catering restock", "Lavatory service", "Cabin cleaning",
+               "Potable water refill", "Pushback and towing", "De-icing service",
+               "Wheelchair assistance", "Cargo hold inspection", "Jet bridge alignment"],
+    "bools": [
+      {"field": "safety_critical", "true_phrase": "safety-critical",
+       "false_phrase": "routine", "placement": "pre"},
+      {"field": "delayed", "true_phrase": "delayed",
+       "false_phrase": "on time", "placement": "pre"},
+      {"field": "priority", "true_phrase": "priority",
+       "false_phrase": "standard", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["pending", "in_progress", "complete", "skipped"],
+      "phrases": {"pending": ["pending", "pre"],
+                  "in_progress": ["in progress", "pre"],
+                  "complete": ["complete", "pre"],
+                  "skipped": ["skipped", "pre"]}
+    },
+    "times": [
+      {"field": "start", "kind": "time_now",
+       "lt_phrase": ["already started", "post"],
+       "gt_phrase": ["not yet started", "post"]},
+      {"field": "due", "kind": "time_cutoff",
+       "phrase": "due more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lsTasks",
+                   "desc": "This tool returns every turnaround task currently tracked across all flights on the ramp. It includes tasks in every phase from pending through skipped."},
+    "get_child": {"name": "getTask",
+                  "desc": "This tool retrieves a single turnaround task record using its unique identifier. It returns all fields currently stored for that task."},
+    "list_parent": {"name": "lsAirlines",
+                    "desc": "This tool returns the full list of airlines that ground crew currently services at this station. It includes both mainline and regional carriers."},
+    "get_parent": {"name": "getAirline",
+                   "desc": "This tool retrieves a single airline record using its unique identifier. It returns the complete airline profile."},
+    "delete_child": {"name": "rmTask",
+                     "desc": "This tool permanently deletes a turnaround task record from the ramp system. Once removed, the task cannot be recovered by any other tool.",
+                     "verbs": ["remove {obj}", "wipe {obj} from the ramp log"]},
+    "set_enum": {"name": "setTaskPhase",
+                 "desc": "This tool changes a turnaround task's phase among pending, in progress, complete, and skipped. It is the standard way ramp crew advance a task through its lifecycle.",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"pending": "back to pending",
+                                   "in_progress": "as in progress",
+                                   "complete": "as complete",
+                                   "skipped": "as skipped"}},
+    "set_bool": {"name": "flagCritical",
+                 "bool_index": 0, "value": true,
+                 "desc": "This tool flags a turnaround task as safety-critical, meaning the flight cannot depart until it is complete. It is used when ramp supervisors identify a task that blocks departure clearance.",
+                 "verbs": ["flag {obj} as safety-critical", "mark {obj} safety-critical"]},
+    "set_ref": {"name": "reassignAirline",
+                "desc": "This tool moves a turnaround task to a different airline, for example after a gate or carrier change. The task's history and phase remain attached to the record.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notifyAirline",
+             "desc": "This tool sends a notification to the airline associated with a given turnaround task. It is used to relay delays or safety concerns to the carrier's station team.",
+             "child_verbs": ["notify the airline behind {obj}", "alert the airline behind {obj}"],
+             "direct_verbs": ["notify {name}", "alert {name}"],
+             "pair_verbs": ["notify", "alert"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the task with the earliest start time",
+    "ord_phrase": "the task with the {ord} earliest start time",
+    "pre_filter": {"enum_value": "pending", "phrase": "pending"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the ramp backlog.",
+                 "The ramp queue is a mess, deal with it."],
+     "hint": "flag pending tasks as safety-critical",
+     "clauses": [{"enum_value": "pending"}],
+     "action": "set_bool"},
+    {"request": ["Clear out the stale tasks.",
+                 "Remove whatever's overdue and forgotten."],
+     "hint": "remove skipped tasks due more than a set number of days ago",
+     "clauses": [{"enum_value": "skipped"},
+                 {"time_index": 1, "days": 2}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["This task requires your attention at this time.",
+                   "Please review the current status of this turnaround task.",
+                   "There is an update regarding this ramp task.",
+                   "This task may need to be rescheduled."],
+    "agg_msgs": ["Your airline currently tops this list.",
+                 "This is being flagged to your airline directly.",
+                 "Your airline leads this count right now."],
+    "fail_msgs": ["The requested operation could not be completed successfully.",
+                  "That action failed to go through as expected.",
+                  "The last operation did not complete."]
+  }
+}

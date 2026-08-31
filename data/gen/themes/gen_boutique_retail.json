@@ -1,0 +1,106 @@
+{
+  "domain": "boutique_retail",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "supplier",
+    "noun": ["supplier", "suppliers"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "replenishment",
+    "noun": ["replenishment", "replenishments"],
+    "ref_field": "supplier",
+    "ref_phrase": "from {name}",
+    "name_field": "item",
+    "titles": ["Linen wrap dress", "Suede ankle boots", "Cashmere scarf",
+               "Silk cami top", "Wide-leg trousers", "Statement earrings",
+               "Denim jacket", "Leather crossbody bag", "Knit cardigan",
+               "Pleated midi skirt", "Canvas tote", "Velvet blazer"],
+    "bools": [
+      {"field": "rush_order", "true_phrase": "rush",
+       "false_phrase": "standard", "placement": "pre"},
+      {"field": "discontinued", "true_phrase": "discontinued",
+       "false_phrase": "active", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["requested", "ordered", "received", "cancelled"],
+      "phrases": {"requested": ["requested", "pre"],
+                  "ordered": ["on order", "pre"],
+                  "received": ["received", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "needed_by", "kind": "time_now",
+       "lt_phrase": ["overdue", "post"],
+       "gt_phrase": ["not yet due", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_replenishments",
+                   "desc": "List every replenishment on order."},
+    "get_child": {"name": "get_replenishment",
+                  "desc": "Fetch one replenishment by its id."},
+    "list_parent": {"name": "list_suppliers",
+                    "desc": "List all suppliers on file."},
+    "get_parent": {"name": "get_supplier",
+                   "desc": "Fetch one supplier by id."},
+    "delete_child": {"name": "cancel_replenishment",
+                     "desc": "Remove a replenishment order permanently. Not reversible.",
+                     "verbs": ["cancel {obj}", "scrap {obj}"]},
+    "set_enum": {"name": "set_replenishment_stage",
+                 "desc": "Change a replenishment's stage (requested, ordered, received, or cancelled).",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"requested": "back to requested",
+                                   "ordered": "to on order",
+                                   "received": "to received",
+                                   "cancelled": "to cancelled"}},
+    "set_bool": {"name": "flag_rush_order",
+                 "bool_index": 0, "value": true,
+                 "desc": "Mark a replenishment as a rush order.",
+                 "verbs": ["flag {obj} as rush", "mark {obj} rush"]},
+    "set_ref": {"name": "reassign_supplier",
+                "desc": "Move a replenishment to a different supplier.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_supplier",
+             "desc": "Send an email to a supplier.",
+             "child_verbs": ["email the supplier of {obj}",
+                             "notify the supplier of {obj}"],
+             "direct_verbs": ["email {name}", "message {name}"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the replenishment with the earliest needed-by date",
+    "ord_phrase": "the replenishment with the {ord} earliest needed-by date",
+    "pre_filter": {"enum_value": "requested", "phrase": "requested"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the stale requests.",
+                 "The requested pile needs sorting."],
+     "hint": "cancel requested replenishments already overdue",
+     "clauses": [{"enum_value": "requested"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Flag the urgent ones.",
+                 "Sort out what's overdue."],
+     "hint": "flag requested replenishments already overdue as rush orders",
+     "clauses": [{"enum_value": "requested"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your replenishment needs a look.",
+                   "Please check on your pending replenishment.",
+                   "A note about your stock order.",
+                   "Your replenishment may need updating."],
+    "agg_msgs": ["You have the most open orders right now.",
+                 "Flagging this backlog to you directly.",
+                 "You lead this supplier's order count."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That update could not be completed.",
+                  "The last change did not go through."]
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "domain": "art_gallery",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "consignor",
+    "noun": ["consignor", "consignors"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "consignment",
+    "noun": ["consignment", "consignments"],
+    "ref_field": "consignor",
+    "ref_phrase": "from {name}",
+    "name_field": "piece",
+    "titles": ["Vermilion Drift", "Study in Grey No. 7", "Coastal Fracture",
+               "Quiet Interior", "Sundial Fragment II", "Blue Hour Triptych",
+               "Salt Marsh Study", "Untitled (Ochre)", "Winter Orchard",
+               "Reclining Form", "Paper Boats", "Ash and Ember"],
+    "bools": [
+      {"field": "authenticated", "true_phrase": "authenticated",
+       "false_phrase": "unauthenticated", "placement": "pre"},
+      {"field": "on_display", "true_phrase": "on display",
+       "false_phrase": "in storage", "placement": "post"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["intake", "priced", "listed", "sold"],
+      "phrases": {"intake": ["just intaken", "pre"],
+                  "priced": ["priced", "pre"],
+                  "listed": ["listed for sale", "post"],
+                  "sold": ["sold", "pre"]}
+    },
+    "times": [
+      {"field": "listed_on", "kind": "time_cutoff",
+       "phrase": "listed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listConsignments",
+                   "desc": "list all consignments"},
+    "get_child": {"name": "getConsignment",
+                  "desc": "fetch one consignment"},
+    "list_parent": {"name": "listConsignors",
+                    "desc": "list all consignors"},
+    "get_parent": {"name": "getConsignor",
+                   "desc": "fetch one consignor"},
+    "delete_child": {"name": "pullConsignment",
+                     "desc": "pull piece, end consignment",
+                     "verbs": ["pull {obj}", "end the consignment on {obj}"]},
+    "set_enum": {"name": "setConsignmentStage",
+                 "desc": "change consignment stage",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"intake": "back to intake",
+                                   "priced": "to priced",
+                                   "listed": "to listed",
+                                   "sold": "to sold"}},
+    "set_bool": {"name": "markAuthenticated",
+                 "bool_index": 0, "value": true,
+                 "desc": "mark piece authenticated",
+                 "verbs": ["mark {obj} authenticated", "flag {obj} as authenticated"]},
+    "set_ref": {"name": "reassignConsignor",
+                "desc": "move piece to new consignor",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "callConsignor",
+             "desc": "call a consignor re: piece",
+             "child_verbs": ["call the consignor of {obj}",
+                             "ring the consignor of {obj}"],
+             "direct_verbs": ["call {name}", "ring {name}"],
+             "pair_verbs": ["call", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the consignment listed longest ago",
+    "ord_phrase": "the consignment with the {ord} oldest listing date",
+    "pre_filter": {"enum_value": "listed", "phrase": "listed"}
+  },
+  "ambiguous": [
+    {"request": ["Clear the stale listings.",
+                 "The listings are piling up, fix it."],
+     "hint": "pull listed consignments listed more than 60 days ago",
+     "clauses": [{"enum_value": "listed"},
+                 {"time_index": 0, "days": 60}],
+     "action": "delete_child"},
+    {"request": ["Sort out the authentication gap.",
+                 "Clear the unauthenticated backlog."],
+     "hint": "mark sold consignments as authenticated",
+     "clauses": [{"enum_value": "sold"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your consignment needs a decision.",
+                   "The gallery has an update on your piece.",
+                   "Your consignment listing needs review.",
+                   "A buyer inquiry has come in on your piece."],
+    "agg_msgs": ["You have the most pieces on consignment right now.",
+                 "You're our top consignor this season.",
+                 "You hold the longest-listed piece on the floor."],
+    "fail_msgs": ["The consignment update failed.",
+                  "That request was not processed.",
+                  "The change did not save."]
+  }
+}

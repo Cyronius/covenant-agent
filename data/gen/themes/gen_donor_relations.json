@@ -1,0 +1,101 @@
+{
+  "domain": "donor_relations",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "donor",
+    "noun": ["donor", "donors"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "pledge",
+    "noun": ["pledge", "pledges"],
+    "ref_field": "donor",
+    "ref_phrase": "from {name}",
+    "name_field": "campaign",
+    "titles": ["Annual Fund Drive", "Capital Campaign", "Matching Gift Challenge",
+               "Year-End Appeal", "Scholarship Endowment", "Building Renovation Fund",
+               "Emergency Relief Appeal", "Legacy Society Ask", "Corporate Sponsorship",
+               "Gala Fundraiser Pledge", "Monthly Giving Program", "Memorial Tribute Fund"],
+    "bools": [
+      {"field": "recurring", "true_phrase": "recurring",
+       "false_phrase": "one-time", "placement": "pre"},
+      {"field": "anonymous", "true_phrase": "anonymous",
+       "false_phrase": "named", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["pledged", "invoiced", "fulfilled", "lapsed"],
+      "phrases": {"pledged": ["pledged", "pre"],
+                  "invoiced": ["invoiced", "pre"],
+                  "fulfilled": ["fulfilled", "pre"],
+                  "lapsed": ["lapsed", "pre"]}
+    },
+    "times": [
+      {"field": "due_date", "kind": "time_now",
+       "lt_phrase": ["past due", "post"],
+       "gt_phrase": ["not yet due", "post"]},
+      {"field": "pledged_at", "kind": "time_cutoff",
+       "phrase": "pledged more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_pledges",
+                   "desc": "List every pledge on record."},
+    "get_child": {"name": "get_pledge",
+                  "desc": "Fetch one pledge by its id."},
+    "list_parent": {"name": "list_donors",
+                    "desc": "List all donors in the development database."},
+    "get_parent": {"name": "get_donor",
+                   "desc": "Fetch one donor by id."},
+    "delete_child": {"name": "delete_pledge",
+                     "desc": "Permanently remove a pledge record. Not reversible.",
+                     "verbs": ["delete {obj}", "wipe {obj} from the ledger"]},
+    "set_enum": {"name": "set_pledge_status",
+                 "desc": "Change a pledge's status (pledged, invoiced, fulfilled, or lapsed).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"pledged": "back to pledged",
+                                   "invoiced": "as invoiced",
+                                   "fulfilled": "as fulfilled",
+                                   "lapsed": "as lapsed"}},
+    "set_bool": {"name": "mark_recurring",
+                 "bool_index": 0, "value": true,
+                 "desc": "Mark a pledge as a recurring gift.",
+                 "verbs": ["mark {obj} recurring", "flag {obj} as recurring"]},
+    "set_ref": {"name": "reassign_donor",
+                "desc": "Move a pledge to a different donor's account.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_donor",
+             "desc": "Send an email to a donor.",
+             "child_verbs": ["email the donor behind {obj}", "follow up with the donor behind {obj}"],
+             "direct_verbs": ["email {name}", "send {name} a note"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the pledge with the nearest due date",
+    "ord_phrase": "the pledge with the {ord} nearest due date",
+    "pre_filter": {"enum_value": "invoiced", "phrase": "invoiced"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the lapsed pledge list.",
+                 "The pledge ledger needs a purge."],
+     "hint": "delete lapsed pledges pledged more than 180 days ago",
+     "clauses": [{"enum_value": "lapsed"},
+                 {"time_index": 1, "days": 180}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your pledge needs attention.",
+                   "Please review your open pledge.",
+                   "A note about your pledge.",
+                   "Your pledge may need updating."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

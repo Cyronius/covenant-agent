@@ -1,0 +1,90 @@
+{
+  "domain": "data_platform",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "team",
+    "noun": ["team", "teams"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "run",
+    "noun": ["run", "runs"],
+    "ref_field": "team",
+    "ref_phrase": "owned by {name}",
+    "name_field": "job_name",
+    "titles": ["daily_sales_aggregate", "user_events_dedup", "inventory_sync",
+               "clickstream_sessionize", "churn_feature_build", "currency_rate_refresh",
+               "warehouse_vacuum", "customer_ltv_rollup", "ad_spend_ingest",
+               "fraud_signal_join", "shipment_status_sync", "catalog_price_backfill"],
+    "bools": [
+      {"field": "backfill", "true_phrase": "backfill", "false_phrase": "incremental", "placement": "pre"},
+      {"field": "data_quality_failed", "true_phrase": "DQ-failed", "false_phrase": "DQ-passed", "placement": "post"},
+      {"field": "alert_sent", "true_phrase": "alert sent", "false_phrase": "no alert sent", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status",
+      "values": ["queued", "running", "succeeded", "failed"],
+      "phrases": {"queued": ["queued", "pre"],
+                  "running": ["running", "pre"],
+                  "succeeded": ["succeeded", "pre"],
+                  "failed": ["failed", "pre"]}
+    },
+    "times": [
+      {"field": "started_at", "kind": "time_now",
+       "lt_phrase": ["already started", "post"],
+       "gt_phrase": ["not started yet", "post"]},
+      {"field": "last_success", "kind": "time_cutoff",
+       "phrase": "hasn't succeeded in over {d} days"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_runs", "desc": "List every ETL run owned by a team."},
+    "get_child": {"name": "get_run", "desc": "Fetch one ETL run by its id."},
+    "list_parent": {"name": "list_teams", "desc": "List all teams on the data platform."},
+    "get_parent": {"name": "get_team", "desc": "Fetch one team by id."},
+    "delete_child": {"name": "delete_run", "desc": "Permanently remove an ETL run record. Not reversible.",
+                     "verbs": ["delete {obj}", "purge {obj} from the run history"]},
+    "set_enum": {"name": "set_run_status",
+                 "desc": "Change an ETL run's status (queued, running, succeeded, or failed).",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"queued": "to queued", "running": "to running",
+                                   "succeeded": "to succeeded", "failed": "to failed"}},
+    "set_bool": {"name": "flag_run_alert", "bool_index": 2, "value": true,
+                 "desc": "Mark an ETL run as having had an alert sent.",
+                 "verbs": ["flag {obj} as alerted", "mark {obj} alert sent"]},
+    "set_ref": {"name": "reassign_run_team", "desc": "Move an ETL run to a different team.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "call_team_lead", "desc": "Call the team's on-call lead about an ETL run.",
+             "child_verbs": ["call the lead behind {obj}", "ring the lead behind {obj}"],
+             "direct_verbs": ["call {name}", "ring {name}"],
+             "pair_verbs": ["call", "ring"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the run with the earliest start time",
+    "ord_phrase": "the run with the {ord} earliest start time",
+    "pre_filter": {"enum_value": "running", "phrase": "running"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the failed run history.", "This team's runs list is full of junk, fix it."],
+     "hint": "delete failed runs that haven't succeeded in over 30 days",
+     "clauses": [{"enum_value": "failed"}, {"time_index": 1, "days": 30}],
+     "action": "delete_child"},
+    {"request": ["Send alerts for whatever is stuck.",
+                 "Somebody needs to know about the running jobs that started forever ago."],
+     "hint": "send alert flag on running runs already started",
+     "clauses": [{"enum_value": "running"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["This run needs a look.", "Check on this run.",
+                   "Heads up about this run.", "This run may need a retry."],
+    "agg_msgs": ["You own the most runs on this team.",
+                 "Flagging this to you directly.", "You lead this team's run count."],
+    "fail_msgs": ["The requested operation failed.", "That change did not go through.",
+                  "The last operation was not applied."]
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "domain": "news_desk",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "reporter",
+    "noun": ["reporter", "reporters"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "assignment",
+    "noun": ["assignment", "assignments"],
+    "ref_field": "reporter",
+    "ref_phrase": "assigned to {name}",
+    "name_field": "headline",
+    "titles": ["City Council Votes to Delay Transit Overhaul",
+               "Local Bakery Marks 50 Years Downtown",
+               "Drought Pushes Farmers to Rethink Crops",
+               "School Board Splits on New Budget",
+               "Bridge Closure Snarls Morning Commute",
+               "Retired Teacher Opens Free Tutoring Center",
+               "Storm Damage Estimates Climb Statewide",
+               "Startup Relocates Headquarters to Riverside",
+               "County Fair Returns After Two-Year Gap",
+               "Water Main Break Floods Main Street",
+               "Historic Theater Slated for Demolition",
+               "Volunteers Rebuild Trail After Wildfire"],
+    "bools": [
+      {"field": "embargoed", "true_phrase": "embargoed",
+       "false_phrase": "not embargoed", "placement": "pre"},
+      {"field": "fact_checked", "true_phrase": "fact-checked",
+       "false_phrase": "unverified", "placement": "post"}
+    ],
+    "enum": {
+      "field": "state", "values": ["pitched", "assigned", "filed", "published"],
+      "phrases": {"pitched": ["just pitched", "pre"],
+                  "assigned": ["assigned", "pre"],
+                  "filed": ["filed", "pre"],
+                  "published": ["live", "pre"]}
+    },
+    "times": [
+      {"field": "deadline", "kind": "time_now",
+       "lt_phrase": ["past deadline", "post"],
+       "gt_phrase": ["not due yet", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listAssignments",
+                   "desc": "all the story assignments, every state"},
+    "get_child": {"name": "getAssignment",
+                  "desc": "grab one assignment by id"},
+    "list_parent": {"name": "listReporters",
+                    "desc": "every reporter on staff, no filter"},
+    "get_parent": {"name": "getReporter",
+                   "desc": "one reporter rec by id"},
+    "delete_child": {"name": "killAssignment",
+                     "desc": "spikes a story, cant get it back",
+                     "verbs": ["kill {obj}", "spike {obj}"]},
+    "set_enum": {"name": "setAssignmentState",
+                 "desc": "flips story btwn pitched/assigned/filed/published",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"pitched": "back to pitched",
+                                   "assigned": "as assigned",
+                                   "filed": "as filed",
+                                   "published": "as published"}},
+    "set_bool": {"name": "flagFactChecked",
+                 "bool_index": 1, "value": true,
+                 "desc": "marks a story fact-checked, good to go",
+                 "verbs": ["mark {obj} fact-checked", "flag {obj} as verified"]},
+    "set_ref": {"name": "reassignReporter",
+                "desc": "hands the story to a diff reporter, quick",
+                "verbs": ["hand {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "textReporter",
+             "desc": "fires a text to the reporter, fast",
+             "child_verbs": ["text the reporter on {obj}",
+                             "ping the reporter for {obj}"],
+             "direct_verbs": ["text {name}", "ping {name}"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the assignment with the nearest deadline",
+    "ord_phrase": "the assignment with the {ord} nearest deadline",
+    "pre_filter": {"enum_value": "assigned", "phrase": "assigned"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the dead pitches.",
+                 "The desk board's a mess, sort it."],
+     "hint": "kill pitched assignments already past deadline",
+     "clauses": [{"enum_value": "pitched"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Deal with the shaky stories.",
+                 "Handle the unverified copy."],
+     "hint": "flag filed assignments as fact-checked",
+     "clauses": [{"enum_value": "filed"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["your story needs a check-in",
+                   "desk has a note on your assignment",
+                   "theres an update on your story",
+                   "your assignment might need a new deadline"],
+    "agg_msgs": ["you got the most stories on the board rn",
+                 "youre topping the byline count this week",
+                 "you got the longest-open assignment"],
+    "fail_msgs": ["the update didnt go thru",
+                  "that action failed",
+                  "assignment couldnt be updated"]
+  }
+}

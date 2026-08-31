@@ -1,0 +1,104 @@
+{
+  "domain": "esports_org",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "org",
+    "noun": ["org", "orgs"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "scrim_block",
+    "noun": ["scrim block", "scrim blocks"],
+    "ref_field": "org",
+    "ref_phrase": "against {name}",
+    "name_field": "matchup",
+    "titles": ["Valorant Scrim vs Northern Wolves", "League Scrim vs Iron Vanguard",
+               "CS Scrim vs Static Reign", "Overwatch Scrim vs Crimson Circuit",
+               "Valorant Scrim vs Echo Point", "Rocket League Scrim vs Nightshade",
+               "Apex Scrim vs Glacier Nine", "League Scrim vs Obsidian Rift",
+               "CS Scrim vs Fault Line", "Overwatch Scrim vs Ashfall",
+               "Valorant Scrim vs Driftwood", "Rocket League Scrim vs Voltage"],
+    "bools": [
+      {"field": "scrim_vod_required", "true_phrase": "VOD required",
+       "false_phrase": "no VOD required", "placement": "post"},
+      {"field": "high_stakes", "true_phrase": "high-stakes",
+       "false_phrase": "low-stakes", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["scheduled", "played", "scrapped"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "played": ["played", "pre"],
+                  "scrapped": ["scrapped", "pre"]}
+    },
+    "times": [
+      {"field": "block_start", "kind": "time_now",
+       "lt_phrase": ["already underway", "post"],
+       "gt_phrase": ["still upcoming", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listScrimBlocks",
+                   "desc": "This tool returns every scrim block currently on the org's practice calendar, across every game title and opponent. Use it whenever a full view of scheduled and past scrims is needed for planning."},
+    "get_child": {"name": "getScrimBlock",
+                  "desc": "This tool retrieves a single scrim block record by its id, including the opposing org, game title, and current state. Use it when only one specific scrim needs to be reviewed."},
+    "list_parent": {"name": "listOrgs",
+                    "desc": "This tool lists every partner org the team has scrimmed against or arranged scrims with, regardless of current activity. Use it to see the full roster of scrim partners."},
+    "get_parent": {"name": "getOrg",
+                   "desc": "This tool fetches a single partner org record by id, returning their contact details and scrim history. Use it when details on one specific org are required."},
+    "delete_child": {"name": "purgeScrimBlock",
+                     "desc": "This tool permanently deletes a scrim block from the org's calendar, and the action cannot be undone once submitted. Use it only when a scrim was booked in error or has been fully replaced.",
+                     "verbs": ["purge {obj}", "wipe {obj} from the calendar"]},
+    "set_enum": {"name": "setScrimState",
+                 "desc": "This tool changes a scrim block's state between scheduled, played, and scrapped, tracking whether the practice actually happened. Use it once a scrim's outcome is known and needs to be logged.",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "played": "as played",
+                                   "scrapped": "as scrapped"}},
+    "set_bool": {"name": "flagHighStakes",
+                 "bool_index": 1, "value": true,
+                 "desc": "This tool marks a scrim block as high-stakes, flagging it as important practice ahead of a tournament. Use it when a scrim carries extra weight for roster evaluation or prep.",
+                 "verbs": ["flag {obj} as high-stakes", "mark {obj} high-stakes"]},
+    "set_ref": {"name": "reassignOrg",
+                "desc": "This tool moves a scrim block from its currently listed opponent org to a different one entirely. Use it when a scrim was logged against the wrong org and needs correcting.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailOrg",
+             "desc": "This tool sends an email to a partner org, either about a specific scrim block or as a direct note. Use it to confirm scrim times or follow up after a session.",
+             "child_verbs": ["email the org behind {obj}",
+                             "notify the org on {obj}"],
+             "direct_verbs": ["email {name}", "send {name} a note"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the scrim block with the earliest start",
+    "ord_phrase": "the scrim block with the {ord} earliest start",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the scrim calendar.", "The calendar's a mess, deal with it."],
+     "hint": "delete scheduled scrim blocks already underway",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Handle the high-priority scrims.", "Deal with the important ones."],
+     "hint": "flag scheduled scrim blocks already underway as high-stakes",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["This scrim block requires your attention.",
+                   "Please review the status of this scrim block.",
+                   "A note regarding your scheduled scrim.",
+                   "Your scrim block may need to be rescheduled."],
+    "agg_msgs": ["Your org currently tops this list.",
+                 "This is being flagged to your org directly.",
+                 "Your org leads this count right now."],
+    "fail_msgs": ["The requested operation could not be completed.",
+                  "That action failed to go through.",
+                  "The system was unable to complete the last operation."]
+  }
+}

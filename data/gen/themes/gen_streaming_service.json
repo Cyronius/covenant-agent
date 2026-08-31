@@ -1,0 +1,109 @@
+{
+  "domain": "streaming_service",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "studio",
+    "noun": ["studio", "studios"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "license",
+    "noun": ["license", "licenses"],
+    "ref_field": "studio",
+    "ref_phrase": "with {name}",
+    "name_field": "title",
+    "titles": ["The Quiet Ledger", "Harborlight", "Static Kingdoms",
+               "The Last Cartographer", "Nine Winters", "Signal and Ash",
+               "The Understory", "Borrowed Tides", "Glasshouse",
+               "The Long Descent", "Paper Moons", "Driftwood Republic"],
+    "bools": [
+      {"field": "exclusive", "true_phrase": "exclusive",
+       "false_phrase": "non-exclusive", "placement": "pre"},
+      {"field": "dubbed", "true_phrase": "dubbed",
+       "false_phrase": "subtitled only", "placement": "post"},
+      {"field": "renewal_pending", "true_phrase": "up for renewal",
+       "false_phrase": "not up for renewal", "placement": "post"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["negotiating", "signed", "live", "expired"],
+      "phrases": {"negotiating": ["under negotiation", "pre"],
+                  "signed": ["signed", "pre"],
+                  "live": ["live on the platform", "post"],
+                  "expired": ["expired", "pre"]}
+    },
+    "times": [
+      {"field": "goes_live", "kind": "time_now",
+       "lt_phrase": ["already live", "post"],
+       "gt_phrase": ["not yet live", "post"]},
+      {"field": "signed_on", "kind": "time_cutoff",
+       "phrase": "signed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_licenses",
+                   "desc": "Returns the full set of content licensing deals currently tracked in the catalog system, spanning every stage from negotiation through expiration. This call is intended for building a complete picture of the licensing pipeline rather than checking a single deal."},
+    "get_child": {"name": "get_license",
+                  "desc": "Retrieves the full record for a single licensing deal by its identifier, including its current stage and key dates. Use this when a specific deal needs a closer look rather than the entire catalog."},
+    "list_parent": {"name": "list_studios",
+                    "desc": "Returns every studio the platform has an existing or historical relationship with, independent of whether they currently have a live deal. This is useful for surveying the full roster of content partners."},
+    "get_parent": {"name": "get_studio",
+                   "desc": "Retrieves a single studio's record by id, including the name on file for that partner. It does not include the list of deals associated with that studio."},
+    "delete_child": {"name": "terminate_license",
+                     "desc": "Permanently terminates a licensing deal and removes it from the active catalog pipeline. This action cannot be reversed, so it should only be used once the termination is confirmed with legal.",
+                     "verbs": ["terminate {obj}", "pull {obj} from the catalog"]},
+    "set_enum": {"name": "set_license_stage",
+                 "desc": "Advances or reverts a licensing deal's stage among negotiating, signed, live, and expired. Content operations relies on this field to know exactly where a title stands in the acquisition pipeline.",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"negotiating": "back to negotiating",
+                                   "signed": "to signed",
+                                   "live": "to live",
+                                   "expired": "as expired"}},
+    "set_bool": {"name": "flag_exclusive",
+                 "bool_index": 0, "value": true,
+                 "desc": "Marks a licensing deal as exclusive to the platform, meaning the title cannot appear on a competing service during the term. Marketing depends on this flag when planning launch campaigns.",
+                 "verbs": ["flag {obj} as exclusive", "mark {obj} exclusive"]},
+    "set_ref": {"name": "reassign_studio",
+                "desc": "Transfers a licensing deal from one studio's account to another, updating the counterparty of record. This is typically used when rights change hands between studios mid-negotiation.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "message_studio",
+             "desc": "Sends a message to the studio associated with a given licensing deal, or to a named studio directly. This is the standard channel content operations uses to relay contractual updates.",
+             "child_verbs": ["message the studio behind {obj}",
+                             "reach out to the studio for {obj}"],
+             "direct_verbs": ["message {name}", "reach out to {name}"],
+             "pair_verbs": ["message", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the license with the soonest go-live date",
+    "ord_phrase": "the license with the {ord} soonest go-live date",
+    "pre_filter": {"enum_value": "signed", "phrase": "signed"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the expired deals.",
+                 "The catalog's cluttered with dead licenses, clean it up."],
+     "hint": "terminate expired licenses signed more than 365 days ago",
+     "clauses": [{"enum_value": "expired"},
+                 {"time_index": 1, "days": 365}],
+     "action": "delete_child"},
+    {"request": ["Handle the exclusivity gaps.",
+                 "Deal with the deals missing exclusivity flags."],
+     "hint": "flag live licenses as exclusive",
+     "clauses": [{"enum_value": "live"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your license needs a stage review.",
+                   "Legal has flagged your deal for review.",
+                   "There's an update on your licensing deal.",
+                   "Your deal may need a renewal decision."],
+    "agg_msgs": ["You have the most active deals on the platform.",
+                 "You're our top content partner this quarter.",
+                 "You hold the longest-running license on the books."],
+    "fail_msgs": ["The license update did not go through.",
+                  "That request was rejected by the rights system.",
+                  "The change could not be saved."]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "domain": "auditing_firm",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "audit_engagement",
+    "noun": ["audit engagement", "audit engagements"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "engagement_type",
+    "titles": ["Annual financial audit", "SOX compliance review", "Internal controls assessment",
+               "Inventory audit", "Revenue recognition review", "IT systems audit",
+               "Grant compliance audit", "Payroll audit", "Fixed asset audit",
+               "Fraud investigation", "Tax provision review", "Vendor compliance audit"],
+    "bools": [
+      {"field": "material_weakness", "true_phrase": "material weakness found",
+       "false_phrase": "no weakness found", "placement": "post"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["planning", "fieldwork", "review", "reporting"],
+      "phrases": {"planning": ["in planning", "post"],
+                  "fieldwork": ["in fieldwork", "post"],
+                  "review": ["in review", "post"],
+                  "reporting": ["in reporting", "post"]}
+    },
+    "times": [
+      {"field": "report_due", "kind": "time_now",
+       "lt_phrase": ["already overdue", "post"],
+       "gt_phrase": ["not yet due", "post"]},
+      {"field": "kickoff", "kind": "time_cutoff",
+       "phrase": "kicked off more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_eng",
+                   "desc": "list all the engagements we got"},
+    "get_child": {"name": "get_eng",
+                  "desc": "grab one engagement by id"},
+    "list_parent": {"name": "list_cli",
+                    "desc": "list clients on the books"},
+    "get_parent": {"name": "get_cli",
+                   "desc": "grab one client by id"},
+    "delete_child": {"name": "rm_eng",
+                     "desc": "nuke an engagement rec, cant undo",
+                     "verbs": ["kill {obj}", "wipe {obj} for good"]},
+    "set_enum": {"name": "set_eng_phase",
+                 "desc": "chnage engagement phase (planning/fieldwork/review/reporting)",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"planning": "back to planning",
+                                   "fieldwork": "to fieldwork",
+                                   "review": "to review",
+                                   "reporting": "to reporting"}},
+    "set_bool": {"name": "flag_mw",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag an engagement for material weakness, needs partner review",
+                 "verbs": ["flag {obj} for material weakness", "mark {obj} as a weakness"]},
+    "set_ref": {"name": "xfer_eng",
+                "desc": "move an engagement to a diff client, for when its filed wrong",
+                "verbs": ["transfer {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "ping_cli",
+             "desc": "fire off an email to a client, quick update or w/e",
+             "child_verbs": ["email the client on {obj}",
+                             "shoot the client on {obj} an update"],
+             "direct_verbs": ["email {name}", "send {name} an email"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the engagement with the soonest report due",
+    "ord_phrase": "the engagement with the {ord} soonest report due",
+    "pre_filter": {"enum_value": "fieldwork", "phrase": "in fieldwork"}
+  },
+  "ambiguous": [
+    {"request": ["Clean out the dead planning stuff.",
+                 "Nothin ever happened with these, dump em."],
+     "hint": "delete planning engagements kicked off more than 200 days ago",
+     "clauses": [{"enum_value": "planning"},
+                 {"time_index": 1, "days": 200}],
+     "action": "delete_child"},
+    {"request": ["Deal with the overdue reports.",
+                 "Some of these blew past deadline, mark em."],
+     "hint": "flag as material weakness the review-phase engagements already past their report due date",
+     "clauses": [{"enum_value": "review"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your engagement needs attention.",
+                   "Please review your open engagement.",
+                   "A note about your engagement.",
+                   "Your engagement may need follow-up."],
+    "agg_msgs": ["You're currently at the top of this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

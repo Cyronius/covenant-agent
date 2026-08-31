@@ -1,0 +1,92 @@
+{
+  "domain": "student_housing",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "resident",
+    "noun": ["resident", "residents"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "assignment",
+    "noun": ["assignment", "assignments"],
+    "ref_field": "resident",
+    "ref_phrase": "for {name}",
+    "name_field": "room_type",
+    "titles": ["Double occupancy dorm", "Single suite", "Triple room",
+               "Apartment-style unit", "Studio suite", "Quad room",
+               "Accessible single room", "Honors hall double",
+               "Graduate housing studio", "Family housing unit",
+               "Substance-free hall room", "International student suite",
+               "Quiet hall single", "Themed community double"],
+    "bools": [
+      {"field": "needs_repair", "true_phrase": "flagged for repair",
+       "false_phrase": "in good condition", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["assigned", "checked_in", "checked_out"],
+      "phrases": {"assigned": ["assigned", "pre"],
+                  "checked_in": ["checked in", "pre"],
+                  "checked_out": ["checked out", "pre"]}
+    },
+    "times": [
+      {"field": "move_in", "kind": "time_now",
+       "lt_phrase": ["already moved in", "post"],
+       "gt_phrase": ["not yet moved in", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lst_asgn", "desc": "list all room assignments"},
+    "get_child": {"name": "get_asgn", "desc": "fetch one assignment by id"},
+    "list_parent": {"name": "lst_res", "desc": "list all residents"},
+    "get_parent": {"name": "get_res", "desc": "fetch one resident by id"},
+    "delete_child": {"name": "del_asgn",
+                     "desc": "wipe an assignment rec, not reversible",
+                     "verbs": ["del {obj}", "wipe {obj} from the roster"]},
+    "set_enum": {"name": "set_asgn_stage",
+                 "desc": "chg an assignment's stage",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"assigned": "back to assigned",
+                                   "checked_in": "as checked in",
+                                   "checked_out": "as checked out"}},
+    "set_bool": {"name": "flag_repair",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag a room as needing repair",
+                 "verbs": ["flag {obj} for repair", "mark {obj} needs repair"]},
+    "set_ref": {"name": "move_res",
+                "desc": "move an assignment to a diff resident",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "msg_res",
+             "desc": "send a message to a resident",
+             "child_verbs": ["message the resident in {obj}", "ping the resident on {obj}"],
+             "direct_verbs": ["message {name}", "ping {name}"],
+             "pair_verbs": ["message", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the assignment with the earliest move-in",
+    "ord_phrase": "the assignment with the {ord} earliest move-in",
+    "pre_filter": {"enum_value": "assigned", "phrase": "assigned"}
+  },
+  "ambiguous": [
+    {"request": ["sort out the room mess", "deal with the housing backlog"],
+     "hint": "flag assigned rooms already past move-in as needing repair",
+     "clauses": [{"enum_value": "assigned"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your assignment needs attention.",
+                   "Please review your room assignment.",
+                   "A note about your assignment.",
+                   "Your assignment may need to be updated."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

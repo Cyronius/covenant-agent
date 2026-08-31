@@ -1,0 +1,110 @@
+{
+  "domain": "furniture_store",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "buyer",
+    "noun": ["buyer", "buyers"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "install",
+    "noun": ["install", "installs"],
+    "ref_field": "buyer",
+    "ref_phrase": "for {name}",
+    "name_field": "piece",
+    "titles": ["Sectional sofa", "Dining table set", "Bedroom wardrobe",
+               "Bookshelf unit", "Recliner chair", "Patio dining set",
+               "Bunk bed frame", "Kitchen island", "TV console",
+               "Office desk", "Nursery crib", "Outdoor sectional"],
+    "bools": [
+      {"field": "white_glove", "true_phrase": "white glove",
+       "false_phrase": "standard drop-off", "placement": "pre"},
+      {"field": "assembly_needed", "true_phrase": "needs assembly",
+       "false_phrase": "pre-assembled", "placement": "post"},
+      {"field": "damaged", "true_phrase": "damaged",
+       "false_phrase": "undamaged", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["scheduled", "in_transit", "installed", "cancelled"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "in_transit": ["in transit", "pre"],
+                  "installed": ["installed", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "slot", "kind": "time_now",
+       "lt_phrase": ["already past", "post"],
+       "gt_phrase": ["still ahead", "post"]},
+      {"field": "ordered", "kind": "time_cutoff",
+       "phrase": "ordered more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lst_inst",
+                   "desc": "list all installs on the books"},
+    "get_child": {"name": "get_inst",
+                  "desc": "fetch one install by id"},
+    "list_parent": {"name": "lst_byrs",
+                    "desc": "list all buyers on file"},
+    "get_parent": {"name": "get_byr",
+                   "desc": "fetch one buyer by id"},
+    "delete_child": {"name": "rm_inst",
+                     "desc": "wipe an install rec, no undo",
+                     "verbs": ["remove {obj}", "scrap {obj}"]},
+    "set_enum": {"name": "set_inst_phase",
+                 "desc": "chg install phase",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "in_transit": "to in transit",
+                                   "installed": "to installed",
+                                   "cancelled": "to cancelled"}},
+    "set_bool": {"name": "flg_dmg",
+                 "bool_index": 2, "value": true,
+                 "desc": "flag a piece as damaged",
+                 "verbs": ["flag {obj} damaged", "mark {obj} damaged"]},
+    "set_ref": {"name": "mv_byr",
+                "desc": "move install to another buyer",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "msg_byr",
+             "desc": "message a buyer directly",
+             "child_verbs": ["message the buyer for {obj}",
+                             "notify the buyer for {obj}"],
+             "direct_verbs": ["message {name}", "notify {name}"],
+             "pair_verbs": ["message", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the install with the earliest slot",
+    "ord_phrase": "the install with the {ord} earliest slot",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["clear the delivery backlog",
+                 "calendar's a mess, sort it"],
+     "hint": "remove scheduled installs already past their slot",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["flag the damaged batch",
+                 "deal with what's been in transit too long"],
+     "hint": "flag in_transit installs ordered more than 60 days ago as damaged",
+     "clauses": [{"enum_value": "in_transit"},
+                 {"time_index": 1, "days": 60}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your install needs a look.",
+                   "Please check on your upcoming install.",
+                   "A note about your delivery.",
+                   "Your install may need rescheduling."],
+    "agg_msgs": ["You top this list right now.",
+                 "Flagging this backlog to you directly.",
+                 "You lead this install count."],
+    "fail_msgs": ["op failed",
+                  "update didnt go thru",
+                  "last change failed"]
+  }
+}

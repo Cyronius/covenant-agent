@@ -1,0 +1,99 @@
+{
+  "domain": "disaster_relief",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "survivor",
+    "noun": ["survivor", "survivors"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "request",
+    "noun": ["request", "requests"],
+    "ref_field": "survivor",
+    "ref_phrase": "filed by {name}",
+    "name_field": "need",
+    "titles": ["Emergency shelter placement", "Potable water delivery",
+               "Generator fuel resupply", "Tarp and rope for roof damage",
+               "Prescription medication refill", "Infant formula and diapers",
+               "Wheelchair repair", "Debris removal from driveway",
+               "Temporary heating unit", "Food voucher renewal",
+               "Mold remediation referral", "Pet food and crate"],
+    "bools": [
+      {"field": "medical_priority", "true_phrase": "medically urgent",
+       "false_phrase": "routine", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "state", "values": ["intake", "in_review", "dispatched", "closed"],
+      "phrases": {"intake": ["newly filed", "pre"],
+                  "in_review": ["under review", "pre"],
+                  "dispatched": ["dispatched", "pre"],
+                  "closed": ["closed", "pre"]}
+    },
+    "times": [
+      {"field": "filed_at", "kind": "time_cutoff",
+       "phrase": "filed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listRequests",
+                   "desc": "Retrieves the full list of aid requests currently logged in the relief system. Use this when you need to see everything survivors have asked for, regardless of status."},
+    "get_child": {"name": "getRequest",
+                  "desc": "Retrieves a single aid request record using its unique id. This is the way to pull full detail on one request instead of scanning the whole list."},
+    "list_parent": {"name": "listSurvivors",
+                    "desc": "Retrieves the full roster of survivors who have filed one or more aid requests with the relief operation. Use this to look up who is registered before filing or referencing a request."},
+    "get_parent": {"name": "getSurvivor",
+                   "desc": "Retrieves a single survivor record using its unique id. This is useful when you already have an id and just need that person's details."},
+    "delete_child": {"name": "purgeRequest",
+                     "desc": "Permanently deletes an aid request record from the system, and this action cannot be undone once it completes. Only use this for duplicate or erroneous entries, never for requests that were simply denied.",
+                     "verbs": ["purge {obj}", "erase {obj} from the log"]},
+    "set_enum": {"name": "setRequestState",
+                 "desc": "Changes an aid request's state to intake, in_review, dispatched, or closed, reflecting where it stands in the relief workflow. Use this whenever a request moves forward or gets closed out.",
+                 "verbs": ["mark {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"intake": "back to intake",
+                                   "in_review": "into review",
+                                   "dispatched": "as dispatched",
+                                   "closed": "as closed"}},
+    "set_bool": {"name": "flagMedicalPriority",
+                 "bool_index": 0, "value": true,
+                 "desc": "Marks an aid request as medically urgent so responders can triage it ahead of routine requests. This should only be used when there is a genuine health or safety concern attached to the request.",
+                 "verbs": ["flag {obj} as medically urgent", "mark {obj} medically urgent"]},
+    "set_ref": {"name": "reassignSurvivor",
+                "desc": "Moves an aid request onto a different survivor's record, which is useful when a request was logged under the wrong name. This does not change anything else about the request itself.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "onto {name}'s record"},
+    "send": {"name": "textSurvivor",
+             "desc": "Sends a text message to a survivor's phone number on file, letting them know about a status change or asking for more information. This is the primary way field coordinators keep survivors informed.",
+             "child_verbs": ["text the survivor behind {obj}",
+                             "give the survivor behind {obj} an update"],
+             "direct_verbs": ["text {name}", "send {name} a message"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the request filed longest ago",
+    "ord_phrase": "the request with the {ord} oldest filing date",
+    "pre_filter": {"enum_value": "intake", "phrase": "still in intake"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the stale intake pile.",
+                 "The intake queue is backed up, handle it."],
+     "hint": "delete requests still in intake that were filed more than 14 days ago",
+     "clauses": [{"enum_value": "intake"},
+                 {"time_index": 0, "days": 14}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your request needs an update from you.",
+                   "Please review your open aid request.",
+                   "A note about your aid request.",
+                   "Your request may need more information."],
+    "agg_msgs": ["You are at the top of this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested action could not be completed.",
+                  "That operation did not go through.",
+                  "The last change was not saved."]
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "domain": "volunteer_center",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "volunteer",
+    "noun": ["volunteer", "volunteers"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "signup",
+    "noun": ["signup", "signups"],
+    "ref_field": "volunteer",
+    "ref_phrase": "by {name}",
+    "name_field": "task",
+    "titles": ["Food sorting shift", "Front desk coverage", "Warehouse loading",
+               "Client intake support", "Phone bank outreach", "Event setup crew",
+               "Donation receiving", "Kids' activity table", "Transportation pickup",
+               "Newsletter stuffing", "Supply inventory count", "Cleanup crew"],
+    "bools": [
+      {"field": "background_checked", "true_phrase": "cleared",
+       "false_phrase": "uncleared", "placement": "pre"},
+      {"field": "needs_training", "true_phrase": "needs training",
+       "false_phrase": "trained", "placement": "post"},
+      {"field": "no_show", "true_phrase": "no-show",
+       "false_phrase": "showed", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["requested", "confirmed", "completed", "withdrawn"],
+      "phrases": {"requested": ["requested", "pre"],
+                  "confirmed": ["confirmed", "pre"],
+                  "completed": ["completed", "pre"],
+                  "withdrawn": ["withdrawn", "pre"]}
+    },
+    "times": [
+      {"field": "shift_start", "kind": "time_now",
+       "lt_phrase": ["already started", "post"],
+       "gt_phrase": ["not started yet", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "ls_sup", "desc": "list signups"},
+    "get_child": {"name": "get_sup", "desc": "get one signup"},
+    "list_parent": {"name": "ls_vol", "desc": "list volunteers"},
+    "get_parent": {"name": "get_vol", "desc": "get one volunteer"},
+    "delete_child": {"name": "rm_sup",
+                     "desc": "del signup rec",
+                     "verbs": ["rm {obj}", "kill {obj}"]},
+    "set_enum": {"name": "set_sup_stg",
+                 "desc": "set signup stage",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"requested": "back to requested",
+                                   "confirmed": "confirmed",
+                                   "completed": "done",
+                                   "withdrawn": "withdrawn"}},
+    "set_bool": {"name": "flag_no_show",
+                 "bool_index": 2, "value": true,
+                 "desc": "flag no-show",
+                 "verbs": ["flag {obj} no-show", "mark {obj} no-show"]},
+    "set_ref": {"name": "mv_sup_vol",
+                "desc": "move signup to diff volunteer",
+                "verbs": ["move {obj} {to_name}", "swap {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "txt_vol",
+             "desc": "text a volunteer",
+             "child_verbs": ["text the volunteer on {obj}", "ping the volunteer on {obj}"],
+             "direct_verbs": ["text {name}", "ping {name}"],
+             "pair_verbs": ["text", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the signup with the earliest shift start",
+    "ord_phrase": "the signup with the {ord} earliest shift start",
+    "pre_filter": {"enum_value": "confirmed", "phrase": "confirmed"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the shift roster.",
+                 "Roster's a mess, sort it."],
+     "hint": "flag confirmed signups whose shift already started as no-show",
+     "clauses": [{"enum_value": "confirmed"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["your signup needs a look.",
+                   "check your shift signup.",
+                   "heads up re: your signup.",
+                   "your signup might need changes."],
+    "agg_msgs": ["you're on top of this list.",
+                 "flagging you directly.",
+                 "you lead this count."],
+    "fail_msgs": ["op failed.",
+                  "that didn't go through.",
+                  "last change didn't save."]
+  }
+}

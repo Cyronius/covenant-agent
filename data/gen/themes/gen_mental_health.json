@@ -1,0 +1,106 @@
+{
+  "domain": "mental_health",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "intake",
+    "noun": ["intake", "intakes"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "presenting_concern",
+    "titles": ["Anxiety and panic symptoms", "Depressive episode screening",
+               "Couples counseling intake", "Grief and loss processing",
+               "Substance use assessment", "Trauma history intake",
+               "Adolescent behavioral concerns", "Sleep and stress intake",
+               "Anger management referral", "Family systems intake",
+               "ADHD evaluation intake", "Eating concerns screening",
+               "Return-to-care intake"],
+    "bools": [
+      {"field": "risk_flagged", "true_phrase": "flagged for risk",
+       "false_phrase": "no risk flags", "placement": "pre"},
+      {"field": "insurance_authorized", "true_phrase": "authorized by insurance",
+       "false_phrase": "pending authorization", "placement": "post"}
+    ],
+    "enum": {
+      "field": "review_stage", "values": ["pending", "in_review", "cleared", "closed"],
+      "phrases": {"pending": ["pending", "pre"],
+                  "in_review": ["under review", "pre"],
+                  "cleared": ["cleared", "pre"],
+                  "closed": ["closed", "pre"]}
+    },
+    "times": [
+      {"field": "session_time", "kind": "time_now",
+       "lt_phrase": ["already past", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "submitted", "kind": "time_cutoff",
+       "phrase": "submitted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_intakes",
+                   "desc": "Retrieve the full list of counseling intakes currently on file, across every clinician and every stage of review."},
+    "get_child": {"name": "get_intake",
+                  "desc": "Look up a single counseling intake record using its unique identifier and return its complete current details."},
+    "list_parent": {"name": "list_clients",
+                    "desc": "Retrieve the full roster of clients currently registered with the clinic, regardless of their active intake status."},
+    "get_parent": {"name": "get_client",
+                   "desc": "Look up a single client record using their unique identifier and return their complete current details."},
+    "delete_child": {"name": "delete_intake",
+                     "desc": "Permanently erase a counseling intake record from the system; this cannot be undone once it has been confirmed.",
+                     "verbs": ["delete {obj}", "erase {obj} from the file"]},
+    "set_enum": {"name": "set_intake_stage",
+                 "desc": "Update the review stage of a counseling intake, moving it between pending, under review, cleared, and closed as the clinical process advances.",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"pending": "back to pending",
+                                   "in_review": "to under review",
+                                   "cleared": "to cleared",
+                                   "closed": "to closed"}},
+    "set_bool": {"name": "flag_intake_risk",
+                 "bool_index": 0, "value": true,
+                 "desc": "Mark a counseling intake as carrying a risk flag so that clinical staff review it with elevated urgency.",
+                 "verbs": ["flag {obj} for risk", "mark {obj} as a risk case"]},
+    "set_ref": {"name": "reassign_intake_client",
+                "desc": "Move a counseling intake record so that it is associated with a different client rather than the one it currently belongs to.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "text_client",
+             "desc": "Send a text message to a client regarding their counseling intake, using the clinic's standard secure messaging channel.",
+             "child_verbs": ["text the client on {obj}", "give the client on {obj} a heads-up"],
+             "direct_verbs": ["text {name}", "send {name} a text"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the intake with the soonest session time",
+    "ord_phrase": "the intake with the {ord} soonest session time",
+    "pre_filter": {"enum_value": "pending", "phrase": "pending"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the closed files.", "The intake list needs pruning."],
+     "hint": "delete closed intakes",
+     "clauses": [{"enum_value": "closed"}],
+     "action": "delete_child"},
+    {"request": ["Flag the ones sitting too long.", "Deal with the stale pending intakes."],
+     "hint": "flag pending intakes submitted more than 30 days ago for risk",
+     "clauses": [{"enum_value": "pending"}, {"time_index": 1, "days": 30}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["There is an update regarding your upcoming intake session.",
+                   "Please take a moment to review your counseling intake.",
+                   "A member of our clinical team has a note about your intake.",
+                   "Your intake session may need to be rescheduled."],
+    "agg_msgs": ["You currently have the most open intakes on this list.",
+                 "This case is being flagged directly to your attention.",
+                 "You are currently at the top of this count."],
+    "fail_msgs": ["The requested update to this intake could not be completed.",
+                  "That change to the record did not save.",
+                  "The last action on this intake did not go through."]
+  }
+}

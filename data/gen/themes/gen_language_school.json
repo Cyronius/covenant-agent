@@ -1,0 +1,107 @@
+{
+  "domain": "language_school",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "student",
+    "noun": ["student", "students"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "placement",
+    "noun": ["placement", "placements"],
+    "ref_field": "student",
+    "ref_phrase": "for {name}",
+    "name_field": "track_name",
+    "titles": ["Beginner Spanish", "Intermediate French", "Advanced German",
+               "Conversational Italian", "Business English",
+               "Mandarin for Travelers", "Japanese Kanji Intensive",
+               "Portuguese Foundations", "Korean Beginner",
+               "Arabic Reading Skills", "Russian Grammar Intensive",
+               "ESL Academic Writing", "Beginner Dutch", "Advanced Mandarin"],
+    "bools": [
+      {"field": "needs_tutor", "true_phrase": "in need of a tutor",
+       "false_phrase": "not requiring extra help", "placement": "post"},
+      {"field": "exchange_student", "true_phrase": "an exchange student",
+       "false_phrase": "a local enrollee", "placement": "post"},
+      {"field": "scholarship_funded", "true_phrase": "scholarship-funded",
+       "false_phrase": "self-funded", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["placed", "transferred", "withdrawn"],
+      "phrases": {"placed": ["placed", "pre"],
+                  "transferred": ["transferred", "pre"],
+                  "withdrawn": ["withdrawn", "pre"]}
+    },
+    "times": [
+      {"field": "term_start", "kind": "time_now",
+       "lt_phrase": ["already underway", "post"],
+       "gt_phrase": ["not yet begun", "post"]},
+      {"field": "placed_on", "kind": "time_cutoff",
+       "phrase": "placed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listPlacements",
+                   "desc": "Retrieve the complete roster of course placements currently on file at the language school. This includes every student track regardless of its current phase."},
+    "get_child": {"name": "getPlacement",
+                  "desc": "Look up a single course placement using its unique identifier. Returns the full placement record for that student's track."},
+    "list_parent": {"name": "listStudents",
+                    "desc": "Retrieve the full list of students who have ever enrolled at the language school. Every registered learner appears in this listing."},
+    "get_parent": {"name": "getStudent",
+                   "desc": "Look up a single student record using their unique identifier. Returns all details the school keeps on file for that student."},
+    "delete_child": {"name": "deletePlacement",
+                     "desc": "Permanently erase a course placement record from the school's system, an action that cannot be undone once completed. Use this only when a placement was created in error or is no longer needed.",
+                     "verbs": ["delete {obj}", "erase {obj} from the roster"]},
+    "set_enum": {"name": "setPlacementPhase",
+                 "desc": "Update the phase of a course placement to reflect whether the student is placed, transferred, or has withdrawn. This keeps the roster accurate for scheduling and reporting purposes.",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"placed": "back to placed",
+                                   "transferred": "as transferred",
+                                   "withdrawn": "as withdrawn"}},
+    "set_bool": {"name": "flagScholarshipFunded",
+                 "bool_index": 2, "value": true,
+                 "desc": "Mark a course placement as scholarship-funded so that finance can track which students receive tuition assistance. This flag affects downstream billing reports.",
+                 "verbs": ["flag {obj} as scholarship-funded", "mark {obj} scholarship-funded"]},
+    "set_ref": {"name": "transferStudent",
+                "desc": "Move a course placement from one student's record to another, which is useful when a placement was logged under the wrong learner. The change is reflected immediately across all reporting views.",
+                "verbs": ["move {obj} {to_name}", "transfer {obj} {to_name}"],
+                "to_template": "onto {name}"},
+    "send": {"name": "messageStudent",
+             "desc": "Send a message to a student regarding their course placement or general standing at the school. This is the primary channel for placement-related communication.",
+             "child_verbs": ["message the student in {obj}", "reach out to the student on {obj}"],
+             "direct_verbs": ["message {name}", "send {name} a message"],
+             "pair_verbs": ["message", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the placement with the earliest term start",
+    "ord_phrase": "the placement with the {ord} earliest term start",
+    "pre_filter": {"enum_value": "placed", "phrase": "placed"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the placement backlog.", "The placement list is a mess, handle it."],
+     "hint": "flag placed students whose term already started as scholarship-funded",
+     "clauses": [{"enum_value": "placed"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"},
+    {"request": ["Clean up abandoned placements.", "Deal with the placements nobody follows up on."],
+     "hint": "delete withdrawn placements placed more than 90 days ago",
+     "clauses": [{"enum_value": "withdrawn"},
+                 {"time_index": 1, "days": 90}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your placement needs attention.",
+                   "Please review your course placement.",
+                   "A note about your placement.",
+                   "Your placement may need to be revisited."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

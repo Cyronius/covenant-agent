@@ -1,0 +1,94 @@
+{
+  "domain": "climbing_gym",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "setter",
+    "noun": ["setter", "setters"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "route",
+    "noun": ["route", "routes"],
+    "ref_field": "setter",
+    "ref_phrase": "by {name}",
+    "name_field": "route_name",
+    "titles": ["Crimson Traverse", "Ghost Pinch", "Iron Mantle", "Slab Whisper",
+               "Copperhead Crimp", "Night Owl Arete", "Sandstorm Dyno",
+               "Velvet Overhang", "Rust Belt Ramp", "Falcon's Reach",
+               "Widow's Crack", "Ember Traverse"],
+    "bools": [
+      {"field": "reset_needed", "true_phrase": "due for reset",
+       "false_phrase": "freshly set", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["live", "aging", "stripped"],
+      "phrases": {"live": ["live", "pre"],
+                  "aging": ["aging", "pre"],
+                  "stripped": ["stripped", "pre"]}
+    },
+    "times": [
+      {"field": "set_on", "kind": "time_cutoff",
+       "phrase": "set more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listRoutes",
+                   "desc": "list live routes on the wall"},
+    "get_child": {"name": "getRoute",
+                  "desc": "fetch one route by id"},
+    "list_parent": {"name": "listSetters",
+                    "desc": "list route setters on staff"},
+    "get_parent": {"name": "getSetter",
+                   "desc": "fetch one setter by id"},
+    "delete_child": {"name": "stripRoute",
+                     "desc": "strip a route off the wall, no undo",
+                     "verbs": ["strip {obj}", "tear down {obj}"]},
+    "set_enum": {"name": "setRouteStage",
+                 "desc": "change route stage (live, aging, stripped)",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"live": "back to live",
+                                   "aging": "as aging",
+                                   "stripped": "as stripped"}},
+    "set_bool": {"name": "flagResetNeeded",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag a route as due for reset",
+                 "verbs": ["flag {obj} for reset", "mark {obj} due for reset"]},
+    "set_ref": {"name": "reassignSetter",
+                "desc": "hand a route to a different setter",
+                "verbs": ["hand {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "textSetter",
+             "desc": "text a route setter",
+             "child_verbs": ["text the setter of {obj}",
+                             "ping the setter behind {obj}"],
+             "direct_verbs": ["text {name}", "send {name} a text"],
+             "pair_verbs": ["text", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the route set longest ago",
+    "ord_phrase": "the route with the {ord} longest ago setting",
+    "pre_filter": {"enum_value": "live", "phrase": "live"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the wall.", "The wall's a mess, deal with it."],
+     "hint": "strip live routes set more than 60 days ago",
+     "clauses": [{"enum_value": "live"},
+                 {"time_index": 0, "days": 60}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your route needs attention.",
+                   "Please check on your route.",
+                   "A note about your route.",
+                   "Your route may need resetting."],
+    "agg_msgs": ["You top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

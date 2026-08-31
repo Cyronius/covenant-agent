@@ -1,0 +1,108 @@
+{
+  "domain": "grocery_chain",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "store",
+    "noun": ["store", "stores"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "reset",
+    "noun": ["reset", "resets"],
+    "ref_field": "store",
+    "ref_phrase": "at {name}",
+    "name_field": "category",
+    "titles": ["Breakfast cereal", "Snack aisle", "Frozen foods",
+               "Dairy case", "Bakery section", "Canned goods",
+               "Beverage aisle", "Health and beauty", "Household cleaning",
+               "Pet food", "Baking supplies", "Deli counter"],
+    "bools": [
+      {"field": "priority", "true_phrase": "priority",
+       "false_phrase": "routine", "placement": "pre"},
+      {"field": "planogram_locked", "true_phrase": "locked",
+       "false_phrase": "unlocked", "placement": "pre"},
+      {"field": "understaffed", "true_phrase": "understaffed",
+       "false_phrase": "fully staffed", "placement": "post"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["planned", "staged", "reset", "verified"],
+      "phrases": {"planned": ["planned", "pre"],
+                  "staged": ["staged", "pre"],
+                  "reset": ["reset", "pre"],
+                  "verified": ["verified", "pre"]}
+    },
+    "times": [
+      {"field": "reset_date", "kind": "time_now",
+       "lt_phrase": ["already done", "post"],
+       "gt_phrase": ["still upcoming", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lst_rsts",
+                   "desc": "This tool returns the complete list of shelf resets scheduled across every store in the chain. Use it when you need a full inventory of pending and completed reset work."},
+    "get_child": {"name": "get_rst",
+                  "desc": "This tool retrieves a single shelf reset record using its unique identifier. It is useful when you already know which reset you want details on."},
+    "list_parent": {"name": "lst_strs",
+                    "desc": "This tool lists every store location registered in the chain's system, along with their basic identifying information. Use it to browse the full store roster."},
+    "get_parent": {"name": "get_str",
+                   "desc": "This tool fetches the full record for one store location given its id. It returns the store's name and contact details."},
+    "delete_child": {"name": "rm_rst",
+                     "desc": "This tool permanently deletes a shelf reset record from the system, and the action cannot be undone. Use it only when a reset was created in error or is no longer needed.",
+                     "verbs": ["remove {obj}", "scrap {obj}"]},
+    "set_enum": {"name": "set_rst_phase",
+                 "desc": "This tool changes the phase of a shelf reset to planned, staged, reset, or verified. It is the primary way to track a reset's progress through the workflow.",
+                 "verbs": ["move {obj} {to_value}", "advance {obj} {to_value}"],
+                 "value_phrases": {"planned": "back to planned",
+                                   "staged": "to staged",
+                                   "reset": "to reset",
+                                   "verified": "to verified"}},
+    "set_bool": {"name": "flg_prty",
+                 "bool_index": 0, "value": true,
+                 "desc": "This tool marks a shelf reset as a priority job that should be handled ahead of routine work. It is typically used when a reset is time-sensitive or requested by category management.",
+                 "verbs": ["flag {obj} as priority", "bump {obj} to priority"]},
+    "set_ref": {"name": "mv_str",
+                "desc": "This tool reassigns a shelf reset from one store location to another. Use it when a reset was logged against the wrong store or the work is being transferred.",
+                "verbs": ["move {obj} {to_name}", "transfer {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "msg_mgr",
+             "desc": "This tool sends a message to a store's management team regarding a shelf reset. It is the standard way to notify store staff about work that needs their attention.",
+             "child_verbs": ["message the store for {obj}",
+                             "notify the store for {obj}"],
+             "direct_verbs": ["message {name}", "notify {name}"],
+             "pair_verbs": ["message", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the reset with the earliest reset date",
+    "ord_phrase": "the reset with the {ord} earliest reset date",
+    "pre_filter": {"enum_value": "planned", "phrase": "planned"}
+  },
+  "ambiguous": [
+    {"request": ["Clear the backlog.",
+                 "The reset schedule is a mess, sort it out."],
+     "hint": "remove planned resets whose date already passed",
+     "clauses": [{"enum_value": "planned"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Bump the overdue ones.",
+                 "Handle what's fallen behind."],
+     "hint": "flag planned resets whose date already passed as priority",
+     "clauses": [{"enum_value": "planned"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your shelf reset needs attention.",
+                   "Please review your pending reset.",
+                   "A note about your scheduled reset.",
+                   "Your reset may need rescheduling."],
+    "agg_msgs": ["Your store tops this list right now.",
+                 "Flagging this backlog to your store directly.",
+                 "Your store leads this reset count."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That update could not be completed.",
+                  "The last change did not go through."]
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "domain": "vetclinic",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "owner",
+    "noun": ["owner", "owners"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "appointment",
+    "noun": ["appointment", "appointments"],
+    "ref_field": "owner",
+    "ref_phrase": "for {name}",
+    "name_field": "reason",
+    "titles": ["Annual checkup", "Vaccination booster", "Limp in left paw",
+               "Dental cleaning", "Spay surgery", "Ear infection recheck",
+               "Microchip fitting", "Weight consult", "Post-op follow-up",
+               "Allergy testing", "Senior wellness exam", "Nail trim"],
+    "bools": [
+      {"field": "no_show_risk", "true_phrase": "flight-risk",
+       "false_phrase": "reliable", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["scheduled", "completed", "cancelled"],
+      "phrases": {"scheduled": ["upcoming", "pre"],
+                  "completed": ["completed", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "slot", "kind": "time_now",
+       "lt_phrase": ["already past", "post"],
+       "gt_phrase": ["still ahead", "post"]},
+      {"field": "booked", "kind": "time_cutoff",
+       "phrase": "booked more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_appointments",
+                   "desc": "List every appointment on the clinic calendar."},
+    "get_child": {"name": "get_appointment",
+                  "desc": "Fetch one appointment by its id."},
+    "list_parent": {"name": "list_owners",
+                    "desc": "List all pet owners registered with the clinic."},
+    "get_parent": {"name": "get_owner",
+                   "desc": "Fetch one pet owner by id."},
+    "delete_child": {"name": "purge_appointment",
+                     "desc": "Permanently remove an appointment record. Not reversible.",
+                     "verbs": ["purge {obj}", "wipe {obj} from the calendar"]},
+    "set_enum": {"name": "set_appointment_status",
+                 "desc": "Change an appointment's status (scheduled, completed, or cancelled).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "completed": "as completed",
+                                   "cancelled": "as cancelled"}},
+    "set_bool": {"name": "flag_no_show_risk",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag an appointment as a no-show risk.",
+                 "verbs": ["flag {obj} as a no-show risk",
+                           "mark {obj} flight-risk"]},
+    "set_ref": {"name": "rebook_owner",
+                "desc": "Move an appointment to a different owner's account.",
+                "verbs": ["move {obj} {to_name}", "rebook {obj} {to_name}"],
+                "to_template": "under {name}"},
+    "send": {"name": "text_owner",
+             "desc": "Send an SMS to a pet owner.",
+             "child_verbs": ["text the owner of {obj}",
+                             "give the owner of {obj} a heads-up"],
+             "direct_verbs": ["text {name}", "send {name} an SMS"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the appointment with the earliest slot",
+    "ord_phrase": "the appointment with the {ord} earliest slot",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["Deal with the likely no-shows.",
+                 "Handle the appointments that look like no-shows."],
+     "hint": "flag scheduled appointments already past their slot as no-show risks",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your appointment needs attention.",
+                   "Please review your upcoming appointment.",
+                   "A note about your appointment.",
+                   "Your appointment may need rescheduling."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

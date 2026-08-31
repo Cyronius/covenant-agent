@@ -1,0 +1,109 @@
+{
+  "domain": "farmers_market",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "vendor",
+    "noun": ["vendor", "vendors"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "stall_permit",
+    "noun": ["stall permit", "stall permits"],
+    "ref_field": "vendor",
+    "ref_phrase": "for {name}",
+    "name_field": "category",
+    "titles": ["Produce stall", "Baked goods stall", "Cheese & dairy stall",
+               "Flower stall", "Honey & preserves stall", "Meat & poultry stall",
+               "Seafood stall", "Craft goods stall", "Coffee cart",
+               "Food truck spot", "Plant nursery stall", "Egg stall",
+               "Herb & spice stall", "Soap & candle stall"],
+    "bools": [
+      {"field": "insured", "true_phrase": "insured",
+       "false_phrase": "uninsured", "placement": "pre"},
+      {"field": "corner_spot", "true_phrase": "corner spot",
+       "false_phrase": "standard spot", "placement": "post"},
+      {"field": "suspended", "true_phrase": "suspended",
+       "false_phrase": "in good standing", "placement": "post"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["applied", "approved", "active", "revoked"],
+      "phrases": {"applied": ["applied", "pre"],
+                  "approved": ["approved", "pre"],
+                  "active": ["active", "pre"],
+                  "revoked": ["revoked", "pre"]}
+    },
+    "times": [
+      {"field": "renewal_due", "kind": "time_now",
+       "lt_phrase": ["past its renewal date", "post"],
+       "gt_phrase": ["not yet due for renewal", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "ls_permits",
+                   "desc": "list all stall permits"},
+    "get_child": {"name": "get_permit",
+                  "desc": "fetch one permit by id"},
+    "list_parent": {"name": "ls_vendors",
+                    "desc": "list all market vendors"},
+    "get_parent": {"name": "get_vendor",
+                   "desc": "fetch one vendor by id"},
+    "delete_child": {"name": "revoke_permit",
+                     "desc": "kill a permit for good",
+                     "verbs": ["revoke {obj}", "pull {obj} for good"]},
+    "set_enum": {"name": "set_permit_phase",
+                 "desc": "change permit phase",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"applied": "back to applied",
+                                   "approved": "to approved",
+                                   "active": "to active",
+                                   "revoked": "to revoked"}},
+    "set_bool": {"name": "flag_suspended",
+                 "bool_index": 2, "value": true,
+                 "desc": "suspend a stall permit",
+                 "verbs": ["suspend {obj}", "flag {obj} as suspended"]},
+    "set_ref": {"name": "move_vendor",
+                "desc": "move a permit to a diff vendor",
+                "verbs": ["move {obj} {to_name}", "rebill {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_vendor",
+             "desc": "email a market vendor",
+             "child_verbs": ["email the vendor on {obj}",
+                             "ping the vendor on {obj}"],
+             "direct_verbs": ["email {name}", "send {name} a note"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the stall permit with the earliest renewal date",
+    "ord_phrase": "the stall permit with the {ord} earliest renewal date",
+    "pre_filter": {"enum_value": "active", "phrase": "active"}
+  },
+  "ambiguous": [
+    {"request": ["sort out the stall list",
+                 "the permit list's a mess, deal with it"],
+     "hint": "suspend active permits already past their renewal date",
+     "clauses": [{"enum_value": "active"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"},
+    {"request": ["clear out the dead applications",
+                 "get rid of stale applied permits"],
+     "hint": "revoke applied permits already past their renewal date",
+     "clauses": [{"enum_value": "applied"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["permit needs a look",
+                   "check your stall permit",
+                   "permit update needed",
+                   "this permit may need review"],
+    "agg_msgs": ["top of this list",
+                 "flagged straight to you",
+                 "you lead this count"],
+    "fail_msgs": ["op failed",
+                  "update didn't save",
+                  "change didn't go through"]
+  }
+}

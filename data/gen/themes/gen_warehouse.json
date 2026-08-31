@@ -1,0 +1,110 @@
+{
+  "domain": "warehouse",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "supplier",
+    "noun": ["supplier", "suppliers"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "lot",
+    "noun": ["lot", "lots"],
+    "ref_field": "supplier",
+    "ref_phrase": "from {name}",
+    "name_field": "item_desc",
+    "titles": ["Galvanized steel bolts, 10mm", "Corrugated shipping boxes, medium",
+               "Industrial shrink wrap rolls", "Pallet jacks, manual",
+               "Nitrile gloves, case of 100", "LED warehouse light fixtures",
+               "Forklift replacement batteries", "Anti-static packing foam",
+               "Barcode label rolls", "Heavy-duty zip ties",
+               "Warehouse shelving brackets", "Loading dock bumpers"],
+    "bools": [
+      {"field": "quarantined", "true_phrase": "quarantined",
+       "false_phrase": "cleared", "placement": "pre"},
+      {"field": "damaged", "true_phrase": "damaged",
+       "false_phrase": "undamaged", "placement": "pre"},
+      {"field": "hazmat", "true_phrase": "hazmat",
+       "false_phrase": "non-hazmat", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["received", "stored", "picked", "shipped"],
+      "phrases": {"received": ["received", "pre"],
+                  "stored": ["in storage", "pre"],
+                  "picked": ["picked", "pre"],
+                  "shipped": ["shipped", "pre"]}
+    },
+    "times": [
+      {"field": "received_at", "kind": "time_cutoff",
+       "phrase": "received more than {d} days ago"},
+      {"field": "expires_at", "kind": "time_now",
+       "lt_phrase": ["already expired", "post"],
+       "gt_phrase": ["not yet expired", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listLots",
+                   "desc": "List every stock lot currently tracked in the warehouse."},
+    "get_child": {"name": "getLot",
+                  "desc": "Fetch one stock lot by its id."},
+    "list_parent": {"name": "listSuppliers",
+                    "desc": "List all suppliers the warehouse orders from."},
+    "get_parent": {"name": "getSupplier",
+                   "desc": "Fetch one supplier by id."},
+    "delete_child": {"name": "purgeLot",
+                     "desc": "Permanently remove a stock lot record. Not reversible.",
+                     "verbs": ["purge {obj}", "wipe {obj} from inventory"]},
+    "set_enum": {"name": "setLotStage",
+                 "desc": "Change a stock lot's stage (received, stored, picked, or shipped).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"received": "back to received",
+                                   "stored": "as stored",
+                                   "picked": "as picked",
+                                   "shipped": "as shipped"}},
+    "set_bool": {"name": "flagQuarantine",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a stock lot as quarantined.",
+                 "verbs": ["quarantine {obj}", "flag {obj} as quarantined"]},
+    "set_ref": {"name": "reassignSupplier",
+                "desc": "Move a stock lot to a different supplier's account.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notifySupplier",
+             "desc": "Send a message to a supplier.",
+             "child_verbs": ["notify the supplier of {obj}",
+                             "give the supplier of {obj} a heads-up"],
+             "direct_verbs": ["notify {name}", "message {name}"],
+             "pair_verbs": ["notify", "message"]}
+  },
+  "sort": {
+    "time_index": 1,
+    "dir": "ASC",
+    "sup_phrase": "the lot with the earliest expiration",
+    "ord_phrase": "the lot with the {ord} earliest expiration",
+    "pre_filter": {"enum_value": "stored", "phrase": "in storage"}
+  },
+  "ambiguous": [
+    {"request": ["Clear the dead stock.", "The floor's cluttered, deal with it."],
+     "hint": "delete lots still stored and already expired",
+     "clauses": [{"enum_value": "stored"},
+                 {"time_index": 1, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Handle the lots sitting too long.", "Sort out the backlog on the receiving dock."],
+     "hint": "flag as quarantined lots still received and received more than 60 days ago",
+     "clauses": [{"enum_value": "received"},
+                 {"time_index": 0, "days": 60}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your stock lot needs attention.",
+                   "Please review this lot.",
+                   "A note about your stock lot.",
+                   "Your lot may need to be reordered."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this lot to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "domain": "election_office",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "voter",
+    "noun": ["voter", "voters"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "registration",
+    "noun": ["registration", "registrations"],
+    "ref_field": "voter",
+    "ref_phrase": "for {name}",
+    "name_field": null,
+    "titles": [],
+    "bools": [
+      {"field": "provisional", "true_phrase": "provisional",
+       "false_phrase": "confirmed", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["pending", "verified", "rejected"],
+      "phrases": {"pending": ["pending", "pre"],
+                  "verified": ["verified", "pre"],
+                  "rejected": ["rejected", "pre"]}
+    },
+    "times": [
+      {"field": "election_date", "kind": "time_now",
+       "lt_phrase": ["already passed", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "submitted_on", "kind": "time_cutoff",
+       "phrase": "submitted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listRegistrations",
+                   "desc": "List every voter registration on file with the office."},
+    "get_child": {"name": "getRegistration",
+                  "desc": "Fetch one voter registration by its id."},
+    "list_parent": {"name": "listVoters",
+                    "desc": "List all voters registered in the county."},
+    "get_parent": {"name": "getVoter",
+                   "desc": "Fetch one voter by id."},
+    "delete_child": {"name": "purgeRegistration",
+                     "desc": "Permanently remove a voter registration record. Not reversible.",
+                     "verbs": ["purge {obj}", "strike {obj} from the rolls"]},
+    "set_enum": {"name": "setRegistrationStatus",
+                 "desc": "Change a registration's status (pending, verified, or rejected).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"pending": "back to pending",
+                                   "verified": "as verified",
+                                   "rejected": "as rejected"}},
+    "set_bool": {"name": "flagProvisional",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a registration as provisional.",
+                 "verbs": ["flag {obj} as provisional", "mark {obj} provisional"]},
+    "set_ref": {"name": "reassignVoter",
+                "desc": "Move a registration to a different voter's record.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "textVoter",
+             "desc": "Send a text message to a voter.",
+             "child_verbs": ["text the voter on {obj}",
+                             "notify the voter for {obj}"],
+             "direct_verbs": ["text {name}", "notify {name}"],
+             "pair_verbs": ["text", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the registration with the earliest election date",
+    "ord_phrase": "the registration with the {ord} earliest election date",
+    "pre_filter": {"enum_value": "pending", "phrase": "pending"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the rejected rolls.",
+                 "Old rejected registrations need to go."],
+     "hint": "purge rejected registrations submitted more than 400 days ago",
+     "clauses": [{"enum_value": "rejected"},
+                 {"time_index": 1, "days": 400}],
+     "action": "delete_child"},
+    {"request": ["Sort out the provisional backlog.",
+                 "Handle the shaky registrations before the election."],
+     "hint": "flag pending registrations whose election date is still upcoming as provisional",
+     "clauses": [{"enum_value": "pending"},
+                 {"time_index": 0, "op": "GT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your registration needs attention.",
+                   "Please review your voter registration.",
+                   "An update is required on your registration.",
+                   "Your registration status has changed."],
+    "agg_msgs": ["You have the most pending registrations right now.",
+                 "Flagging this to you directly.",
+                 "You lead this count."],
+    "fail_msgs": ["The requested registration action failed.",
+                  "That record could not be updated.",
+                  "The last action did not go through."]
+  }
+}

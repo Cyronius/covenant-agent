@@ -1,0 +1,103 @@
+{
+  "domain": "event_venue",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "booking",
+    "noun": ["booking", "bookings"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "event_type",
+    "titles": ["Wedding Reception", "Corporate Gala", "Product Launch",
+               "Birthday Party", "Retirement Party", "Fundraiser Dinner",
+               "Award Ceremony", "Trade Show", "Holiday Party",
+               "Bar Mitzvah", "Quinceanera", "Album Release Party",
+               "Conference", "Charity Auction"],
+    "bools": [
+      {"field": "deposit_paid", "true_phrase": "paid deposit",
+       "false_phrase": "deposit due", "placement": "pre"},
+      {"field": "needs_follow_up", "true_phrase": "flagged for follow-up",
+       "false_phrase": "not flagged", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["inquiry", "tentative", "confirmed", "completed"],
+      "phrases": {"inquiry": ["inquiry stage", "pre"],
+                  "tentative": ["tentative", "pre"],
+                  "confirmed": ["confirmed", "pre"],
+                  "completed": ["completed", "pre"]}
+    },
+    "times": [
+      {"field": "event_date", "kind": "time_now",
+       "lt_phrase": ["already held", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "inquired_on", "kind": "time_cutoff",
+       "phrase": "inquired more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listBookings",
+                   "desc": "list all venue bookings"},
+    "get_child": {"name": "getBooking",
+                  "desc": "fetch one booking by id"},
+    "list_parent": {"name": "listClients",
+                    "desc": "list all booking clients"},
+    "get_parent": {"name": "getClient",
+                   "desc": "fetch one client by id"},
+    "delete_child": {"name": "purgeBooking",
+                     "desc": "wipe a booking record, no undo",
+                     "verbs": ["purge {obj}", "scrub {obj} from the schedule"]},
+    "set_enum": {"name": "setBookingPhase",
+                 "desc": "change booking phase (inquiry/tentative/confirmed/completed)",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"inquiry": "back to inquiry",
+                                   "tentative": "to tentative",
+                                   "confirmed": "to confirmed",
+                                   "completed": "to completed"}},
+    "set_bool": {"name": "flagFollowUp",
+                 "bool_index": 1, "value": true,
+                 "desc": "flag a booking that needs follow-up",
+                 "verbs": ["flag {obj} for follow-up", "mark {obj} needs follow-up"]},
+    "set_ref": {"name": "reassignClient",
+                "desc": "move a booking to a different client account",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailClient",
+             "desc": "email the client on file",
+             "child_verbs": ["email the client for {obj}",
+                             "notify the client of {obj}"],
+             "direct_verbs": ["email {name}", "send {name} a note"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the booking with the soonest event date",
+    "ord_phrase": "the booking with the {ord} soonest event date",
+    "pre_filter": {"enum_value": "confirmed", "phrase": "confirmed"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the stale inquiries.",
+                 "The inquiry pile is getting old, handle it."],
+     "hint": "flag inquiry-stage bookings inquired more than 30 days ago for follow-up",
+     "clauses": [{"enum_value": "inquiry"},
+                 {"time_index": 1, "days": 30}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your booking needs a quick update.",
+                   "Please review your upcoming booking.",
+                   "A note about your venue booking.",
+                   "Your booking may need a new date."],
+    "agg_msgs": ["You're currently first on this list.",
+                 "Flagging this booking to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested change could not be made.",
+                  "That operation did not go through.",
+                  "The last update failed to save."]
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "domain": "theater_company",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "producer",
+    "noun": ["producer", "producers"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "run",
+    "noun": ["run", "runs"],
+    "ref_field": "producer",
+    "ref_phrase": "produced by {name}",
+    "name_field": "show",
+    "titles": ["The Lantern Keeper", "Salt and Velvet", "Midnight at the Aviary",
+               "Six Empty Chairs", "The Cartographer's Daughter", "Glass Houses",
+               "A Winter's Debt", "The Understudy's Ghost", "Paper Crowns",
+               "The Long Intermission", "Echoes of the Foyer", "Curtain Call for Ravens"],
+    "bools": [
+      {"field": "understudy_ready", "true_phrase": "understudy-ready",
+       "false_phrase": "no understudy", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["rehearsal", "previews", "open_run", "closed"],
+      "phrases": {"rehearsal": ["in rehearsal", "pre"],
+                  "previews": ["in previews", "pre"],
+                  "open_run": ["running", "pre"],
+                  "closed": ["closed", "pre"]}
+    },
+    "times": [
+      {"field": "curtain", "kind": "time_now",
+       "lt_phrase": ["already struck", "post"],
+       "gt_phrase": ["still to come", "post"]},
+      {"field": "opened", "kind": "time_cutoff",
+       "phrase": "opened more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lsRuns",
+                   "desc": "Returns the complete list of show runs currently tracked by the company, across every phase from rehearsal through closing. Use this when you need a full sweep of the season's runs rather than a single lookup."},
+    "get_child": {"name": "getRun",
+                  "desc": "Retrieves a single show run record by its unique identifier, including its current phase and scheduling details. This is the single-record counterpart to the full listing call."},
+    "list_parent": {"name": "lsProducers",
+                    "desc": "Returns every producer the company has worked with, regardless of whether they currently have an active run. Useful for building a full roster rather than a filtered subset."},
+    "get_parent": {"name": "getProducer",
+                   "desc": "Retrieves a single producer's record by id, including the name on file. This does not include any of their associated runs."},
+    "delete_child": {"name": "pullRun",
+                     "desc": "Permanently strikes a show run from the company's schedule, removing all record of its booking. This action cannot be undone once submitted, so it should be used with care.",
+                     "verbs": ["pull {obj} from the schedule", "strike {obj}"]},
+    "set_enum": {"name": "setPhase",
+                 "desc": "Advances or reverts a show run's phase among rehearsal, previews, open run, and closed. The company uses this to keep the box office and marketing systems in sync with where a production actually stands.",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"rehearsal": "back to rehearsal",
+                                   "previews": "into previews",
+                                   "open_run": "to open run",
+                                   "closed": "as closed"}},
+    "set_bool": {"name": "setUnderstudy",
+                 "bool_index": 0, "value": true,
+                 "desc": "Marks a show run as having a ready understudy, meaning the run can proceed even if a lead is unavailable. Stage management relies on this flag when making last-minute casting calls.",
+                 "verbs": ["mark {obj} understudy-ready", "flag {obj} as covered"]},
+    "set_ref": {"name": "reassignProducer",
+                "desc": "Transfers a show run from one producer's slate to another's, updating the credited producer of record. This is typically used when a run changes hands mid-season.",
+                "verbs": ["hand {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "ringProducer",
+             "desc": "Places a call to the producer associated with a given show run, or to a named producer directly. This is the company's standard way of relaying urgent scheduling news.",
+             "child_verbs": ["call the producer of {obj}",
+                             "ring the producer behind {obj}"],
+             "direct_verbs": ["call {name}", "ring {name}"],
+             "pair_verbs": ["call", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the run with the soonest curtain",
+    "ord_phrase": "the run with the {ord} soonest curtain",
+    "pre_filter": {"enum_value": "previews", "phrase": "in previews"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the closed shows.",
+                 "The schedule's cluttered with dead runs, clean it up."],
+     "hint": "pull closed runs whose curtain already passed",
+     "clauses": [{"enum_value": "closed"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Deal with the uncovered runs.",
+                 "Fix the coverage gaps in open shows."],
+     "hint": "mark open_run shows as understudy-ready",
+     "clauses": [{"enum_value": "open_run"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your run needs a scheduling decision.",
+                   "Stage management has flagged your run for review.",
+                   "There's an update on your show run.",
+                   "Your run may need a phase change."],
+    "agg_msgs": ["You have the most runs on the books this season.",
+                 "You're carrying the longest-running show right now.",
+                 "You lead the roster in active runs."],
+    "fail_msgs": ["The schedule change did not go through.",
+                  "That update was rejected by the booking system.",
+                  "The run could not be updated."]
+  }
+}

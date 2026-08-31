@@ -1,0 +1,87 @@
+{
+  "domain": "seo_agency",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "company",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "audit",
+    "noun": ["audit", "audits"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "focus_area",
+    "titles": ["Core Web Vitals review", "Backlink profile scan", "On-page metadata audit",
+               "Site architecture review", "Mobile usability check", "Crawl budget analysis",
+               "Duplicate content scan", "Schema markup validation", "Page speed audit",
+               "Internal linking review", "Keyword cannibalization check",
+               "Local listings consistency audit"],
+    "bools": [
+      {"field": "manual_review", "true_phrase": "manually reviewed", "false_phrase": "auto-generated", "placement": "pre"},
+      {"field": "critical_issues_found", "true_phrase": "flagged critical", "false_phrase": "clean", "placement": "pre"},
+      {"field": "white_label", "true_phrase": "white-labeled", "false_phrase": "agency-branded", "placement": "post"}
+    ],
+    "enum": {
+      "field": "phase",
+      "values": ["scheduled", "crawling", "analyzing", "complete"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "crawling": ["crawling", "pre"],
+                  "analyzing": ["analyzing", "pre"],
+                  "complete": ["complete", "pre"]}
+    },
+    "times": [
+      {"field": "run_at", "kind": "time_now",
+       "lt_phrase": ["already run", "post"],
+       "gt_phrase": ["not yet run", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_audits", "desc": "list audits for a client"},
+    "get_child": {"name": "get_audit", "desc": "get one audit by id"},
+    "list_parent": {"name": "list_clients", "desc": "list clients"},
+    "get_parent": {"name": "get_client", "desc": "get one client"},
+    "delete_child": {"name": "delete_audit", "desc": "delete an audit rec, no undo",
+                     "verbs": ["delete {obj}", "remove {obj} from the file"]},
+    "set_enum": {"name": "set_audit_phase", "desc": "change audit phase",
+                 "verbs": ["set {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "to scheduled", "crawling": "to crawling",
+                                   "analyzing": "to analyzing", "complete": "to complete"}},
+    "set_bool": {"name": "flag_audit_critical", "bool_index": 1, "value": true,
+                 "desc": "flag an audit as having critical issues",
+                 "verbs": ["flag {obj} as critical", "mark {obj} flagged"]},
+    "set_ref": {"name": "move_audit_client", "desc": "move an audit to another client",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "call_client", "desc": "call the client about an audit",
+             "child_verbs": ["call the client behind {obj}", "ring the client behind {obj}"],
+             "direct_verbs": ["call {name}", "ring {name}"],
+             "pair_verbs": ["call", "ring"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the audit with the earliest run time",
+    "ord_phrase": "the audit with the {ord} earliest run time",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["clean up old audits", "this client folder is a mess"],
+     "hint": "delete complete audits that are already run",
+     "clauses": [{"enum_value": "complete"}, {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["flag the risky ones", "find whats broken across these audits"],
+     "hint": "flag crawling audits that are overdue as having critical issues",
+     "clauses": [{"enum_value": "crawling"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["This audit needs a look.", "Check on this audit.",
+                   "Heads up about this audit.", "This audit may need review."],
+    "agg_msgs": ["You have the most audits for this client.",
+                 "Flagging this to you directly.", "You lead this client's audit count."],
+    "fail_msgs": ["The requested operation failed.", "That change did not go through.",
+                  "The last operation was not applied."]
+  }
+}

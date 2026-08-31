@@ -1,0 +1,95 @@
+{
+  "domain": "app_store",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "developer",
+    "noun": ["developer", "developers"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "submission",
+    "noun": ["submission", "submissions"],
+    "ref_field": "developer",
+    "ref_phrase": "from {name}",
+    "name_field": "app_name",
+    "titles": ["PixelPost", "RouteWise", "BudgetBloom", "FocusForge", "TrailMinder",
+               "RecipeRadar", "SleepScape", "HabitHive", "QuickQuote", "SnapSort",
+               "MoodMuse", "ChoreChime"],
+    "bools": [
+      {"field": "contains_iap", "true_phrase": "has in-app purchases",
+       "false_phrase": "no in-app purchases", "placement": "post"}
+    ],
+    "enum": {
+      "field": "review_state",
+      "values": ["submitted", "in_review", "approved", "rejected"],
+      "phrases": {"submitted": ["submitted", "pre"],
+                  "in_review": ["in review", "pre"],
+                  "approved": ["approved", "pre"],
+                  "rejected": ["rejected", "pre"]}
+    },
+    "times": [
+      {"field": "submitted_at", "kind": "time_now",
+       "lt_phrase": ["already submitted", "post"],
+       "gt_phrase": ["not submitted yet", "post"]},
+      {"field": "last_updated", "kind": "time_cutoff",
+       "phrase": "not updated in over {d} days"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listSubmissions",
+                   "desc": "Returns every app submission currently in the review queue. Use this to see the full backlog before acting on any single one."},
+    "get_child": {"name": "getSubmission",
+                  "desc": "Retrieves one app submission by its id. It returns every field the store currently has on record for that submission."},
+    "list_parent": {"name": "listDevelopers",
+                    "desc": "Returns every developer account registered with the store. Use this to look up a developer before inspecting their submissions."},
+    "get_parent": {"name": "getDeveloper",
+                   "desc": "Retrieves one developer account by its id. It returns the developer's full profile as stored by the platform."},
+    "delete_child": {"name": "deleteSubmission",
+                     "desc": "Removes a submission from the review queue permanently. Once deleted, the submission record cannot be recovered.",
+                     "verbs": ["delete {obj}", "remove {obj} from the queue"]},
+    "set_enum": {"name": "setReviewState",
+                 "desc": "Updates a submission's review state to submitted, in review, approved, or rejected. This replaces whatever state the submission previously held.",
+                 "verbs": ["set {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"submitted": "to submitted", "in_review": "to in review",
+                                   "approved": "to approved", "rejected": "to rejected"}},
+    "set_bool": {"name": "flagInAppPurchases", "bool_index": 0, "value": true,
+                 "desc": "Marks a submission as containing in-app purchases. This is used when the review team confirms IAP is present in the build.",
+                 "verbs": ["flag {obj} as having in-app purchases", "mark {obj} IAP"]},
+    "set_ref": {"name": "reassignSubmissionDeveloper",
+                "desc": "Moves a submission to a different developer's account. This is used when a submission was filed under the wrong developer.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailDeveloper",
+             "desc": "Sends an email to the developer about their submission. This is the standard way to request changes or share a review decision.",
+             "child_verbs": ["email the developer behind {obj}", "notify the developer behind {obj}"],
+             "direct_verbs": ["email {name}", "notify {name}"],
+             "pair_verbs": ["email", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the submission with the earliest submit time",
+    "ord_phrase": "the submission with the {ord} earliest submit time",
+    "pre_filter": {"enum_value": "in_review", "phrase": "in review"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the abandoned submissions.", "This queue has dead weight, clean it up."],
+     "hint": "delete rejected submissions not updated in over 60 days",
+     "clauses": [{"enum_value": "rejected"}, {"time_index": 1, "days": 60}],
+     "action": "delete_child"},
+    {"request": ["Flag anything with purchases we haven't reviewed for that.",
+                 "Check the queue for in-app purchase apps."],
+     "hint": "flag submitted submissions already submitted as containing in-app purchases",
+     "clauses": [{"enum_value": "submitted"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["This submission needs a look.", "Check on this submission.",
+                   "Heads up about this submission.", "This submission may need review."],
+    "agg_msgs": ["You have the most submissions from this developer.",
+                 "Flagging this to you directly.", "You lead this developer's submission count."],
+    "fail_msgs": ["The requested operation failed.", "That change did not go through.",
+                  "The last operation was not applied."]
+  }
+}

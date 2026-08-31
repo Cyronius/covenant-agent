@@ -1,0 +1,104 @@
+{
+  "domain": "ecommerce",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "customer",
+    "noun": ["customer", "customers"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "return",
+    "noun": ["return", "returns"],
+    "ref_field": "customer",
+    "ref_phrase": "from {name}",
+    "name_field": "item",
+    "titles": ["Wireless earbuds", "Running shoes", "Coffee maker",
+               "Bluetooth speaker", "Yoga mat", "Desk lamp", "Backpack",
+               "Water bottle", "Phone case", "Throw blanket",
+               "Kitchen scale", "Sunglasses"],
+    "bools": [
+      {"field": "defective", "true_phrase": "defective",
+       "false_phrase": "non-defective", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["pending", "approved", "refunded"],
+      "phrases": {"pending": ["pending", "pre"],
+                  "approved": ["approved", "pre"],
+                  "refunded": ["refunded", "pre"]}
+    },
+    "times": [
+      {"field": "window_expires", "kind": "time_now",
+       "lt_phrase": ["expired", "post"],
+       "gt_phrase": ["still open", "post"]},
+      {"field": "filed", "kind": "time_cutoff",
+       "phrase": "filed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listReturns",
+                   "desc": "list open returns"},
+    "get_child": {"name": "getReturn",
+                  "desc": "fetch one return by id"},
+    "list_parent": {"name": "listCustomers",
+                    "desc": "list all customers"},
+    "get_parent": {"name": "getCustomer",
+                   "desc": "fetch one customer by id"},
+    "delete_child": {"name": "purgeReturn",
+                     "desc": "wipe a return rec, no undo",
+                     "verbs": ["purge {obj}", "wipe {obj}"]},
+    "set_enum": {"name": "setReturnStatus",
+                 "desc": "chg return status",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"pending": "back to pending",
+                                   "approved": "as approved",
+                                   "refunded": "as refunded"}},
+    "set_bool": {"name": "flagDefective",
+                 "bool_index": 0, "value": true,
+                 "desc": "flag item as defective",
+                 "verbs": ["flag {obj} defective", "mark {obj} defective"]},
+    "set_ref": {"name": "reassignCustomer",
+                "desc": "move return to other acct",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "emailCustomer",
+             "desc": "send customer an email",
+             "child_verbs": ["email the customer of {obj}",
+                             "ping the customer of {obj}"],
+             "direct_verbs": ["email {name}", "ping {name}"],
+             "pair_verbs": ["email", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the return with the soonest window expiry",
+    "ord_phrase": "the return with the {ord} soonest window expiry",
+    "pre_filter": {"enum_value": "pending", "phrase": "pending"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the return queue.",
+                 "Deal with the return backlog."],
+     "hint": "purge pending returns whose window already expired",
+     "clauses": [{"enum_value": "pending"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Flag the bad ones.",
+                 "Sort the sketchy returns."],
+     "hint": "flag pending returns filed more than 30 days ago as defective",
+     "clauses": [{"enum_value": "pending"},
+                 {"time_index": 1, "days": 30}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your return needs a quick look.",
+                   "Please check on your pending return.",
+                   "A note about your return request.",
+                   "Your return may need action soon."],
+    "agg_msgs": ["You have the most open returns right now.",
+                 "Flagging this backlog to you directly.",
+                 "You lead this customer's return count."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That update could not be completed.",
+                  "The last change did not go through."]
+  }
+}

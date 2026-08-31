@@ -1,0 +1,94 @@
+{
+  "domain": "community_garden",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "gardener",
+    "noun": ["gardener", "gardeners"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "assignment",
+    "noun": ["assignment", "assignments"],
+    "ref_field": "gardener",
+    "ref_phrase": "held by {name}",
+    "name_field": null,
+    "titles": [],
+    "bools": [
+      {"field": "water_access", "true_phrase": "has water hookup",
+       "false_phrase": "no water hookup", "placement": "post"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["waitlisted", "assigned", "active", "released"],
+      "phrases": {"waitlisted": ["on the waitlist", "pre"],
+                  "assigned": ["assigned", "pre"],
+                  "active": ["active", "pre"],
+                  "released": ["released", "pre"]}
+    },
+    "times": [
+      {"field": "season_start", "kind": "time_now",
+       "lt_phrase": ["season already started", "post"],
+       "gt_phrase": ["season not started", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listPlots",
+                   "desc": "lists all the plot assignments, dont use for single lookups"},
+    "get_child": {"name": "getPlot",
+                  "desc": "grabs one plot assignment by id"},
+    "list_parent": {"name": "listGardeners",
+                    "desc": "all gardeners on file, ppl who rent plots"},
+    "get_parent": {"name": "getGardener",
+                   "desc": "one gardener record by id"},
+    "delete_child": {"name": "killPlot",
+                     "desc": "nukes a plot assignment, cant be undone so b careful",
+                     "verbs": ["kill {obj}", "nuke {obj}"]},
+    "set_enum": {"name": "setPlotStage",
+                 "desc": "changes plot stage (waitlisted/assigned/active/released)",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"waitlisted": "back on the waitlist",
+                                   "assigned": "assigned",
+                                   "active": "active",
+                                   "released": "released"}},
+    "set_bool": {"name": "flagWaterAccess",
+                 "bool_index": 0, "value": true,
+                 "desc": "flags a plot as having water hookup",
+                 "verbs": ["flag {obj} as having water hookup", "mark {obj} water access"]},
+    "set_ref": {"name": "movePlot",
+                "desc": "moves a plot assignment to another gardener",
+                "verbs": ["move {obj} {to_name}", "give {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "callGardener",
+             "desc": "calls a gardener, use their phone on file",
+             "child_verbs": ["call the gardener on {obj}", "ring the gardener on {obj}"],
+             "direct_verbs": ["call {name}", "ring {name}"],
+             "pair_verbs": ["call", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the assignment with the earliest season start",
+    "ord_phrase": "the assignment with the {ord} earliest season start",
+    "pre_filter": {"enum_value": "active", "phrase": "active"}
+  },
+  "ambiguous": [
+    {"request": ["sort out the plot mess.",
+                 "garden plots are a mess, fix it"],
+     "hint": "flag active assignments whose season already started as having water access",
+     "clauses": [{"enum_value": "active"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["hey your plot needs a look",
+                   "check on ur garden plot pls",
+                   "note about ur plot assignment",
+                   "ur plot might need attention"],
+    "agg_msgs": ["ur on top of this list",
+                 "flagging this to u directly",
+                 "u lead this count rn"],
+    "fail_msgs": ["op failed",
+                  "that didnt go thru",
+                  "last change didnt save"]
+  }
+}

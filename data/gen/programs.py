@@ -542,7 +542,7 @@ def sample_parallel(world, profile, state, now, rng, alloc, holdout):
     pair = rng.choice(profile["pairs"])
     o, i, link = pair["outer"], pair["inner"], pair["link_field"]
     inner_prof = profile["entities"][i]
-    get_tool = PAIR_OUTER_GET[world]
+    get_tool = pair.get("outer_get") or PAIR_OUTER_GET[world]
     recs = _records(state, o)
     if not recs:
         raise SampleError("no outer records")

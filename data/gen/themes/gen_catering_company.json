@@ -1,0 +1,103 @@
+{
+  "domain": "catering_company",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "client",
+    "noun": ["client", "clients"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "catering_order",
+    "noun": ["catering order", "catering orders"],
+    "ref_field": "client",
+    "ref_phrase": "for {name}",
+    "name_field": "event_type",
+    "titles": ["Corporate Lunch", "Wedding Reception", "Holiday Office Party",
+               "Graduation Party", "Backyard BBQ", "Baby Shower",
+               "Retirement Luncheon", "Board Meeting Breakfast", "Charity Gala",
+               "Anniversary Party", "Funeral Reception", "Conference Lunch Buffet",
+               "Cocktail Hour", "Family Reunion"],
+    "bools": [
+      {"field": "tasting_done", "true_phrase": "tasting complete",
+       "false_phrase": "tasting pending", "placement": "post"},
+      {"field": "dietary_restrictions", "true_phrase": "has dietary restrictions",
+       "false_phrase": "no dietary restrictions", "placement": "post"},
+      {"field": "delivery_required", "true_phrase": "delivery",
+       "false_phrase": "pickup", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "status", "values": ["inquiry", "quoted", "confirmed", "completed"],
+      "phrases": {"inquiry": ["inquiry", "pre"],
+                  "quoted": ["quoted", "pre"],
+                  "confirmed": ["confirmed", "pre"],
+                  "completed": ["completed", "pre"]}
+    },
+    "times": [
+      {"field": "event_time", "kind": "time_now",
+       "lt_phrase": ["already served", "post"],
+       "gt_phrase": ["still upcoming", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lst_ord",
+                   "desc": "List every catering order on file."},
+    "get_child": {"name": "get_ord",
+                  "desc": "Fetch one catering order by its id."},
+    "list_parent": {"name": "lst_cli",
+                    "desc": "List all catering clients."},
+    "get_parent": {"name": "get_cli",
+                   "desc": "Fetch one client by id."},
+    "delete_child": {"name": "rm_ord",
+                     "desc": "Permanently remove a catering order. Not reversible.",
+                     "verbs": ["delete {obj}", "remove {obj} from the schedule"]},
+    "set_enum": {"name": "set_ord_stat",
+                 "desc": "Change a catering order's status (inquiry, quoted, confirmed, or completed).",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"inquiry": "back to inquiry",
+                                   "quoted": "to quoted",
+                                   "confirmed": "to confirmed",
+                                   "completed": "to completed"}},
+    "set_bool": {"name": "flag_tasting",
+                 "bool_index": 0, "value": true,
+                 "desc": "Mark a catering order's tasting as complete.",
+                 "verbs": ["flag {obj} as tasting complete", "mark {obj} tasting done"]},
+    "set_ref": {"name": "mv_cli",
+                "desc": "Move a catering order to a different client account.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notif_cli",
+             "desc": "Send a notification to the client on file.",
+             "child_verbs": ["notify the client for {obj}",
+                             "reach out to the client behind {obj}"],
+             "direct_verbs": ["notify {name}", "reach out to {name}"],
+             "pair_verbs": ["notify", "message"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the catering order with the soonest event time",
+    "ord_phrase": "the catering order with the {ord} soonest event time",
+    "pre_filter": {"enum_value": "confirmed", "phrase": "confirmed"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the dead inquiries.",
+                 "The inquiry pile is stale, get rid of it."],
+     "hint": "delete inquiry-stage orders whose event time has already passed",
+     "clauses": [{"enum_value": "inquiry"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your catering order needs a status update.",
+                   "Please review your upcoming catering order.",
+                   "A note about your catering order.",
+                   "Your catering order may need adjusting."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this order to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested update could not be completed.",
+                  "That action did not go through.",
+                  "The last operation failed to save."]
+  }
+}

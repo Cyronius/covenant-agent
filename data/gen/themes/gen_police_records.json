@@ -1,0 +1,108 @@
+{
+  "domain": "police_records",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "complainant",
+    "noun": ["complainant", "complainants"],
+    "name_style": "person",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "report",
+    "noun": ["report", "reports"],
+    "ref_field": "complainant",
+    "ref_phrase": "filed by {name}",
+    "name_field": "incident_type",
+    "titles": ["Residential burglary", "Vehicle theft", "Vandalism complaint", "Assault report",
+               "Noise disturbance", "Shoplifting incident", "Domestic disturbance",
+               "Fraud complaint", "Missing person report", "Traffic collision report",
+               "Trespassing complaint", "Public intoxication"],
+    "bools": [
+      {"field": "suspect_identified", "true_phrase": "suspect identified",
+       "false_phrase": "suspect unknown", "placement": "post"},
+      {"field": "evidence_collected", "true_phrase": "evidence on file",
+       "false_phrase": "no evidence logged", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status", "values": ["open", "under_investigation", "closed", "unfounded"],
+      "phrases": {"open": ["open", "pre"],
+                  "under_investigation": ["under investigation", "pre"],
+                  "closed": ["closed", "pre"],
+                  "unfounded": ["unfounded", "pre"]}
+    },
+    "times": [
+      {"field": "followup_due", "kind": "time_now",
+       "lt_phrase": ["already overdue", "post"],
+       "gt_phrase": ["not yet due", "post"]},
+      {"field": "filed_on", "kind": "time_cutoff",
+       "phrase": "filed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_reports",
+                   "desc": "This tool returns the full list of incident reports currently held in the records system. It is the starting point for browsing the department's caseload."},
+    "get_child": {"name": "get_report",
+                  "desc": "This tool retrieves a single incident report using its case number. It should be called once the specific report of interest has already been identified."},
+    "list_parent": {"name": "list_complainants",
+                    "desc": "This tool lists every complainant who has filed a report with the department. It is useful for cross-referencing individuals against their reported incidents."},
+    "get_parent": {"name": "get_complainant",
+                   "desc": "This tool fetches a single complainant's record by their unique identifier. It returns the contact and identifying details on file."},
+    "delete_child": {"name": "purge_report",
+                     "desc": "This tool permanently deletes an incident report from the records system, and the deletion cannot be undone. It should only be used when a report is confirmed to be erroneous or duplicated.",
+                     "verbs": ["purge {obj}", "expunge {obj} from the system"]},
+    "set_enum": {"name": "set_report_status",
+                 "desc": "This tool updates the investigative status of an incident report, moving it between open, under investigation, closed, and unfounded. It should be used any time the case status changes.",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"open": "back to open",
+                                   "under_investigation": "as under investigation",
+                                   "closed": "as closed",
+                                   "unfounded": "as unfounded"}},
+    "set_bool": {"name": "flag_suspect_identified",
+                 "bool_index": 0, "value": true,
+                 "desc": "This tool records that a suspect has been identified in connection with an incident report. It should be used once investigators have a named or confirmed suspect.",
+                 "verbs": ["mark {obj} suspect identified", "flag {obj} with a suspect"]},
+    "set_ref": {"name": "reassign_complainant",
+                "desc": "This tool reassigns an incident report to a different complainant's record. It is used when a report was mistakenly logged under the wrong individual.",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "contact_complainant",
+             "desc": "This tool sends a message to a complainant regarding the status of their report. It is the standard channel used to keep victims and witnesses informed.",
+             "child_verbs": ["contact the complainant on {obj}",
+                             "reach out to the complainant for {obj}"],
+             "direct_verbs": ["contact {name}", "reach out to {name}"],
+             "pair_verbs": ["contact", "reach out to"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the report with the earliest followup due date",
+    "ord_phrase": "the report with the {ord} earliest followup due date",
+    "pre_filter": {"enum_value": "open", "phrase": "open"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the unfounded cases.",
+                 "Old dead-end reports need to go."],
+     "hint": "purge unfounded reports filed more than 200 days ago",
+     "clauses": [{"enum_value": "unfounded"},
+                 {"time_index": 1, "days": 200}],
+     "action": "delete_child"},
+    {"request": ["Chase the overdue follow-ups.",
+                 "Deal with the open cases that are lagging."],
+     "hint": "flag open reports whose followup is already overdue as having an identified suspect",
+     "clauses": [{"enum_value": "open"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your report needs attention.",
+                   "Please review the status of your report.",
+                   "An update is required on your incident report.",
+                   "Your report may require a follow-up."],
+    "agg_msgs": ["You have the most open reports right now.",
+                 "Flagging this to you directly.",
+                 "You lead this caseload."],
+    "fail_msgs": ["The requested action on this report failed.",
+                  "That report could not be updated.",
+                  "The last action did not go through."]
+  }
+}

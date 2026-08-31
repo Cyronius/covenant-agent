@@ -1,0 +1,100 @@
+{
+  "domain": "hotel_frontdesk",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "guest",
+    "noun": ["guest", "guests"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "reservation",
+    "noun": ["reservation", "reservations"],
+    "ref_field": "guest",
+    "ref_phrase": "for {name}",
+    "name_field": "notes",
+    "titles": ["Early check-in requested", "Late checkout requested", "High floor requested",
+               "Away from elevator", "Extra pillows requested", "Crib requested",
+               "Ocean view requested", "Quiet room requested", "Connecting rooms requested",
+               "Anniversary package", "Airport shuttle requested", "Wheelchair accessible room"],
+    "bools": [
+      {"field": "guaranteed_late_arrival", "true_phrase": "guaranteed for late arrival",
+       "false_phrase": "standard hold", "placement": "post"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["confirmed", "checked_in", "checked_out", "cancelled"],
+      "phrases": {"confirmed": ["confirmed", "pre"],
+                  "checked_in": ["checked-in", "pre"],
+                  "checked_out": ["checked-out", "pre"],
+                  "cancelled": ["cancelled", "pre"]}
+    },
+    "times": [
+      {"field": "checkin_date", "kind": "time_now",
+       "lt_phrase": ["already arrived", "post"],
+       "gt_phrase": ["still upcoming", "post"]},
+      {"field": "booked_on", "kind": "time_cutoff",
+       "phrase": "booked more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_reservations",
+                   "desc": "List every reservation on the front desk board."},
+    "get_child": {"name": "get_reservation",
+                  "desc": "Fetch one reservation by its id."},
+    "list_parent": {"name": "list_guests",
+                    "desc": "List all guests registered at the hotel."},
+    "get_parent": {"name": "get_guest",
+                   "desc": "Fetch one guest by id."},
+    "delete_child": {"name": "purge_reservation",
+                     "desc": "Permanently remove a reservation record. Not reversible.",
+                     "verbs": ["purge {obj}", "wipe {obj} from the board"]},
+    "set_enum": {"name": "set_reservation_stage",
+                 "desc": "Change a reservation's stage (confirmed, checked-in, checked-out, or cancelled).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"confirmed": "back to confirmed",
+                                   "checked_in": "as checked-in",
+                                   "checked_out": "as checked-out",
+                                   "cancelled": "as cancelled"}},
+    "set_bool": {"name": "flag_late_arrival",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag a reservation as guaranteed for late arrival.",
+                 "verbs": ["flag {obj} for late arrival",
+                           "mark {obj} guaranteed late arrival"]},
+    "set_ref": {"name": "rebook_guest",
+                "desc": "Move a reservation to a different guest's account.",
+                "verbs": ["move {obj} {to_name}", "rebook {obj} {to_name}"],
+                "to_template": "under {name}"},
+    "send": {"name": "call_guest",
+             "desc": "Call a guest by phone.",
+             "child_verbs": ["call the guest of {obj}",
+                             "give the guest of {obj} a ring"],
+             "direct_verbs": ["call {name}", "phone {name}"],
+             "pair_verbs": ["call", "phone"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the reservation with the earliest check-in",
+    "ord_phrase": "the reservation with the {ord} earliest check-in",
+    "pre_filter": {"enum_value": "confirmed", "phrase": "confirmed"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the stale holds.", "The board is cluttered, clean it up."],
+     "hint": "delete reservations still confirmed but already past check-in",
+     "clauses": [{"enum_value": "confirmed"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"}
+  ],
+  "banks": {
+    "child_msgs": ["Your reservation needs attention.",
+                   "Please review your upcoming stay.",
+                   "A note about your reservation.",
+                   "Your reservation may need updating."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this reservation to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

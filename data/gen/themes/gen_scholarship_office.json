@@ -1,0 +1,106 @@
+{
+  "domain": "scholarship_office",
+  "desc_style": "clean",
+  "parent": {
+    "entity": "applicant",
+    "noun": ["applicant", "applicants"],
+    "name_style": "person",
+    "contact_field": "phone"
+  },
+  "child": {
+    "entity": "application",
+    "noun": ["application", "applications"],
+    "ref_field": "applicant",
+    "ref_phrase": "from {name}",
+    "name_field": "scholarship_name",
+    "titles": ["Merit Excellence Award", "STEM Futures Grant",
+               "First-Generation Scholars Fund", "Community Service Award",
+               "Arts & Humanities Grant", "Athletic Achievement Scholarship",
+               "Need-Based Tuition Grant", "International Student Award",
+               "Graduate Research Fellowship", "Diversity in Engineering Grant",
+               "Veterans Education Award", "Rural Student Opportunity Fund",
+               "Women in Science Grant", "Local Business Leaders Scholarship"],
+    "bools": [
+      {"field": "needs_documents", "true_phrase": "missing documents",
+       "false_phrase": "documents complete", "placement": "pre"},
+      {"field": "renewal", "true_phrase": "a renewal",
+       "false_phrase": "a first-time application", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status", "values": ["submitted", "awarded", "denied"],
+      "phrases": {"submitted": ["submitted", "pre"],
+                  "awarded": ["awarded", "pre"],
+                  "denied": ["denied", "pre"]}
+    },
+    "times": [
+      {"field": "deadline", "kind": "time_now",
+       "lt_phrase": ["already past deadline", "post"],
+       "gt_phrase": ["still before deadline", "post"]},
+      {"field": "submitted_on", "kind": "time_cutoff",
+       "phrase": "submitted more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listApplications",
+                   "desc": "List every scholarship application on file."},
+    "get_child": {"name": "getApplication",
+                  "desc": "Fetch one scholarship application by its id."},
+    "list_parent": {"name": "listApplicants",
+                    "desc": "List all applicants registered with the scholarship office."},
+    "get_parent": {"name": "getApplicant",
+                   "desc": "Fetch one applicant by id."},
+    "delete_child": {"name": "purgeApplication",
+                     "desc": "Permanently remove an application record. Not reversible.",
+                     "verbs": ["purge {obj}", "delete {obj} from the file"]},
+    "set_enum": {"name": "setApplicationStatus",
+                 "desc": "Change an application's status (submitted, awarded, or denied).",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"submitted": "back to submitted",
+                                   "awarded": "as awarded",
+                                   "denied": "as denied"}},
+    "set_bool": {"name": "flagMissingDocuments",
+                 "bool_index": 0, "value": true,
+                 "desc": "Flag an application as missing required documents.",
+                 "verbs": ["flag {obj} as missing documents", "mark {obj} incomplete"]},
+    "set_ref": {"name": "reassignApplicant",
+                "desc": "Move an application to a different applicant's record.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "callApplicant",
+             "desc": "Place a phone call to an applicant.",
+             "child_verbs": ["call the applicant behind {obj}", "reach out to the applicant on {obj}"],
+             "direct_verbs": ["call {name}", "phone {name}"],
+             "pair_verbs": ["call", "contact"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the application with the earliest deadline",
+    "ord_phrase": "the application with the {ord} earliest deadline",
+    "pre_filter": {"enum_value": "submitted", "phrase": "submitted"}
+  },
+  "ambiguous": [
+    {"request": ["Clean up the stale applications.", "The application queue needs sorting out."],
+     "hint": "delete denied applications submitted more than 60 days ago",
+     "clauses": [{"enum_value": "denied"},
+                 {"time_index": 1, "days": 60}],
+     "action": "delete_child"},
+    {"request": ["Sort out the paperwork backlog.", "Deal with the incomplete files."],
+     "hint": "flag submitted applications already past deadline as missing documents",
+     "clauses": [{"enum_value": "submitted"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your application needs attention.",
+                   "Please review your scholarship application.",
+                   "A note about your application.",
+                   "Your application may need additional documents."],
+    "agg_msgs": ["You currently top this list.",
+                 "Flagging this to you directly.",
+                 "You lead this count right now."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That action could not be completed.",
+                  "The last operation did not go through."]
+  }
+}

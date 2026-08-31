@@ -1,0 +1,102 @@
+{
+  "domain": "ferry_line",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "operator",
+    "noun": ["operator", "operators"],
+    "name_style": "company",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "crossing",
+    "noun": ["crossing", "crossings"],
+    "ref_field": "operator",
+    "ref_phrase": "operated by {name}",
+    "name_field": "route_name",
+    "titles": ["Seattle to Bainbridge Island", "Bremerton to Seattle", "Edmonds to Kingston",
+               "Mukilteo to Clinton", "Fauntleroy to Vashon", "Anacortes to Friday Harbor",
+               "Port Townsend to Coupeville", "Tacoma to Point Defiance", "Southworth to Vashon",
+               "Anacortes to Sidney", "Point Defiance to Tahlequah", "Fauntleroy to Southworth"],
+    "bools": [
+      {"field": "overloaded", "true_phrase": "over capacity",
+       "false_phrase": "within capacity", "placement": "post"}
+    ],
+    "enum": {
+      "field": "status", "values": ["scheduled", "boarding", "underway", "docked"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "boarding": ["boarding", "pre"],
+                  "underway": ["underway", "pre"],
+                  "docked": ["docked", "pre"]}
+    },
+    "times": [
+      {"field": "departure", "kind": "time_now",
+       "lt_phrase": ["already departed", "post"],
+       "gt_phrase": ["not yet departed", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "lsCrossings",
+                   "desc": "This tool returns the full list of crossings tracked across every route the ferry line operates. It includes crossings in every status from scheduled through docked."},
+    "get_child": {"name": "getCrossing",
+                  "desc": "This tool retrieves a single crossing record using its unique identifier. It returns all fields currently stored for that crossing."},
+    "list_parent": {"name": "lsOperators",
+                    "desc": "This tool returns the full list of operating companies registered with the ferry line. It includes both current and historical operators."},
+    "get_parent": {"name": "getOperator",
+                   "desc": "This tool retrieves a single operator record using its unique identifier. It returns the complete operator profile."},
+    "delete_child": {"name": "rmCrossing",
+                     "desc": "This tool permanently deletes a crossing record from the schedule. Once removed, the crossing cannot be recovered by any other tool.",
+                     "verbs": ["remove {obj}", "wipe {obj} from the schedule"]},
+    "set_enum": {"name": "setCrossingStatus",
+                 "desc": "This tool changes a crossing's status among scheduled, boarding, underway, and docked. It is the standard way to advance a crossing through its lifecycle.",
+                 "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "boarding": "as boarding",
+                                   "underway": "as underway",
+                                   "docked": "as docked"}},
+    "set_bool": {"name": "flagOverloaded",
+                 "bool_index": 0, "value": true,
+                 "desc": "This tool flags a crossing as over its passenger or vehicle capacity. It is used when the loading crew reports the vessel is full beyond its rated limit.",
+                 "verbs": ["flag {obj} as over capacity", "mark {obj} overloaded"]},
+    "set_ref": {"name": "reassignOperator",
+                "desc": "This tool moves a crossing to a different operating company, for example after a route contract changes hands. The crossing's schedule and history remain attached to the record.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notifyOperator",
+             "desc": "This tool sends a notification to the company operating a given crossing. It is used to relay schedule changes or capacity concerns.",
+             "child_verbs": ["notify the operator of {obj}", "alert the operator of {obj}"],
+             "direct_verbs": ["notify {name}", "alert {name}"],
+             "pair_verbs": ["notify", "alert"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the crossing with the earliest departure",
+    "ord_phrase": "the crossing with the {ord} earliest departure",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["Sort out the schedule backlog.",
+                 "The schedule's a mess, deal with it."],
+     "hint": "remove scheduled crossings that have already departed",
+     "clauses": [{"enum_value": "scheduled"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Flag anything running full.",
+                 "Deal with the overloaded ones."],
+     "hint": "flag boarding crossings as over capacity",
+     "clauses": [{"enum_value": "boarding"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["This crossing requires your attention at this time.",
+                   "Please review the current status of this crossing.",
+                   "There is an update regarding this scheduled crossing.",
+                   "This crossing may need to be rescheduled."],
+    "agg_msgs": ["Your company currently tops this list.",
+                 "This is being flagged to your company directly.",
+                 "Your company leads this count right now."],
+    "fail_msgs": ["The requested operation could not be completed successfully.",
+                  "That action failed to go through as expected.",
+                  "The last operation did not complete."]
+  }
+}

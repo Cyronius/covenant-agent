@@ -1,0 +1,104 @@
+{
+  "domain": "garden_center",
+  "desc_style": "verbose",
+  "parent": {
+    "entity": "grower",
+    "noun": ["grower", "growers"],
+    "name_style": "company",
+    "contact_field": "email"
+  },
+  "child": {
+    "entity": "plant_order",
+    "noun": ["plant order", "plant orders"],
+    "ref_field": "grower",
+    "ref_phrase": "from {name}",
+    "name_field": "plant",
+    "titles": ["Japanese maple", "Hydrangea shrub", "Boxwood hedge",
+               "Rose bush", "Lavender plant", "Tomato seedlings",
+               "Fern hanging basket", "Succulent tray", "Blueberry bush",
+               "Ornamental grass", "Peony root", "Citrus tree"],
+    "bools": [
+      {"field": "greenhouse_held", "true_phrase": "held in greenhouse",
+       "false_phrase": "on the floor", "placement": "post"},
+      {"field": "pre_paid", "true_phrase": "pre-paid",
+       "false_phrase": "unpaid", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["ordered", "shipped", "arrived"],
+      "phrases": {"ordered": ["ordered", "pre"],
+                  "shipped": ["shipped", "pre"],
+                  "arrived": ["arrived", "pre"]}
+    },
+    "times": [
+      {"field": "expected", "kind": "time_now",
+       "lt_phrase": ["overdue", "post"],
+       "gt_phrase": ["still on schedule", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_plant_orders",
+                   "desc": "This tool returns the full list of plant orders currently on file with the garden center. It is helpful whenever you need a complete view of what has been ordered from growers."},
+    "get_child": {"name": "get_plant_order",
+                  "desc": "This tool fetches a single plant order using its unique identifier. Use it when you already know which specific order you want to inspect."},
+    "list_parent": {"name": "list_growers",
+                    "desc": "This tool lists every grower the garden center currently sources plants from. It gives a full picture of the supplier network in one call."},
+    "get_parent": {"name": "get_grower",
+                   "desc": "This tool retrieves the details for one grower given its id. It returns the grower's name and contact information."},
+    "delete_child": {"name": "delete_plant_order",
+                     "desc": "This tool permanently removes a plant order from the system, and the deletion cannot be reversed. It should only be used when an order was entered in error or is no longer relevant.",
+                     "verbs": ["delete {obj}", "scrap {obj}"]},
+    "set_enum": {"name": "set_order_phase",
+                 "desc": "This tool advances or reverts a plant order's phase between ordered, shipped, and arrived. It is the main way to track where a shipment stands in the supply chain.",
+                 "verbs": ["move {obj} {to_value}", "set {obj} {to_value}"],
+                 "value_phrases": {"ordered": "back to ordered",
+                                   "shipped": "to shipped",
+                                   "arrived": "to arrived"}},
+    "set_bool": {"name": "flag_prepaid",
+                 "bool_index": 1, "value": true,
+                 "desc": "This tool marks a plant order as pre-paid, indicating the balance has already been settled. It is typically used once payment has been confirmed with the grower.",
+                 "verbs": ["flag {obj} as pre-paid", "mark {obj} pre-paid"]},
+    "set_ref": {"name": "reassign_grower",
+                "desc": "This tool moves a plant order from one grower to another. Use it when an order needs to be resourced or was logged against the wrong supplier.",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "email_grower",
+             "desc": "This tool sends an email to a grower regarding a plant order. It is the standard channel for following up on shipment timing or order details.",
+             "child_verbs": ["email the grower for {obj}",
+                             "follow up with the grower for {obj}"],
+             "direct_verbs": ["email {name}", "follow up with {name}"],
+             "pair_verbs": ["email", "follow up with"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the plant order with the earliest expected date",
+    "ord_phrase": "the plant order with the {ord} earliest expected date",
+    "pre_filter": {"enum_value": "ordered", "phrase": "ordered"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the stale orders.",
+                 "The order backlog needs sorting."],
+     "hint": "delete ordered-phase plant orders already overdue",
+     "clauses": [{"enum_value": "ordered"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Flag the paid ones.",
+                 "Sort out what's already been settled."],
+     "hint": "flag shipped plant orders already overdue as pre-paid",
+     "clauses": [{"enum_value": "shipped"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["Your plant order needs a look.",
+                   "Please check on your pending order.",
+                   "A note about your plant shipment.",
+                   "Your order may need follow-up."],
+    "agg_msgs": ["You have the most open orders right now.",
+                 "Flagging this backlog to you directly.",
+                 "You lead this grower's order count."],
+    "fail_msgs": ["The requested operation failed.",
+                  "That update could not be completed.",
+                  "The last change did not go through."]
+  }
+}

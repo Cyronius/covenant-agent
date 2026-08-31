@@ -1,0 +1,92 @@
+{
+  "domain": "sleep_clinic",
+  "desc_style": "terse",
+  "parent": {
+    "entity": "patient",
+    "noun": ["patient", "patients"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "sleep_study",
+    "noun": ["sleep study", "sleep studies"],
+    "ref_field": "patient",
+    "ref_phrase": "for {name}",
+    "name_field": "study_type",
+    "titles": ["Overnight polysomnography", "Home sleep apnea test",
+               "CPAP titration study", "Split-night study", "MSLT daytime study",
+               "Pediatric sleep study", "Insomnia evaluation study",
+               "Restless legs assessment", "Narcolepsy workup study",
+               "Bruxism monitoring study", "Oxygen desaturation study",
+               "Actigraphy monitoring", "Follow-up CPAP compliance study"],
+    "bools": [
+      {"field": "needs_rescore", "true_phrase": "flagged for rescore",
+       "false_phrase": "not flagged", "placement": "pre"}
+    ],
+    "enum": {
+      "field": "study_status", "values": ["scheduled", "recording", "scored", "reported"],
+      "phrases": {"scheduled": ["scheduled", "pre"],
+                  "recording": ["in progress", "pre"],
+                  "scored": ["scored", "pre"],
+                  "reported": ["reported", "pre"]}
+    },
+    "times": [
+      {"field": "study_night", "kind": "time_now",
+       "lt_phrase": ["already recorded", "post"],
+       "gt_phrase": ["still upcoming", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_studies", "desc": "list sleep studies"},
+    "get_child": {"name": "get_study", "desc": "fetch one study by id"},
+    "list_parent": {"name": "list_patients", "desc": "list patients on file"},
+    "get_parent": {"name": "get_patient", "desc": "fetch one patient by id"},
+    "delete_child": {"name": "delete_study", "desc": "drop a study rec, no undo",
+                     "verbs": ["delete {obj}", "drop {obj}"]},
+    "set_enum": {"name": "set_study_status", "desc": "chg study status",
+                 "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
+                 "value_phrases": {"scheduled": "back to scheduled",
+                                   "recording": "as in progress",
+                                   "scored": "as scored",
+                                   "reported": "as reported"}},
+    "set_bool": {"name": "flag_rescore", "bool_index": 0, "value": true,
+                 "desc": "flag a study for rescore",
+                 "verbs": ["flag {obj} for rescore", "mark {obj} needs rescore"]},
+    "set_ref": {"name": "reassign_patient", "desc": "move study to another patient",
+                "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "call_patient", "desc": "place a call to a patient",
+             "child_verbs": ["call the patient on {obj}", "notify the patient on {obj}"],
+             "direct_verbs": ["call {name}", "notify {name}"],
+             "pair_verbs": ["call", "notify"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the sleep study with the earliest study night",
+    "ord_phrase": "the sleep study with the {ord} earliest study night",
+    "pre_filter": {"enum_value": "scheduled", "phrase": "scheduled"}
+  },
+  "ambiguous": [
+    {"request": ["Clear the finished ones out.", "The study list needs cleanup."],
+     "hint": "delete sleep studies already reported",
+     "clauses": [{"enum_value": "reported"}],
+     "action": "delete_child"},
+    {"request": ["Flag whatever needs a second pass.", "Handle the ones that look off."],
+     "hint": "flag scored sleep studies whose study night already passed as needing rescore",
+     "clauses": [{"enum_value": "scored"}, {"time_index": 0, "op": "LT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["update on your sleep study",
+                   "your study record needs a look",
+                   "note about your upcoming study night",
+                   "your sleep study may need rescheduling"],
+    "agg_msgs": ["you have the most studies on this list",
+                 "flagging this one to you",
+                 "you lead this count"],
+    "fail_msgs": ["op failed",
+                  "that update didn't save",
+                  "action didn't go through"]
+  }
+}

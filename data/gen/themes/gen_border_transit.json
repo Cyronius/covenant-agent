@@ -1,0 +1,103 @@
+{
+  "domain": "border_transit",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "traveler",
+    "noun": ["traveler", "travelers"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "case",
+    "noun": ["case", "cases"],
+    "ref_field": "traveler",
+    "ref_phrase": "for {name}",
+    "name_field": "purpose_of_travel",
+    "titles": ["Tourism visit", "Business conference", "Student exchange program", "Family reunification",
+               "Medical treatment", "Work assignment", "Diplomatic visit", "Transit layover",
+               "Cultural exchange program", "Athletic competition", "Religious pilgrimage", "Seasonal labor"],
+    "bools": [
+      {"field": "flagged_for_secondary", "true_phrase": "pulled for secondary",
+       "false_phrase": "cleared through primary", "placement": "post"}
+    ],
+    "enum": {
+      "field": "stage", "values": ["received", "screening", "approved", "denied"],
+      "phrases": {"received": ["received", "pre"],
+                  "screening": ["in screening", "pre"],
+                  "approved": ["approved", "pre"],
+                  "denied": ["denied", "pre"]}
+    },
+    "times": [
+      {"field": "entry_date", "kind": "time_now",
+       "lt_phrase": ["already past", "post"],
+       "gt_phrase": ["still ahead", "post"]}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "listCases",
+                   "desc": "lists all the visa cases we got, no filters or nothin"},
+    "get_child": {"name": "getCase",
+                  "desc": "grabs one case by id, quick lookup"},
+    "list_parent": {"name": "listTravelers",
+                    "desc": "lists every traveler in the system"},
+    "get_parent": {"name": "getTraveler",
+                   "desc": "grabs one traveler rec by id"},
+    "delete_child": {"name": "purgeCase",
+                     "desc": "deletes a case for good, cant get it back so watch out",
+                     "verbs": ["purge {obj}", "toss {obj}"]},
+    "set_enum": {"name": "setCaseStage",
+                 "desc": "moves a case thru the stages, received/screening/approved/denied",
+                 "verbs": ["mark {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"received": "back to received",
+                                   "screening": "into screening",
+                                   "approved": "as approved",
+                                   "denied": "as denied"}},
+    "set_bool": {"name": "flagSecondary",
+                 "bool_index": 0, "value": true,
+                 "desc": "pulls a case for secondary screening, flag n go",
+                 "verbs": ["flag {obj} for secondary", "pull {obj} for secondary"]},
+    "set_ref": {"name": "reassignTraveler",
+                "desc": "moves a case to a diff traveler, use when its under wrong name",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "pingTraveler",
+             "desc": "shoots a msg to the traveler, nothing else to it",
+             "child_verbs": ["ping the traveler on {obj}",
+                             "message the traveler for {obj}"],
+             "direct_verbs": ["ping {name}", "message {name}"],
+             "pair_verbs": ["ping", "message"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the case with the earliest entry date",
+    "ord_phrase": "the case with the {ord} earliest entry date",
+    "pre_filter": {"enum_value": "screening", "phrase": "in screening"}
+  },
+  "ambiguous": [
+    {"request": ["Clear the denied pile.",
+                 "Old denied cases gotta go."],
+     "hint": "purge denied cases whose entry date has already passed",
+     "clauses": [{"enum_value": "denied"},
+                 {"time_index": 0, "op": "LT"}],
+     "action": "delete_child"},
+    {"request": ["Pull the sketchy ones.",
+                 "Some of these cases need a second look."],
+     "hint": "pull received cases whose entry date is still ahead for secondary screening",
+     "clauses": [{"enum_value": "received"},
+                 {"time_index": 0, "op": "GT"}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["case needs a look",
+                   "pls check your case status",
+                   "somethin changed on your case",
+                   "your case might need more info"],
+    "agg_msgs": ["you got the most cases open rn",
+                 "flaggin this str8 to you",
+                 "you lead this count"],
+    "fail_msgs": ["that didnt work",
+                  "case update failed",
+                  "last action didnt go thru"]
+  }
+}

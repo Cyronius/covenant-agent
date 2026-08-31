@@ -1,0 +1,105 @@
+{
+  "domain": "patent_office",
+  "desc_style": "sloppy",
+  "parent": {
+    "entity": "inventor",
+    "noun": ["inventor", "inventors"],
+    "name_style": "person",
+    "contact_field": null
+  },
+  "child": {
+    "entity": "application",
+    "noun": ["application", "applications"],
+    "ref_field": "inventor",
+    "ref_phrase": "from {name}",
+    "name_field": "invention_title",
+    "titles": ["Solar panel mounting bracket", "Wireless charging pad", "Biodegradable packaging film",
+               "Adjustable ergonomic chair", "Modular water filtration system", "Self-sealing bicycle tire",
+               "Foldable drone frame", "Smart irrigation controller", "Noise-cancelling window insert",
+               "Rechargeable battery casing", "Compostable coffee pod", "Voice-activated door lock"],
+    "bools": [
+      {"field": "provisional", "true_phrase": "provisional",
+       "false_phrase": "non-provisional", "placement": "pre"},
+      {"field": "expedited", "true_phrase": "fast-tracked",
+       "false_phrase": "standard queue", "placement": "post"}
+    ],
+    "enum": {
+      "field": "phase", "values": ["filed", "examination", "allowed", "rejected"],
+      "phrases": {"filed": ["filed", "pre"],
+                  "examination": ["in examination", "pre"],
+                  "allowed": ["allowed", "pre"],
+                  "rejected": ["rejected", "pre"]}
+    },
+    "times": [
+      {"field": "filed_on", "kind": "time_cutoff",
+       "phrase": "filed more than {d} days ago"}
+    ]
+  },
+  "tools": {
+    "list_child": {"name": "list_applications",
+                   "desc": "lists all patent apps in the system, dont forget pagination isnt a thing here"},
+    "get_child": {"name": "get_application",
+                  "desc": "grabs one app by id, thats it"},
+    "list_parent": {"name": "list_inventors",
+                    "desc": "lists every inventor on file"},
+    "get_parent": {"name": "get_inventor",
+                   "desc": "grabs one inventor rec by id"},
+    "delete_child": {"name": "purge_application",
+                     "desc": "nukes an application record permanent, no undo so be careful w this one",
+                     "verbs": ["purge {obj}", "nuke {obj}"]},
+    "set_enum": {"name": "set_application_phase",
+                 "desc": "changes an apps exam phase (filed/examination/allowed/rejected), just pick the right one",
+                 "verbs": ["mark {obj} {to_value}", "move {obj} {to_value}"],
+                 "value_phrases": {"filed": "back to filed",
+                                   "examination": "into examination",
+                                   "allowed": "as allowed",
+                                   "rejected": "as rejected"}},
+    "set_bool": {"name": "flag_expedited",
+                 "bool_index": 1, "value": true,
+                 "desc": "marks an app to skip the line, fast-track flag",
+                 "verbs": ["fast-track {obj}", "mark {obj} expedited"]},
+    "set_ref": {"name": "reassign_inventor",
+                "desc": "moves an app to a diff inventor record, use when filed under wrong name",
+                "verbs": ["reassign {obj} {to_name}", "move {obj} {to_name}"],
+                "to_template": "to {name}"},
+    "send": {"name": "notify_inventor",
+             "desc": "fires off a notice to the inventor, nothing fancy",
+             "child_verbs": ["notify the inventor on {obj}",
+                             "ping the inventor for {obj}"],
+             "direct_verbs": ["notify {name}", "ping {name}"],
+             "pair_verbs": ["notify", "ping"]}
+  },
+  "sort": {
+    "time_index": 0,
+    "dir": "ASC",
+    "sup_phrase": "the application filed longest ago",
+    "ord_phrase": "the application with the {ord} longest time since filing",
+    "pre_filter": {"enum_value": "examination", "phrase": "in examination"}
+  },
+  "ambiguous": [
+    {"request": ["Clear out the dead applications.",
+                 "The rejected pile needs cleanup."],
+     "hint": "purge rejected applications filed more than 365 days ago",
+     "clauses": [{"enum_value": "rejected"},
+                 {"time_index": 0, "days": 365}],
+     "action": "delete_child"},
+    {"request": ["Push the old provisional ones forward.",
+                 "Some of these need fast-tracking."],
+     "hint": "fast-track applications still in examination that were filed more than 60 days ago",
+     "clauses": [{"enum_value": "examination"},
+                 {"time_index": 0, "days": 60}],
+     "action": "set_bool"}
+  ],
+  "banks": {
+    "child_msgs": ["your app needs a look",
+                   "patent app update needed",
+                   "something changed on your filing",
+                   "your application may need action"],
+    "agg_msgs": ["you're top of this list rn",
+                 "flagging this str8 to you",
+                 "you lead this count"],
+    "fail_msgs": ["that didnt work",
+                  "the update failed",
+                  "last action didnt go thru"]
+  }
+}
