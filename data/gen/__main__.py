@@ -41,16 +41,29 @@ if _DOMAIN_SPLIT.exists():
         | set(json.loads(_DOMAIN_SPLIT.read_text())["reserved_eval_domains"]))
 
 
-def gen_one(level: int, seed: int, holdout: bool, teacher: str) -> dict:
+def gen_one(level: int, seed: int, holdout: bool, teacher: str,
+            crowd: tuple | None = None) -> dict:
     rng = random.Random(seed)
     if holdout:
-        world_name = rng.choice(RESERVED["worlds"])
+        pool = [w for w in RESERVED["worlds"] if w in programs.PROFILES]
+        world_name = rng.choice(pool)
         holdout_tools = set()
     else:
         world_names = sorted(set(programs.PROFILES) - set(RESERVED["worlds"]))
         world_name = rng.choice(world_names)
         holdout_tools = set(RESERVED["tools"].get(world_name, []))
     world = get_world(world_name)
+    if crowd:
+        from harness.crowding import crowd_world
+        pool = (RESERVED["worlds"] if holdout
+                else sorted(set(programs.PROFILES) - set(RESERVED["worlds"])))
+        donor_names = [w for w in pool
+                       if w != world_name and w in programs.PROFILES]
+        donors = [get_world(n)
+                  for n in rng.sample(donor_names,
+                                      min(10, len(donor_names)))]
+        world = crowd_world(world, donors, rng,
+                            rng.randint(crowd[0], crowd[1]))
     now = world["now"]
     state = gen_state(world_name, rng, now)
 
@@ -85,6 +98,11 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str) -> dict:
             "style": style, "frame": sample.frame,
         },
         prebuilt=(ctx, sandbox_ctx))
+    if crowd:
+        # crowded contexts contain foreign tools the native world cannot
+        # rebuild a sandbox for — store the payload with the task
+        task["sandbox"] = sandbox_ctx
+        task["tags"] = sorted(set(task["tags"]) | {"crowded"})
 
     # training-pair extras
     task["input_text"] = serialize_context(request, ctx)
@@ -146,7 +164,14 @@ def main():
     ap.add_argument("--domains", default=None, metavar="DIR",
                     help="register generated domain themes from DIR before "
                          "generating (S0 multi-domain worldgen)")
+    ap.add_argument("--crowd", default=None, metavar="MIN:MAX",
+                    help="add MIN..MAX distractor tools from other domains "
+                         "to each task's context (E-crowded)")
     args = ap.parse_args()
+    crowd = None
+    if args.crowd:
+        lo, hi = args.crowd.split(":")
+        crowd = (int(lo), int(hi))
     if args.domains:
         from data.gen.domains import register_domains
         registered = register_domains(args.domains)
@@ -170,7 +195,7 @@ def main():
                 seed_cursor += 1
                 try:
                     candidate = gen_one(level, seed_cursor, args.holdout,
-                                        args.teacher)
+                                        args.teacher, crowd=crowd)
                 except (programs.SampleError, ReferenceError):
                     failures += 1
                     continue
