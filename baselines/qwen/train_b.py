@@ -64,6 +64,10 @@ def main():
         warmup_steps=100, bf16=True, max_length=args.max_len,
         logging_steps=50, save_strategy="steps", save_steps=500,
         save_total_limit=2, seed=args.seed,
+        # NOTE: packing=True was tried for the mixed plain/crowded corpus
+        # and was ~5x SLOWER on a 4090 (dense 3072-token batches every
+        # step); plain padded batches win despite the waste. group_by_length
+        # does not exist in TRL 1.12's SFTConfig.
         assistant_only_loss=True, report_to=[])
     model = AutoModelForCausalLM.from_pretrained(
         args.model, torch_dtype="bfloat16", attn_implementation="sdpa")

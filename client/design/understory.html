@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Understory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Piazzolla:ital,wght@0,400;0,600;1,400&family=Commissioner:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F3EEE2;
+    --ink:#2B2A21;
+    --ink-soft:#6E6C58;
+    --accent:#5B7052;
+    --clay:#B4674A;
+    --rule:#CFC7B2;
+    --surface:#FAF7EE;
+    --surface-2:#EAE2CE;
+    --shadow-1: rgba(43,42,33,0.20);
+    --shadow-2: rgba(43,42,33,0.10);
+    --read:#9CAE8E;
+    --write:#5B7052;
+    --send:#8A7BA8;
+    --delete:#B4674A;
+    --on-read:#26301F;
+    --on-accent:#F6F3E7;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1B1E16;
+      --ink:#EDE7D8;
+      --ink-soft:#B4AF98;
+      --accent:#8AAE7C;
+      --clay:#C97A5C;
+      --rule:#3B4030;
+      --surface:#22261B;
+      --surface-2:#2A2E20;
+      --shadow-1: rgba(0,0,0,0.55);
+      --shadow-2: rgba(0,0,0,0.35);
+      --read:#8CA47C;
+      --write:#8AAE7C;
+      --send:#A597C8;
+      --delete:#C97A5C;
+      --on-read:#161B10;
+      --on-accent:#161B10;
+    }
+  }
+
+  :root[data-theme="dark"]{
+    --bg:#1B1E16;
+    --ink:#EDE7D8;
+    --ink-soft:#B4AF98;
+    --accent:#8AAE7C;
+    --clay:#C97A5C;
+    --rule:#3B4030;
+    --surface:#22261B;
+    --surface-2:#2A2E20;
+    --shadow-1: rgba(0,0,0,0.55);
+    --shadow-2: rgba(0,0,0,0.35);
+    --read:#8CA47C;
+    --write:#8AAE7C;
+    --send:#A597C8;
+    --delete:#C97A5C;
+    --on-read:#161B10;
+    --on-accent:#161B10;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ background:var(--bg); }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Commissioner', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .sr-only{
+    position:absolute; width:1px; height:1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0; padding:0; margin:-1px;
+  }
+
+  /* ---------- Chrome ---------- */
+  .chrome{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1rem 1.7rem;
+    border-bottom:1px solid var(--rule);
+    gap:1rem; flex-wrap:wrap;
+  }
+  .wordmark{
+    display:flex; align-items:center; gap:.55rem;
+    font-family:'Piazzolla', serif; font-weight:600; font-size:1.4rem;
+    color:var(--ink);
+  }
+  .wordmark svg{ color:var(--accent); }
+  .chrome-right{ display:flex; align-items:center; gap:1rem; }
+  .tagline{ color:var(--ink-soft); font-size:.83rem; letter-spacing:.03em; }
+  .replay-btn{
+    display:flex; align-items:center; gap:.45rem;
+    background:var(--surface-2); border:1px solid var(--rule);
+    border-radius:4px 12px 4px 12px; padding:.5rem .95rem;
+    font-family:'Commissioner', sans-serif; font-weight:600; font-size:.85rem;
+    color:var(--ink); cursor:pointer; transition:border-color 180ms ease, color 180ms ease, transform 120ms ease;
+  }
+  .replay-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .replay-btn:active{ transform:scale(.96); }
+  .replay-btn svg{ transition:transform 480ms ease; }
+  .replay-btn.spin svg{ transform:rotate(-360deg); }
+
+  /* ---------- Layout ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns:1.7fr 1fr;
+    gap:1.4rem;
+    padding:1.3rem 1.7rem 2rem;
+    max-width:1440px;
+    margin:0 auto;
+    align-items:start;
+  }
+  @media (max-width:980px){
+    .layout{ grid-template-columns:1fr; }
+  }
+
+  /* ---------- Board ---------- */
+  .board{ display:flex; flex-direction:column; gap:1.1rem; }
+  .columns{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:1rem;
+  }
+  @media (max-width:760px){
+    .columns{ grid-template-columns:1fr; }
+  }
+  .column{
+    background:transparent;
+    display:flex; flex-direction:column;
+    min-width:0;
+  }
+  .col-head{
+    display:flex; align-items:baseline; gap:.55rem;
+    font-family:'Piazzolla', serif; font-weight:600; font-size:1.08rem;
+    padding-bottom:.5rem; margin-bottom:.8rem;
+    border-bottom:1px solid var(--rule);
+    color:var(--ink);
+  }
+  .col-head .count{
+    font-family:'Commissioner', sans-serif; font-weight:500; font-size:.78rem;
+    color:var(--ink-soft);
+  }
+  .col-head .botanical-mark{ color:var(--accent); margin-left:auto; }
+
+  .cards{ display:flex; flex-direction:column; min-height:40px; }
+  .empty-note{ color:var(--ink-soft); font-size:.83rem; font-style:italic; font-family:'Piazzolla', serif; padding:.3rem 0; }
+
+  .card{
+    position:relative;
+    background:var(--surface);
+    border:1px solid var(--rule);
+    border-radius:16px 6px 14px 4px;
+    padding:.85rem .95rem .8rem;
+    margin-bottom:.7rem;
+    box-shadow:3px 4px 0 var(--shadow-2), 6px 8px 0 -3px var(--shadow-1);
+    transition:transform 460ms cubic-bezier(.32,.72,.35,1), opacity 460ms ease, box-shadow 300ms ease;
+    overflow:hidden;
+  }
+  .cards .card:nth-child(3n+2){ border-radius:6px 16px 5px 15px; }
+  .cards .card:nth-child(3n){ border-radius:14px 5px 6px 16px; }
+
+  .card-title{
+    font-family:'Commissioner', sans-serif; font-weight:500; font-size:.92rem;
+    color:var(--ink); line-height:1.35; margin-bottom:.6rem;
+    padding-right:.5rem;
+  }
+  .card-meta{ display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+  .avatar{
+    width:24px; height:24px; border-radius:50%;
+    background:var(--surface-2); border:1px solid var(--rule);
+    display:flex; align-items:center; justify-content:center;
+    font-size:.65rem; font-weight:700; color:var(--ink-soft);
+    flex-shrink:0;
+  }
+  .assignee-name{ font-size:.78rem; color:var(--ink-soft); flex:1; min-width:0; }
+  .due{
+    font-size:.76rem; color:var(--ink-soft); font-weight:500;
+    white-space:nowrap;
+  }
+  .due.due-overdue{
+    color:var(--clay); font-weight:700;
+    text-decoration:underline wavy var(--clay);
+    text-underline-offset:3px;
+    text-decoration-thickness:1px;
+  }
+
+  /* urgent = folded paper corner, independent channel from overdue */
+  .card.urgent::after{
+    content:"";
+    position:absolute; top:0; right:0;
+    border-width:0 20px 20px 0;
+    border-style:solid;
+    border-color:transparent var(--clay) transparent transparent;
+    opacity:.9;
+  }
+  .card.urgent::before{
+    content:"";
+    position:absolute; top:3px; right:3px;
+    width:5px; height:5px; border-radius:50%;
+    background:var(--on-accent);
+    opacity:.55;
+    z-index:1;
+  }
+
+  .card.card-deleting{
+    transform:scale(.8) rotate(-5deg) translateY(10px);
+    opacity:0;
+    box-shadow:none;
+  }
+  .card.card-hidden{ visibility:hidden; }
+
+  .flying-clone{
+    box-shadow:4px 6px 0 var(--shadow-2), 8px 10px 0 -3px var(--shadow-1);
+  }
+
+  /* ---------- Archive drawer ---------- */
+  .archive-drawer{
+    border-top:1px solid var(--rule);
+    padding-top:.9rem;
+  }
+  .archive-toggle{
+    display:flex; align-items:center; gap:.6rem;
+    background:none; border:none; cursor:pointer;
+    font-family:'Piazzolla', serif; font-weight:600; font-size:.95rem;
+    color:var(--ink-soft); padding:.2rem 0;
+  }
+  .archive-toggle:hover{ color:var(--ink); }
+  .archive-toggle .badge{
+    font-family:'Commissioner', sans-serif; font-weight:700; font-size:.72rem;
+    background:var(--surface-2); border:1px solid var(--rule);
+    color:var(--ink-soft); border-radius:20px; padding:.1rem .5rem;
+    transition:transform 260ms ease;
+  }
+  .archive-toggle .badge.bump{ animation:badgeBump 520ms ease; }
+  @keyframes badgeBump{
+    0%{ transform:scale(1); }
+    35%{ transform:scale(1.35); color:var(--accent); }
+    100%{ transform:scale(1); }
+  }
+  .archive-toggle svg{ color:var(--ink-soft); transition:transform 320ms ease; }
+  .archive-toggle.open svg{ transform:rotate(180deg); }
+
+  .archive-body{
+    max-height:0; overflow:hidden; opacity:0;
+    transition:max-height 460ms cubic-bezier(.32,.72,.35,1), opacity 380ms ease;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr));
+    gap:.7rem; margin-top:0;
+  }
+  .archive-body.open{ opacity:1; margin-top:.8rem; }
+  .archive-body .card{ opacity:.82; }
+
+  /* ---------- Chat panel ---------- */
+  .chat{
+    display:flex; flex-direction:column;
+    height:calc(100vh - 168px);
+    min-height:480px;
+    background:var(--surface);
+    background-image:repeating-linear-gradient(to bottom, transparent, transparent 30px, var(--rule) 31px);
+    background-size:100% 31px;
+    border:1px solid var(--rule);
+    border-radius:16px 4px 16px 4px;
+    box-shadow:4px 6px 0 var(--shadow-2), 8px 10px 0 -3px var(--shadow-1);
+    overflow:hidden;
+  }
+  @media (max-width:980px){
+    .chat{ height:70vh; }
+  }
+  .chat-head{
+    padding:.8rem 1.1rem; border-bottom:1px solid var(--rule);
+    font-family:'Piazzolla', serif; font-weight:600; font-size:.92rem;
+    color:var(--ink-soft); background:var(--surface);
+    display:flex; align-items:center; gap:.5rem;
+  }
+  .chat-head svg{ color:var(--accent); }
+  .chat-messages{
+    flex:1; overflow-y:auto; padding:1.1rem 1.15rem;
+    display:flex; flex-direction:column; gap:.55rem;
+  }
+
+  .msg{ display:flex; width:100%; }
+  .msg-user{ justify-content:flex-end; }
+  .msg-agent{ justify-content:flex-start; }
+  .msg-bubble{ max-width:86%; font-size:.93rem; line-height:1.5; }
+  .msg-user .msg-bubble{
+    background:var(--surface-2); border:1px solid var(--rule);
+    border-radius:12px 12px 3px 12px; padding:.55rem .85rem;
+    font-family:'Commissioner', sans-serif; color:var(--ink);
+    transform:rotate(.35deg);
+  }
+  .msg-agent .msg-bubble{
+    border-left:3px solid var(--accent); padding:.1rem 0 .1rem .85rem;
+    font-family:'Commissioner', sans-serif; color:var(--ink);
+    transform:rotate(-.25deg);
+  }
+  .msg-agent.msg-closing .msg-bubble{
+    font-family:'Piazzolla', serif; font-style:italic;
+    color:var(--ink-soft); font-size:.98rem;
+  }
+
+  .tool-call{
+    display:flex; align-items:center; gap:.55rem;
+    font-size:.79rem; padding:.4rem .6rem;
+    background:var(--surface-2);
+    border:1px dashed var(--rule);
+    border-radius:4px 10px 4px 10px;
+    color:var(--ink-soft);
+    margin-left:.15rem;
+  }
+  .effect-tag{
+    font-family:'Commissioner', sans-serif; font-weight:700; font-size:.64rem;
+    letter-spacing:.05em; padding:.14rem .45rem; border-radius:3px;
+    flex-shrink:0;
+  }
+  .effect-read .effect-tag{ background:var(--read); color:var(--on-read); }
+  .effect-write .effect-tag{ background:var(--write); color:var(--on-accent); }
+  .effect-send .effect-tag{ background:var(--send); color:var(--on-accent); }
+  .effect-delete .effect-tag{ background:var(--delete); color:var(--on-accent); }
+  .tool-name{ font-weight:600; color:var(--ink); flex-shrink:0; }
+  .tool-detail{ color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .parallel-group{
+    display:flex; gap:.5rem; flex-wrap:wrap; margin-left:.15rem;
+  }
+  .parallel-group .tool-call{ flex:1 1 220px; margin-left:0; }
+
+  .approval-gate{
+    border:1.5px solid var(--clay);
+    border-radius:12px 3px 12px 3px;
+    background:var(--surface);
+    padding:1rem 1.1rem;
+    margin:.35rem 0;
+    box-shadow:4px 5px 0 var(--shadow-2);
+  }
+  .gate-head{
+    display:flex; align-items:center; gap:.5rem;
+    color:var(--clay); font-weight:700; font-size:.76rem;
+    text-transform:uppercase; letter-spacing:.06em; margin-bottom:.5rem;
+  }
+  .gate-text{
+    font-family:'Piazzolla', serif; font-size:1rem; line-height:1.45;
+    color:var(--ink); margin:0 0 .9rem;
+  }
+  .gate-actions{ display:flex; gap:.6rem; }
+  .gate-btn{
+    font-family:'Commissioner', sans-serif; font-weight:600; font-size:.85rem;
+    padding:.5rem 1.05rem; border-radius:4px 12px 4px 12px;
+    border:1px solid var(--rule); background:var(--surface-2);
+    color:var(--ink); cursor:default;
+    transition:transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+  }
+  .gate-approve{ background:var(--clay); color:var(--on-accent); border-color:var(--clay); }
+  .gate-approve.pressed{ transform:scale(.93); box-shadow:inset 0 2px 5px rgba(0,0,0,.35); }
+  .gate-cancel{ opacity:.75; }
+  .approval-gate.gate-resolved .gate-actions{ opacity:.5; }
+  .approval-gate.gate-resolved .gate-cancel{ display:none; }
+
+  .chat-input-bar{
+    display:flex; gap:.55rem; padding:.85rem 1rem;
+    border-top:1px solid var(--rule); background:var(--surface);
+  }
+  .chat-input-bar input{
+    flex:1; padding:.62rem .85rem; border-radius:8px;
+    border:1px solid var(--rule); background:var(--surface-2);
+    color:var(--ink-soft); font-family:'Commissioner', sans-serif; font-size:.85rem;
+  }
+  .chat-input-bar button{
+    padding:.62rem 1.1rem; border-radius:8px; border:1px solid var(--rule);
+    background:var(--surface-2); color:var(--ink-soft);
+    font-family:'Commissioner', sans-serif; font-weight:600; font-size:.85rem;
+  }
+  .chat-input-bar input:disabled, .chat-input-bar button:disabled{
+    opacity:.55; cursor:not-allowed;
+  }
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed;
+    background:var(--send); color:var(--on-accent);
+    padding:.5rem .85rem; border-radius:4px 12px 4px 12px;
+    font-size:.78rem; font-weight:600;
+    box-shadow:3px 4px 0 var(--shadow-2);
+    opacity:0; transform:translateY(8px) scale(.94);
+    transition:opacity 320ms ease, transform 320ms ease;
+    z-index:1000; pointer-events:none;
+  }
+  .toast.show{ opacity:1; transform:translateY(0) scale(1); }
+
+  /* ---------- generic enter transition ---------- */
+  .enter{ opacity:0; transform:translateY(9px); }
+  .enter-active{
+    opacity:1; transform:translateY(0);
+    transition:opacity 420ms ease, transform 420ms cubic-bezier(.3,.7,.35,1);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation-duration:0.001ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:0.001ms !important;
+      scroll-behavior:auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <header class="chrome">
+    <div class="wordmark">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 20c8-1 14-7 15-16-9 1-15 7-16 16Z" fill="currentColor" opacity=".2" stroke="none"/>
+        <path d="M4 20c8-1 14-7 15-16-9 1-15 7-16 16Z"/>
+        <path d="M6.5 17.5c3-4 6.5-7.5 11-10.5"/>
+      </svg>
+      Understory
+    </div>
+    <div class="chrome-right">
+      <span class="tagline">board agent</span>
+      <button class="replay-btn" id="replayBtn" type="button" aria-label="Replay the scripted demo">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 1 2.6 6.4"/>
+          <path d="M3 4v6h6"/>
+        </svg>
+        Replay
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="board" aria-label="Kanban board">
+      <div class="columns">
+        <div class="column" data-status="todo">
+          <div class="col-head">
+            Todo
+            <svg class="botanical-mark" width="30" height="14" viewBox="0 0 28 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+              <path d="M1 7 H27"/>
+              <path d="M9 7 C9 3 12 2 14 2 C13 5 11 7 9 7Z" fill="currentColor" stroke="none" opacity=".55"/>
+              <path d="M19 7 C19 11 16 12 14 12 C15 9 17 7 19 7Z" fill="currentColor" stroke="none" opacity=".55"/>
+            </svg>
+          </div>
+          <div class="cards" id="col-todo"></div>
+        </div>
+        <div class="column" data-status="doing">
+          <div class="col-head">
+            Doing
+            <svg class="botanical-mark" width="30" height="14" viewBox="0 0 28 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+              <path d="M1 7 H27"/>
+              <path d="M9 7 C9 3 12 2 14 2 C13 5 11 7 9 7Z" fill="currentColor" stroke="none" opacity=".55"/>
+              <path d="M19 7 C19 11 16 12 14 12 C15 9 17 7 19 7Z" fill="currentColor" stroke="none" opacity=".55"/>
+            </svg>
+          </div>
+          <div class="cards" id="col-doing"></div>
+        </div>
+        <div class="column" data-status="done">
+          <div class="col-head">
+            Done
+            <svg class="botanical-mark" width="30" height="14" viewBox="0 0 28 14" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+              <path d="M1 7 H27"/>
+              <path d="M9 7 C9 3 12 2 14 2 C13 5 11 7 9 7Z" fill="currentColor" stroke="none" opacity=".55"/>
+              <path d="M19 7 C19 11 16 12 14 12 C15 9 17 7 19 7Z" fill="currentColor" stroke="none" opacity=".55"/>
+            </svg>
+          </div>
+          <div class="cards" id="col-done"></div>
+        </div>
+      </div>
+
+      <div class="archive-drawer">
+        <button class="archive-toggle" id="archiveToggle" type="button" aria-expanded="false" aria-controls="archiveBody">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+          Archived
+          <span class="badge" id="archiveCount">1</span>
+        </button>
+        <div class="archive-body" id="archiveBody"></div>
+      </div>
+    </section>
+
+    <aside class="chat" aria-label="Agent chat">
+      <div class="chat-head">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V6l7-3Z"/>
+          <path d="M9.5 12.2l1.8 1.8 3.4-3.6"/>
+        </svg>
+        Agent
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-bar">
+        <input type="text" disabled placeholder="Ask the agent to do something on the board…">
+        <button disabled type="button">Send</button>
+      </div>
+    </aside>
+  </main>
+
+<script>
+(function(){
+  "use strict";
+
+  var USERS = [
+    { id: "u_bob", name: "Bob Alvarez", role: "Engineering", initials: "BA" },
+    { id: "u_priya", name: "Priya Nandan", role: "Design", initials: "PN" },
+    { id: "u_theo", name: "Theo Marsh", role: "QA", initials: "TM" },
+    { id: "u_kade", name: "Kade Whitfield", role: "Engineering", initials: "KW" },
+    { id: "u_luz", name: "Luz Ferreira", role: "Support", initials: "LF" }
+  ];
+
+  var TODAY = "2026-08-28";
+
+  var INITIAL_CARDS = [
+    { id: 1, title: "Fix OAuth redirect loop on staging", status: "doing", assignee: "u_bob", due: "2026-08-25", urgent: true, archived: false },
+    { id: 2, title: "Write release notes for v4.2", status: "todo", assignee: "u_priya", due: "2026-09-03", urgent: false, archived: false },
+    { id: 3, title: "Audit tool-call pause UX for DELETE effects", status: "doing", assignee: "u_theo", due: "2026-08-30", urgent: true, archived: false },
+    { id: 4, title: "Retire legacy webhook handler", status: "todo", assignee: "u_bob", due: "2026-08-20", urgent: false, archived: false },
+    { id: 5, title: "Design empty-state illustration for board", status: "todo", assignee: "u_priya", due: "2026-09-10", urgent: false, archived: false },
+    { id: 6, title: "Reproduce race condition in segment resume", status: "doing", assignee: "u_kade", due: "2026-08-29", urgent: true, archived: false },
+    { id: 7, title: "Onboard Luz to on-call rotation", status: "todo", assignee: "u_luz", due: "2026-09-05", urgent: false, archived: false },
+    { id: 8, title: "Ship grammar-constrained decode benchmarks", status: "done", assignee: "u_kade", due: "2026-08-22", urgent: false, archived: false },
+    { id: 9, title: "Bob: quarterly perf self-review", status: "todo", assignee: "u_bob", due: "2026-08-24", urgent: false, archived: false },
+    { id: 10, title: "Patch prompt-injection regression in E-crowded suite", status: "doing", assignee: "u_theo", due: "2026-08-27", urgent: true, archived: false },
+    { id: 11, title: "Bob: renew staging TLS cert", status: "todo", assignee: "u_bob", due: "2026-08-19", urgent: false, archived: false },
+    { id: 12, title: "Migrate fixtures to 142-domain worldgen", status: "done", assignee: "u_priya", due: "2026-08-15", urgent: false, archived: false },
+    { id: 13, title: "Draft coursebuilder domain mirror spec", status: "todo", assignee: "u_luz", due: "2026-09-08", urgent: false, archived: false },
+    { id: 14, title: "Old kanban prototype cleanup", status: "done", assignee: "u_kade", due: "2026-07-01", urgent: false, archived: true }
+  ];
+
+  var CARDS = [];
+  var runId = 0;
+  var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var chatMessages = document.getElementById('chatMessages');
+  var archiveToggleBtn = document.getElementById('archiveToggle');
+  var archiveBody = document.getElementById('archiveBody');
+  var archiveCountEl = document.getElementById('archiveCount');
+  var replayBtn = document.getElementById('replayBtn');
+
+  function sleep(ms){
+    var t = REDUCED ? Math.min(ms, 110) : ms;
+    return new Promise(function(res){ setTimeout(res, t); });
+  }
+
+  function userById(id){
+    for (var i=0;i<USERS.length;i++){ if (USERS[i].id===id) return USERS[i]; }
+    return null;
+  }
+
+  function humanDate(iso){
+    var parts = iso.split('-');
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return months[parseInt(parts[1],10)-1] + " " + parseInt(parts[2],10);
+  }
+
+  function isOverdue(card){
+    return card.due < TODAY && card.status !== 'done' && !card.archived;
+  }
+
+  function cardTemplate(card){
+    var user = userById(card.assignee);
+    var overdue = isOverdue(card);
+    var cls = 'card' + (card.urgent ? ' urgent' : '') + (overdue ? ' overdue' : '');
+    return '' +
+      '<div class="' + cls + '" data-id="' + card.id + '">' +
+        '<div class="card-title">' + card.title + '</div>' +
+        '<div class="card-meta">' +
+          '<span class="avatar">' + user.initials + '</span>' +
+          '<span class="assignee-name">' + user.name + '</span>' +
+          '<span class="due' + (overdue ? ' due-overdue' : '') + '">' + humanDate(card.due) +
+            (overdue ? '<span class="sr-only"> — overdue</span>' : '') +
+          '</span>' +
+        '</div>' +
+        (card.urgent ? '<span class="sr-only">Urgent</span>' : '') +
+      '</div>';
+  }
+
+  function render(){
+    ['todo','doing','done'].forEach(function(status){
+      var list = CARDS.filter(function(c){ return c.status === status && !c.archived; });
+      var el = document.getElementById('col-' + status);
+      el.innerHTML = list.length ? list.map(cardTemplate).join('') : '<p class="empty-note">Nothing here.</p>';
+    });
+    var archived = CARDS.filter(function(c){ return c.archived; });
+    archiveCountEl.textContent = archived.length;
+    archiveBody.innerHTML = archived.length ? archived.map(cardTemplate).join('') : '<p class="empty-note">Empty.</p>';
+    if (archiveBody.classList.contains('open')){
+      archiveBody.style.maxHeight = archiveBody.scrollHeight + 'px';
+    }
+  }
+
+  function bumpArchiveBadge(){
+    archiveCountEl.classList.remove('bump');
+    void archiveCountEl.offsetWidth;
+    archiveCountEl.classList.add('bump');
+  }
+
+  archiveToggleBtn.addEventListener('click', function(){
+    var isOpen = archiveBody.classList.toggle('open');
+    archiveToggleBtn.classList.toggle('open', isOpen);
+    archiveToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    if (isOpen){
+      archiveBody.style.maxHeight = archiveBody.scrollHeight + 'px';
+    } else {
+      archiveBody.style.maxHeight = '0px';
+    }
+  });
+
+  function scrollChat(){
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function appendAnimated(container, el){
+    el.classList.add('enter');
+    container.appendChild(el);
+    void el.offsetWidth;
+    requestAnimationFrame(function(){ el.classList.add('enter-active'); });
+    return el;
+  }
+
+  function createUserMsg(text){
+    var div = document.createElement('div');
+    div.className = 'msg msg-user';
+    div.innerHTML = '<div class="msg-bubble">' + text + '</div>';
+    return div;
+  }
+
+  function createAgentText(html, closing){
+    var div = document.createElement('div');
+    div.className = 'msg msg-agent' + (closing ? ' msg-closing' : '');
+    div.innerHTML = '<div class="msg-bubble">' + html + '</div>';
+    return div;
+  }
+
+  function createToolCall(effect, name, detail){
+    var div = document.createElement('div');
+    div.className = 'tool-call effect-' + effect.toLowerCase();
+    div.innerHTML =
+      '<span class="effect-tag">' + effect + '</span>' +
+      '<span class="tool-name">' + name + '</span>' +
+      '<span class="tool-detail">' + detail + '</span>';
+    return div;
+  }
+
+  function createGate(text){
+    var div = document.createElement('div');
+    div.className = 'approval-gate';
+    div.innerHTML =
+      '<div class="gate-head">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M12 3l7 3v6c0 5-3 8-7 9-4-1-7-4-7-9V6l7-3Z"/>' +
+          '<path d="M9.5 12.2l1.8 1.8 3.4-3.6"/>' +
+        '</svg>' +
+        'Approval required' +
+      '</div>' +
+      '<p class="gate-text">' + text + '</p>' +
+      '<div class="gate-actions">' +
+        '<button class="gate-btn gate-approve" type="button">Approve</button>' +
+        '<button class="gate-btn gate-cancel" type="button">Cancel</button>' +
+      '</div>';
+    return div;
+  }
+
+  function showToast(nearEl, text){
+    if (!nearEl) return;
+    var rect = nearEl.getBoundingClientRect();
+    var toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = text;
+    toast.style.left = Math.min(rect.right + 10, window.innerWidth - 180) + 'px';
+    toast.style.top = Math.max(rect.top - 6, 8) + 'px';
+    document.body.appendChild(toast);
+    requestAnimationFrame(function(){ toast.classList.add('show'); });
+    setTimeout(function(){
+      toast.classList.remove('show');
+      setTimeout(function(){ toast.remove(); }, 400);
+    }, 2400);
+  }
+
+  async function deleteCardAnimated(id){
+    var el = document.querySelector('.card[data-id="' + id + '"]');
+    if (el){
+      el.classList.add('card-deleting');
+      await sleep(520);
+    }
+    CARDS = CARDS.filter(function(c){ return c.id !== id; });
+    render();
+  }
+
+  async function archiveCardAnimated(id){
+    var before = document.querySelector('.card[data-id="' + id + '"]');
+    if (!before){
+      var obj = CARDS.filter(function(c){ return c.id === id; })[0];
+      if (obj) obj.archived = true;
+      render();
+      bumpArchiveBadge();
+      return;
+    }
+    var startRect = before.getBoundingClientRect();
+    var endRect = archiveToggleBtn.getBoundingClientRect();
+    var clone = before.cloneNode(true);
+    clone.classList.add('flying-clone');
+    clone.style.position = 'fixed';
+    clone.style.left = startRect.left + 'px';
+    clone.style.top = startRect.top + 'px';
+    clone.style.width = startRect.width + 'px';
+    clone.style.margin = '0';
+    clone.style.zIndex = '999';
+    clone.style.pointerEvents = 'none';
+    document.body.appendChild(clone);
+    before.classList.add('card-hidden');
+
+    var cardObj = CARDS.filter(function(c){ return c.id === id; })[0];
+    if (cardObj) cardObj.archived = true;
+    render();
+    bumpArchiveBadge();
+
+    void clone.offsetWidth;
+    var dx = (endRect.left + endRect.width/2) - (startRect.left + startRect.width/2);
+    var dy = (endRect.top + endRect.height/2) - (startRect.top + startRect.height/2);
+    requestAnimationFrame(function(){
+      clone.style.transition = REDUCED
+        ? 'opacity 150ms ease'
+        : 'transform 640ms cubic-bezier(.3,.72,.4,1), opacity 640ms ease';
+      clone.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(.14)';
+      clone.style.opacity = '0.12';
+    });
+    await sleep(REDUCED ? 180 : 660);
+    clone.remove();
+  }
+
+  function resetState(){
+    CARDS = JSON.parse(JSON.stringify(INITIAL_CARDS));
+    chatMessages.innerHTML = '';
+    archiveBody.classList.remove('open');
+    archiveToggleBtn.classList.remove('open');
+    archiveToggleBtn.setAttribute('aria-expanded', 'false');
+    archiveBody.style.maxHeight = '0px';
+    document.querySelectorAll('.toast').forEach(function(t){ t.remove(); });
+  }
+
+  var BEAT = 1400;
+  var BEAT_LONG = 1900;
+
+  async function runScript(){
+    var myRun = ++runId;
+    function dead(){ return myRun !== runId; }
+
+    resetState();
+    render();
+
+    await sleep(500); if (dead()) return;
+
+    /* ---------- Turn 1 ---------- */
+    appendAnimated(chatMessages, createUserMsg('Delete card 4.'));
+    scrollChat();
+    await sleep(950); if (dead()) return;
+
+    appendAnimated(chatMessages, createToolCall('READ', 'get_card', '#4 → "Retire legacy webhook handler" · Bob Alvarez'));
+    scrollChat();
+    await sleep(750); if (dead()) return;
+
+    appendAnimated(chatMessages, createToolCall('DELETE', 'delete_card', '#4 · pending approval'));
+    scrollChat();
+    await sleep(550); if (dead()) return;
+
+    var gate = createGate('This can&#8217;t be undone — permanently delete card #4, &#8220;Retire legacy webhook handler&#8221;?');
+    appendAnimated(chatMessages, gate);
+    scrollChat();
+    await sleep(BEAT); if (dead()) return;
+
+    var approveBtn = gate.querySelector('.gate-approve');
+    approveBtn.classList.add('pressed');
+    await sleep(240); if (dead()) return;
+    gate.classList.add('gate-resolved');
+    approveBtn.textContent = 'Approved';
+    await sleep(REDUCED ? 90 : 360); if (dead()) return;
+
+    await deleteCardAnimated(4); if (dead()) return;
+
+    appendAnimated(chatMessages, createAgentText('Done — card 4 deleted permanently.', true));
+    scrollChat();
+
+    await sleep(BEAT_LONG); if (dead()) return;
+
+    /* ---------- Turn 2 ---------- */
+    appendAnimated(chatMessages, createUserMsg('Archive the overdue cards assigned to Bob, except the urgent ones.'));
+    scrollChat();
+    await sleep(950); if (dead()) return;
+
+    appendAnimated(chatMessages, createToolCall('READ', 'list_cards', '13 cards on board'));
+    scrollChat();
+    await sleep(520); if (dead()) return;
+
+    appendAnimated(chatMessages, createToolCall('READ', 'list_users', '5 team members'));
+    scrollChat();
+    await sleep(800); if (dead()) return;
+
+    appendAnimated(chatMessages, createToolCall('WRITE', 'archive_card', '#9 · "Bob: quarterly perf self-review"'));
+    scrollChat();
+    await sleep(300); if (dead()) return;
+    await archiveCardAnimated(9); if (dead()) return;
+
+    await sleep(450); if (dead()) return;
+    appendAnimated(chatMessages, createToolCall('WRITE', 'archive_card', '#11 · "Bob: renew staging TLS cert"'));
+    scrollChat();
+    await sleep(300); if (dead()) return;
+    await archiveCardAnimated(11); if (dead()) return;
+
+    await sleep(450); if (dead()) return;
+    appendAnimated(chatMessages, createAgentText('Archived 2 — Bob&#8217;s perf self-review and the TLS cert renewal. Left the OAuth fix, it&#8217;s flagged urgent.', true));
+    scrollChat();
+
+    await sleep(BEAT_LONG); if (dead()) return;
+
+    /* ---------- Turn 3 ---------- */
+    appendAnimated(chatMessages, createUserMsg('Fetch the board and Bob&#8217;s profile together; if Bob has any overdue cards, send him a heads-up.'));
+    scrollChat();
+    await sleep(950); if (dead()) return;
+
+    var pgroup = document.createElement('div');
+    pgroup.className = 'parallel-group';
+    pgroup.appendChild(createToolCall('READ', 'list_cards', '11 cards on board'));
+    pgroup.appendChild(createToolCall('READ', 'get_user', 'Bob Alvarez · Engineering'));
+    appendAnimated(chatMessages, pgroup);
+    scrollChat();
+    await sleep(950); if (dead()) return;
+
+    appendAnimated(chatMessages, createToolCall('SEND', 'send_message', 'DM → Bob Alvarez'));
+    scrollChat();
+
+    var bobCard = document.querySelector('.card[data-id="1"]');
+    showToast(bobCard, 'DM sent to Bob');
+
+    await sleep(550); if (dead()) return;
+    appendAnimated(chatMessages, createAgentText('Bob has 1 overdue card — the OAuth fix, due Aug 25. Sent him a heads-up.', true));
+    scrollChat();
+  }
+
+  replayBtn.addEventListener('click', function(){
+    replayBtn.classList.remove('spin');
+    void replayBtn.offsetWidth;
+    replayBtn.classList.add('spin');
+    runScript();
+  });
+
+  render();
+  runScript();
+})();
+</script>
+</body>
+</html>

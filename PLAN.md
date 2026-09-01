@@ -21,6 +21,20 @@ Qwen-class 0.5B+ models are baselines (R2), not candidates; they exceed the
 budget. Size, download weight, and in-browser latency are first-class
 success criteria alongside goal_success.
 
+**Deployment tiers (owner, amended 2026-08-31):** the browser client is the
+primary target and the 0–300M budget above still gates it — unchanged.
+Separately, a **server-hosted fallback** ships for resource-constrained
+clients (no WebGPU, low memory, etc.), running whatever model currently
+passes the accuracy bar regardless of size — today that's the R2
+Condition-B model. This tier has no size ceiling (server RAM/GPU, not a
+browser tab) and is **not gated on R3**: it can ship independent of
+whether the tiny-model track ever clears the browser budget. The two tiers
+share the same harness/pipeline/sandbox; "ship server-side" is an API
+wrapper around what already exists in `harness/run.py` +
+`runtime/sandbox.js`, not new research. **Future work, not started** —
+noted here so the decoupling is on record; the active track is the
+browser tier (R3 onward, plus the §0.3 stand-in work).
+
 This plan replaces the earlier 38-section draft. It keeps the foundation, the size curve, constrained decoding, compiler/execution feedback, tool grounding, English robustness, effect-typed safety, and real-trace distillation. It drops modular blocks, routers, Neural IR, Mixture of Widths, attention sparsity, and diffusion-style construction as premature.
 
 ### Core hypotheses actually being tested
@@ -77,6 +91,34 @@ IR is wasted work. When the port lands, add differential tests: the TS and
 Python compilers must emit byte-identical JS for every `spec/examples/`
 program and for property-generated programs from F4. Until then, no
 production code depends on the Python pipeline.
+
+### 0.3 In-browser inference runtime (not yet built — R3+ deliverable)
+
+Decided 2026-08-31 (not yet started; blocked on R3 producing a model to
+export): **onnxruntime-web**, not WebLLM/MLC. WebLLM's compiled-model
+registry targets chat-scale (1B+) architectures MLC has pre-compiled with
+TVM; it does not help a custom <300M architecture, which would need its own
+from-scratch MLC compilation to use WebLLM at all. onnxruntime-web gives
+both target backends — WebGPU execution provider and WASM fallback — from
+one library, against a plain ONNX export of whatever custom architecture R3
+lands on.
+
+**Real unsolved piece:** grammar-constrained decoding. `agent_core.gbnf`
+constrains generation token-by-token today via llama.cpp's `grammar=` param
+(`baselines/qwen/run_a.py:96-98`, R2 only). Neither onnxruntime-web nor
+transformers.js ships GBNF-style constrained decoding; porting the Agent
+Core grammar into an in-browser per-step logit mask (via onnxruntime-web's
+custom logits-processor hook) is real R3+ engineering that must be budgeted
+for, not something either library provides for free.
+
+**Not applicable:** Vercel AI SDK (`useChat` et al.) — the model's I/O is
+the symbolic, non-chat `serialize_context` format (`harness/context.py:133`),
+not conversational text; a chat abstraction adds nothing here. Chrome's
+built-in Prompt API only exposes Gemini Nano, not custom weights, so it's
+out regardless of architecture.
+
+**Depends on:** R3 (a trained, exportable model). Revisit this section when
+R3 lands; until then it is a direction, not a build.
 
 ---
 
@@ -287,7 +329,7 @@ not a stop condition.
 
 **Decision gate (write the answer in `results/R2.md` before continuing):**
 
-1. Define the targets now: model download budget, in-browser p95 latency (proxy-measured on the dev CPU until a WASM/WebGPU runtime exists), resident memory. Whatever they are, write them down.
+1. Define the targets now: model download budget, in-browser p95 latency (proxy-measured on the dev CPU until a WASM/WebGPU runtime exists — direction set in §0.3), resident memory. Whatever they are, write them down.
 2. Condition B's per-level goal_success is the **reference bar**: R3's pass criterion is defined relative to it, and a custom model justifies itself by approaching that accuracy within the browser budget.
 3. If some off-the-shelf model meets the browser budget **and** ≥95% on Levels 0–8, then — and only then — stop the custom track and ship it with the harness, effect gate, and PAUSE runtime. Otherwise record the gap (accuracy and/or size/latency) that R3–R6 must close.
 

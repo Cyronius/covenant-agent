@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Agent Core — browser inference stand-in</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.1rem; margin-bottom: 0.25rem; }
+  .sub { color: #888; font-size: 0.85rem; margin-bottom: 1.5rem; }
+  .row { display: flex; gap: 0.5rem; align-items: center; margin: 0.5rem 0; flex-wrap: wrap; }
+  select, button {
+    font: inherit;
+    padding: 0.4rem 0.7rem;
+  }
+  button:disabled { opacity: 0.5; }
+  #status { font-weight: bold; }
+  pre {
+    background: rgba(128,128,128,0.1);
+    border: 1px solid rgba(128,128,128,0.3);
+    border-radius: 4px;
+    padding: 0.75rem;
+    overflow: auto;
+    max-height: 320px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  #log {
+    background: rgba(128,128,128,0.1);
+    border: 1px solid rgba(128,128,128,0.3);
+    border-radius: 4px;
+    padding: 0.75rem;
+    height: 220px;
+    overflow-y: auto;
+    font-size: 0.8rem;
+  }
+  #log div { white-space: pre-wrap; word-break: break-word; margin-bottom: 0.25rem; }
+  section { margin: 1.5rem 0; }
+  h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.04em; color: #888; margin-bottom: 0.4rem; }
+  footer { margin-top: 2rem; font-size: 0.75rem; color: #888; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+  <h1>Agent Core — browser inference stand-in</h1>
+  <div class="sub">
+    Dev-only POC. Loads the R2 Condition-B GGUF model via <code>wllama</code>
+    (llama.cpp compiled to WASM/WebGPU), generates a grammar-constrained
+    Agent Core program client-side, and round-trips it through the existing
+    Python parse/typecheck/effects/compile/execute pipeline via a local dev
+    server. See <code>.claude/plans/browser-inference-standin.md</code>.
+    Not a shippable artifact — the model is ~2.7&times; over the browser size
+    budget (PLAN.md &sect;0).
+  </div>
+
+  <section>
+    <h2>1. Task</h2>
+    <div class="row">
+      <select id="task-select"></select>
+      <button id="reset-btn">Reset run</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Model</h2>
+    <div class="row">
+      <button id="load-btn">Load model</button>
+      <span id="status">not loaded</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Generate &amp; run</h2>
+    <div class="row">
+      <button id="gen-btn" disabled>Generate &amp; run</button>
+    </div>
+    <h2>Generated program</h2>
+    <pre id="program-out"></pre>
+    <h2>Last /validate response</h2>
+    <pre id="state-out"></pre>
+  </section>
+
+  <section>
+    <h2>Log</h2>
+    <div id="log"></div>
+  </section>
+
+  <footer>
+    First model load fetches the GGUF (~800&nbsp;MB) from the dev server —
+    slow on first run. Multi-threaded WASM requires the
+    <code>Cross-Origin-Opener-Policy</code>/<code>Cross-Origin-Embedder-Policy</code>
+    headers <code>dev_server.py</code> sends on every response; WebGPU (if
+    your browser supports it) is attempted automatically — see
+    <code>src/llm.md</code> for what wllama does and doesn't confirm about
+    which backend actually ran.
+  </footer>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

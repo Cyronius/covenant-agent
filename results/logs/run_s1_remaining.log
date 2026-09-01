@@ -1,0 +1,283 @@
+=== crowded Tue Sep  1 11:47:56 CDT 2026 ===
+20/300 goal=19 compile=19 (14.6s/task)
+40/300 goal=39 compile=39 (14.8s/task)
+60/300 goal=57 compile=59 (14.1s/task)
+80/300 goal=76 compile=78 (13.6s/task)
+100/300 goal=95 compile=97 (13.6s/task)
+120/300 goal=115 compile=117 (13.6s/task)
+140/300 goal=132 compile=137 (13.5s/task)
+160/300 goal=152 compile=157 (13.5s/task)
+180/300 goal=171 compile=177 (13.4s/task)
+200/300 goal=191 compile=197 (13.5s/task)
+220/300 goal=211 compile=217 (13.5s/task)
+240/300 goal=229 compile=236 (13.5s/task)
+260/300 goal=247 compile=255 (13.4s/task)
+280/300 goal=267 compile=275 (13.3s/task)
+300/300 goal=284 compile=295 (13.3s/task)
+{
+  "model": "qwen3.5-0.8b-s1-q8.gguf",
+  "condition": "A-unconstrained",
+  "n": 300,
+  "compile_ok_rate": 0.9833333333333333,
+  "goal_success_rate": 0.9466666666666667,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 14,
+      "compile": 14,
+      "goal": 14
+    },
+    "1": {
+      "n": 14,
+      "compile": 14,
+      "goal": 14
+    },
+    "2": {
+      "n": 35,
+      "compile": 33,
+      "goal": 33
+    },
+    "3": {
+      "n": 35,
+      "compile": 35,
+      "goal": 33
+    },
+    "4": {
+      "n": 35,
+      "compile": 35,
+      "goal": 35
+    },
+    "5": {
+      "n": 35,
+      "compile": 35,
+      "goal": 34
+    },
+    "6": {
+      "n": 35,
+      "compile": 35,
+      "goal": 35
+    },
+    "7": {
+      "n": 35,
+      "compile": 35,
+      "goal": 34
+    },
+    "8": {
+      "n": 34,
+      "compile": 33,
+      "goal": 31
+    },
+    "9": {
+      "n": 14,
+      "compile": 12,
+      "goal": 7
+    },
+    "10": {
+      "n": 14,
+      "compile": 14,
+      "goal": 14
+    }
+  },
+  "gen_ms_p50": 12740.626399987377,
+  "gen_ms_p95": 19252.22710001981,
+  "tokens_out_p50": 50.0
+}
+=== known Tue Sep  1 12:54:38 CDT 2026 ===
+20/1000 goal=20 compile=20 (3.9s/task)
+40/1000 goal=40 compile=40 (4.0s/task)
+60/1000 goal=60 compile=60 (3.9s/task)
+80/1000 goal=79 compile=80 (4.1s/task)
+100/1000 goal=99 compile=100 (4.1s/task)
+120/1000 goal=119 compile=120 (4.1s/task)
+140/1000 goal=139 compile=140 (4.1s/task)
+160/1000 goal=159 compile=160 (4.1s/task)
+180/1000 goal=178 compile=180 (4.1s/task)
+200/1000 goal=197 compile=200 (4.1s/task)
+220/1000 goal=215 compile=220 (4.1s/task)
+240/1000 goal=235 compile=240 (4.1s/task)
+260/1000 goal=255 compile=260 (4.1s/task)
+280/1000 goal=275 compile=280 (4.1s/task)
+300/1000 goal=294 compile=300 (4.2s/task)
+320/1000 goal=313 compile=320 (4.3s/task)
+340/1000 goal=333 compile=340 (4.3s/task)
+360/1000 goal=352 compile=359 (4.3s/task)
+380/1000 goal=372 compile=379 (4.4s/task)
+400/1000 goal=392 compile=399 (4.4s/task)
+420/1000 goal=409 compile=418 (4.4s/task)
+440/1000 goal=428 compile=437 (4.4s/task)
+460/1000 goal=448 compile=457 (4.4s/task)
+480/1000 goal=468 compile=477 (4.4s/task)
+500/1000 goal=488 compile=497 (4.5s/task)
+520/1000 goal=507 compile=517 (4.5s/task)
+540/1000 goal=527 compile=537 (4.5s/task)
+560/1000 goal=547 compile=557 (4.5s/task)
+580/1000 goal=566 compile=577 (4.5s/task)
+600/1000 goal=585 compile=597 (4.5s/task)
+620/1000 goal=604 compile=617 (4.6s/task)
+640/1000 goal=624 compile=637 (4.6s/task)
+660/1000 goal=644 compile=657 (4.6s/task)
+680/1000 goal=664 compile=677 (4.6s/task)
+700/1000 goal=684 compile=697 (4.6s/task)
+720/1000 goal=703 compile=717 (4.6s/task)
+740/1000 goal=723 compile=737 (4.6s/task)
+760/1000 goal=743 compile=757 (4.6s/task)
+780/1000 goal=763 compile=777 (4.6s/task)
+800/1000 goal=783 compile=797 (4.6s/task)
+820/1000 goal=803 compile=817 (4.6s/task)
+840/1000 goal=821 compile=837 (4.6s/task)
+860/1000 goal=840 compile=857 (4.6s/task)
+880/1000 goal=860 compile=877 (4.5s/task)
+900/1000 goal=879 compile=897 (4.5s/task)
+920/1000 goal=899 compile=917 (4.5s/task)
+940/1000 goal=919 compile=937 (4.5s/task)
+960/1000 goal=938 compile=957 (4.5s/task)
+980/1000 goal=958 compile=977 (4.5s/task)
+1000/1000 goal=978 compile=997 (4.6s/task)
+{
+  "model": "qwen3.5-0.8b-s1-q8.gguf",
+  "condition": "A-unconstrained",
+  "n": 1000,
+  "compile_ok_rate": 0.997,
+  "goal_success_rate": 0.978,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 48,
+      "compile": 48,
+      "goal": 48
+    },
+    "1": {
+      "n": 48,
+      "compile": 48,
+      "goal": 48
+    },
+    "2": {
+      "n": 116,
+      "compile": 116,
+      "goal": 116
+    },
+    "3": {
+      "n": 116,
+      "compile": 114,
+      "goal": 112
+    },
+    "4": {
+      "n": 116,
+      "compile": 116,
+      "goal": 116
+    },
+    "5": {
+      "n": 115,
+      "compile": 114,
+      "goal": 114
+    },
+    "6": {
+      "n": 115,
+      "compile": 115,
+      "goal": 109
+    },
+    "7": {
+      "n": 115,
+      "compile": 115,
+      "goal": 112
+    },
+    "8": {
+      "n": 115,
+      "compile": 115,
+      "goal": 107
+    },
+    "9": {
+      "n": 48,
+      "compile": 48,
+      "goal": 48
+    },
+    "10": {
+      "n": 48,
+      "compile": 48,
+      "goal": 48
+    }
+  },
+  "gen_ms_p50": 4167.820849979762,
+  "gen_ms_p95": 7253.407499985769,
+  "tokens_out_p50": 47.0
+}
+=== ood Tue Sep  1 14:10:50 CDT 2026 ===
+20/200 goal=19 compile=19 (5.0s/task)
+40/200 goal=36 compile=39 (4.9s/task)
+60/200 goal=55 compile=59 (5.0s/task)
+80/200 goal=74 compile=79 (5.0s/task)
+100/200 goal=94 compile=99 (4.9s/task)
+120/200 goal=112 compile=118 (4.9s/task)
+140/200 goal=130 compile=138 (4.9s/task)
+160/200 goal=147 compile=157 (4.9s/task)
+180/200 goal=166 compile=177 (4.9s/task)
+200/200 goal=185 compile=197 (4.8s/task)
+{
+  "model": "qwen3.5-0.8b-s1-q8.gguf",
+  "condition": "A-unconstrained",
+  "n": 200,
+  "compile_ok_rate": 0.985,
+  "goal_success_rate": 0.925,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 11,
+      "compile": 11,
+      "goal": 11
+    },
+    "1": {
+      "n": 12,
+      "compile": 12,
+      "goal": 11
+    },
+    "2": {
+      "n": 30,
+      "compile": 30,
+      "goal": 28
+    },
+    "3": {
+      "n": 20,
+      "compile": 20,
+      "goal": 15
+    },
+    "4": {
+      "n": 21,
+      "compile": 20,
+      "goal": 19
+    },
+    "5": {
+      "n": 20,
+      "compile": 19,
+      "goal": 19
+    },
+    "6": {
+      "n": 24,
+      "compile": 23,
+      "goal": 23
+    },
+    "7": {
+      "n": 21,
+      "compile": 21,
+      "goal": 20
+    },
+    "8": {
+      "n": 23,
+      "compile": 23,
+      "goal": 23
+    },
+    "9": {
+      "n": 9,
+      "compile": 9,
+      "goal": 7
+    },
+    "10": {
+      "n": 9,
+      "compile": 9,
+      "goal": 9
+    }
+  },
+  "gen_ms_p50": 4458.629350003321,
+  "gen_ms_p95": 7083.049899956677,
+  "tokens_out_p50": 46.0
+}
+=== all done Tue Sep  1 14:27:00 CDT 2026 ===

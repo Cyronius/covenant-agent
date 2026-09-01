@@ -11,3 +11,5 @@ __pycache__/
 .pytest_cache/
 baselines/qwen/models/
 .codegraph/
+node_modules/
+dist/
