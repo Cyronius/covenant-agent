@@ -54,7 +54,12 @@ def main():
     ap.add_argument("--tasks", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--no-continuations", action="store_true")
+    ap.add_argument("--domains", default=None, metavar="DIR",
+                    help="register generated domain themes first")
     args = ap.parse_args()
+    if args.domains:
+        from data.gen.domains import register_domains
+        register_domains(args.domains)
 
     from concurrent.futures import ThreadPoolExecutor
 
