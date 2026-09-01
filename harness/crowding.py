@@ -42,12 +42,16 @@ def crowd_world(world: dict, donors: List[dict], rng: random.Random,
             break
         if tool["name"] in tool_names:
             continue
-        # entities this tool's signature references
+        # entities this tool's signature references: ID:/OBJ: types AND
+        # field annotations (legacy tools annotate scalar params with
+        # ["entity", "fname"] — e.g. crm's invoice amount)
         ents = set()
         for p in tool["params"]:
             t = p["type"]
             if t.startswith("ID:"):
                 ents.add(t[3:])
+            if p.get("field"):
+                ents.add(p["field"][0])
         ret = tool.get("returns") or ""
         for token in ret.replace("LIST ", "").split():
             if token.startswith("OBJ:") or token.startswith("ID:"):
