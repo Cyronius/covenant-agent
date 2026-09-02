@@ -1,0 +1,118 @@
+20/1000 goal=20 compile=20 (10.9s/task)
+40/1000 goal=40 compile=40 (10.6s/task)
+60/1000 goal=60 compile=60 (10.0s/task)
+80/1000 goal=80 compile=80 (10.2s/task)
+100/1000 goal=100 compile=100 (10.2s/task)
+120/1000 goal=120 compile=120 (10.2s/task)
+140/1000 goal=140 compile=140 (10.1s/task)
+160/1000 goal=160 compile=160 (10.1s/task)
+180/1000 goal=179 compile=180 (10.4s/task)
+200/1000 goal=198 compile=200 (10.4s/task)
+220/1000 goal=217 compile=220 (10.4s/task)
+240/1000 goal=237 compile=240 (10.2s/task)
+260/1000 goal=257 compile=260 (10.0s/task)
+280/1000 goal=277 compile=280 (9.9s/task)
+300/1000 goal=297 compile=300 (9.9s/task)
+320/1000 goal=315 compile=320 (9.9s/task)
+340/1000 goal=335 compile=340 (9.8s/task)
+360/1000 goal=355 compile=360 (9.8s/task)
+380/1000 goal=375 compile=380 (9.8s/task)
+400/1000 goal=395 compile=400 (9.8s/task)
+420/1000 goal=414 compile=420 (9.9s/task)
+440/1000 goal=434 compile=440 (10.0s/task)
+460/1000 goal=454 compile=460 (10.0s/task)
+480/1000 goal=474 compile=480 (17.7s/task)
+500/1000 goal=494 compile=500 (17.3s/task)
+520/1000 goal=514 compile=520 (17.2s/task)
+540/1000 goal=533 compile=540 (17.0s/task)
+560/1000 goal=553 compile=560 (16.7s/task)
+580/1000 goal=572 compile=580 (16.5s/task)
+600/1000 goal=592 compile=600 (16.3s/task)
+620/1000 goal=612 compile=620 (16.2s/task)
+640/1000 goal=631 compile=640 (16.0s/task)
+660/1000 goal=651 compile=660 (15.8s/task)
+680/1000 goal=671 compile=680 (15.7s/task)
+700/1000 goal=691 compile=700 (15.5s/task)
+720/1000 goal=710 compile=720 (15.3s/task)
+740/1000 goal=730 compile=740 (15.2s/task)
+760/1000 goal=750 compile=760 (15.1s/task)
+780/1000 goal=770 compile=780 (14.9s/task)
+800/1000 goal=789 compile=800 (14.8s/task)
+820/1000 goal=809 compile=820 (14.7s/task)
+840/1000 goal=829 compile=840 (14.6s/task)
+860/1000 goal=848 compile=860 (14.5s/task)
+880/1000 goal=868 compile=880 (14.4s/task)
+900/1000 goal=887 compile=900 (14.3s/task)
+920/1000 goal=907 compile=920 (14.2s/task)
+940/1000 goal=927 compile=940 (14.0s/task)
+960/1000 goal=947 compile=960 (14.0s/task)
+980/1000 goal=967 compile=980 (13.8s/task)
+1000/1000 goal=986 compile=1000 (13.8s/task)
+{
+  "model": "qwen3.5-0.8b-condB-q8.gguf",
+  "condition": "A-grammar",
+  "n": 1000,
+  "compile_ok_rate": 1.0,
+  "goal_success_rate": 0.986,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 48,
+      "compile": 48,
+      "goal": 48
+    },
+    "1": {
+      "n": 48,
+      "compile": 48,
+      "goal": 48
+    },
+    "2": {
+      "n": 116,
+      "compile": 116,
+      "goal": 116
+    },
+    "3": {
+      "n": 116,
+      "compile": 116,
+      "goal": 116
+    },
+    "4": {
+      "n": 116,
+      "compile": 116,
+      "goal": 116
+    },
+    "5": {
+      "n": 115,
+      "compile": 115,
+      "goal": 115
+    },
+    "6": {
+      "n": 115,
+      "compile": 115,
+      "goal": 115
+    },
+    "7": {
+      "n": 115,
+      "compile": 115,
+      "goal": 115
+    },
+    "8": {
+      "n": 115,
+      "compile": 115,
+      "goal": 107
+    },
+    "9": {
+      "n": 48,
+      "compile": 48,
+      "goal": 48
+    },
+    "10": {
+      "n": 48,
+      "compile": 48,
+      "goal": 42
+    }
+  },
+  "gen_ms_p50": 9487.354200013215,
+  "gen_ms_p95": 16597.826200013515,
+  "tokens_out_p50": 47.0
+}

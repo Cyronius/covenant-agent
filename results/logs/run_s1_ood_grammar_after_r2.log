@@ -1,0 +1,80 @@
+=== r2 done (1000 rows), starting s1 ood grammar Tue Sep  1 19:27:26 CDT 2026 ===
+20/200 goal=19 compile=19 (8.6s/task)
+40/200 goal=36 compile=39 (8.6s/task)
+60/200 goal=55 compile=59 (8.7s/task)
+80/200 goal=74 compile=79 (8.8s/task)
+100/200 goal=94 compile=99 (8.7s/task)
+120/200 goal=112 compile=118 (8.7s/task)
+140/200 goal=130 compile=138 (8.7s/task)
+160/200 goal=147 compile=157 (8.8s/task)
+180/200 goal=166 compile=177 (8.9s/task)
+200/200 goal=185 compile=197 (8.9s/task)
+{
+  "model": "qwen3.5-0.8b-s1-q8.gguf",
+  "condition": "A-grammar",
+  "n": 200,
+  "compile_ok_rate": 0.985,
+  "goal_success_rate": 0.925,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 11,
+      "compile": 11,
+      "goal": 11
+    },
+    "1": {
+      "n": 12,
+      "compile": 12,
+      "goal": 11
+    },
+    "2": {
+      "n": 30,
+      "compile": 30,
+      "goal": 28
+    },
+    "3": {
+      "n": 20,
+      "compile": 20,
+      "goal": 15
+    },
+    "4": {
+      "n": 21,
+      "compile": 20,
+      "goal": 19
+    },
+    "5": {
+      "n": 20,
+      "compile": 19,
+      "goal": 19
+    },
+    "6": {
+      "n": 24,
+      "compile": 23,
+      "goal": 23
+    },
+    "7": {
+      "n": 21,
+      "compile": 21,
+      "goal": 20
+    },
+    "8": {
+      "n": 23,
+      "compile": 23,
+      "goal": 23
+    },
+    "9": {
+      "n": 9,
+      "compile": 9,
+      "goal": 7
+    },
+    "10": {
+      "n": 9,
+      "compile": 9,
+      "goal": 9
+    }
+  },
+  "gen_ms_p50": 8428.99899999611,
+  "gen_ms_p95": 15178.048599977046,
+  "tokens_out_p50": 45.5
+}
+=== all done Tue Sep  1 19:57:03 CDT 2026 ===

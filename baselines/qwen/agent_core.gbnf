@@ -7,12 +7,18 @@
 
 root      ::= line* termline
 line      ::= indent? (instr | "STOP" | ret) nl
-termline  ::= ("STOP" | "PAUSE" | ret) nl
-# PAUSE is only a terminator (never in `line`): keeping it in `line` makes
-# "PAUSE\n" ambiguous (line vs termline), and llama.cpp's grammar sampler
-# then masks EOG after it, forcing overgeneration past the PAUSE — every
-# L10 task failed with UNREACHABLE until this split. STOP stays in `line`
-# for early exits inside IF bodies.
+termline  ::= ("STOP" | "PAUSE" | ret) nl?
+# The newline after the terminator MUST be optional. SFT targets are
+# stripped (make_sft.py), so the tuned model puts ~1.0 on <|im_end|>
+# immediately after "STOP"; a mandatory `nl` leaves the grammar in a
+# non-accepting state there, llama.cpp masks EOG, the sampler is forced to
+# emit "\n", and the model lands in a state it never trained on (P(EOG)
+# drops to ~0.02, P("CALL") ~0.23) — it then rambles to max_tokens and
+# every extra line is UNREACHABLE. See .claude/plans/
+# grammar-terminator-newline.md and probe_stop.py for the measurements.
+# PAUSE is only a terminator (never in `line`): with PAUSE also in `line`,
+# "PAUSE\n" was ambiguous and the same masking hit every L10 task. STOP
+# stays in `line` for early exits inside IF bodies.
 ret       ::= "RETURN " operand
 indent    ::= "  " | "    " | "      " | "        "
 nl        ::= "\n"
