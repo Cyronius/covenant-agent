@@ -1,0 +1,269 @@
+qwen3.5-0.8b-s1-remerged-q8.gguf 9.9s/prompt
+qwen3.5-0.8b-s1-pruned-q8.gguf 5.9s/prompt
+qwen3.5-0.8b-s1-q8.gguf 9.2s/prompt
+IDENTITY qwen3.5-0.8b-s1-remerged-q8.gguf vs qwen3.5-0.8b-s1-pruned-q8.gguf: 36/40
+IDENTITY qwen3.5-0.8b-s1-remerged-q8.gguf vs qwen3.5-0.8b-s1-q8.gguf: 40/40
+IDENTITY qwen3.5-0.8b-s1-pruned-q8.gguf vs qwen3.5-0.8b-s1-q8.gguf: 36/40
+RUN remerged data/holdout/e_demo_requests.jsonl
+20/65 goal=12 compile=15 (7.1s/task)
+40/65 goal=18 compile=28 (10.4s/task)
+60/65 goal=21 compile=35 (11.1s/task)
+{
+  "model": "qwen3.5-0.8b-s1-remerged-q8.gguf",
+  "condition": "A-grammar",
+  "n": 65,
+  "compile_ok_rate": 0.5692307692307692,
+  "goal_success_rate": 0.3230769230769231,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 20,
+      "compile": 15,
+      "goal": 12
+    },
+    "1": {
+      "n": 15,
+      "compile": 6,
+      "goal": 4
+    },
+    "2": {
+      "n": 5,
+      "compile": 1,
+      "goal": 0
+    },
+    "3": {
+      "n": 10,
+      "compile": 10,
+      "goal": 5
+    },
+    "11": {
+      "n": 5,
+      "compile": 2,
+      "goal": 0
+    },
+    "12": {
+      "n": 5,
+      "compile": 0,
+      "goal": 0
+    },
+    "13": {
+      "n": 5,
+      "compile": 3,
+      "goal": 0
+    }
+  },
+  "gen_ms_p50": 10500.060299993493,
+  "gen_ms_p95": 16423.15950000193,
+  "tokens_out_p50": 36
+}
+RUN remerged data/holdout/e_ood_english.jsonl
+20/200 goal=19 compile=19 (9.6s/task)
+40/200 goal=36 compile=39 (9.5s/task)
+60/200 goal=56 compile=59 (9.5s/task)
+80/200 goal=75 compile=79 (9.4s/task)
+100/200 goal=95 compile=99 (9.3s/task)
+120/200 goal=114 compile=119 (9.3s/task)
+140/200 goal=132 compile=139 (9.2s/task)
+160/200 goal=150 compile=159 (9.3s/task)
+180/200 goal=169 compile=179 (9.3s/task)
+200/200 goal=188 compile=199 (9.3s/task)
+{
+  "model": "qwen3.5-0.8b-s1-remerged-q8.gguf",
+  "condition": "A-grammar",
+  "n": 200,
+  "compile_ok_rate": 0.995,
+  "goal_success_rate": 0.94,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 11,
+      "compile": 11,
+      "goal": 11
+    },
+    "1": {
+      "n": 12,
+      "compile": 12,
+      "goal": 11
+    },
+    "2": {
+      "n": 30,
+      "compile": 30,
+      "goal": 28
+    },
+    "3": {
+      "n": 20,
+      "compile": 20,
+      "goal": 16
+    },
+    "4": {
+      "n": 21,
+      "compile": 21,
+      "goal": 20
+    },
+    "5": {
+      "n": 20,
+      "compile": 19,
+      "goal": 19
+    },
+    "6": {
+      "n": 24,
+      "compile": 24,
+      "goal": 24
+    },
+    "7": {
+      "n": 21,
+      "compile": 21,
+      "goal": 20
+    },
+    "8": {
+      "n": 23,
+      "compile": 23,
+      "goal": 23
+    },
+    "9": {
+      "n": 9,
+      "compile": 9,
+      "goal": 7
+    },
+    "10": {
+      "n": 9,
+      "compile": 9,
+      "goal": 9
+    }
+  },
+  "gen_ms_p50": 8715.275699971244,
+  "gen_ms_p95": 15286.417700001039,
+  "tokens_out_p50": 45.5
+}
+RUN pruned data/holdout/e_demo_requests.jsonl
+20/65 goal=11 compile=13 (5.3s/task)
+40/65 goal=17 compile=26 (5.5s/task)
+60/65 goal=20 compile=33 (5.6s/task)
+{
+  "model": "qwen3.5-0.8b-s1-pruned-q8.gguf",
+  "condition": "A-grammar",
+  "n": 65,
+  "compile_ok_rate": 0.5384615384615384,
+  "goal_success_rate": 0.3076923076923077,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 20,
+      "compile": 13,
+      "goal": 11
+    },
+    "1": {
+      "n": 15,
+      "compile": 6,
+      "goal": 4
+    },
+    "2": {
+      "n": 5,
+      "compile": 1,
+      "goal": 0
+    },
+    "3": {
+      "n": 10,
+      "compile": 10,
+      "goal": 5
+    },
+    "11": {
+      "n": 5,
+      "compile": 2,
+      "goal": 0
+    },
+    "12": {
+      "n": 5,
+      "compile": 0,
+      "goal": 0
+    },
+    "13": {
+      "n": 5,
+      "compile": 3,
+      "goal": 0
+    }
+  },
+  "gen_ms_p50": 5605.305999983102,
+  "gen_ms_p95": 6642.696800059639,
+  "tokens_out_p50": 36
+}
+RUN pruned data/holdout/e_ood_english.jsonl
+20/200 goal=19 compile=19 (5.9s/task)
+40/200 goal=36 compile=39 (5.7s/task)
+60/200 goal=55 compile=59 (5.7s/task)
+80/200 goal=74 compile=79 (5.8s/task)
+100/200 goal=94 compile=99 (5.7s/task)
+120/200 goal=112 compile=118 (5.6s/task)
+140/200 goal=130 compile=138 (5.6s/task)
+160/200 goal=148 compile=158 (5.6s/task)
+180/200 goal=166 compile=177 (5.7s/task)
+200/200 goal=185 compile=197 (5.6s/task)
+{
+  "model": "qwen3.5-0.8b-s1-pruned-q8.gguf",
+  "condition": "A-grammar",
+  "n": 200,
+  "compile_ok_rate": 0.985,
+  "goal_success_rate": 0.925,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 11,
+      "compile": 11,
+      "goal": 11
+    },
+    "1": {
+      "n": 12,
+      "compile": 12,
+      "goal": 11
+    },
+    "2": {
+      "n": 30,
+      "compile": 30,
+      "goal": 28
+    },
+    "3": {
+      "n": 20,
+      "compile": 20,
+      "goal": 15
+    },
+    "4": {
+      "n": 21,
+      "compile": 21,
+      "goal": 20
+    },
+    "5": {
+      "n": 20,
+      "compile": 19,
+      "goal": 19
+    },
+    "6": {
+      "n": 24,
+      "compile": 22,
+      "goal": 22
+    },
+    "7": {
+      "n": 21,
+      "compile": 21,
+      "goal": 20
+    },
+    "8": {
+      "n": 23,
+      "compile": 23,
+      "goal": 23
+    },
+    "9": {
+      "n": 9,
+      "compile": 9,
+      "goal": 7
+    },
+    "10": {
+      "n": 9,
+      "compile": 9,
+      "goal": 9
+    }
+  },
+  "gen_ms_p50": 5228.28285000287,
+  "gen_ms_p95": 8871.117700007744,
+  "tokens_out_p50": 46.0
+}
+=== all done ===

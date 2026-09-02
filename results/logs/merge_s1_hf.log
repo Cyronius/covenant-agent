@@ -1,0 +1,2 @@
+vocab 248320 tie True hidden 1024 type qwen3_5
+merged -> baselines/qwen/models/merged_s1_hf 8s

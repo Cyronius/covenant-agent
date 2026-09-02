@@ -14,3 +14,7 @@ baselines/qwen/models/
 .codegraph/
 node_modules/
 dist/
+
+# raw production session pulls (PII) - never committed; only the scrubbed, reviewed eval slice is tracked
+data/real_sessions/
+data/open_pairs/
