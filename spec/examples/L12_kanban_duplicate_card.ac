@@ -1,0 +1,9 @@
+# L12_kanban_duplicate_card  (level 12, world kanban)
+# request: Duplicate card 4.
+# $0: ID:card = 'card_4' — card 4
+# $1: STR = 'Copy of {0}' — title template: Copy of {0} (fill {0} with the original title)
+
+CALL @get_card $0 -> r0
+FORMAT $1 r0.@card.title -> r1
+CALL @create_card r1 r0.@card.due r0.@card.assignee -> r2
+STOP

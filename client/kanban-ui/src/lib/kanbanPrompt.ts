@@ -1,4 +1,4 @@
-// Client for POST /kanban_prompt — see client/poc/server/README.md. Builds
+// Client for POST /kanban_prompt — see server/README.md. Builds
 // a fresh grammar-matched TOOLS/FIELDS/CONSTANTS context for the `kanban`
 // world from whatever a person actually typed, against the current fake
 // board, instead of picking one of a fixed set of pre-written requests.
@@ -66,7 +66,7 @@ export async function fetchKanbanPrompt(
 }
 
 /** Strips the "message: " desc prefix constants_from_board()
- * (client/poc/server/dev_server.py) adds for readability in the raw prompt.
+ * (server/dev_server.py) adds for readability in the raw prompt.
  * Card descs are "card 3 — Title" and user descs are a plain name — both
  * already read fine as-is for a UI display. */
 export function describeConstant(c: KanbanConstDecl): string {

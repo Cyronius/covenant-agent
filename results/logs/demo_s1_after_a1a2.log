@@ -1,0 +1,35 @@
+20/50 goal=8 compile=17 (7.4s/task)
+40/50 goal=14 compile=31 (8.3s/task)
+{
+  "model": "qwen3.5-0.8b-s1-q8.gguf",
+  "condition": "A-grammar",
+  "n": 50,
+  "compile_ok_rate": 0.72,
+  "goal_success_rate": 0.38,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 20,
+      "compile": 17,
+      "goal": 13
+    },
+    "1": {
+      "n": 15,
+      "compile": 9,
+      "goal": 6
+    },
+    "2": {
+      "n": 5,
+      "compile": 0,
+      "goal": 0
+    },
+    "3": {
+      "n": 10,
+      "compile": 10,
+      "goal": 0
+    }
+  },
+  "gen_ms_p50": 7073.99899995653,
+  "gen_ms_p95": 10845.987600041553,
+  "tokens_out_p50": 12.0
+}

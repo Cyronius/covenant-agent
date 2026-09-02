@@ -22,7 +22,7 @@ system).
 Two processes, both from the repo root:
 
 ```
-python client/poc/server/dev_server.py --port 8080
+python server/dev_server.py --port 8080
 ```
 
 ```
@@ -48,12 +48,11 @@ card 3 to done"*, *"message Priya about her overdue card"*). Each request:
 
 1. `POST /kanban_prompt` — builds a fresh, grammar-matched
    `TOOLS`/`FIELDS`/`CONSTANTS` context for the `kanban` world from your
-   current board (`client/poc/server/dev_server.py`'s
+   current board (`server/dev_server.py`'s
    `handle_kanban_prompt`, using `harness.context.build_context()` — the
    same function the offline curriculum generator uses, not a
    reimplementation).
-2. Real grammar-constrained generation (`src/lib/llm.ts`, ported from
-   `client/poc/src/llm.js`).
+2. Real grammar-constrained generation (`src/lib/llm.ts`).
 3. `POST /validate` — real parse/typecheck/effects/compile
    (`core.pipeline.build`) and real sandboxed execution
    (`harness.run.run_sandbox`), run **unapproved first**. If it touches a

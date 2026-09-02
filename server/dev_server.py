@@ -1,26 +1,30 @@
-"""Dev-only local server for the browser-inference stand-in (client/poc).
+"""Local backend for the kanban-ui demo (client/kanban-ui) and the eval
+harness's browser-parity checks. Pure Python stdlib.
 
-Two jobs:
-  1. Static file server for client/poc/** (index.html, src/*.js, vendor/*
-     wasm, fixtures/*), plus Range-request support for the large GGUF model
-     file served straight out of baselines/qwen/models/ (never copied), and
-     the grammar file at baselines/qwen/agent_core.gbnf.
-  2. POST /validate: takes generated Agent Core program text from the
-     in-browser model and round-trips it through the *existing* Python
-     pipeline (core.pipeline.build) and sandbox executor
-     (harness.run.run_sandbox) — the same path harness/run.py's run_task()
-     uses for the reference/model planners. This is a dev shortcut per
-     .claude/plans/browser-inference-standin.md scope item 4(a); it is not
-     a reimplementation of parse/typecheck/compile/execute.
+Jobs:
+  1. Serves the GGUF model files straight out of baselines/qwen/models/
+     (Range requests, never copied), the grammar at
+     baselines/qwen/agent_core.gbnf, and — when it exists — the built
+     kanban-ui app from client/kanban-ui/dist (SPA fallback to index.html).
+     In development Vite serves the app itself and proxies to this server
+     (client/kanban-ui/vite.config.ts).
+  2. POST /kanban_prompt: builds a real TOOLS/FIELDS/CONSTANTS context for a
+     free-typed request against the client's board (handle_kanban_prompt).
+  3. POST /plan (+ GET /plan/status): server-side inference — the same GGUF
+     and grammar the browser path uses, run through llama-cpp-python on
+     this machine's CPU (plan s2-consolidated-program §A7). --model picks
+     the checkpoint; it loads lazily on first use.
+  4. POST /validate: takes generated Agent Core program text and round-trips
+     it through the *existing* Python pipeline (core.pipeline.build) and
+     sandbox executor (harness.run.run_sandbox) — the same path
+     harness/run.py's run_task() uses. Not a reimplementation.
 
-Pure Python stdlib only — no Flask/FastAPI, none are installed and none are
-needed for this POC.
+Pure Python stdlib, plus llama-cpp-python for /plan only.
 
-Run:
-    python client/poc/server/dev_server.py --port 8080
+Run (from the repo root):
+    python server/dev_server.py --port 8080 [--model baselines/qwen/models/<gguf>]
 
-See client/poc/server/README.md for the full /validate request/response
-contract and a worked curl example.
+See server/README.md for the request/response contracts.
 """
 from __future__ import annotations
 
@@ -29,12 +33,14 @@ import json
 import mimetypes
 import re
 import sys
+import threading
+import time
 import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-# client/poc/server/dev_server.py -> repo root is three levels up.
-ROOT = Path(__file__).resolve().parent.parent.parent.parent
+# server/dev_server.py -> repo root is one level up.
+ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from core.ir import TaskContext, parse_type  # noqa: E402
@@ -43,10 +49,123 @@ from harness.context import build_context, sandbox_from_context, serialize_conte
 from harness.run import run_sandbox  # noqa: E402
 from runtime.worlds import get_world  # noqa: E402
 
-CLIENT_POC = ROOT / "client" / "poc"
+APP_DIST = ROOT / "client" / "kanban-ui" / "dist"
 MODELS_DIR = ROOT / "baselines" / "qwen" / "models"
 GRAMMAR_FILE = ROOT / "baselines" / "qwen" / "agent_core.gbnf"
 TASKS_FILE = ROOT / "data" / "curriculum_tasks.jsonl"
+DEFAULT_PLAN_MODEL = MODELS_DIR / "qwen3.5-0.8b-s1-q8.gguf"
+# The writer uses the UNTUNED base weights: the merged S1 checkpoint has lost
+# its general writing (it echoes the data list back; measured 2026-09-02,
+# plan s2-consolidated-program §A8), while the base 0.8B writes a proper
+# short message. Falls back to the planner weights if this file is absent.
+DEFAULT_WRITER_MODEL = MODELS_DIR / "Qwen3.5-0.8B-Q8_0.gguf"
+
+
+class ServerPlanner:
+    """Lazily-loaded llama-cpp-python model + grammar behind POST /plan.
+    llama.cpp contexts are not thread-safe and ThreadingHTTPServer is
+    threaded, so generation is serialized with a lock."""
+
+    def __init__(self, model_path: Path | None, n_ctx: int = 4096,
+                 writer_path: Path | None = None):
+        self.model_path = model_path
+        self.writer_path = writer_path
+        self.n_ctx = n_ctx
+        self._llm = None
+        self._writer = None
+        self._grammar = None
+        self._lock = threading.Lock()
+
+    @property
+    def available(self) -> bool:
+        return bool(self.model_path and self.model_path.exists())
+
+    def status(self) -> dict:
+        return {"available": self.available,
+                "model": self.model_path.name if self.model_path else None,
+                "loaded": self._llm is not None,
+                "writer_model": (self.writer_path.name if self.writer_path and self.writer_path.exists()
+                                 else (self.model_path.name if self.model_path else None)),
+                **({} if self.available else
+                   {"reason": f"model file not found: {self.model_path}"})}
+
+    def _ensure(self):
+        if self._llm is None:
+            from llama_cpp import Llama, LlamaGrammar
+            self._grammar = LlamaGrammar.from_string(
+                GRAMMAR_FILE.read_text(encoding="utf-8"), verbose=False)
+            self._llm = Llama(model_path=str(self.model_path), n_ctx=self.n_ctx,
+                              verbose=False)
+
+    def generate(self, prompt: str, max_tokens: int, stop: list) -> dict:
+        with self._lock:
+            self._ensure()
+            t0 = time.perf_counter()
+            res = self._llm.create_completion(
+                prompt, grammar=self._grammar, temperature=0.0,
+                max_tokens=max_tokens, stop=stop or ["<|im_end|>"])
+            gen_ms = (time.perf_counter() - t0) * 1000
+        choice = res["choices"][0]
+        return {"text": choice["text"], "finish_reason": choice["finish_reason"],
+                "tokens_out": res.get("usage", {}).get("completion_tokens", 0),
+                "tokens_in": res.get("usage", {}).get("prompt_tokens", 0),
+                "gen_ms": gen_ms, "model": self.model_path.name}
+
+    def _ensure_writer(self):
+        """Base weights if present (separate llama.cpp instance, ~0.8 GB more
+        RAM); otherwise the planner weights."""
+        if self.writer_path and self.writer_path.exists():
+            if self._writer is None:
+                from llama_cpp import Llama
+                self._writer = Llama(model_path=str(self.writer_path), n_ctx=2048,
+                                     verbose=False)
+            return self._writer
+        self._ensure()
+        return self._llm
+
+    def warm(self) -> dict:
+        with self._lock:
+            self._ensure()
+        return self.status()
+
+    WRITER_SYSTEM = ("You write short, plain workplace messages. Output only the "
+                     "message text — no greeting line, no sign-off, no markdown.")
+
+    def write(self, brief: str, data: list, max_tokens: int = 120) -> dict:
+        """POST /write: the writer tool (plan §A8, option a — same weights,
+        second prompt, NO grammar). The planner never sees this text; it only
+        routes it."""
+        lines = []
+        for rec in data or []:
+            if not isinstance(rec, dict):
+                lines.append(f"- {rec}")
+                continue
+            bits = [str(rec.get("title") or rec.get("name") or rec.get("id"))]
+            if "status" in rec:
+                bits.append(f"status {rec['status']}")
+            if isinstance(rec.get("due"), (int, float)):
+                import datetime as _dt
+                bits.append("due " + _dt.datetime.fromtimestamp(
+                    rec["due"], _dt.timezone.utc).strftime("%Y-%m-%d"))
+            lines.append("- " + ", ".join(bits))
+        user = (f"Brief: {brief}\n" + ("Items:\n" + "\n".join(lines) if lines else "Items: none")
+                + "\n\nWrite the message.")
+        prompt = (f"<|im_start|>system\n{self.WRITER_SYSTEM}<|im_end|>\n"
+                  f"<|im_start|>user\n{user}<|im_end|>\n"
+                  f"<|im_start|>assistant\n<think>\n\n</think>\n\n")
+        with self._lock:
+            llm = self._ensure_writer()
+            t0 = time.perf_counter()
+            res = llm.create_completion(
+                prompt, temperature=0.0, max_tokens=max_tokens, stop=["<|im_end|>"])
+            gen_ms = (time.perf_counter() - t0) * 1000
+        text = res["choices"][0]["text"].strip()
+        return {"text": text, "gen_ms": gen_ms,
+                "tokens_out": res.get("usage", {}).get("completion_tokens", 0)}
+
+
+PLANNER = ServerPlanner(DEFAULT_PLAN_MODEL, writer_path=DEFAULT_WRITER_MODEL)
+SELF_URL: str | None = None  # set in main(); lets the sandbox call back for EXTERNAL tools
 
 EXTRA_MIME_TYPES = {
     ".wasm": "application/wasm",
@@ -108,15 +227,18 @@ class DevHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _resolve_static_path(self, url_path: str) -> Path | None:
-        """Map a URL path to a file under client/poc, guarding traversal."""
+        """Map a URL path to a file under the built app (client/kanban-ui/dist),
+        guarding traversal. Unknown paths fall back to index.html (SPA)."""
         rel = url_path.lstrip("/")
         if rel == "" or rel == "/":
             rel = "index.html"
-        candidate = (CLIENT_POC / rel).resolve()
+        candidate = (APP_DIST / rel).resolve()
         try:
-            candidate.relative_to(CLIENT_POC.resolve())
+            candidate.relative_to(APP_DIST.resolve())
         except ValueError:
             return None
+        if not candidate.is_file():
+            candidate = APP_DIST / "index.html"
         return candidate
 
     def _serve_file(self, path: Path, support_range: bool = False) -> None:
@@ -207,6 +329,10 @@ class DevHandler(BaseHTTPRequestHandler):
                 self._serve_file(GRAMMAR_FILE)
                 return
 
+            if path == "/plan/status":
+                self._send_json(200, PLANNER.status())
+                return
+
             static_path = self._resolve_static_path(path)
             if static_path is None:
                 self._send_text(403, "Forbidden\n")
@@ -217,14 +343,19 @@ class DevHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = self.path.split("?", 1)[0]
-        if path not in ("/validate", "/kanban_prompt"):
+        if path not in ("/validate", "/kanban_prompt", "/plan", "/write"):
             self._send_text(404, "Not found\n")
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
             raw = self.rfile.read(length) if length else b"{}"
             req = json.loads(raw.decode("utf-8"))
-            resp = handle_kanban_prompt(req) if path == "/kanban_prompt" else handle_validate(req)
+            if path == "/plan":
+                resp = handle_plan(req)
+            elif path == "/write":
+                resp = handle_write(req)
+            else:
+                resp = handle_kanban_prompt(req) if path == "/kanban_prompt" else handle_validate(req)
             self._send_json(200, resp)
         except Exception as exc:
             self._send_json(500, {
@@ -239,7 +370,7 @@ class DevHandler(BaseHTTPRequestHandler):
     def end_headers(self) -> None:
         # Required for wllama's multi-threaded WASM path (SharedArrayBuffer):
         # without these, isSupportMultiThread() is false and generation
-        # silently falls back to a single thread. See client/poc/src/llm.md
+        # silently falls back to a single thread. See client/kanban-ui/src/lib/llm.md
         # "Multi-threading" note. Applied to every response; harmless
         # elsewhere since this is a same-origin, single-page dev server.
         self.send_header("Cross-Origin-Opener-Policy", "same-origin")
@@ -308,7 +439,96 @@ def relevant_cards(request: str, cards: list) -> list:
     return matched
 
 
-def constants_from_board(request: str, state: dict) -> list:
+# --- free-text literal extraction (plan s2-consolidated-program §A2) --------
+# The IR carries every literal through a C symbol, so a create-style request
+# is only expressible if the serializer lifts its title and due date into
+# constants. This is deliberately a small, deterministic heuristic (it has to
+# run wherever the demo runs), not an NLP pass. Extracted literals are
+# appended AFTER the fixed constants so the indices of cards/users/statuses/
+# messages stay stable for authored references (harness/demo_suite.py).
+
+_DQUOTE_RE = re.compile(r'["“”]([^"“”]{2,80})["“”]')
+_CREATE_NOUN_RE = re.compile(
+    r"\b(?:create|add|open|make|start)\b[^.]*?\b(?:new\s+)?"
+    r"(?:issue|card|ticket|task|item)\b\s*(?:for|called|titled|named|about|:|to)?\s+(.+)",
+    re.I)
+# Where a title stops: a column clause, a due clause, an assignment clause,
+# or a conjunction introducing another action.
+_TITLE_STOP_RE = re.compile(
+    r"\s+(?:(?:in|into|to|on)\s+(?:the\s+)?(?:todo|doing|done)\b"
+    r"|due\b|assigned?\b|owned\b|owner\b|and\s+(?:assign|make|set|move|put)\b)",
+    re.I)
+_WEEKDAYS = ("monday", "tuesday", "wednesday", "thursday", "friday",
+             "saturday", "sunday")
+_DATE_PATTERNS = [
+    (re.compile(r"\btoday\b", re.I), lambda m: 0),
+    (re.compile(r"\btomorrow\b", re.I), lambda m: 1),
+    (re.compile(r"\bnext week\b", re.I), lambda m: 7),
+    (re.compile(r"\bin\s+(\d+)\s+days?\b", re.I), lambda m: int(m.group(1))),
+    (re.compile(r"\bin\s+(\d+)\s+weeks?\b", re.I), lambda m: 7 * int(m.group(1))),
+    (re.compile(r"\b(\d+)\s+days?\s+from\s+now\b", re.I), lambda m: int(m.group(1))),
+    (re.compile(r"\bin\s+a\s+week\b", re.I), lambda m: 7),
+]
+_NEXT_WEEKDAY_RE = re.compile(r"\bnext\s+(" + "|".join(_WEEKDAYS) + r")\b", re.I)
+_DEFAULT_DUE_DAYS = 7
+# FORMAT templates (spec §4) the model can fill from fields. Offered only
+# when the request's verb calls for them, so most prompts stay short.
+_COPY_RE = re.compile(r"\b(duplicate|copy|clone)\b", re.I)
+_REMIND_RE = re.compile(r"\b(remind|reminder|nudge|ping)\b", re.I)
+
+
+def literals_from_request(request: str, now: int) -> list:
+    """STR/TIME constants a free-typed request implies: quoted spans, a
+    title when the request creates something, and a due date phrase (or a
+    default due when creating with no date given)."""
+    out = []
+    for m in _DQUOTE_RE.finditer(request):
+        out.append({"type": "STR", "value": m.group(1).strip(),
+                    "desc": f'the text "{m.group(1).strip()}"'})
+    creating = False
+    m = _CREATE_NOUN_RE.search(request)
+    if m:
+        creating = True
+        title = m.group(1)
+        stop = _TITLE_STOP_RE.search(title)
+        if stop:
+            title = title[:stop.start()]
+        title = title.strip(" .,;:!\"“”")
+        if title and not any(c["value"] == title for c in out):
+            out.append({"type": "STR", "value": title,
+                        "desc": f"title: {title}"})
+    days = None
+    for pat, fn in _DATE_PATTERNS:
+        dm = pat.search(request)
+        if dm:
+            days = fn(dm)
+            phrase = dm.group(0)
+            break
+    if days is None:
+        wm = _NEXT_WEEKDAY_RE.search(request)
+        if wm:
+            # world `now` is a fixed epoch; weekday arithmetic uses UTC
+            import datetime as _dt
+            today = _dt.datetime.fromtimestamp(now, _dt.timezone.utc).weekday()
+            target = _WEEKDAYS.index(wm.group(1).lower())
+            days = (target - today) % 7 or 7
+            phrase = wm.group(0)
+    if _COPY_RE.search(request):
+        out.append({"type": "STR", "value": "Copy of {0}",
+                    "desc": "title template: Copy of {0} (fill {0} with the original title)"})
+    if _REMIND_RE.search(request):
+        out.append({"type": "STR", "value": "Reminder: {0} is due {1}.",
+                    "desc": "message template: Reminder: {0} is due {1}. (fill {0} with the card title, {1} with its due date)"})
+    if days is not None:
+        out.append({"type": "TIME", "value": now + days * 86400,
+                    "desc": f"{phrase} (a date)"})
+    elif creating:
+        out.append({"type": "TIME", "value": now + _DEFAULT_DUE_DAYS * 86400,
+                    "desc": "one week from now (default due date)"})
+    return out
+
+
+def constants_from_board(request: str, state: dict, now: int | None = None) -> list:
     """Builds the CONSTANTS list (harness.context.build_context's `constants`
     param shape) from a client-supplied fake board — every user on it (a
     small, cheap set) plus only the cards relevant_cards() thinks the
@@ -339,7 +559,42 @@ def constants_from_board(request: str, state: dict) -> list:
     for msg in GENERIC_MESSAGES:
         constants.append({"type": "STR", "value": msg,
                            "desc": f"message: {msg}"})
+    if now is None:
+        now = get_world("kanban")["now"]
+    constants.extend(literals_from_request(request, now))
+    # The writer tool's brief: the request itself, verbatim (plan §A8). Last,
+    # so every other index stays stable for authored references.
+    constants.append({"type": "STR", "value": request,
+                      "desc": "the request itself, verbatim (brief for write_text)"})
     return constants
+
+
+def handle_plan(req: dict) -> dict:
+    """POST /plan {prompt, max_tokens?, stop?} -> {text, tokens_out, gen_ms, ...};
+    {warm: true} just loads the model."""
+    if not PLANNER.available:
+        return {"error": {"code": "NO_MODEL", "message": PLANNER.status().get("reason")}}
+    if req.get("warm"):
+        return PLANNER.warm()
+    prompt = req.get("prompt")
+    if not isinstance(prompt, str) or not prompt:
+        return {"error": {"code": "BAD_REQUEST", "message": "plan needs 'prompt'"}}
+    max_tokens = int(req.get("max_tokens") or 250)
+    stop = req.get("stop") or ["<|im_end|>"]
+    return PLANNER.generate(prompt, max_tokens, list(stop))
+
+
+def handle_write(req: dict) -> dict:
+    """POST /write — the sandbox's EXTERNAL callback: {kind, params} ->
+    {text}. Only kind 'write_text' exists today."""
+    if not PLANNER.available:
+        return {"error": {"code": "NO_MODEL", "message": PLANNER.status().get("reason")}}
+    if req.get("kind") != "write_text":
+        return {"error": {"code": "BAD_REQUEST", "message": f"unknown external kind {req.get('kind')!r}"}}
+    params = req.get("params") or []
+    brief = str(params[0]) if params else ""
+    data = params[1] if len(params) > 1 and isinstance(params[1], list) else []
+    return PLANNER.write(brief, data)
 
 
 def handle_kanban_prompt(req: dict) -> dict:
@@ -356,7 +611,8 @@ def handle_kanban_prompt(req: dict) -> dict:
         return {"error": {"code": "BAD_REQUEST",
                            "message": "kanban_prompt needs 'request' and 'state'"}}
     world = get_world("kanban")
-    ctx, _sandbox = build_context(world, constants_from_board(request, state))
+    ctx, _sandbox = build_context(
+        world, constants_from_board(request, state, world["now"]))
     return {
         "input_text": serialize_context(request, ctx),
         "context": ctx.to_json(),
@@ -366,7 +622,7 @@ def handle_kanban_prompt(req: dict) -> dict:
 
 
 def handle_validate(req: dict) -> dict:
-    """Implements POST /validate. See client/poc/server/README.md for the
+    """Implements POST /validate. See server/README.md for the
     full request/response contract, including the pause_types/pause_envs
     continuation contract."""
     task_id = req.get("task_id")
@@ -449,6 +705,8 @@ def handle_validate(req: dict) -> dict:
         "error_injection": error_injection,
         "initial_registers": registers,
     }
+    if SELF_URL and PLANNER.available:
+        payload["external_url"] = SELF_URL + "/write"  # EXTERNAL tools call back here
     sres = run_sandbox(payload)
 
     return {
@@ -460,6 +718,7 @@ def handle_validate(req: dict) -> dict:
         "return_value": sres.get("return_value"),
         "pause_envs": result.pause_envs if sres.get("status") == "paused" else None,
         "error": sres.get("error"),
+        "reason": sres.get("reason"),  # ABORT reason when status == 'aborted'
     }
 
 
@@ -468,13 +727,24 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--model", default=str(DEFAULT_PLAN_MODEL),
+                    help="GGUF for POST /plan server-side inference (loaded lazily)")
+    ap.add_argument("--ctx", type=int, default=4096, help="n_ctx for /plan")
+    ap.add_argument("--writer-model", default=str(DEFAULT_WRITER_MODEL),
+                    help="GGUF for POST /write (base weights; falls back to --model if missing)")
     args = ap.parse_args()
+    PLANNER.model_path = Path(args.model) if args.model else None
+    PLANNER.n_ctx = args.ctx
+    PLANNER.writer_path = Path(args.writer_model) if args.writer_model else None
+    global SELF_URL
+    SELF_URL = f"http://{args.host}:{args.port}"
 
     TASKS = load_tasks(TASKS_FILE)
 
     print(f"covenant-agent dev server")
     print(f"  repo root:      {ROOT}")
-    print(f"  static root:    {CLIENT_POC}")
+    print(f"  app (if built): {APP_DIST}")
+    print(f"  /plan model:    {PLANNER.model_path} (available={PLANNER.available})")
     print(f"  models dir:     {MODELS_DIR}")
     print(f"  grammar file:   {GRAMMAR_FILE}")
     print(f"  tasks indexed:  {len(TASKS)} (from {TASKS_FILE})")

@@ -683,6 +683,49 @@ def sample_pause(world, profile, state, now, rng, alloc, holdout):
     return base
 
 
+# Names that never appear in any generated world state: a request naming one
+# of these has no matching constant, and the reference program abstains.
+ABSENT_NAMES = ["Cyrus", "Marguerite", "Tobias", "Ingrid", "Rafael", "Wen",
+                "Oluwaseun", "Katarina", "Desmond", "Priyanka"]
+# For entities named by a title-like field ("title", "item", "route", ...)
+# rather than a person name: neutral titles the worldgen never produces.
+ABSENT_TITLES = ["Q3 budget review", "Northwind onboarding", "Harbor lights",
+                 "Legacy migration", "Winter retrospective", "Blue corridor",
+                 "Sunset audit", "Pilot phase two", "Orchard survey",
+                 "Meridian handover"]
+
+
+def sample_abort(world, profile, state, now, rng, alloc, holdout):
+    """Level 11, NOT_FOUND flavor: a direct action on a record that does not
+    exist. Same frame shape as `direct`, so the English renders naturally,
+    but no ID constant is allocated for the record and the reference is
+    `ABORT NOT_FOUND`. (UNSUPPORTED / NEEDS_INFO / AMBIGUOUS flavors: see
+    harness/curriculum.py L11 examples; generator coverage is Lane C.)"""
+    entity = rng.choice(sorted(profile["entities"]))
+    prof = profile["entities"][entity]
+    acts = visible_actions(prof, holdout, exclude_kinds={"send_field"})
+    if not acts:
+        raise SampleError("no direct actions")
+    act = rng.choice(acts)
+    nf = prof.get("name_field")
+    if nf:
+        existing = {r.get(nf) for r in _records(state, entity)}
+        source = ABSENT_NAMES if nf == "name" else ABSENT_TITLES
+        pool = [n for n in source if n not in existing]
+        display = rng.choice(pool)
+    else:
+        ids = [int(r["id"].split("_")[-1]) for r in _records(state, entity)
+               if r["id"].split("_")[-1].isdigit()]
+        display = prof["ref_word"].format(n=(max(ids) if ids else 0) + rng.randint(7, 40))
+    # build_action may still allocate the action's own constants (an enum
+    # value, a message) — those are legitimately in the request.
+    info = build_action(act, entity, {"<v>": "r0"}, state, rng, alloc)
+    frame = {"recipe": "direct", "entity": entity, "noun": prof["noun"],
+             "record": display, "action": info}
+    return GenSample(frame, ["ABORT NOT_FOUND\n"], alloc.items,
+                     tags=["abort", "not_found"])
+
+
 RECIPES = {
     0: [("direct", lambda *a: sample_direct(*a))],
     1: [("chain", lambda *a: sample_chain(*a))],
@@ -699,6 +742,7 @@ RECIPES = {
     8: [("recovery", lambda *a: sample_recovery(*a))],
     9: [("ambiguous", lambda *a: sample_ambiguous(*a))],
     10: [("pause", lambda *a: sample_pause(*a))],
+    11: [("abort", lambda *a: sample_abort(*a))],
 }
 
 

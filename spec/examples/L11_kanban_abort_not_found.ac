@@ -1,0 +1,6 @@
+# L11_kanban_abort_not_found  (level 11, world kanban)
+# request: Assign card 4 to Cyrus.
+# $0: ID:card = 'card_4' — card 4
+# expected status: aborted
+
+ABORT NOT_FOUND

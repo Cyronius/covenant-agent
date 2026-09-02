@@ -6,6 +6,7 @@ const EFFECT_NOTE: Record<string, string> = {
   WRITE: 'Runs freely.',
   DELETE: "Needs your approval — can't be undone.",
   SEND: 'Needs your approval — sends a real message.',
+  EXTERNAL: 'Runs freely — calls the writer model; you approve before anything it wrote is sent.',
 };
 
 export default function ToolsPanel({ open, onClose }: { open: boolean; onClose: () => void }) {

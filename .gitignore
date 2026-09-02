@@ -3,6 +3,7 @@
 data/*.jsonl
 !data/curriculum_tasks.jsonl
 data/holdout/*.jsonl
+!data/holdout/e_demo_requests.jsonl
 data/r1_batches/
 data/r1_authored/
 .claude/plans/

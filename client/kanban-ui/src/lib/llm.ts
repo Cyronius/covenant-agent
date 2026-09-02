@@ -1,6 +1,5 @@
-// Ported from client/poc/src/llm.js — same @wllama/wllama contract, converted
-// to TS. See client/poc/src/llm.md for the API research notes behind this
-// file; nothing about the wllama usage itself changed in the port.
+// @wllama/wllama planner. See ./llm.md for the API research notes behind
+// this file.
 //
 // The vendored bundle lives in src/vendor/wllama/index.js (NOT public/) and
 // is imported normally so Vite bundles it — Vite refuses to import anything
@@ -18,7 +17,8 @@ const WLLAMA_WASM_URL = '/vendor/wllama/wasm/wllama.wasm';
 const DEFAULT_N_CTX = 4096;
 
 export interface Planner {
-  backend: 'wasm' | 'webgpu';
+  /** 'server' = POST /plan on the dev server (./serverPlanner.ts). */
+  backend: 'wasm' | 'webgpu' | 'server';
   loadMs: number;
   generate(
     promptText: string,

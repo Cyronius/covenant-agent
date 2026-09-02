@@ -1,4 +1,4 @@
-# client/poc/server — dev server
+# client/kanban-ui/server — dev server
 
 Dev-only local server for the browser-inference stand-in
 (`.claude/plans/browser-inference-standin.md`). Pure Python stdlib —
@@ -6,7 +6,7 @@ Dev-only local server for the browser-inference stand-in
 
 It does two things:
 
-1. **Static file server** for everything under `client/poc/` (index.html,
+1. **Static file server** for everything under `client/kanban-ui/` (index.html,
    `src/*.js`, `vendor/wllama/*.wasm`, `fixtures/*.json`, ...), plus the
    large GGUF model file served in place from `baselines/qwen/models/`
    (never copied — it's ~0.8–2GB and gitignored) with `Range:` request
@@ -34,11 +34,11 @@ It does two things:
 ## Run
 
 ```
-python client/poc/server/dev_server.py --port 8080
+python server/dev_server.py --port 8080
 ```
 
 Runnable from any working directory — it resolves the repo root relative
-to its own file location (`client/poc/server/dev_server.py` → repo root is
+to its own file location (`server/dev_server.py` → repo root is
 3 levels up), the same convention `harness/run.py` uses.
 
 Startup prints the resolved repo root, static root, models dir, grammar
@@ -51,9 +51,9 @@ crashing the server.
 
 ## Static routes
 
-- `GET /` → `client/poc/index.html`
-- `GET /<any path>` → `client/poc/<any path>` (404 if missing; directory
-  traversal outside `client/poc/` is rejected with 403)
+- `GET /` → `client/kanban-ui/index.html`
+- `GET /<any path>` → `client/kanban-ui/<any path>` (404 if missing; directory
+  traversal outside `client/kanban-ui/` is rejected with 403)
 - `GET /models/<filename>` → `baselines/qwen/models/<filename>`, served in
   place with full `Range:` support (`206 Partial Content` +
   `Content-Range`/`Accept-Ranges`, or a normal `200` whole-file response for
@@ -182,3 +182,31 @@ Also spot-checked: malformed program text returns
 `{"status": "static_error", "diagnostics": ["PARSE_ERROR ..."]}` (HTTP
 200, not a crash), and an unknown `task_id` returns
 `{"status": "server_error", "error": {"code": "UNKNOWN_TASK", ...}}`.
+
+## `POST /plan` and `GET /plan/status` — server-side inference
+
+Added 2026-09-02 (plan `s2-consolidated-program` §A7). Runs the same GGUF
+and `agent_core.gbnf` the browser path uses, through llama-cpp-python on
+this machine's CPU. The client builds the prompt exactly as it does for
+the browser path and posts it, so both paths send byte-identical text.
+
+- `GET /plan/status` → `{available, model, loaded, reason?}`
+- `POST /plan {"warm": true}` → loads the model (first call), returns status
+- `POST /plan {"prompt": "<full chat-formatted prompt>", "max_tokens"?: 250, "stop"?: ["<|im_end|>"]}`
+  → `{text, finish_reason, tokens_out, tokens_in, gen_ms, model}`
+
+`--model PATH` picks the checkpoint (default `qwen3.5-0.8b-s1-q8.gguf`);
+`--ctx N` sets the context size. Generation is serialized with a lock
+(llama.cpp contexts are not thread-safe).
+
+## `POST /write` — the writer tool's backend
+
+Called by the sandbox, not by the client: when `/validate` runs a program
+that calls an `EXTERNAL` tool (`write_text` in the kanban world), the
+sandbox POSTs `{kind, params}` here and uses the returned `{text}`. With
+no server (the eval harness), the sandbox returns a deterministic stub
+`[write_text: <brief>]` instead, so evals score routing, not prose.
+Backed by `--writer-model` (default: the untuned `Qwen3.5-0.8B-Q8_0.gguf`,
+a second llama.cpp instance). The merged S1 planner checkpoint was tried
+first and just echoes the data list back; the base weights write a proper
+short message. Falls back to the planner weights if the file is missing.

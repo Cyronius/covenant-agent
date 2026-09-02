@@ -1,0 +1,10 @@
+# L13_kanban_write_overdue  (level 13, world kanban)
+# request: Tell Bob which of his cards are overdue.
+# $0: ID:user = 'user_1' — Bob
+# $1: STR = 'Tell Bob which of his cards are overdue.' — the request itself, verbatim (brief for write_text)
+
+CALL @list_cards -> r0
+FILTER r0 @card.assignee EQ $0 AND @card.due LT NOW -> r1
+CALL @write_text $1 r1 -> r2
+CALL @send_message $0 r2
+STOP

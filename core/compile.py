@@ -10,7 +10,7 @@ rt.select, rt.first, rt.isToolError.
 """
 from __future__ import annotations
 
-from .ir import (Call, Const, Count, Filter, First, Foreach, Get, If, IntLit,
+from .ir import (Abort, Format, Call, Const, Count, Filter, First, Foreach, Get, If, IntLit,
                  Let, MapF, Now, Null, Parallel, Pause, Pred, Program, Reg,
                  RegField, Return, Select, SetF, Sort, Stop, TaskContext, Try)
 
@@ -131,6 +131,10 @@ class _Emitter:
             self.out(depth, f"{self._assign(instr.dst)}(r{instr.src.n}).filter((_x) => ({p}));")
         elif isinstance(instr, MapF):
             self.out(depth, f'{self._assign(instr.dst)}rt.mapF(r{instr.src.n}, "{instr.field}");')
+        elif isinstance(instr, Format):
+            vals = ", ".join(self.operand(o) for o in instr.ops)
+            kinds = ", ".join(f'"{k}"' for k in getattr(instr, "kinds", ()))
+            self.out(depth, f'{self._assign(instr.dst)}rt.format(rt.constant("{instr.template}"), [{vals}], [{kinds}]);')
         elif isinstance(instr, Count):
             self.out(depth, f"{self._assign(instr.dst)}rt.count(r{instr.src.n});")
         elif isinstance(instr, Sort):
@@ -178,6 +182,8 @@ class _Emitter:
             self.out(depth, f"return rt.ret({self.operand(instr.op)});")
         elif isinstance(instr, Stop):
             self.out(depth, "return rt.stop();")
+        elif isinstance(instr, Abort):
+            self.out(depth, f'return rt.abort("{instr.reason}");')
         elif isinstance(instr, Pause):
             regs = sorted(self.assigned)
             pairs = ", ".join(f"r{n}: r{n}" for n in regs)
@@ -197,7 +203,7 @@ class _Emitter:
             self.out(1, f'{rname} = rt.initial("{rname}");')
         self.block(self.program.body, 1)
         last = self.program.body[-1] if self.program.body else None
-        if not isinstance(last, (Return, Stop, Pause)):
+        if not isinstance(last, (Return, Stop, Pause, Abort)):
             self.out(1, "return rt.stop();")
         self.out(0, "}")
         return "\n".join(self.lines) + "\n"

@@ -161,6 +161,16 @@ class Call(Instr):
 
 
 @dataclass
+class Format(Instr):
+    """spec §4 FORMAT: fill a STR template constant's {0},{1},... slots with
+    operand values -> STR. The only way a program produces new text, and it
+    still emits none: the template is a constant, the values are data."""
+    template: str  # 'C3'
+    ops: tuple
+    dst: Reg
+
+
+@dataclass
 class Filter(Instr):
     src: Reg
     pred: Pred
@@ -240,6 +250,16 @@ class Stop(Instr):
 @dataclass
 class Pause(Instr):
     pass
+
+
+# spec §4 ABORT: the planner declines to act. Reasons are a closed enum so
+# the value channel stays out of the token stream.
+ABORT_REASONS = ("NOT_FOUND", "AMBIGUOUS", "UNSUPPORTED", "NEEDS_INFO")
+
+
+@dataclass
+class Abort(Instr):
+    reason: str
 
 
 @dataclass

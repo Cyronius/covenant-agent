@@ -190,7 +190,7 @@ README also documents a CDN option (`@wllama/wllama/esm/wasm-from-cdn.js`)
 — explicitly **not used here**, since the task requires same-origin static
 serving with no network dependency beyond the local dev server.
 
-## Vendored static assets (`client/poc/vendor/wllama/`)
+## Vendored static assets (`src/vendor/wllama/` + `public/vendor/wllama/wasm/`)
 
 Copied straight out of the installed npm package (`esm/` subtree) with no
 modification:

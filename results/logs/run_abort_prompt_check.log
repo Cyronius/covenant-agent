@@ -1,0 +1,114 @@
+20/55 goal=12 compile=16 (7.9s/task)
+40/55 goal=17 compile=28 (9.3s/task)
+{
+  "model": "qwen3.5-0.8b-s1-q8.gguf",
+  "condition": "A-grammar",
+  "n": 55,
+  "compile_ok_rate": 0.6363636363636364,
+  "goal_success_rate": 0.4,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 20,
+      "compile": 16,
+      "goal": 12
+    },
+    "1": {
+      "n": 15,
+      "compile": 8,
+      "goal": 5
+    },
+    "2": {
+      "n": 5,
+      "compile": 0,
+      "goal": 0
+    },
+    "3": {
+      "n": 10,
+      "compile": 9,
+      "goal": 5
+    },
+    "11": {
+      "n": 5,
+      "compile": 2,
+      "goal": 0
+    }
+  },
+  "gen_ms_p50": 9632.316100061871,
+  "gen_ms_p95": 25024.948799982667,
+  "tokens_out_p50": 16
+}
+20/100 goal=20 compile=20 (13.7s/task)
+40/100 goal=40 compile=40 (14.2s/task)
+60/100 goal=60 compile=60 (13.2s/task)
+80/100 goal=79 compile=80 (13.4s/task)
+100/100 goal=99 compile=100 (13.4s/task)
+{
+  "model": "qwen3.5-0.8b-s1-q8.gguf",
+  "condition": "A-grammar",
+  "n": 100,
+  "compile_ok_rate": 1.0,
+  "goal_success_rate": 0.99,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 5,
+      "compile": 5,
+      "goal": 5
+    },
+    "1": {
+      "n": 6,
+      "compile": 6,
+      "goal": 6
+    },
+    "2": {
+      "n": 16,
+      "compile": 16,
+      "goal": 16
+    },
+    "3": {
+      "n": 9,
+      "compile": 9,
+      "goal": 9
+    },
+    "4": {
+      "n": 10,
+      "compile": 10,
+      "goal": 10
+    },
+    "5": {
+      "n": 13,
+      "compile": 13,
+      "goal": 13
+    },
+    "6": {
+      "n": 10,
+      "compile": 10,
+      "goal": 9
+    },
+    "7": {
+      "n": 17,
+      "compile": 17,
+      "goal": 17
+    },
+    "8": {
+      "n": 5,
+      "compile": 5,
+      "goal": 5
+    },
+    "9": {
+      "n": 4,
+      "compile": 4,
+      "goal": 4
+    },
+    "10": {
+      "n": 5,
+      "compile": 5,
+      "goal": 5
+    }
+  },
+  "gen_ms_p50": 12709.23389995005,
+  "gen_ms_p95": 21105.920400004834,
+  "tokens_out_p50": 47.5
+}
+=== all done ===

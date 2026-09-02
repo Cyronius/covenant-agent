@@ -94,3 +94,32 @@ def test_pred_parsing():
     pred = prog.body[0].pred
     assert pred.ops == ("AND", "OR")
     assert pred.clauses[1].neg
+
+
+def test_abort_parses_with_reason():
+    prog, diags = parse("ABORT NOT_FOUND\n")
+    assert diags == []
+    assert isinstance(prog.body[0], ir.Abort)
+    assert prog.body[0].reason == "NOT_FOUND"
+
+
+def test_abort_rejects_unknown_reason():
+    prog, codes = _diag_codes("ABORT BECAUSE\n")
+    assert prog is None and codes == ["PARSE_ERROR"]
+    prog, codes = _diag_codes("ABORT\n")
+    assert prog is None and codes == ["PARSE_ERROR"]
+
+
+def test_format_parses():
+    prog, diags = parse("FORMAT C1 r0.F2 r3 -> r4\n")
+    assert diags == []
+    f = prog.body[0]
+    assert isinstance(f, ir.Format) and f.template == "C1" and len(f.ops) == 2
+    assert f.dst == ir.Reg(4)
+
+
+def test_format_needs_template_and_arrow():
+    prog, codes = _diag_codes("FORMAT r0 -> r1\n")
+    assert prog is None and codes == ["PARSE_ERROR"]
+    prog, codes = _diag_codes("FORMAT C1 r0\n")
+    assert prog is None and codes == ["PARSE_ERROR"]

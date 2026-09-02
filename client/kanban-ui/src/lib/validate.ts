@@ -1,6 +1,6 @@
-// Thin client for POST /validate — see client/poc/server/README.md for the
+// Thin client for POST /validate — see server/README.md for the
 // full contract. Proxied through Vite's dev server to the running
-// `python client/poc/server/dev_server.py` (see ../../vite.config.ts).
+// `python server/dev_server.py` (see ../../vite.config.ts).
 import type { KanbanState } from '../data/board';
 import type { Registers } from './prompt';
 import type { KanbanContext } from './kanbanPrompt';
@@ -16,7 +16,7 @@ export interface CallLogEntry {
 export interface ValidateRequest {
   // Either task_id (one of the three fixed curriculum tasks) OR
   // context+world (as returned by POST /kanban_prompt, for a freely-typed
-  // request) — see client/poc/server/README.md's `/validate` section.
+  // request) — see server/README.md's `/validate` section.
   task_id?: string;
   context?: KanbanContext;
   world?: string;
@@ -39,6 +39,7 @@ export interface ValidateResponse {
   status:
     | 'ok'
     | 'paused'
+    | 'aborted'
     | 'static_error'
     | 'effect_blocked'
     | 'error'
@@ -50,7 +51,11 @@ export interface ValidateResponse {
   calls: CallLogEntry[];
   return_value: unknown;
   pause_envs: Record<string, string>[] | null;
-  error: { code: string; message?: string; tool?: string; effect?: string } | null;
+  /** On effect_blocked, `args` are the blocked call's actual (narrowed) params —
+   * e.g. the drafted message text — so the approval gate can preview them. */
+  error: { code: string; message?: string; tool?: string; effect?: string; args?: unknown[] } | null;
+  /** ABORT reason (spec §4) when status === 'aborted'. */
+  reason?: 'NOT_FOUND' | 'AMBIGUOUS' | 'UNSUPPORTED' | 'NEEDS_INFO' | string | null;
 }
 
 export async function validate(req: ValidateRequest): Promise<ValidateResponse> {

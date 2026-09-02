@@ -1,0 +1,6 @@
+# L11_kanban_abort_needs_info  (level 11, world kanban)
+# request: Create a new card for Bob.
+# $0: ID:user = 'user_1' — Bob
+# expected status: aborted
+
+ABORT NEEDS_INFO

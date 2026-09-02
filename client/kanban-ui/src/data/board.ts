@@ -3,11 +3,10 @@
 // default_state for the reference shape this mirrors), anchored to the same
 // `now` all three of our tasks carry (data/curriculum_tasks.jsonl).
 //
-// Two ids are load-bearing, not arbitrary: "user_1" must be Bob (the
-// L3/L7 tasks' constant C0 is the literal id "user_1", resolved at compile
-// time from data/curriculum_tasks.jsonl — see TASKS in ./tasks.ts), and a
-// card with id "card_4" must exist (L0's constant C0 is literally "card_4").
-// Every other id/title/date is ours to invent.
+// "user_1" is Bob and "card_4" exists by convention (data/curriculum_tasks.jsonl's
+// kanban tasks and harness/demo_suite.py's CASES assume both). Every other
+// id/title/date is ours to invent. harness/demo_suite.py mirrors this board
+// verbatim — keep the two in sync.
 
 export const NOW = 1_760_000_000; // matches task["now"] for L0/L3/L7
 const DAY = 86400;
@@ -74,7 +73,7 @@ export function initialState(): KanbanState {
   };
 }
 
-export type Effect = 'READ' | 'WRITE' | 'DELETE' | 'SEND';
+export type Effect = 'READ' | 'WRITE' | 'DELETE' | 'SEND' | 'EXTERNAL';
 
 // Tool name -> effect, mirroring runtime/worlds/kanban.py's WORLD["tools"]
 // 1:1 (kept small and static rather than fetched, since it's fixed
@@ -90,6 +89,7 @@ export const TOOL_EFFECTS: Record<string, Effect> = {
   list_users: 'READ',
   get_user: 'READ',
   send_message: 'SEND',
+  write_text: 'EXTERNAL',
 };
 
 export function userById(state: KanbanState, id: string): KanbanUser | undefined {

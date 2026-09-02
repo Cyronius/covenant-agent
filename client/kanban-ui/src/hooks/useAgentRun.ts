@@ -9,15 +9,16 @@
 // See .claude/plans/understory-kanban-frontend.md.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPlanner, type LoadStage, type Planner } from '../lib/llm';
+import { createServerPlanner } from '../lib/serverPlanner';
 import { buildFullPrompt, STOP, type Registers } from '../lib/prompt';
 import { validate, type CallLogEntry } from '../lib/validate';
 import { fetchKanbanPrompt, describeCallSite } from '../lib/kanbanPrompt';
-import { describeCall } from '../lib/describe';
+import { describeCall, describeArg } from '../lib/describe';
 import { initialState, userById, TOOL_EFFECTS, type KanbanState, type Effect } from '../data/board';
 
 const MODEL_URL = '/models/qwen3.5-0.8b-s1-q8.gguf'; // multi-domain S1 checkpoint (104 domains) — condB was 2-domain (kanban+crm) and generalized worse: 80% holdout vs S1's 92.5% OOD (results/r2_b_0.8b_holdout.jsonl vs results/s1_0.8b_q8_ood.jsonl)
 const GRAMMAR_URL = '/agent_core.gbnf';
-const MAX_SEGMENTS = 4; // matches client/poc/src/main.js's POC-only segment cap
+const MAX_SEGMENTS = 4; // PAUSE continuations per request (harness MAX_SEGMENTS is the eval-side cap)
 
 export type ChatMessage =
   | { kind: 'user'; id: string; text: string }
@@ -29,6 +30,17 @@ export type ChatMessage =
   | { kind: 'note'; id: string; text: string };
 
 const CPU_ONLY_KEY = 'kanban-ui:cpuOnly';
+const INFERENCE_KEY = 'kanban-ui:inference';
+
+export type InferenceMode = 'browser' | 'server';
+
+function loadInferencePref(): InferenceMode {
+  try {
+    return localStorage.getItem(INFERENCE_KEY) === 'server' ? 'server' : 'browser';
+  } catch {
+    return 'browser';
+  }
+}
 
 function loadCpuOnlyPref(): boolean {
   try {
@@ -40,7 +52,7 @@ function loadCpuOnlyPref(): boolean {
 
 export type ModelStatus =
   | { phase: 'loading'; stage: LoadStage }
-  | { phase: 'ready'; backend: 'wasm' | 'webgpu'; loadMs: number }
+  | { phase: 'ready'; backend: 'wasm' | 'webgpu' | 'server'; loadMs: number }
   | { phase: 'error'; message: string };
 
 let nextId = 0;
@@ -49,6 +61,14 @@ const mkId = () => `m${++nextId}`;
 function effectFor(call: CallLogEntry): Effect {
   return TOOL_EFFECTS[call.name] ?? 'READ';
 }
+
+// spec §4 ABORT reasons, as the person should read them.
+const ABORT_COPY: Record<string, string> = {
+  NOT_FOUND: "I couldn't find what that refers to on this board.",
+  AMBIGUOUS: 'That could mean more than one thing — which did you mean?',
+  UNSUPPORTED: "I don't have a tool that does that.",
+  NEEDS_INFO: 'I need more details before I can do that.',
+};
 
 const EFFECT_COPY: Record<string, string> = {
   DELETE: "This can't be undone.",
@@ -77,6 +97,7 @@ export function useAgentRun() {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [cpuOnly, setCpuOnly] = useState(loadCpuOnlyPref);
+  const [inference, setInference] = useState<InferenceMode>(loadInferencePref);
 
   const plannerRef = useRef<Planner | null>(null);
   const gateResolveRef = useRef<((approved: boolean) => void) | null>(null);
@@ -109,18 +130,22 @@ export function useAgentRun() {
   // further down — both just want "unload whatever's loaded (if anything),
   // load fresh with this nGpuLayers setting, report loading/ready/error the
   // same way".
-  const loadPlanner = useCallback(async (forceCpu: boolean) => {
+  const loadPlanner = useCallback(async (forceCpu: boolean, mode: InferenceMode) => {
     try {
       if (plannerRef.current) {
         await plannerRef.current.unload();
         plannerRef.current = null;
       }
-      const planner = await createPlanner({
-        modelUrl: MODEL_URL,
-        grammarUrl: GRAMMAR_URL,
-        nGpuLayers: forceCpu ? 0 : undefined,
-        onStage: (stage) => setModelStatus({ phase: 'loading', stage }),
-      });
+      setModelStatus({ phase: 'loading', stage: mode === 'server' ? 'model' : 'grammar' });
+      const planner =
+        mode === 'server'
+          ? await createServerPlanner()
+          : await createPlanner({
+              modelUrl: MODEL_URL,
+              grammarUrl: GRAMMAR_URL,
+              nGpuLayers: forceCpu ? 0 : undefined,
+              onStage: (stage) => setModelStatus({ phase: 'loading', stage }),
+            });
       plannerRef.current = planner;
       setModelStatus({ phase: 'ready', backend: planner.backend, loadMs: planner.loadMs });
     } catch (err) {
@@ -144,11 +169,23 @@ export function useAgentRun() {
   useEffect(() => {
     if (loadStartedRef.current) return;
     loadStartedRef.current = true;
-    loadPlanner(cpuOnly);
+    loadPlanner(cpuOnly, inference);
     // Deliberately not depending on cpuOnly: only the very first mount's
     // value matters here — the effect below owns every reload after that,
     // including ones triggered by the toggle changing this same state.
   }, [loadPlanner]);
+
+  const setInferenceMode = useCallback((mode: InferenceMode) => {
+    setInference((prev) => {
+      if (prev === mode) return prev;
+      try {
+        localStorage.setItem(INFERENCE_KEY, mode);
+      } catch {
+        // localStorage unavailable — still switches for this session
+      }
+      return mode;
+    });
+  }, []);
 
   const toggleCpuOnly = useCallback(() => {
     setCpuOnly((prev) => {
@@ -172,8 +209,8 @@ export function useAgentRun() {
       cpuOnlyMountedRef.current = true;
       return;
     }
-    loadPlanner(cpuOnly);
-  }, [cpuOnly, loadPlanner]);
+    loadPlanner(cpuOnly, inference);
+  }, [cpuOnly, inference, loadPlanner]);
 
   const approveGate = useCallback(() => {
     gateResolveRef.current?.(true);
@@ -237,7 +274,14 @@ export function useAgentRun() {
           while (resp.status === 'effect_blocked') {
             const sym = resp.error?.tool;
             const tool = sym ? kp.context.tools.find((t) => t.sym === sym) : undefined;
-            const args = sym ? describeCallSite(gen.text, sym, kp.context) : [];
+            // Prefer the sandbox's actual params (resolved values — for a SEND
+            // that's the drafted text); fall back to the static call site.
+            const board = boardRef.current;
+            const args = resp.error?.args
+              ? resp.error.args.map((a) => describeArg(a, board, board))
+              : sym
+                ? describeCallSite(gen.text, sym, kp.context)
+                : [];
             const lead = (resp.error?.effect && EFFECT_COPY[resp.error.effect]) || 'This needs approval.';
             const gateId = mkId();
             append({
@@ -271,6 +315,13 @@ export function useAgentRun() {
             registers = resp.registers ?? null;
             pauseTypes = resp.pause_envs?.[0] ?? null;
             continue;
+          }
+
+          if (resp.status === 'aborted') {
+            // The planner declined (ABORT) — nothing ran past any reads.
+            const reason = resp.reason ?? '';
+            append({ kind: 'agent-text', id: mkId(), text: ABORT_COPY[reason] ?? `Can't do that (${reason || 'no reason given'}).` });
+            return;
           }
 
           if (resp.status === 'ok') {
@@ -328,6 +379,8 @@ export function useAgentRun() {
     toast,
     cpuOnly,
     toggleCpuOnly,
+    inference,
+    setInferenceMode,
     sendMessage,
     approveGate,
     cancelGate,

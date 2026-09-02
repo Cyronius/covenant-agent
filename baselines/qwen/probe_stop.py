@@ -24,44 +24,20 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "client" / "poc" / "server"))
+sys.path.insert(0, str(ROOT / "server"))
 
 from baselines.qwen.run_a import SYSTEM, build_prompt  # noqa: E402
 from core.ir import TaskContext  # noqa: E402
 from core.pipeline import build  # noqa: E402
 from dev_server import handle_kanban_prompt  # noqa: E402
 
-NOW = 1_760_000_000  # client/kanban-ui/src/data/board.ts
-DAY = 86400
-USERS = [("user_1", "Bob Alvarez"), ("user_2", "Priya Nandan"),
-         ("user_3", "Theo Marsh"), ("user_4", "Kade Whitfield"),
-         ("user_5", "Luz Ferreira")]
-CARDS = [  # id, title, status, assignee, due (days from now), urgent
-    ("card_1", "Fix OAuth redirect loop on staging", "doing", "user_1", -3, True),
-    ("card_2", "Write release notes for v4.2", "todo", "user_2", 6, False),
-    ("card_3", "Audit tool-call pause UX for DELETE effects", "doing", "user_3", 2, True),
-    ("card_4", "Retire legacy webhook handler", "todo", "user_1", -8, False),
-    ("card_5", "Design empty-state illustration for board", "todo", "user_2", 13, False),
-    ("card_6", "Reproduce race condition in segment resume", "doing", "user_4", 1, True),
-    ("card_7", "Onboard Luz to on-call rotation", "todo", "user_5", 8, False),
-    ("card_8", "Ship grammar-constrained decode benchmarks", "done", "user_4", -6, False),
-]
+from harness.demo_suite import demo_state  # noqa: E402  (the kanban-ui board)
+
 DEFAULT_REQUESTS = [
     "delete all the cards owned by bob",
     "message bob about card 4",
     "archive everything that is done",
 ]
-
-
-def demo_state() -> dict:
-    return {"entities": {
-        "user": [{"id": i, "name": n, "email": f"{n.split()[0].lower()}@understory.test"}
-                 for i, n in USERS],
-        "card": [{"id": i, "title": t, "status": s, "assignee": a,
-                  "due": NOW + d * DAY, "urgent": u, "archived": False,
-                  "created": NOW - 20 * DAY}
-                 for i, t, s, a, d, u in CARDS]},
-        "outbox": [], "payments": []}
 
 
 def chat_prompt(user: str) -> str:

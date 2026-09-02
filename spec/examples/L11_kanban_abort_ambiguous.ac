@@ -1,0 +1,6 @@
+# L11_kanban_abort_ambiguous  (level 11, world kanban)
+# request: Message him about the release.
+# $0: STR = 'The release is going out today.' — message text
+# expected status: aborted
+
+ABORT AMBIGUOUS

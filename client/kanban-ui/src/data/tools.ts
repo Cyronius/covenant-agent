@@ -95,6 +95,16 @@ export const TOOLS: ToolDecl[] = [
     effect: 'READ',
   },
   {
+    name: 'write_text',
+    desc: "Write a short message from a brief (the request, in the requester's words) and the cards it should mention. Returns the text — drafted by the model, never composed by the planner.",
+    params: [
+      { name: 'brief', type: 'STR', desc: 'what to write' },
+      { name: 'data', type: 'LIST OBJ:card', desc: 'cards the message is about' },
+    ],
+    returns: 'STR',
+    effect: 'EXTERNAL',
+  },
+  {
     name: 'send_message',
     desc: 'Send a direct message to a user.',
     params: [

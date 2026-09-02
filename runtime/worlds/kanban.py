@@ -87,6 +87,12 @@ WORLD = {
         },
         {
             "name": "assign_card",
+            # Do not "fix" grounding by adding synonyms here: tried
+            # 2026-09-02 ("change who owns it (its owner / assignee)") —
+            # across 5 symbol assignments it left "owned by Bob" at 1/5 and
+            # regressed "delete all the cards owned by bob" from 5/5 to 0/5.
+            # Synonym coverage belongs in the training corpus
+            # (.claude/plans/s2-consolidated-program.md, Lane C).
             "desc": "Assign a card to a user.",
             "params": [
                 {"name": "card", "type": "ID:card", "desc": "the card",
@@ -124,6 +130,24 @@ WORLD = {
             "returns": "OBJ:user",
             "effects": ["READ"],
             "impl": {"op": "get", "entity": "user", "id_param": 0},
+        },
+        {
+            # Plan s2-consolidated-program §A8: prose is a tool, never something
+            # the planner emits. The sandbox stubs it deterministically for
+            # eval (routing is what gets scored); server/dev_server.py backs
+            # it with a real model for the demo.
+            "name": "write_text",
+            "desc": "Write a short message from a brief (what to say, in the "
+                    "requester's words) and the cards it should mention. "
+                    "Returns the text.",
+            "params": [
+                {"name": "brief", "type": "STR", "desc": "what to write"},
+                {"name": "data", "type": "LIST OBJ:card",
+                 "desc": "cards the message is about"},
+            ],
+            "returns": "STR",
+            "effects": ["EXTERNAL"],
+            "impl": {"op": "external", "kind": "write_text"},
         },
         {
             "name": "send_message",

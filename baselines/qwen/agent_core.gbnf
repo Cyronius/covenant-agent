@@ -6,8 +6,8 @@
 # The optional EFFECTS header is omitted (references omit it too).
 
 root      ::= line* termline
-line      ::= indent? (instr | "STOP" | ret) nl
-termline  ::= ("STOP" | "PAUSE" | ret) nl?
+line      ::= indent? (instr | "STOP" | ret | abort) nl
+termline  ::= ("STOP" | "PAUSE" | ret | abort) nl?
 # The newline after the terminator MUST be optional. SFT targets are
 # stripped (make_sft.py), so the tuned model puts ~1.0 on <|im_end|>
 # immediately after "STOP"; a mandatory `nl` leaves the grammar in a
@@ -20,15 +20,17 @@ termline  ::= ("STOP" | "PAUSE" | ret) nl?
 # "PAUSE\n" was ambiguous and the same masking hit every L10 task. STOP
 # stays in `line` for early exits inside IF bodies.
 ret       ::= "RETURN " operand
+abort     ::= "ABORT " ("NOT_FOUND" | "AMBIGUOUS" | "UNSUPPORTED" | "NEEDS_INFO")
 indent    ::= "  " | "    " | "      " | "        "
 nl        ::= "\n"
 
-instr     ::= let | get | set | call | filterin | mapin | countin | sortin | selectin | firstin | foreachin | ifin | "ELSE" | "PARALLEL" | tryin
+instr     ::= let | get | set | call | formatin | filterin | mapin | countin | sortin | selectin | firstin | foreachin | ifin | "ELSE" | "PARALLEL" | tryin
 
 let       ::= "LET " operand arrow
 get       ::= "GET " reg "." field arrow
 set       ::= "SET " reg " " field " " operand arrow
 call      ::= "CALL " tool (" " operand)* (arrow)?
+formatin  ::= "FORMAT " const (" " operand)* arrow
 filterin  ::= "FILTER " reg " " pred arrow
 mapin     ::= "MAP " reg " " field arrow
 countin   ::= "COUNT " reg arrow

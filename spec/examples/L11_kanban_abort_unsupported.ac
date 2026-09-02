@@ -1,0 +1,7 @@
+# L11_kanban_abort_unsupported  (level 11, world kanban)
+# request: Merge card 4 into card 2.
+# $0: ID:card = 'card_4' — card 4
+# $1: ID:card = 'card_2' — card 2
+# expected status: aborted
+
+ABORT UNSUPPORTED

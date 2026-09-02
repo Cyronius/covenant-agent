@@ -579,6 +579,80 @@ CURRICULUM = [
         ],
     ),
     # ---------------- Effect gate (R7 groundwork) ----------------
+    # ---------------- Level 11: abstain (ABORT) ----------------
+    dict(
+        id="L11_kanban_abort_not_found", level=11, world="kanban",
+        request="Assign card 4 to Cyrus.",
+        constants=[{"type": "ID:card", "value": "card_4", "desc": "card 4"}],
+        segments=["ABORT NOT_FOUND\n"],
+        expected_status="aborted", tags=["abort"],
+    ),
+    dict(
+        id="L11_kanban_abort_unsupported", level=11, world="kanban",
+        request="Merge card 4 into card 2.",
+        constants=[{"type": "ID:card", "value": "card_4", "desc": "card 4"},
+                   {"type": "ID:card", "value": "card_2", "desc": "card 2"}],
+        segments=["ABORT UNSUPPORTED\n"],
+        expected_status="aborted", tags=["abort"],
+    ),
+    dict(
+        id="L11_kanban_abort_needs_info", level=11, world="kanban",
+        request="Create a new card for Bob.",
+        constants=[{"type": "ID:user", "value": "user_1", "desc": "Bob"}],
+        segments=["ABORT NEEDS_INFO\n"],
+        expected_status="aborted", tags=["abort"],
+    ),
+    dict(
+        id="L11_kanban_abort_ambiguous", level=11, world="kanban",
+        request="Message him about the release.",
+        constants=[{"type": "STR", "value": "The release is going out today.",
+                    "desc": "message text"}],
+        segments=["ABORT AMBIGUOUS\n"],
+        expected_status="aborted", tags=["abort"],
+    ),
+    # ---------------- Level 12: FORMAT (templated text from data) ----------------
+    dict(
+        id="L12_kanban_duplicate_card", level=12, world="kanban",
+        request="Duplicate card 4.",
+        constants=[{"type": "ID:card", "value": "card_4", "desc": "card 4"},
+                   {"type": "STR", "value": "Copy of {0}",
+                    "desc": "title template: Copy of {0} (fill {0} with the original title)"}],
+        segments=[
+            "CALL @get_card $0 -> r0\n"
+            "FORMAT $1 r0.@card.title -> r1\n"
+            "CALL @create_card r1 r0.@card.due r0.@card.assignee -> r2\n"
+            "STOP\n"],
+        tags=["format"],
+    ),
+    dict(
+        id="L12_kanban_due_reminder", level=12, world="kanban",
+        request="Remind Bob that card 4 is due.",
+        constants=[{"type": "ID:card", "value": "card_4", "desc": "card 4"},
+                   {"type": "ID:user", "value": "user_1", "desc": "Bob"},
+                   {"type": "STR", "value": "Reminder: {0} is due {1}.",
+                    "desc": "message template: Reminder: {0} is due {1}. (fill {0} with the card title, {1} with its due date)"}],
+        segments=[
+            "CALL @get_card $0 -> r0\n"
+            "FORMAT $2 r0.@card.title r0.@card.due -> r1\n"
+            "CALL @send_message $1 r1\n"
+            "STOP\n"],
+        tags=["format"],
+    ),
+    # ---------------- Level 13: prose via the writer tool ----------------
+    dict(
+        id="L13_kanban_write_overdue", level=13, world="kanban",
+        request="Tell Bob which of his cards are overdue.",
+        constants=[{"type": "ID:user", "value": "user_1", "desc": "Bob"},
+                   {"type": "STR", "value": "Tell Bob which of his cards are overdue.",
+                    "desc": "the request itself, verbatim (brief for write_text)"}],
+        segments=[
+            "CALL @list_cards -> r0\n"
+            "FILTER r0 @card.assignee EQ $0 AND @card.due LT NOW -> r1\n"
+            "CALL @write_text $1 r1 -> r2\n"
+            "CALL @send_message $0 r2\n"
+            "STOP\n"],
+        tags=["writer"],
+    ),
     dict(
         id="GATE_kanban_delete_blocked", level=0, world="kanban",
         request="Delete card 4.",
@@ -643,7 +717,8 @@ def write_examples(out_dir: Path):
             if i > 0:
                 lines.append("# --- continuation segment (after PAUSE) ---")
             lines.append(seg.rstrip("\n"))
-        (out_dir / f"{spec['id']}.ac").write_text("\n".join(lines) + "\n")
+        (out_dir / f"{spec['id']}.ac").write_text("\n".join(lines) + "\n",
+                                                 encoding="utf-8")
 
 
 def main():

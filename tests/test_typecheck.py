@@ -123,3 +123,48 @@ def test_parallel_no_intra_block_reads():
 def test_pause_env_reported():
     _, res = _codes("CALL @list_cards -> r0\nPAUSE\n")
     assert res.pause_envs and res.pause_envs[0]["r0"] == "LIST OBJ:card"
+
+
+def test_unreachable_after_abort():
+    codes, _ = _codes("ABORT UNSUPPORTED\nCALL @list_cards -> r0\n")
+    assert codes == ["UNREACHABLE"]
+
+
+def test_abort_inside_if_is_a_valid_early_exit():
+    codes, res = _codes(
+        "CALL @list_cards -> r0\n"
+        "FIRST r0 -> r1\n"
+        "IF r1 EQ NULL\n"
+        "  ABORT NOT_FOUND\n"
+        "CALL @delete_card r1\n"
+        "STOP\n")
+    assert codes == []
+    assert 'rt.abort("NOT_FOUND")' in res.js
+
+
+def _fmt_ctx():
+    world = get_world("kanban")
+    constants = [
+        {"type": "ID:card", "value": "card_1", "desc": "card 1"},
+        {"type": "STR", "value": "Copy of {0}", "desc": "title template"},
+        {"type": "STR", "value": "{0} due {1}", "desc": "two-slot template"},
+        {"type": "INT", "value": 3, "desc": "three"},
+    ]
+    return build_context(world, constants, random.Random(7))[0]
+
+
+def test_format_slot_count_and_result_type():
+    ctx = _fmt_ctx()
+    codes, res = _codes(
+        "CALL @get_card $0 -> r0\n"
+        "FORMAT $1 r0.@card.title -> r1\n"
+        "CALL @create_card r1 r0.@card.due r0.@card.assignee -> r2\n"
+        "STOP\n", ctx)
+    assert codes == []
+    assert 'rt.format(rt.constant("C1")' in res.js
+    codes, _ = _codes("CALL @get_card $0 -> r0\nFORMAT $1 r0.@card.title r0.@card.due -> r1\nSTOP\n", ctx)
+    assert codes == ["TYPE_ERROR"]  # one slot, two operands
+    codes, _ = _codes("FORMAT $3 -> r1\nSTOP\n", ctx)
+    assert codes == ["TYPE_ERROR"]  # template must be STR
+    codes, _ = _codes("CALL @get_card $0 -> r0\nFORMAT $2 r0.@card.title r0 -> r1\nSTOP\n", ctx)
+    assert codes == ["TYPE_ERROR"]  # OBJ operand not renderable

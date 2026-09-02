@@ -1,0 +1,10 @@
+# L12_kanban_due_reminder  (level 12, world kanban)
+# request: Remind Bob that card 4 is due.
+# $0: ID:card = 'card_4' — card 4
+# $1: ID:user = 'user_1' — Bob
+# $2: STR = 'Reminder: {0} is due {1}.' — message template: Reminder: {0} is due {1}. (fill {0} with the card title, {1} with its due date)
+
+CALL @get_card $0 -> r0
+FORMAT $2 r0.@card.title r0.@card.due -> r1
+CALL @send_message $1 r1
+STOP

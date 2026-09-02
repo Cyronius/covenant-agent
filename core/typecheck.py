@@ -9,11 +9,13 @@ binding in the task context) — see spec §9.
 """
 from __future__ import annotations
 
+import re
+
 from dataclasses import dataclass, field as dc_field
 from typing import Dict, List, Optional
 
 from . import diagnostics as dg
-from .ir import (Call, Clause, Const, Count, Filter, First, Foreach, Get, If,
+from .ir import (Abort, Format, Call, Clause, Const, Count, Filter, First, Foreach, Get, If,
                  IntLit, Let, MapF, Now, Null, Parallel, Pause, Pred, Program,
                  Reg, RegField, Return, Select, SetF, Sort, Stop, TaskContext,
                  Try, Type, format_type)
@@ -194,6 +196,30 @@ class _Checker:
                 if f:
                     env[instr.dst.n] = ("LIST", f.type)
             return False
+        if isinstance(instr, Format):
+            c = self.ctx.constants.get(instr.template)
+            if c is None:
+                self.diags.append(dg.unbound(ln, instr.template))
+            elif c.type != ("STR",):
+                self.diags.append(dg.type_error(ln, "STR", format_type(c.type)))
+            else:
+                slots = set(re.findall(r"\{(\d+)\}", str(c.value)))
+                want = {str(i) for i in range(len(instr.ops))}
+                if slots != want:
+                    self.diags.append(dg.type_error(
+                        ln, f"template with {len(instr.ops)} slots",
+                        f"{len(slots)} slots"))
+            kinds = []
+            for op in instr.ops:
+                t = self._operand_type(op, env, ln)
+                if t is not None and t[0] not in ("STR", "INT", "TIME", "ID"):
+                    self.diags.append(dg.type_error(
+                        ln, "STR|INT|TIME|ID", format_type(t)))
+                kinds.append(t[0] if t else "STR")
+            # the runtime has no types; tell the compiler how to render each slot
+            instr.kinds = tuple(kinds)
+            env[instr.dst.n] = ("STR",)
+            return False
         if isinstance(instr, Count):
             t = env.get(instr.src.n)
             if t is None:
@@ -290,6 +316,8 @@ class _Checker:
             self._operand_type(instr.op, env, ln)
             return True
         if isinstance(instr, Stop):
+            return True
+        if isinstance(instr, Abort):
             return True
         if isinstance(instr, Pause):
             self.pause_envs.append(

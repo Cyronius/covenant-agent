@@ -1,6 +1,6 @@
 # Agent Core IR — Specification (F1)
 
-**Version:** 0.1.0
+**Version:** 0.2.0 (0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
 **Status:** Foundation draft. Every change to this document must land in the same
 commit as the matching changes to `core/` (parser, typechecker, effects, compiler),
 `data/gen/`, and `spec/examples/`, with round-trip tests passing.
@@ -54,14 +54,15 @@ block       = { line } ;
 line        = instr NL [ body ] ;
 body        = INDENT block DEDENT ;              (* only after block heads *)
 
-instr       = let | get | set | call | filter | map | count | sort
+instr       = let | get | set | call | format | filter | map | count | sort
             | select | first | foreach | if | else | parallel | try
-            | return | stop | pause ;
+            | return | stop | pause | abort ;
 
 let         = "LET" operand "->" reg ;
 get         = "GET" reg "." field "->" reg ;
 set         = "SET" reg field operand "->" reg ;
 call        = "CALL" tool { operand } [ "->" reg ] ;
+format      = "FORMAT" const { operand } "->" reg ;
 filter      = "FILTER" reg pred "->" reg ;
 map         = "MAP" reg field "->" reg ;
 count       = "COUNT" reg "->" reg ;
@@ -77,6 +78,8 @@ try         = "TRY" [ "RETRY" int ] "->" reg ;   (* block head *)
 return      = "RETURN" operand ;
 stop        = "STOP" ;
 pause       = "PAUSE" ;
+abort       = "ABORT" reason ;
+reason      = "NOT_FOUND" | "AMBIGUOUS" | "UNSUPPORTED" | "NEEDS_INFO" ;
 
 operand     = reg | reg "." field | const | "NOW" | "NULL" | int ;
 reg         = "r0" … "r15" ;
@@ -109,6 +112,7 @@ Notes:
 | `GET r0.F3 -> r1` | Field extraction. `r0` must hold `OBJ(e)` and `F3` a field of `e`. |
 | `SET r0 F3 x -> r1` | `r1` = copy of `r0` with field `F3` set to `x`. Pure; persistence only happens through tools. |
 | `CALL T2 a b -> r` | Invoke tool `T2` with positional args matching the tool schema's parameter order. Result bound to `r` if present, else discarded. Errors: see §8. |
+| `FORMAT C3 a b -> r1` | `C3` must be a `STR` constant whose value contains slots `{0}`, `{1}`, … — exactly one per operand. `r1` = the template with each slot replaced by the rendered operand (`STR` as is, `INT` as digits, `TIME` as an ISO date, `ID` as the id). Operands must be `STR`, `INT`, `TIME` or `ID(e)`. This is the only way a program produces new text, and it emits none: the template is a constant supplied by the serializer, the values are data. |
 | `FILTER r0 p -> r1` | `r0 : LIST(OBJ(e))`; keep elements satisfying predicate `p`, whose field symbols resolve against `e`. |
 | `MAP r0 F3 -> r1` | Project field `F3` over `LIST(OBJ(e))` → `LIST(field type)`. |
 | `COUNT r0 -> r1` | Length of a list → `INT`. |
@@ -121,7 +125,26 @@ Notes:
 | `TRY [RETRY n] -> r` | Run body. On a tool error inside, abort the body, and (if `RETRY n` and attempts remain) re-run it from the top, up to `n` additional attempts. `r` gets `OK` or the last error code (`STATUS`). Execution continues after the block. |
 | `RETURN x` | Terminate program, final value `x`. |
 | `STOP` | Terminate program, no value. |
+| `ABORT reason` | Terminate program **without carrying out the request**, reporting why. Reads that already ran are fine; the point is that no further action is taken. A terminator: any following line at the same or an outer level is `UNREACHABLE`. Run status `aborted`, with the reason. |
 | `PAUSE` | Terminate this **program segment**, returning all bound registers to the harness. The planner is re-invoked with the register state and emits a fresh continuation program whose registers arrive pre-bound. `PAUSE` is a terminator: any following line at the same or an outer level is `UNREACHABLE`. |
+
+### Abstaining (`ABORT`)
+
+The planner may only reference values that exist in its context, and may
+only call tools that are listed. When a request cannot be carried out
+faithfully, the correct program declines rather than guesses:
+
+| reason | when |
+|---|---|
+| `NOT_FOUND` | the request names an entity (a person, a record) that has no matching symbol in the context |
+| `UNSUPPORTED` | the request needs an action no listed tool performs |
+| `NEEDS_INFO` | a required value (a title, an amount, a date) is neither in the request nor derivable from the context |
+| `AMBIGUOUS` | the request could refer to several things and the context does not disambiguate |
+
+`ABORT` is legal inside an `IF` body (check, then decline). The reason is
+a closed enum, not free text, so the value channel stays out of the token
+stream. An abstain task is scored correct only when the status *and* the
+reason match the reference (`correct_abstain` in the harness).
 
 ### Execution boundary (`PAUSE`)
 
@@ -190,6 +213,8 @@ INDEX_OUT_OF_RANGE
   block's `STATUS` result.
 - Outside `TRY`: the error halts the program; the run reports `exec_ok = false`
   with the code.
+- `ABORT` reasons are not tool errors: they are the planner's own verdict,
+  emitted statically, and never raised by a tool.
 
 ## 9. Static diagnostics
 

@@ -40,7 +40,8 @@ Planner = Callable[[str, TaskContext, int, Dict], Optional[str]]
 def run_sandbox(payload: dict) -> dict:
     proc = subprocess.run(
         ["node", str(SANDBOX)], input=json.dumps(payload).encode(),
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        timeout=150 if payload.get("external_url") else 30)
     out = proc.stdout.decode().strip()
     if not out:
         return {"status": "error",
@@ -133,7 +134,8 @@ def run_task(task: dict, planner: Planner) -> dict:
     else:
         status = "segment_limit"
 
-    exec_ok = status in ("ok", "effect_blocked") and compile_ok
+    exec_ok = status in ("ok", "effect_blocked", "aborted") and compile_ok
+    abort_reason = sres.get("reason") if (sres and status == "aborted") else None
     if status == "error" and sres is not None:
         err = sres.get("error", {})
         diagnostics.append(f"RUNTIME {err.get('code')} {err.get('message', '')}")
@@ -145,7 +147,7 @@ def run_task(task: dict, planner: Planner) -> dict:
         final_state=final_state, call_log=call_log,
         sandbox_tools=sandbox_ctx["tools"],
         n_instructions=n_instructions or None, pauses=pauses,
-        latency=lat, diagnostics=diagnostics)
+        latency=lat, diagnostics=diagnostics, abort_reason=abort_reason)
     return row
 
 

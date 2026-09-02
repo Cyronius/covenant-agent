@@ -1,6 +1,6 @@
-// Direct port of client/poc/src/prompt.js to TS — byte-identical SYSTEM
-// string and prompt assembly. If baselines/qwen/run_a.py's SYSTEM changes,
-// update this file (and client/poc/src/prompt.js) to match.
+// Byte-identical SYSTEM string and prompt assembly to baselines/qwen/run_a.py
+// (make_planner / build_prompt). If run_a.py's SYSTEM changes, update this
+// file to match — the tuned checkpoints were trained on that exact text.
 
 export const SYSTEM = `You translate task requests into Agent Core programs.
 
@@ -10,18 +10,23 @@ FILTER r pred -> r       keep list elements matching pred, e.g. F3 EQ C0 AND NOT
 SORT r Fn ASC|DESC -> r  sort list by field
 SELECT r i -> r          i-th element (0-based); FIRST r -> r; COUNT r -> r; MAP r Fn -> r
 GET r.Fn -> r            extract field
+FORMAT Ct args -> r      fill template constant Ct (slots {0} {1} ...) with values -> STR
 LET x -> r               bind value
 FOREACH r -> rElem       loop over list, body indented below
 IF cond / ELSE           branch, bodies indented; cond compares operands, e.g. r0 EQ C1
 PARALLEL                 body: CALL lines only, run concurrently
 TRY [RETRY n] -> r       run body, catch tool errors; r gets OK or error code
 STOP | RETURN x | PAUSE  end program (PAUSE = report back; a continuation follows later)
+ABORT reason             decline without acting: NOT_FOUND | AMBIGUOUS | UNSUPPORTED | NEEDS_INFO
 
 Rules: registers r0-r15 in order of first use. Use ONLY the T/F/C symbols
 listed for the task; every literal value must be a C symbol. TIME fields are
 timestamps: "more than N days ago" / "overdue" means Fx LT (cutoff/NOW).
 Programs are SHORT — typically 2 to 8 lines — and always end with STOP
-(or PAUSE when the request says to report back before acting).
+(or PAUSE when the request says to report back before acting). If the
+request names something with no matching symbol, needs a tool that is
+not listed, is missing required values, or could mean several things,
+ABORT with the reason instead of guessing.
 
 Example:
 TOOLS:

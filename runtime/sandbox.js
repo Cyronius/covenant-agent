@@ -11,7 +11,7 @@
  * world state via a generic, data-driven tool engine.
  *
  * Writes one JSON result to stdout:
- *   { status: ok|paused|error|effect_blocked,
+ *   { status: ok|paused|aborted|error|effect_blocked,
  *     return_value, registers, state, calls, error, ops }
  *
  * Effect gate: any DELETE/SEND/PAY call without `approval` halts the run
@@ -31,10 +31,11 @@ class ToolError extends Error {
 }
 
 class EffectBlocked extends Error {
-  constructor(tool, effect) {
+  constructor(tool, effect, args) {
     super(`EFFECT_BLOCKED ${effect} ${tool}`);
     this.tool = tool;
     this.effect = effect;
+    this.args = args; // the call's narrowed params, for approval previews
   }
 }
 
@@ -150,6 +151,29 @@ function main(input) {
         state.outbox.push(entry);
         return null;
       }
+      case "external": {
+        // EXTERNAL tools (spec §7) run outside the sandbox. With
+        // input.external_url set (the dev server), POST {kind, params} and
+        // use the text that comes back; otherwise return a deterministic
+        // stub so eval scores routing, not prose.
+        if (input.external_url) {
+          const { spawnSync } = require("node:child_process");
+          const script = "const [u,b]=[process.argv[1],process.argv[2]];" +
+            "fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:b})" +
+            ".then(r=>r.text()).then(t=>process.stdout.write(t))" +
+            ".catch(e=>{process.stderr.write(String(e));process.exit(1)});";
+          const body = JSON.stringify({ kind: impl.kind, params });
+          const r = spawnSync(process.execPath, ["-e", script, input.external_url, body],
+                              { encoding: "utf8", timeout: 120000 });
+          if (r.status !== 0) {
+            throw new ToolError("EXTERNAL_FAILED", `${impl.kind}: ${(r.stderr || "").slice(0, 200)}`);
+          }
+          const out = JSON.parse(r.stdout);
+          if (out.error) throw new ToolError("EXTERNAL_FAILED", String(out.error.message || out.error));
+          return out.text;
+        }
+        return `[${impl.kind}: ${String(params[0])}]`;
+      }
       case "pay": {
         const entry = {};
         (impl.param_map || []).forEach((key, i) => { entry[key] = params[i]; });
@@ -168,11 +192,6 @@ function main(input) {
       budget();
       const tool = toolsBySym.get(sym);
       if (!tool) throw new ToolError("NOT_FOUND", `unknown tool ${sym}`);
-      for (const eff of tool.effects || []) {
-        if (DESTRUCTIVE.has(eff) && !approval) {
-          throw new EffectBlocked(sym, eff);
-        }
-      }
       // narrow + validate params
       const params = [];
       for (let i = 0; i < (tool.params || []).length; i++) {
@@ -188,6 +207,13 @@ function main(input) {
           v = narrowId(v);
         }
         params.push(v);
+      }
+      for (const eff of tool.effects || []) {
+        if (DESTRUCTIVE.has(eff) && !approval) {
+          // not logged: the reference (approved) run has no such entry and
+          // unnecessary_destructive diffs the two logs
+          throw new EffectBlocked(sym, eff, clone(params));
+        }
       }
       const entry = { tool: sym, name: tool.name, args: clone(params),
                       ok: true, error: null };
@@ -253,6 +279,21 @@ function main(input) {
       return list.map((x) => (x[f.name] === undefined ? null : x[f.name]));
     },
     count: (list) => list.length,
+    // spec §4 FORMAT: fill {i} slots. TIME renders as an ISO date (UTC);
+    // objects render as their id; null as empty.
+    format(template, values, kinds) {
+      budget();
+      const render = (v, kind) => {
+        if (v === null || v === undefined) return "";
+        if (kind === "TIME" && typeof v === "number") {
+          return new Date(v * 1000).toISOString().slice(0, 10);
+        }
+        if (typeof v === "object") return v.id !== undefined ? String(v.id) : JSON.stringify(v);
+        return String(v);
+      };
+      return String(template).replace(/\{(\d+)\}/g, (_m, i) =>
+        render(values[Number(i)], (kinds || [])[Number(i)]));
+    },
     sortBy(list, sym, dir) {
       budget();
       const f = fieldsBySym.get(sym);
@@ -278,6 +319,8 @@ function main(input) {
     first: (list) => (list.length ? list[0] : null),
     ret: (v) => ({ __kind: "return", value: v }),
     stop: () => ({ __kind: "stop" }),
+    // spec §4 ABORT: the program declines to act; reason is a closed enum.
+    abort: (reason) => ({ __kind: "abort", reason }),
     pause(regs) {
       const out = {};
       for (const [k, v] of Object.entries(regs)) {
@@ -299,7 +342,7 @@ function main(input) {
   const watchdog = setTimeout(() => {
     finish({ status: "error", error: { code: "TIMEOUT", message: "watchdog" },
              state, calls, ops });
-  }, WATCHDOG_MS);
+  }, input.external_url ? 120000 : WATCHDOG_MS); // external tools block on a model
 
   Promise.resolve()
     .then(() => programMain(rt))
@@ -310,6 +353,8 @@ function main(input) {
         finish({ status: "paused", registers: marker.regs, ...base });
       } else if (marker && marker.__kind === "return") {
         finish({ status: "ok", return_value: marker.value, ...base });
+      } else if (marker && marker.__kind === "abort") {
+        finish({ status: "aborted", reason: marker.reason, ...base });
       } else {
         finish({ status: "ok", return_value: null, ...base });
       }
@@ -320,7 +365,7 @@ function main(input) {
       if (e instanceof EffectBlocked) {
         finish({ status: "effect_blocked",
                  error: { code: "EFFECT_BLOCKED", tool: e.tool,
-                          effect: e.effect }, ...base });
+                          effect: e.effect, args: e.args }, ...base });
       } else if (e instanceof ToolError) {
         finish({ status: "error",
                  error: { code: e.code, message: e.message }, ...base });

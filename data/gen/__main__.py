@@ -88,6 +88,8 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
         world_name=world_name, request=request,
         constants=sample.constants, segments=segments, seed=seed,
         error_injection=sample.error_injection or None,
+        # abstain recipes (level 11) reference ABORT; the sandbox reports it
+        expected_status="aborted" if "abort" in sample.tags else "ok",
         state=state,
         tags=sorted(set(sample.tags + [f"style:{style}"])
                     | ({"holdout"} if holdout else set())),
@@ -139,7 +141,7 @@ def build_schedule(args) -> list[int]:
         schedule = [l for l in sorted(counts) for _ in range(counts[l])]
         random.Random(args.seed).shuffle(schedule)
         return schedule
-    levels = (list(range(11)) if args.level == "all"
+    levels = (list(range(12)) if args.level == "all"
               else [int(args.level)])
     return [levels[i % len(levels)] for i in range(args.n)]
 

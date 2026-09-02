@@ -42,6 +42,8 @@ export default function App() {
     toast,
     cpuOnly,
     toggleCpuOnly,
+    inference,
+    setInferenceMode,
     sendMessage,
     approveGate,
     cancelGate,
@@ -68,16 +70,32 @@ export default function App() {
           )}
           <label
             className="cpu-toggle"
-            title="Force WASM-only decoding, skipping WebGPU offload. Changing this reloads the model."
+            title="Where the planner runs: in this browser (model download, WASM/WebGPU) or on the dev server's CPU via POST /plan. No GPU either way."
           >
-            <input
-              type="checkbox"
-              checked={cpuOnly}
-              disabled={modelStatus.phase !== 'ready' || busy}
-              onChange={toggleCpuOnly}
-            />
-            CPU only
+            Inference
+            <select
+              value={inference}
+              disabled={busy || modelStatus.phase === 'loading'}
+              onChange={(e) => setInferenceMode(e.target.value === 'server' ? 'server' : 'browser')}
+            >
+              <option value="browser">browser</option>
+              <option value="server">server</option>
+            </select>
           </label>
+          {inference === 'browser' && (
+            <label
+              className="cpu-toggle"
+              title="Force WASM-only decoding, skipping WebGPU offload. Changing this reloads the model."
+            >
+              <input
+                type="checkbox"
+                checked={cpuOnly}
+                disabled={modelStatus.phase !== 'ready' || busy}
+                onChange={toggleCpuOnly}
+              />
+              CPU only
+            </label>
+          )}
           {ready && (
             <span className="model-status ready">
               <span className="dot" />

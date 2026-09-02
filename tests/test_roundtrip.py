@@ -35,7 +35,7 @@ def test_curriculum_examples_roundtrip(spec):
                                    for r, t in res.pause_envs[0].items()})
 
 
-@pytest.mark.parametrize("level", range(11))
+@pytest.mark.parametrize("level", range(12))
 def test_property_random_programs_compile(level):
     """20 random samples per level: always parse + typecheck + compile."""
     count = 0

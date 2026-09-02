@@ -10,8 +10,10 @@ import re
 from typing import List, Optional, Tuple
 
 from . import diagnostics as dg
-from .ir import (CMPS, EFFECTS, NUM_REGISTERS, Call, Clause, Const, Count,
-                 Filter, First, Foreach, Get, If, IntLit, Let, MapF, Now, Null,
+from .ir import (ABORT_REASONS, CMPS, EFFECTS, NUM_REGISTERS, Abort, Call,
+                 Clause, Const, Count,
+                 Filter, First, Foreach, Format, Get, If, IntLit, Let, MapF,
+                 Now, Null,
                  Parallel, Pause, Pred, Program, Reg, RegField, Return, Select,
                  SetF, Sort, Stop, Try)
 
@@ -133,6 +135,11 @@ def _parse_instr(toks: List[str], line: int):
             raise _ParseFail(dg.parse_error(line, f"expected tool symbol, got {got!r}"))
         args = tuple(_operand(t, line) for t in rest[1:])
         return Call(rest[0], args, dst, line=line)
+    if op == "FORMAT":
+        rest, dst = _arrow_dst(rest, line)
+        if not rest or not _CONST_RE.match(rest[0]):
+            raise _ParseFail(dg.parse_error(line, "FORMAT takes Ck template then operands"))
+        return Format(rest[0], tuple(_operand(t, line) for t in rest[1:]), dst, line=line)
     if op == "FILTER":
         rest, dst = _arrow_dst(rest, line)
         if len(rest) < 4:
@@ -204,6 +211,11 @@ def _parse_instr(toks: List[str], line: int):
         if rest:
             raise _ParseFail(dg.parse_error(line, "PAUSE takes no arguments"))
         return Pause(line=line)
+    if op == "ABORT":
+        if len(rest) != 1 or rest[0] not in ABORT_REASONS:
+            raise _ParseFail(dg.parse_error(
+                line, "ABORT takes one reason: " + "|".join(ABORT_REASONS)))
+        return Abort(rest[0], line=line)
     raise _ParseFail(dg.parse_error(line, f"unknown instruction {op!r}"))
 
 

@@ -113,3 +113,69 @@ def test_parallel_executes_and_binds():
     assert out["status"] == "ok"
     assert out["return_value"] == len(
         world["default_state"]["entities"]["invoice"])
+
+
+def test_abort_reports_status_and_reason():
+    world, ctx, sctx, res = _build("kanban", [], "ABORT NEEDS_INFO\n")
+    out = run_sandbox(_payload(world, sctx, res, approval=True))
+    assert out["status"] == "aborted"
+    assert out["reason"] == "NEEDS_INFO"
+    assert out["calls"] == []
+
+
+def test_abort_task_scores_only_with_matching_reason():
+    from core.ir import TaskContext
+    task = build_task(
+        task_id="t_abort", level=11, world_name="kanban",
+        request="Assign card 4 to Cyrus.",
+        constants=[{"type": "ID:card", "value": "card_4", "desc": "card 4"}],
+        segments=["ABORT NOT_FOUND\n"], expected_status="aborted")
+    assert task["reference"]["abort_reason"] == "NOT_FOUND"
+    row = run_task(task, reference_planner(task))
+    assert row["goal_success"] and row["correct_abstain"]
+    wrong = run_task(task, lambda *a: "ABORT UNSUPPORTED\n")
+    assert wrong["status"] == "aborted" and not wrong["goal_success"]
+    ctx = TaskContext.from_json(task["context"])
+    acted = run_task(task, lambda *a: resolve("CALL @list_cards -> r0\nSTOP\n", ctx))
+    assert acted["status"] == "ok" and not acted["goal_success"]
+    assert acted["correct_abstain"] is False
+
+
+def test_format_renders_fields_and_dates():
+    consts = [{"type": "ID:card", "value": "card_4", "desc": "card 4"},
+              {"type": "STR", "value": "Copy of {0}", "desc": "title template"},
+              {"type": "STR", "value": "{0} due {1}", "desc": "two-slot template"}]
+    world, ctx, sctx, res = _build(
+        "kanban", consts,
+        "CALL @get_card $0 -> r0\n"
+        "FORMAT $1 r0.@card.title -> r1\n"
+        "FORMAT $2 r0.@card.title r0.@card.due -> r3\n"
+        "CALL @create_card r1 r0.@card.due r0.@card.assignee -> r2\n"
+        "RETURN r3\n")
+    out = run_sandbox(_payload(world, sctx, res, approval=True))
+    assert out["status"] == "ok", out
+    titles = [c["title"] for c in out["state"]["entities"]["card"]]
+    original = next(c for c in world["default_state"]["entities"]["card"] if c["id"] == "card_4")
+    assert f"Copy of {original['title']}" in titles
+    assert out["return_value"].startswith(original["title"] + " due ")
+    assert str(original["due"]) not in out["return_value"]  # rendered as a date, not epoch
+
+
+def test_external_tool_stubs_deterministically_and_gate_reports_args():
+    consts = [{"type": "ID:user", "value": "user_1", "desc": "Bob"},
+              {"type": "STR", "value": "Tell Bob what is overdue.", "desc": "brief"}]
+    world, ctx, sctx, res = _build(
+        "kanban", consts,
+        "CALL @list_cards -> r0\n"
+        "FILTER r0 @card.assignee EQ $0 AND @card.due LT NOW -> r1\n"
+        "CALL @write_text $1 r1 -> r2\n"
+        "CALL @send_message $0 r2\n"
+        "STOP\n")
+    blocked = run_sandbox(_payload(world, sctx, res, approval=False))
+    assert blocked["status"] == "effect_blocked"
+    assert blocked["error"]["args"][0] == "user_1"
+    assert blocked["error"]["args"][1] == "[write_text: Tell Bob what is overdue.]"
+    assert [c["name"] for c in blocked["calls"]] == ["list_cards", "write_text"]
+    ok = run_sandbox(_payload(world, sctx, res, approval=True))
+    assert ok["status"] == "ok"
+    assert ok["state"]["outbox"][-1]["text"] == "[write_text: Tell Bob what is overdue.]"
