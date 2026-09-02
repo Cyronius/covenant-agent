@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import KanbanBoard from './components/KanbanBoard';
 import ChatPanel from './components/ChatPanel';
 import Toast from './components/Toast';
 import LoadingView from './components/LoadingView';
+import ToolsPanel from './components/ToolsPanel';
 import { useAgentRun } from './hooks/useAgentRun';
 
 function LeafIcon() {
@@ -23,6 +25,14 @@ function ResetIcon() {
   );
 }
 
+function ToolsIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.7 6.3a4 4 0 0 1-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 1 5.4-5.4l-2.8 2.8-2-2Z" />
+    </svg>
+  );
+}
+
 export default function App() {
   const {
     board,
@@ -39,6 +49,7 @@ export default function App() {
   } = useAgentRun();
 
   const ready = modelStatus.phase === 'ready';
+  const [toolsOpen, setToolsOpen] = useState(false);
 
   return (
     <>
@@ -49,6 +60,12 @@ export default function App() {
         </div>
         <div className="chrome-right">
           <span className="tagline">board agent</span>
+          {ready && (
+            <button className="action-btn" type="button" onClick={() => setToolsOpen(true)}>
+              <ToolsIcon />
+              Tools
+            </button>
+          )}
           <label
             className="cpu-toggle"
             title="Force WASM-only decoding, skipping WebGPU offload. Changing this reloads the model."
@@ -86,6 +103,7 @@ export default function App() {
       )}
 
       <Toast text={toast} />
+      <ToolsPanel open={toolsOpen} onClose={() => setToolsOpen(false)} />
     </>
   );
 }

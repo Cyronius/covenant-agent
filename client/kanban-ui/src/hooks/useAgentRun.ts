@@ -15,7 +15,7 @@ import { fetchKanbanPrompt, describeCallSite } from '../lib/kanbanPrompt';
 import { describeCall } from '../lib/describe';
 import { initialState, userById, TOOL_EFFECTS, type KanbanState, type Effect } from '../data/board';
 
-const MODEL_URL = '/models/qwen3.5-0.8b-condB-q8.gguf';
+const MODEL_URL = '/models/qwen3.5-0.8b-s1-q8.gguf'; // multi-domain S1 checkpoint (104 domains) — condB was 2-domain (kanban+crm) and generalized worse: 80% holdout vs S1's 92.5% OOD (results/r2_b_0.8b_holdout.jsonl vs results/s1_0.8b_q8_ood.jsonl)
 const GRAMMAR_URL = '/agent_core.gbnf';
 const MAX_SEGMENTS = 4; // matches client/poc/src/main.js's POC-only segment cap
 
