@@ -1,0 +1,14 @@
+tokenizer: 248044 vocab, 247587 merges, 33 added
+collecting used tokens:
+  data/sft_s1.jsonl: 54544 rows, used so far 6911
+  data/holdout/e_foreign.jsonl: 500 rows, used so far 7541
+  data/holdout/e_crowded.jsonl: 300 rows, used so far 7679
+  data/holdout/e_ood_english.jsonl: 200 rows, used so far 7778
+  data/holdout/e_demo_requests.jsonl: 65 rows, used so far 7811
+  data/r1_tasks.jsonl: 1000 rows, used so far 7811
+  data/real_sessions/turns.jsonl: 5461 rows, used so far 15695
+keep-set: used 15695 + floor 40000 + bases/specials, closed -> 44605 of 248077
+new tokenizer: 44605 vocab, 44316 merges
+  model.language_model.embed_tokens.weight: (248320, 1024) -> (44608, 1024)
+wrote baselines\qwen\models\merged_s1_pruned_v2_hf (vocab 44605, embedding rows 44608)
+tokenization identity on 2000 corpus rows: 6000/6000 identical
