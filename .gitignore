@@ -18,3 +18,6 @@ dist/
 # raw production session pulls (PII) - never committed; only the scrubbed, reviewed eval slice is tracked
 data/real_sessions/
 data/open_pairs/
+
+# real-session eval: stays out of git until fully scrubbed (owner rule 2026-09-02)
+data/holdout/e_real_sessions.jsonl
