@@ -76,6 +76,16 @@ def render(frame: dict, rng: random.Random):
     r = frame["recipe"]
     if r == "ambiguous":
         return frame["request"], style
+    from .v2 import V2_RECIPES, render_v2  # lazy: v2 imports programs
+    if r in V2_RECIPES:
+        core = render_v2(frame, rng, _np, _obj_for, _wrap, EVERY)
+        low = core.lower().rstrip("?")
+        if low.startswith(("how ", "which ", "what ", "where ", "can you ", "tell me ")):
+            # questions stay questions; no "Please" / "Can you" wrapper
+            return low[0].upper() + low[1:] + ("?" if style != "terse" else ""), style
+        if low.startswith("on "):
+            return core[0].upper() + core[1:] + ("" if style == "terse" else "."), style
+        return _wrap(core, style, rng), style
 
     if r == "direct":
         core = frame["action"]["verb"].format(obj=_obj_for(frame, rng))

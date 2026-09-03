@@ -141,7 +141,7 @@ def build_schedule(args) -> list[int]:
         schedule = [l for l in sorted(counts) for _ in range(counts[l])]
         random.Random(args.seed).shuffle(schedule)
         return schedule
-    levels = (list(range(12)) if args.level == "all"
+    levels = (sorted(programs.RECIPES) if args.level == "all"
               else [int(args.level)])
     return [levels[i % len(levels)] for i in range(args.n)]
 

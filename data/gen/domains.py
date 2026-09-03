@@ -34,7 +34,105 @@ def _child_fields(theme: dict) -> dict:
     for t in c["times"]:
         fields[t["field"]] = "TIME"
     fields[c["ref_field"]] = f"ID:{theme['parent']['entity']}"
+    fields["image"] = "STR"
     return fields
+
+
+def _v2_names(theme: dict) -> dict:
+    """Surface v2 tool names, rule-derived from the theme (plan
+    lane-c-retrain §C1). The three generic tools draw from small pools so
+    the corpus sees a few spellings of the same role."""
+    child = theme["child"]["entity"]
+    h = sum(ord(ch) for ch in theme["domain"])
+    return {
+        "create": f"create_{child}",
+        "list_notes": f"list_{child}_notes", "add_note": f"add_{child}_note",
+        "update_note": f"update_{child}_note", "delete_note": f"delete_{child}_note",
+        "set_image": f"set_{child}_image",
+        "writer": ["write_text", "draft_text", "compose_text"][h % 3],
+        "image": ["generate_image", "make_image", "render_image"][(h // 3) % 3],
+        "search": ["search_docs", "search_help", "lookup_docs"][(h // 9) % 3],
+    }
+
+
+def _v2_tools(theme: dict) -> list:
+    c, p = theme["child"], theme["parent"]
+    child, parent = c["entity"], p["entity"]
+    note = f"{child}_note"
+    n = _v2_names(theme)
+    noun = c["noun"][0]
+    enum_f = c["enum"]["field"]
+    nf = c.get("name_field")
+
+    def idp(entity, desc, pname=None):
+        return {"name": pname or entity, "type": f"ID:{entity}", "desc": desc,
+                "field": [entity, "id"]}
+
+    create_params = [idp(parent, f"the {p['noun'][0]} it belongs to")]
+    create_fields = [c["ref_field"]]
+    if nf:
+        create_params.append({"name": nf, "type": "STR", "desc": f"the {noun}'s {nf}",
+                              "field": [child, nf]})
+        create_fields.append(nf)
+    create_params.append({"name": enum_f, "type": "STR", "desc": f"initial {enum_f}",
+                          "required": False, "field": [child, enum_f]})
+    create_fields.append(enum_f)
+    defaults = {enum_f: c["enum"]["values"][0], "image": ""}
+    if nf:
+        defaults[nf] = f"New {noun}"
+    for b in c["bools"]:
+        defaults[b["field"]] = False
+    for t in c["times"]:
+        defaults[t["field"]] = "$now"
+    return [
+        {"name": n["create"], "desc": f"Create a new {noun} for a {p['noun'][0]}.",
+         "params": create_params, "returns": f"OBJ:{child}", "effects": ["WRITE"],
+         "impl": {"op": "create", "entity": child, "param_fields": create_fields,
+                  "defaults": defaults}},
+        {"name": n["list_notes"], "desc": f"List the notes attached to one {noun}.",
+         "params": [idp(child, f"the {noun}")],
+         "returns": f"LIST OBJ:{note}", "effects": ["READ"],
+         "impl": {"op": "list_by", "entity": note, "field": child, "id_param": 0}},
+        {"name": n["add_note"], "desc": f"Attach a note to a {noun}.",
+         "params": [idp(child, f"the {noun}"),
+                    {"name": "text", "type": "STR", "desc": "note text", "field": [note, "text"]},
+                    {"name": "title", "type": "STR", "desc": "note title", "required": False,
+                     "field": [note, "title"]}],
+         "returns": f"OBJ:{note}", "effects": ["WRITE"],
+         "impl": {"op": "create", "entity": note, "param_fields": [child, "text", "title"],
+                  "defaults": {"title": "Note", "text": ""}}},
+        {"name": n["update_note"], "desc": f"Change the text (and optionally the title) of one of a {noun}'s notes.",
+         "params": [idp(child, f"the {noun}"), idp(note, "the note", "note"),
+                    {"name": "text", "type": "STR", "desc": "new text", "field": [note, "text"]},
+                    {"name": "title", "type": "STR", "desc": "new title", "required": False,
+                     "field": [note, "title"]}],
+         "returns": f"OBJ:{note}", "effects": ["WRITE"],
+         "impl": {"op": "update", "entity": note, "id_param": 1,
+                  "set_from_params": {"text": 2, "title": 3}}},
+        {"name": n["delete_note"], "desc": f"Remove a note from a {noun}.",
+         "params": [idp(child, f"the {noun}"), idp(note, "the note to remove", "note")],
+         "returns": None, "effects": ["DELETE"],
+         "impl": {"op": "delete", "entity": note, "id_param": 1}},
+        {"name": n["set_image"], "desc": f"Set the image shown on a {noun}.",
+         "params": [idp(child, f"the {noun}"),
+                    {"name": "image", "type": "STR", "desc": "image URL", "field": [child, "image"]}],
+         "returns": f"OBJ:{child}", "effects": ["WRITE"],
+         "impl": {"op": "update", "entity": child, "id_param": 0, "set_from_params": {"image": 1}}},
+        {"name": n["writer"], "desc": "Write a short message from a brief (what to say, in the requester's words) and the records it should mention. Returns the text.",
+         "params": [{"name": "brief", "type": "STR", "desc": "what to write"},
+                    {"name": "data", "type": f"LIST OBJ:{child}", "desc": f"{c['noun'][1]} the message is about"}],
+         "returns": "STR", "effects": ["EXTERNAL"],
+         "impl": {"op": "external", "kind": "write_text"}},
+        {"name": n["image"], "desc": "Generate an image from a prompt and return its URL.",
+         "params": [{"name": "prompt", "type": "STR", "desc": "what the image shows"},
+                    {"name": "style", "type": "STR", "desc": "visual style", "required": False}],
+         "returns": "STR", "effects": ["EXTERNAL"],
+         "impl": {"op": "external", "kind": "generate_image"}},
+        {"name": n["search"], "desc": "Search the help docs and knowledge base with a question; returns the best passage.",
+         "params": [{"name": "query", "type": "STR", "desc": "the question"}],
+         "returns": "STR", "effects": ["READ"],
+         "impl": {"op": "external", "kind": "search_docs"}},
+    ]
 
 
 def _parent_fields(theme: dict) -> dict:
@@ -102,13 +200,16 @@ def build_world(theme: dict) -> dict:
          "impl": {"op": "send", "channel": "message",
                   "param_map": ["to", "text"]}},
     ]
+    note = f"{child}_note"
     return {
         "name": theme["domain"], "now": NOW,
         "entities": {child: _child_fields(theme),
-                     parent: _parent_fields(theme)},
+                     parent: _parent_fields(theme),
+                     note: {"id": f"ID:{note}", child: f"ID:{child}",
+                            "title": "STR", "text": "STR"}},
         "enums": {(child, enum_f): list(c["enum"]["values"])},
-        "tools": world_tools,
-        "default_state": {"entities": {child: [], parent: []},
+        "tools": world_tools + _v2_tools(theme),
+        "default_state": {"entities": {child: [], parent: [], note: []},
                           "outbox": [], "payments": []},
     }
 
@@ -236,6 +337,16 @@ def build_profile(theme: dict) -> dict:
                    "dir": sort["dir"], "sup_phrase": sort["sup_phrase"],
                    "ord_phrase": sort["ord_phrase"],
                    "pre_filter": pre_filter}],
+        "v2": {
+            **_v2_names(theme),
+            "child": child, "parent": parent, "note_entity": f"{child}_note",
+            "parent_noun": tuple(p["noun"]), "ref_field": c["ref_field"],
+            "name_field": c.get("name_field"), "titles": list(c.get("titles") or []),
+            "enum_field": enum["field"], "enum_values": list(enum["values"]),
+            "enum_phrases": {v: tuple(ph) for v, ph in enum["phrases"].items()},
+            "time_field": c["times"][theme["sort"]["time_index"]]["field"],
+            "send": tools["send"]["name"],
+        },
         "fallback_notify": {"tool": tools["send"]["name"],
                             "target": {"const_ref": {"entity": parent,
                                                      "name_field": "name",
@@ -289,8 +400,18 @@ def make_state_gen(theme: dict):
                 else:
                     rec[t["field"]] = now - rng.randint(5, 300) * DAY
             rec[c["ref_field"]] = rng.choice(parents)["id"]
+            rec["image"] = "" if rng.random() < 0.7 else \
+                f"https://cdn.{theme['domain']}.test/img/{i + 1}.jpg"
             children.append(rec)
-        return {"entities": {parent: parents, child: children},
+        from .v2 import NOTE_TEXTS, NOTE_TITLES
+        notes = []
+        for ch in children:
+            for _ in range(rng.choice([0, 0, 1, 1, 2, 3])):
+                notes.append({"id": f"{child}_note_{len(notes) + 1}", child: ch["id"],
+                              "title": rng.choice(NOTE_TITLES),
+                              "text": rng.choice(NOTE_TEXTS)})
+        return {"entities": {parent: parents, child: children,
+                             f"{child}_note": notes},
                 "outbox": [], "payments": []}
 
     return gen
@@ -327,6 +448,8 @@ def validate_theme(theme: dict) -> None:
     names = [t["name"] for t in
              (theme["tools"][k] for k in theme["tools"])]
     assert len(names) == len(set(names)), "duplicate tool names"
+    v2 = set(_v2_names(theme).values())
+    assert not (v2 & set(names)), f"theme tool names collide with v2 surface: {v2 & set(names)}"
 
 
 def register_theme(theme: dict) -> str:
@@ -363,7 +486,7 @@ def smoke_theme(name: str, attempts_per_level: int = 80) -> list[str]:
 
     failures = []
     world = get_world(name)
-    for level in range(11):
+    for level in sorted(programs.RECIPES):
         last_err = "NO_SAMPLE"
         for attempt in range(attempts_per_level):
             seed = hash((name, level, attempt)) & 0xFFFFFF
@@ -382,6 +505,7 @@ def smoke_theme(name: str, attempts_per_level: int = 80) -> list[str]:
                     world_name=name, request=request,
                     constants=sample.constants, segments=segments, seed=seed,
                     error_injection=sample.error_injection or None,
+                    expected_status="aborted" if "abort" in sample.tags else "ok",
                     state=state, tags=sample.tags, provenance={},
                     prebuilt=(ctx, sandbox_ctx))
             except (programs.SampleError, ReferenceError) as e:

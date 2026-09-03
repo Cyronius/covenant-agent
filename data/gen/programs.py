@@ -746,6 +746,16 @@ RECIPES = {
 }
 
 
+# Surface v2 recipes (L12-L18) register themselves into RECIPES when
+# data.gen.v2 loads; import it here so `import programs` alone is enough.
+# Tolerant: when v2 is the module being imported first, this hits a partial
+# module and v2 finishes the registration itself.
+try:
+    from . import v2 as _v2  # noqa: E402,F401
+except ImportError:
+    pass
+
+
 def sample_level(level: int, world: str, state: dict, now: int,
                  rng: random.Random, holdout_tools: set) -> GenSample:
     alloc = ConstAlloc()

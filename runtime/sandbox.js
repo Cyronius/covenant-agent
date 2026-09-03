@@ -112,6 +112,12 @@ function main(input) {
     switch (impl.op) {
       case "list":
         return clone(state.entities[impl.entity] || []);
+      case "list_by": {
+        // records of `entity` whose `field` equals the id param (a
+        // container's items: a lesson's elements, an item's notes)
+        const key = params[impl.id_param];
+        return clone((state.entities[impl.entity] || []).filter((r) => r[impl.field] === key));
+      }
       case "get": {
         const rec = findRecord(impl.entity, params[impl.id_param]);
         if (!rec) throw new ToolError("NOT_FOUND", `${impl.entity} not found`);
