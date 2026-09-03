@@ -1,0 +1,4 @@
+hermes: 349/1893 converted -> data\open_pairs\hermes_full.jsonl
+  dropped    803  parse: not a first-turn call/refusal
+  dropped    392  unsupported param type 
+  dropped    349  request length

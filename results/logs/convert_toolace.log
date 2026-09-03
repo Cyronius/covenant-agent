@@ -1,0 +1,7 @@
+toolace: 2197/4000 converted -> data\open_pairs\toolace_4k.jsonl
+  dropped   1054  parse: not a first-turn call/refusal
+  dropped    677  unsupported param type 
+  dropped     47  call to undeclared tool
+  dropped     19  request length
+  dropped      4  gap in positional args 
+  dropped      2  value not representable 

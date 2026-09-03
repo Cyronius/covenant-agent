@@ -1,0 +1,6 @@
+glaive: 4347/12000 converted -> data\open_pairs\glaive_12k.jsonl
+  dropped   6680  parse: not a first-turn call/refusal
+  dropped    894  unsupported param type 
+  dropped     67  bad tool name
+  dropped      9  exception
+  dropped      3  required param not given 
