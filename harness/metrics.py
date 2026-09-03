@@ -113,5 +113,8 @@ def metrics_row(task: dict, *, parse_ok: bool, compile_ok: bool,
         "tokens_out": tokens_out,
         "diagnostics": diagnostics,
         "tags": task.get("tags", []),
+        # the sandbox call log, names only, in order (routing suites score on
+        # this: harness/real_suite.py); ok=False when the tool raised
+        "calls": [{"name": c.get("name"), "ok": c.get("ok", True)} for c in call_log],
     }
     return row

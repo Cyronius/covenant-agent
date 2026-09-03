@@ -1,8 +1,16 @@
 {
-  "comment": "Reserved at generation time; never enters training data (F4/R5).",
-  "worlds": ["projects"],
-  "tools": {
-    "kanban": ["create_card"],
-    "crm": ["charge_customer", "set_priority"]
-  }
+ "comment": "Reserved at generation time; never enters training data (F4/R5).",
+ "worlds": [
+  "projects",
+  "coursebuilder"
+ ],
+ "tools": {
+  "kanban": [
+   "create_card"
+  ],
+  "crm": [
+   "charge_customer",
+   "set_priority"
+  ]
+ }
 }

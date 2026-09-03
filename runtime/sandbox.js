@@ -123,7 +123,9 @@ function main(input) {
           rec[k] = v === "$now" ? now : v;
         }
         (impl.param_fields || []).forEach((fname, i) => {
-          rec[fname] = params[i];
+          // null slot = a param with no field (e.g. a position hint); an
+          // omitted optional param keeps the default
+          if (fname && params[i] !== undefined && params[i] !== null) rec[fname] = params[i];
         });
         if (!state.entities[impl.entity]) state.entities[impl.entity] = [];
         state.entities[impl.entity].push(rec);
@@ -134,7 +136,9 @@ function main(input) {
         if (!rec) throw new ToolError("NOT_FOUND", `${impl.entity} not found`);
         for (const [k, v] of Object.entries(impl.set_const || {})) rec[k] = v;
         for (const [k, i] of Object.entries(impl.set_from_params || {})) {
-          rec[k] = params[i];
+          // an omitted optional param leaves the field alone (coursebuilder's
+          // flattened props are all optional)
+          if (params[i] !== undefined && params[i] !== null) rec[k] = params[i];
         }
         return clone(rec);
       }

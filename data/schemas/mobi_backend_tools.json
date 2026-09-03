@@ -1,0 +1,101 @@
+{
+ "generated": "2026-09-02",
+ "source": "lm-python-functions d002886",
+ "note": "Signature-derived by hand from agent/*.py (Agno infers the same JSON schema from the Python signature); descriptions are the docstrings' first sentence. The DB `description` column may override them in production (utils/tool_loader.py). Only the tools the coursebuilder world uses are listed; an automated dump was attempted but the subagent was cut off by API overload twice.",
+ "tools": [
+  {
+   "name": "generate_image",
+   "db_name": null,
+   "description": "Generate an image and return its public URL. prompt: description of the image to generate, no style words unless the user named a style; style: the style the user named, or auto; context: one line on the course/lesson subject.",
+   "parameters": {"type": "object", "properties": {
+     "prompt": {"type": "string", "description": "Description of the image to generate (e.g., an avocado on a wooden cutting board). No style words unless the user named a style."},
+     "style": {"type": "string", "description": "The style the user named, or auto to infer one from the subject and context."},
+     "context": {"type": "string", "description": "One line on the course/lesson subject and the style of the existing images."}},
+     "required": ["prompt"]},
+   "source_file": "agent/generate_image_tool.py:178",
+   "derived_from": "signature",
+   "stop_after_tool_call": false,
+   "external_execution": false
+  },
+  {
+   "name": "edit_image",
+   "db_name": null,
+   "description": "Edit an existing image and return the new image's public URL.",
+   "parameters": {"type": "object", "properties": {
+     "image_url": {"type": "string", "description": "URL of the existing image to edit (e.g. the current image of the selected element)."},
+     "prompt": {"type": "string", "description": "Description of the change to make (e.g., make it cartoon style, replace the man with a woman)."},
+     "reference_image_urls": {"type": "array", "items": {"type": "string"}, "description": "Optional additional image URLs to guide the edit."}},
+     "required": ["image_url", "prompt"]},
+   "source_file": "agent/edit_image_tool.py:41",
+   "derived_from": "signature",
+   "stop_after_tool_call": false,
+   "external_execution": false
+  },
+  {
+   "name": "export_document",
+   "db_name": null,
+   "description": "Export markdown, HTML, or CSV content as a downloadable file (pdf, docx, txt, md, html, csv).",
+   "parameters": {"type": "object", "properties": {
+     "title": {"type": "string", "description": "Document title (rendered as the top heading)."},
+     "content_markdown": {"type": "string", "description": "The document body, in the language the format names (markdown for pdf/docx/txt/md)."},
+     "format": {"type": "string", "description": "Output format.", "enum": ["pdf", "docx", "txt", "md", "html", "csv"]},
+     "filename": {"type": "string", "description": "Optional file name."}},
+     "required": ["title", "content_markdown"]},
+   "source_file": "agent/export_tools.py:69",
+   "derived_from": "signature",
+   "stop_after_tool_call": false,
+   "external_execution": false
+  },
+  {
+   "name": "contact_us",
+   "db_name": "submit_contact_form",
+   "description": "Send a message to the team. Use when users want to provide feedback, ask a question, report a bug, or request a callback. Requires a message and at least one way to contact them (email or phone).",
+   "parameters": {"type": "object", "properties": {
+     "message": {"type": "string", "description": "The message to send."},
+     "email": {"type": "string", "description": "Contact email."},
+     "phone": {"type": "string", "description": "Contact phone."},
+     "name": {"type": "string", "description": "Sender name."},
+     "subject": {"type": "string", "description": "Subject line."}},
+     "required": ["message"]},
+   "source_file": "agent/contact_us.py:154",
+   "derived_from": "signature",
+   "stop_after_tool_call": false,
+   "external_execution": false
+  },
+  {
+   "name": "course_search_and_create",
+   "db_name": null,
+   "description": "Search for existing courses, create new ones if no matches found. Always searches the course library first; if no matches for any topic, creates new course outlines.",
+   "parameters": {"type": "object", "properties": {
+     "topics": {"type": "array", "items": {"type": "string"}, "description": "Topics to search for or create courses about (max 10)."}},
+     "required": ["topics"]},
+   "source_file": "agent/course_search_and_create.py:52",
+   "derived_from": "signature",
+   "stop_after_tool_call": true,
+   "external_execution": false
+  },
+  {
+   "name": "start_free_trial",
+   "db_name": null,
+   "description": "Invoke this tool when the user approves course outline(s) and wants to proceed to signup.",
+   "parameters": {"type": "object", "properties": {}, "required": []},
+   "source_file": "agent/start_free_trial.py:16",
+   "derived_from": "signature",
+   "stop_after_tool_call": true,
+   "external_execution": false
+  },
+  {
+   "name": "knowledge_base_search",
+   "db_name": null,
+   "description": "Query the knowledge base. Real tool names are sanitize_name(kb.name) per knowledge base (LEARNER_HOW_TO, PLATFORM_FEATURES, user-named notebooks); each has this one parameter.",
+   "parameters": {"type": "object", "properties": {
+     "query": {"type": "string", "description": "The question to search the knowledge base with."}},
+     "required": ["query"]},
+   "source_file": "agent/knowledge_base_tool.py:51",
+   "derived_from": "signature",
+   "stop_after_tool_call": false,
+   "external_execution": false
+  }
+ ],
+ "agent_tool_bridges": null
+}

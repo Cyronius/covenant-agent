@@ -179,3 +179,64 @@ def test_external_tool_stubs_deterministically_and_gate_reports_args():
     ok = run_sandbox(_payload(world, sctx, res, approval=True))
     assert ok["status"] == "ok"
     assert ok["state"]["outbox"][-1]["text"] == "[write_text: Tell Bob what is overdue.]"
+
+
+def test_update_skips_omitted_optional_params():
+    # coursebuilder's flattened props are optional: an omitted one must not
+    # blank the field (runtime/sandbox.js `update`)
+    world = {
+        "name": "mini", "now": 1_760_000_000,
+        "entities": {"element": {"id": "ID:element", "heading": "STR", "text": "STR"}},
+        "enums": {},
+        "tools": [{
+            "name": "update_element", "desc": "update",
+            "params": [
+                {"name": "columnId", "type": "ID:element", "desc": "el", "field": ["element", "id"]},
+                {"name": "heading", "type": "STR", "desc": "h", "required": False, "field": ["element", "heading"]},
+                {"name": "text", "type": "STR", "desc": "t", "required": False, "field": ["element", "text"]},
+            ],
+            "returns": "OBJ:element", "effects": ["WRITE"],
+            "impl": {"op": "update", "entity": "element", "id_param": 0,
+                     "set_from_params": {"heading": 1, "text": 2}},
+        }],
+        "default_state": {"entities": {"element": [
+            {"id": "element_1", "heading": "Old heading", "text": "Old text"}]},
+            "outbox": [], "payments": []},
+    }
+    constants = [{"type": "ID:element", "value": "element_1", "desc": "e"},
+                 {"type": "STR", "value": "New heading", "desc": "h"}]
+    ctx, sctx = build_context(world, constants, random.Random(3))
+    res = build(resolve("CALL @update_element $0 $1 -> r0\nSTOP\n", ctx), ctx)
+    assert res.compile_ok, res.rendered_diagnostics()
+    out = run_sandbox(_payload(world, sctx, res, approval=True))
+    assert out["status"] == "ok"
+    rec = out["state"]["entities"]["element"][0]
+    assert rec["heading"] == "New heading" and rec["text"] == "Old text"
+
+
+def test_create_skips_null_slots_and_omitted_optionals():
+    world = {
+        "name": "mini2", "now": 1_760_000_000,
+        "entities": {"element": {"id": "ID:element", "type": "STR", "heading": "STR"}},
+        "enums": {},
+        "tools": [{
+            "name": "add_element", "desc": "add",
+            "params": [
+                {"name": "type", "type": "STR", "desc": "t", "field": ["element", "type"]},
+                {"name": "position", "type": "STR", "desc": "p", "required": False},
+                {"name": "heading", "type": "STR", "desc": "h", "required": False, "field": ["element", "heading"]},
+            ],
+            "returns": "OBJ:element", "effects": ["WRITE"],
+            "impl": {"op": "create", "entity": "element", "param_fields": ["type", None, "heading"],
+                     "defaults": {"heading": "Untitled"}},
+        }],
+        "default_state": {"entities": {"element": []}, "outbox": [], "payments": []},
+    }
+    constants = [{"type": "STR", "value": "paragraph", "desc": "type"}]
+    ctx, sctx = build_context(world, constants, random.Random(4))
+    res = build(resolve("CALL @add_element $0 -> r0\nSTOP\n", ctx), ctx)
+    assert res.compile_ok, res.rendered_diagnostics()
+    out = run_sandbox(_payload(world, sctx, res, approval=True))
+    assert out["status"] == "ok"
+    rec = out["state"]["entities"]["element"][0]
+    assert rec["type"] == "paragraph" and rec["heading"] == "Untitled" and "null" not in rec

@@ -1,0 +1,2047 @@
+{
+ "generated": "2026-09-03T13:50:58.242Z",
+ "source": "lm-admin 9e89f9706",
+ "unbound_chat": [
+  {
+   "name": "get_course_metadata",
+   "description": "Read the current course-level metadata (title, cover image URL, description). The same values are already in courseContext.courseMetadata — only call this tool if you need to confirm the latest state after an update.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "update_course_metadata",
+   "description": "Update course-level metadata: title (header), cover image URL (headerImagePath), or description. Pass only the fields you want to change; omitted fields are left untouched. Empty string is allowed and clears the field. For a \"generate a new cover image from <prompt>\" request, first call generate_image to get a URL, then call this tool with that URL as headerImagePath. Description is plain text. Use this for whole-course shell changes — not for module or element edits.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "header": {
+      "type": "string",
+      "description": "Course title shown in the top app bar."
+     },
+     "headerImagePath": {
+      "type": "string",
+      "description": "URL of the course cover image."
+     },
+     "description": {
+      "type": "string",
+      "description": "Plain-text course description shown on publish."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "get_course_theme",
+   "description": "Read the course's styling so new or transformed elements match it instead of falling back to generic defaults. Returns TWO layers: (1) `courseStyleSettings` — the explicit course style configuration (fonts, color palette, heading/subheading/paragraph styles, line height). These are frequently unset (`value: null`), meaning the instructor never configured them. (2) `derivedTheme` — the fonts, text/background/accent colors, font sizes, and line heights actually IN USE across the existing elements, each ranked most-used first. Reconcile the two: prefer an explicit `courseStyleSettings` value where one is set; otherwise fall back to the dominant (first) `derivedTheme` value. Apply by emitting matching inline styles in the rich-text HTML you author and by setting `accentColor` / `backgroundColor` props. Call this ONCE at the start of any task that creates or transforms elements, then REUSE the result for every element in that task — the theme does not change between elements, so do not call it again per element. Call it BEFORE add_element / transform_element when the user did not specify styling, so the result fits the course.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "add_module",
+   "description": "Add a new module (lesson or quiz) to the course and return its id and name. Does NOT navigate — the lesson the user is viewing stays put (MOBI-ADD-MODULE / MOBI-COURSE-NO-NAV). To populate the new lesson, pass the returned id as moduleId to element tools, or as a lesson's moduleId in generate_lesson_content. Lessons are ordered by position; pass position:'top' for an introduction/opening lesson so it lands first.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "type": {
+      "type": "string",
+      "enum": [
+       "lesson",
+       "quiz"
+      ],
+      "description": "Module type"
+     },
+     "name": {
+      "type": "string",
+      "description": "Optional name for the module. If omitted, a default name is generated."
+     },
+     "position": {
+      "type": "string",
+      "enum": [
+       "top",
+       "bottom"
+      ],
+      "description": "Where to place the new module in the course order. 'bottom' (default) appends it last; 'top' inserts it first — use 'top' for an introduction or opening lesson (MOBI-LESSON-INSERT-POS)."
+     }
+    },
+    "required": [
+     "type"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "rename_module",
+   "description": "Rename a module (lesson or quiz) by its ID.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "ID of the module to rename"
+     },
+     "name": {
+      "type": "string",
+      "description": "New name for the module"
+     }
+    },
+    "required": [
+     "moduleId",
+     "name"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "delete_module",
+   "description": "Delete a module from the course by its ID.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "ID of the module to delete"
+     }
+    },
+    "required": [
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "get_module_elements",
+   "description": "Get full details of all elements in a module (layout props stripped). If moduleId is omitted, uses the current working module (the active module, or the module being processed during a course-wide edit). Pass a moduleId to read another module — its element IDs are NOT in your courseContext, so fetch them here first if you need to reference them.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "Module ID. Omit to use active module."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/moduleTools.ts"
+  },
+  {
+   "name": "get_element_details",
+   "description": "Get full details of one element by its column ID, including non-text props (image, src, theme, accentColor, alignment, dimensions, videoType, multipleOpen, etc.) that courseContext omits. Geometry/layout props (width, opacity, horizontalPosition, topPadding, bottomPadding, responsiveRow) are returned on the 0–100 builder-slider scale. Call this BEFORE changing any non-text prop to see current values; for text-only edits (heading, paragraph, text, title, label, body, slide/drawer/card text) courseContext already has what you need. For an element in another module, call get_module_elements(moduleId) first to fetch its IDs.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element"
+     }
+    },
+    "required": [
+     "columnId",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "add_element",
+   "description": "Add a new element to the working module. Returns the new element's column ID. Use `position` to place it; it defaults to the end of the module. Set the element's REAL content in THIS call by passing `props` (preferred): a new element is only finished once it holds actual authored text and any required image — never leave it on its template placeholder text or with an empty required image slot. If you didn't supply the content in `props` (or the response comes back `incomplete: true`), follow up with update_element / batch_update_elements to fill it before ending your turn. There are no combined \"image + text\"-style layout types — build a side-by-side layout by adding each element as its own column with position \"left:<id>\"/\"right:<id>\".",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "type": {
+      "type": "string",
+      "description": "Element type (e.g. paragraph, image, video, carousel, accordion, heading1, heading2, etc.)"
+     },
+     "props": {
+      "type": "object",
+      "description": "Optional initial properties for the element, as a JSON object. Omit to use defaults."
+     },
+     "position": {
+      "type": "string",
+      "description": "Where to place the new element. One of: \"top\" (first row), \"bottom\" (last row — the default), \"above:<id>\" / \"below:<id>\" (a new row immediately above / below that element's row), or \"left:<id>\" / \"right:<id>\" (a new column in the SAME row, just to the left / right of that element — columns in the row are then resized to equal widths). A bare column id is treated as \"below:<id>\". Errors if the referenced id matches no element. NOTE: \"left:\"/\"right:\" (multi-column) is only valid in lesson modules, and dividers, spacers, forced-completion, and knowledge-check elements cannot share a multi-column row — add those with \"above:\"/\"below:\" instead."
+     }
+    },
+    "required": [
+     "type",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "delete_element",
+   "description": "Delete an element from the working module by its column ID.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to delete"
+     }
+    },
+    "required": [
+     "columnId",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "merge_elements",
+   "description": "Merge one element into another in a single undo step: the SOURCE element's content is appended to the TARGET, then the source is deleted. For two same-type containers (e.g. two accordions) the source's sub-items are appended; otherwise the source's text bodies (heading/paragraph/list/table/question HTML) are appended after the target's and the combined text is re-shaped so list/HTML structure stays valid. Use this instead of hand-concatenating text + delete_element (which botches list HTML). The target is named by `columnId`; the source by `sourceColumnId` OR by `direction` ('above'/'below') relative to the target. Content lands on the target; selection stays on the target (MOBI-ELEMENT-MERGE).",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "Column ID of the TARGET element (kept; receives the merged content)."
+     },
+     "sourceColumnId": {
+      "type": "string",
+      "description": "Column ID of the SOURCE element (deleted after its content is merged in). Provide this or `direction`."
+     },
+     "direction": {
+      "type": "string",
+      "enum": [
+       "above",
+       "below"
+      ],
+      "description": "Choose the source as the element immediately above or below the target, instead of by id. Provide this or `sourceColumnId`."
+     }
+    },
+    "required": [
+     "columnId",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "select_element",
+   "description": "Select an element in the builder, opening its editor panel. Applies to the active module only; during a course-wide edit of another module it is a no-op.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to select"
+     }
+    },
+    "required": [
+     "columnId",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "update_element",
+   "description": "Update properties of ONE element (for 2+ elements use batch_update_elements; if a batch_update_elements call failed, fix and retry it rather than editing one at a time). Pass changed props under the \"props\" object — { columnId, props: { heading: \"...\", text: \"...\" } }. Props are shallow-merged (top-level keys replaced). Text props are HTML strings; style props are JavaScript objects (e.g. {\"backgroundColor\": \"#f8f8f8\"}), not CSS strings. Geometry/layout props use the 0–100 builder-slider scale: width, opacity, horizontalPosition (0=left, 50=center, 100=right), topPadding, bottomPadding — width: 30 means 30% (NOT a fraction); responsiveRow (true/false) applies to the element's row. backgroundColor always sets the ROW/outer background. On image and textOnImageV2 elements, the image's own fill (the \"Image Background Color\", shown through transparency or on load failure) is a SEPARATE key, imageColor — set imageColor to color the image fill and backgroundColor to color the row behind it; they are independent. Recoloring a background is a prop write here — it NEVER removes the image; keep the image unless the user explicitly asks to remove it. On a container element (flipCards, accordion, carousel, tabs, hotspots), backgroundColor sets the ROW/container background — to color individual cards/drawers/slides/tabs/markers, use update_sub_item / batch_update_sub_items instead. Pass the FULL columnId UUID exactly as shown — do not truncate. For non-text props (image, src, theme, accentColor, alignment, dimensions, videoType, multipleOpen) call get_element_details first to inspect current values; text props are already in courseContext. For an element in another module, call get_module_elements(moduleId) first to fetch its IDs. Some props accept only specific internal values (e.g. completionType, target, theme, mode) — get_element_schema returns them under valueConstraints (UI display labels are auto-mapped, unrecognized values rejected). On knowledge-check elements, answerStyle: \"textOnly\" | \"imageInAnswer\" converts the element between its text and image variants. Setting an image theme (imageOnTop/imageOnBottom/imageOnly/textOnImage/fullWidthImage/centeredImage) without an image renders an empty slot — supply `imagePrompt` or a URL in the same call.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to update"
+     },
+     "props": {
+      "type": "object",
+      "description": "Properties to merge, as a JSON object. Shallow merge — each key replaces the existing value."
+     }
+    },
+    "required": [
+     "columnId",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "batch_update_elements",
+   "description": "Update 2+ elements in one call (single undo entry). Include EVERY element you are changing — one entry per element, all its changed props combined: updates: [{ columnId: \"<full-uuid>\", props: { heading: \"...\", paragraph: \"...\" } }, ...]. If this returns an error, fix the arguments and call it again — do not switch to per-element update_element. Props shallow-merge; text props are HTML strings, style props are JS objects (not CSS strings). Geometry/layout props (width, opacity, horizontalPosition, topPadding, bottomPadding) use the 0–100 slider scale — width: 30 means 30%, not 0.3; responsiveRow (true/false) is settable. backgroundColor sets the ROW/outer background; on image and textOnImageV2 the image's own fill is the separate imageColor key (set independently of the row backgroundColor). For non-text props (image, src, theme, accentColor, alignment, dimensions, videoType, multipleOpen) call get_element_details first; text props are already in courseContext. Elements in another module: call get_module_elements(moduleId) first. Use the FULL columnId UUID — never truncate. Some props accept only specific internal values (e.g. completionType, target, theme, mode) — get_element_schema returns them under valueConstraints (UI display labels auto-mapped, unrecognized values rejected). On knowledge-check elements, answerStyle: \"textOnly\" | \"imageInAnswer\" converts the element between its text and image variants.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "updates": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "columnId": {
+         "type": "string",
+         "description": "Element column ID"
+        },
+        "props": {
+         "type": "object",
+         "description": "Properties to shallow-merge, as a JSON object."
+        }
+       },
+       "required": [
+        "columnId",
+        "props"
+       ]
+      },
+      "description": "Array of { columnId, props } updates to apply"
+     }
+    },
+    "required": [
+     "updates",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "duplicate_element",
+   "description": "Duplicate an element. The copy is inserted directly below the original with new IDs.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to duplicate"
+     }
+    },
+    "required": [
+     "columnId",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "move_element",
+   "description": "Move an element within the working module. Vertical (row-axis) moves return newPosition, the element's resulting 0-based row index; left/right moves return the element it was placed beside. The \"up\"/\"down\"/\"top\"/\"above:\"/\"below:\" forms reposition the element's whole row; \"left:\"/\"right:\" pull the element out of its row and place it as a column beside the target.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to move"
+     },
+     "position": {
+      "type": "string",
+      "description": "One of these forms ONLY — not a numeric index: \"up\" (one row earlier), \"down\" (one row later), \"top\" (to the very beginning), \"above:<id>\" / \"below:<id>\" (place this element's row immediately above / below the target's row), or \"left:<id>\" / \"right:<id>\" (place this element as a column just to the left / right of the target, in the SAME row — the row's columns are then resized to equal widths). A bare column id is treated as \"below:<id>\". NOTE: \"left:\"/\"right:\" (multi-column) is only valid in lesson modules, and dividers, spacers, forced-completion, and knowledge-check elements cannot share a multi-column row."
+     }
+    },
+    "required": [
+     "columnId",
+     "position",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "transform_element",
+   "description": "Transform an element into a different type IN PLACE — the element keeps its position AND its columnId, so any follow-up edit (image, props) can address it by the SAME columnId. Returns the unchanged columnId. Single undo entry. The element's IMAGES and sub-items (slides/drawers/tabs/cards) are carried over and remapped to the new type AUTOMATICALLY — you do NOT need to re-send or re-generate images that should stay the same. Element-level text (headings/body) and layout/styling are NOT carried: the new type starts from its clean factory defaults, so pass the text you want via `props`. The element's existing ROW background (and other row-level props) IS preserved across the transform. This is NOT a tool for recoloring — to change a background or color, call update_element (backgroundColor / imageColor), never transform; and never transform just to add or drop a background. Existing images are preserved even if you supply a new imagePrompt — to replace an image you must pass its new URL, not just a prompt. When you DO pass props, use the NEW type's prop keys (they differ by type, e.g. heading→paragraph uses \"paragraph\"; a standalone \"image\" stores its URL under \"src\", a carousel/accordion/tabs under per-sub-item \"image\"); props under keys the new type does not define are dropped. ALWAYS call get_element_schema BEFORE transforming — on the SOURCE type to see what content exists to preserve, and on newType to learn its required fields AND their exact formats (e.g. tabs/carousel/accordion sub-item \"title\" is rich-text HTML like `<p class=\"slate-p\"><strong>Label</strong></p>`, NOT plain text). AFTER transforming, VERIFY the result against newType's schema: confirm every required field — especially sub-item titles/labels — is populated in the correct format, and fix any gaps with update_sub_item / update_element before reporting done. Also confirm the result is in newType's sub-item count range (carousel 3–6, tabs 3–5, accordion 3–6, flipCards 2–4, hotspot 2–5) — top up via add_sub_item if the source had fewer — and that every image-theme sub-item has an image (carried or supplied). newType must be a single element type — there are NO combined \"image + text\" layout types. To SPLIT an element into a side-by-side layout, transform it to the first piece (e.g. \"image\", which keeps its content) then add the second piece as a column with add_element(position: \"right:<id>\").",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to transform"
+     },
+     "newType": {
+      "type": "string",
+      "description": "The new element type (e.g. accordion, carousel, paragraph, heading1)"
+     },
+     "props": {
+      "type": "object",
+      "description": "Optional properties to set on the transformed element (e.g. content carried over from the old element)."
+     }
+    },
+    "required": [
+     "columnId",
+     "newType",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "get_sub_items",
+   "description": "Get all sub-items (slides, tabs, drawers, cards) of a container element with their IDs and text-only content summaries. For hotspot/hotspotQuiz markers the summary also includes each marker's geometry (left/top/width/height) and its boolean `isCorrect` flag — read `isCorrect` here to see which spots are correct, and set it via update_sub_item / batch_update_sub_items. Other non-text fields (image, src, imageUrl, assetId, imagePrompt, theme, accentColor) are omitted — call get_element_details(columnId) when you need those.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the container element"
+     }
+    },
+    "required": [
+     "columnId",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "add_sub_item",
+   "description": "Add a new sub-item (slide, tab, drawer, card) to a container element. Returns the new sub-item ID. Respect the container's count range (carousel 3–6, tabs 3–5, accordion 3–6, flipCards 2–4, hotspot 2–5). If the sub-item uses an image theme (imageOnTop/imageOnBottom/imageOnly/textOnImage/fullWidthImage/centeredImage) it renders an empty slot without an image — include an `imagePrompt` or image URL in the same write.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the container element"
+     },
+     "props": {
+      "type": "object",
+      "description": "Optional properties to shallow-merge onto the new sub-item defaults. Shape varies by container type: **flipCards**: `{ front: { image, imagePrompt, theme, text, backgroundColor, altText }, back: { same keys } }` (top-level image keys are silently ignored — they live under `front`/`back`. `backgroundColor` here is the per-side \"Card Color\" — NOT a row \"background color\" (that term is reserved for the row); it only renders for side themes textOnly/centeredImage/imageOnTop/imageOnBottom. Text color is set inside the `text` HTML, NOT via `backgroundColor`). **carousel slides / tabs / accordion drawers**: top-level `{ image, imagePrompt, theme, text, title }`. **hotspot markers**: top-level `{ contentImgSrc, contentAltText, label, text, theme, markerColor, contentBackgroundColor, left, top, width, height }` — `text` is the content-window body revealed when the marker is clicked (this is the marker's \"content\"); `label` is the short caption shown on the marker itself. `markerColor` is the \"Marker Color\" (the marker dot); `contentBackgroundColor` is the \"Content Color\" — the background of the click-popup content window that holds `text`/`contentImgSrc` (distinct from `markerColor`). Keep `contentBackgroundColor` an opaque, readable color (a transparent/unset value lets the image show through and makes the popup text unreadable); prefer a course-theme color. Neither is a row \"background color\" — that term is reserved for the row.Image lives at `contentImgSrc` (not `image`); `contentAltText` is the alt text for THAT per-marker content image (set via `update_sub_item` on the focused marker — see `activeSubItem` from `get_sub_items`), distinct from the element's main background-image alt text `altText` (an element-level prop set via `update_element`). Marker order in the list is NOT on-screen order — use `left` (0 = far left, 100 = far right) to order markers spatially. Marker `left`/`top` are 0-100 percentages of the image (origin top-left) and place the marker's TOP-LEFT corner, not its center. When a real image already exists (`src`/`image` URL), NEVER estimate marker positions: call `analyze_image` with `locate` listing each visible label or feature phrase (e.g. [\"Input Encoder\", \"Cell\"]), then center the marker on each returned box (0-1 fractions): left = (box.left + box.width/2)*100 - w/2 and top = (box.top + box.height/2)*100 - (w/2)*(image_width/image_height), where w is the marker `width` (default 10) - round/square markers render square in pixels, so the vertical offset needs that aspect correction. If a phrase returns no match, retry `analyze_image` with tasks: [\"text_regions\"] and match the returned text boxes yourself. Estimate only when the image does not exist yet (it will be generated from `imagePrompt`); once it exists, verify the positions with `analyze_image` and correct them. **hotspotQuiz markers**: top-level `{ label, isCorrect, markerColor, left, top, width }` — `isCorrect` is a boolean marking a marker as a correct answer; at least one marker must remain `isCorrect: true`. Position quiz markers with the same `analyze_image` grounding guidance as hotspot markers above. When changing an existing image's style, preserve the original `imagePrompt` content and append style hints rather than rewriting the visual concept from scratch."
+     }
+    },
+    "required": [
+     "columnId",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "update_sub_item",
+   "description": "Update properties of a sub-item within a container element. Props are shallow-merged. For text-only sub-item edits (text, label, title, body, front.text/back.text on flipCards) get_sub_items already shows the current text. For non-text sub-item props (image, src, theme, accentColor) call get_element_details on the parent columnId first to inspect current values. Pass the FULL columnId and subItemId exactly as shown in courseContext.activeModuleManifest — do not truncate or abbreviate. Schema reminder: props must be a JSON object — sending it as a JSON-encoded string is a common error and silently fails. Per-element-type shape is documented on the props parameter — flipCards needs `front`/`back` nesting, hotspots use `contentImgSrc`, slides/tabs/drawers use top-level `image`. Only editor-producible formatting is kept; text-shadow, box-shadow, drop-shadow, filters, and arbitrary CSS are removed automatically — do not emit them. Setting an image theme (imageOnTop/imageOnBottom/imageOnly/textOnImage/fullWidthImage/centeredImage) without an image renders an empty slot — supply `imagePrompt` or a URL in the same call.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the container element"
+     },
+     "subItemId": {
+      "type": "string",
+      "description": "The ID of the sub-item to update"
+     },
+     "props": {
+      "type": "object",
+      "description": "Properties to shallow-merge onto the sub-item. Shape varies by container type: **flipCards**: `{ front: { image, imagePrompt, theme, text, backgroundColor, altText }, back: { same keys } }` (top-level image keys are silently ignored — they live under `front`/`back`. `backgroundColor` here is the per-side \"Card Color\" — NOT a row \"background color\" (that term is reserved for the row); it only renders for side themes textOnly/centeredImage/imageOnTop/imageOnBottom. Text color is set inside the `text` HTML, NOT via `backgroundColor`). **carousel slides / tabs / accordion drawers**: top-level `{ image, imagePrompt, theme, text, title }`. **hotspot markers**: top-level `{ contentImgSrc, contentAltText, label, text, theme, markerColor, contentBackgroundColor, left, top, width, height }` — `text` is the content-window body revealed when the marker is clicked (this is the marker's \"content\"); `label` is the short caption shown on the marker itself. `markerColor` is the \"Marker Color\" (the marker dot); `contentBackgroundColor` is the \"Content Color\" — the background of the click-popup content window that holds `text`/`contentImgSrc` (distinct from `markerColor`). Keep `contentBackgroundColor` an opaque, readable color (a transparent/unset value lets the image show through and makes the popup text unreadable); prefer a course-theme color. Neither is a row \"background color\" — that term is reserved for the row.Image lives at `contentImgSrc` (not `image`); `contentAltText` is the alt text for THAT per-marker content image (set via `update_sub_item` on the focused marker — see `activeSubItem` from `get_sub_items`), distinct from the element's main background-image alt text `altText` (an element-level prop set via `update_element`). Marker order in the list is NOT on-screen order — use `left` (0 = far left, 100 = far right) to order markers spatially. Marker `left`/`top` are 0-100 percentages of the image (origin top-left) and place the marker's TOP-LEFT corner, not its center. When a real image already exists (`src`/`image` URL), NEVER estimate marker positions: call `analyze_image` with `locate` listing each visible label or feature phrase (e.g. [\"Input Encoder\", \"Cell\"]), then center the marker on each returned box (0-1 fractions): left = (box.left + box.width/2)*100 - w/2 and top = (box.top + box.height/2)*100 - (w/2)*(image_width/image_height), where w is the marker `width` (default 10) - round/square markers render square in pixels, so the vertical offset needs that aspect correction. If a phrase returns no match, retry `analyze_image` with tasks: [\"text_regions\"] and match the returned text boxes yourself. Estimate only when the image does not exist yet (it will be generated from `imagePrompt`); once it exists, verify the positions with `analyze_image` and correct them. **hotspotQuiz markers**: top-level `{ label, isCorrect, markerColor, left, top, width }` — `isCorrect` is a boolean marking a marker as a correct answer; at least one marker must remain `isCorrect: true`. Position quiz markers with the same `analyze_image` grounding guidance as hotspot markers above. When changing an existing image's style, preserve the original `imagePrompt` content and append style hints rather than rewriting the visual concept from scratch."
+     }
+    },
+    "required": [
+     "columnId",
+     "subItemId",
+     "props",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "delete_sub_item",
+   "description": "Delete a sub-item from a container element. Cannot delete the last sub-item. Pass the FULL columnId and subItemId exactly as shown — do not truncate.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the container element"
+     },
+     "subItemId": {
+      "type": "string",
+      "description": "The ID of the sub-item to delete"
+     }
+    },
+    "required": [
+     "columnId",
+     "subItemId",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "batch_update_sub_items",
+   "description": "Update multiple sub-items within a container element at once. Creates a single undo entry. Use when modifying 2+ sub-items (slides, tabs, cards, etc.). For text-only sub-item edits you can call this directly using IDs from courseContext.activeModuleManifest. For non-text sub-item props (image, src, theme, accentColor) call get_element_details on the parent columnId first to inspect current values. Pass the FULL columnId and subItemId UUIDs exactly as shown — do not truncate or abbreviate. Schema reminder: props must be a JSON object — sending it as a JSON-encoded string is a common error and silently fails. Per-element-type shape is documented on the props parameter — flipCards needs `front`/`back` nesting, hotspots use `contentImgSrc`, slides/tabs/drawers use top-level `image`. Respect the container's count range (carousel 3–6, tabs 3–5, accordion 3–6, flipCards 2–4, hotspot 2–5). An image theme (imageOnTop/imageOnBottom/imageOnly/textOnImage/fullWidthImage/centeredImage) without an image renders an empty slot — supply `imagePrompt` or a URL in the same call.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "The lesson to operate on — use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson's id to edit it. Editing never changes which lesson the user sees."
+     },
+     "columnId": {
+      "type": "string",
+      "description": "Container element column ID"
+     },
+     "updates": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "subItemId": {
+         "type": "string",
+         "description": "Sub-item ID"
+        },
+        "props": {
+         "type": "object",
+         "description": "Properties to shallow-merge. Shape varies by container type: **flipCards**: `{ front: { image, imagePrompt, theme, text, backgroundColor, altText }, back: { same keys } }` (top-level image keys are silently ignored — they live under `front`/`back`. `backgroundColor` here is the per-side \"Card Color\" — NOT a row \"background color\" (that term is reserved for the row); it only renders for side themes textOnly/centeredImage/imageOnTop/imageOnBottom. Text color is set inside the `text` HTML, NOT via `backgroundColor`). **carousel slides / tabs / accordion drawers**: top-level `{ image, imagePrompt, theme, text, title }`. **hotspot markers**: top-level `{ contentImgSrc, contentAltText, label, text, theme, markerColor, contentBackgroundColor, left, top, width, height }` — `text` is the content-window body revealed when the marker is clicked (this is the marker's \"content\"); `label` is the short caption shown on the marker itself. `markerColor` is the \"Marker Color\" (the marker dot); `contentBackgroundColor` is the \"Content Color\" — the background of the click-popup content window that holds `text`/`contentImgSrc` (distinct from `markerColor`). Keep `contentBackgroundColor` an opaque, readable color (a transparent/unset value lets the image show through and makes the popup text unreadable); prefer a course-theme color. Neither is a row \"background color\" — that term is reserved for the row.Image lives at `contentImgSrc` (not `image`); `contentAltText` is the alt text for THAT per-marker content image (set via `update_sub_item` on the focused marker — see `activeSubItem` from `get_sub_items`), distinct from the element's main background-image alt text `altText` (an element-level prop set via `update_element`). Marker order in the list is NOT on-screen order — use `left` (0 = far left, 100 = far right) to order markers spatially. Marker `left`/`top` are 0-100 percentages of the image (origin top-left) and place the marker's TOP-LEFT corner, not its center. When a real image already exists (`src`/`image` URL), NEVER estimate marker positions: call `analyze_image` with `locate` listing each visible label or feature phrase (e.g. [\"Input Encoder\", \"Cell\"]), then center the marker on each returned box (0-1 fractions): left = (box.left + box.width/2)*100 - w/2 and top = (box.top + box.height/2)*100 - (w/2)*(image_width/image_height), where w is the marker `width` (default 10) - round/square markers render square in pixels, so the vertical offset needs that aspect correction. If a phrase returns no match, retry `analyze_image` with tasks: [\"text_regions\"] and match the returned text boxes yourself. Estimate only when the image does not exist yet (it will be generated from `imagePrompt`); once it exists, verify the positions with `analyze_image` and correct them. **hotspotQuiz markers**: top-level `{ label, isCorrect, markerColor, left, top, width }` — `isCorrect` is a boolean marking a marker as a correct answer; at least one marker must remain `isCorrect: true`. Position quiz markers with the same `analyze_image` grounding guidance as hotspot markers above. When changing an existing image's style, preserve the original `imagePrompt` content and append style hints rather than rewriting the visual concept from scratch."
+        }
+       },
+       "required": [
+        "subItemId",
+        "props"
+       ]
+      },
+      "description": "Array of { subItemId, props } updates to apply"
+     }
+    },
+    "required": [
+     "columnId",
+     "updates",
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "get_available_fonts",
+   "description": "Returns the fonts available in this course builder as { displayName, fontFamily }. Use the EXACT fontFamily stack (the CSS value, NOT the displayName). There is NO top-level fontFamily prop on elements — a font is an inline style on every text-bearing <span> inside HTML props (paragraph, heading, etc.). To apply: fetch the element's HTML via get_element_details, then rewrite it so EVERY text-bearing <span> has 'font-family: <value>' in its inline style — replace any existing font-family on a span (do not duplicate); if a span has no style attribute, add style=\"font-family: <value>\"; include spans nested inside <a> tags; preserve everything else byte-for-byte (ids, classes, hrefs, target, other inline styles, inline tags like <strong>/<em>/<br>); then call update_element with the rewritten HTML under the same prop name. For elements with multiple HTML props (e.g. paragraphWithHeading1), update both in one call.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "get_element_schema",
+   "description": "Get the full sample/template props for an element type, including layout and styling keys (backgroundColor, opacity, topPadding, accentColor, theme, etc.) that are stripped from courseContext.availableElementTypes. Use this when the user asks for a styling, layout, or theming change and you're unsure of the exact prop key, or when adding a new sub-item from scratch in a container element (accordion, flashcards, flipCards, carousel) and you need to see the full sub-item shape. Returns the ComponentFactory defaults for that type. Geometry props in the sample (width, opacity, horizontalPosition, topPadding, bottomPadding) are shown on the same 0–100 slider scale you use when writing them. Image/video URL keys in the sample are placeholders (https://www.example.com/ThisIsAnExampleBlobUrl) — they signal the key exists and is settable; do not echo them back to update_element unless the user gave you a real URL. Image URL keys are interchangeable on WRITE regardless of which the sample shows (some types display `src`, others `image`): always write the URL under `image` — the builder syncs `src`/`imageUrl` automatically, so you never need a second call to switch the key. When present, valueConstraints lists enum-valued props with their allowed INTERNAL values (element props plus sub-item props like marker theme or flip-card front.theme/back.theme) — write the internal value, not the UI display label (common labels are auto-mapped). Skip this tool for content-only edits (text, heading, paragraph) — courseContext.availableElementTypes already covers those.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "type": {
+      "type": "string",
+      "description": "Element type (e.g. paragraph, flashcards, accordion). Must match a key in courseContext.availableElementTypes[].type."
+     }
+    },
+    "required": [
+     "type"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "get_user_info",
+   "description": "Get basic information about the current user: their account name, username, first name, and last name. The userName is usually (but not always) the user's login email. Call this proactively before asking the user for their name, account, or contact info — including when filling out forms, submitting contact-form / bug-report submissions, or addressing the user by name. Only ask the user directly for identity info this tool does not return, or to confirm a username that may not be a valid email.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/userTools.ts"
+  },
+  {
+   "name": "generate_lesson_content",
+   "description": "Fill multiple lessons with content concurrently, each from its own brief. Use this for \"create/build a course (with N lessons) about X\" after you have created the lessons with add_module. YOU are the planner: first call add_module once per lesson to get its id, then call this ONCE with one entry per lesson — each brief stating that lesson's objectives and what it covers, with no overlap between lessons. The lessons are filled in parallel and a combined summary is posted when they finish. Returns immediately; do not call other tools afterward in this turn.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "lessons": {
+      "type": "array",
+      "description": "One entry per lesson to fill (max 12).",
+      "items": {
+       "type": "object",
+       "properties": {
+        "moduleId": {
+         "type": "string",
+         "description": "The lesson id returned by add_module."
+        },
+        "brief": {
+         "type": "string",
+         "description": "This lesson's objectives and coverage — what content to generate. No overlap with other lessons."
+        }
+       },
+       "required": [
+        "moduleId",
+        "brief"
+       ]
+      }
+     }
+    },
+    "required": [
+     "lessons"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseOrchestrator/dispatchTools.ts"
+  },
+  {
+   "name": "apply_to_lessons",
+   "description": "Apply ONE instruction to multiple lessons concurrently (a course-wide edit). Use this for requests that span lessons — e.g. \"rewrite every lesson in a formal tone\", \"add a summary to all lessons\". By default (OMIT moduleIds) it applies to EVERY lesson in the course — use that for \"all/every lesson\", and do NOT hand-assemble the id list. Pass moduleIds ONLY to target a specific subset of modules (e.g. \"lessons 2 and 4\"; an explicit id may also be a quiz or skill-check when the user names one — only the omit-moduleIds default filters to lessons), taking their ids from the lesson roster / courseContext.modules; do NOT ask the user to navigate. Each lesson is edited in parallel with the same instruction; a combined summary is posted when they finish. Returns immediately; do not call other tools afterward in this turn.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleIds": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "Optional. Omit (or leave empty) to apply to every lesson in the course. Provide ids only to target a specific subset of modules (may include a quiz / skill-check when the user names one)."
+     },
+     "instruction": {
+      "type": "string",
+      "description": "The edit to apply to each lesson."
+     }
+    },
+    "required": [
+     "instruction"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseOrchestrator/dispatchTools.ts"
+  },
+  {
+   "name": "download_conversation",
+   "description": "Download the full chat transcript (every user, assistant, and tool message) as a plain-text (.txt) file. Use this when the user asks to download, save, or export the conversation itself. The tool reads the live transcript — do NOT paste the conversation into export_document. Returns immediately.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "filename": {
+      "type": "string",
+      "description": "Optional file name (a \".txt\" extension is added automatically). Defaults to \"conversation.txt\"."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": "downloads",
+   "source_file": "React/Components/Builder/mobi/reportTools.ts"
+  },
+  {
+   "name": "find_courses",
+   "description": "Search the current account's course library by text and return matching cards as { id, header, cardType }. Use this to find ANOTHER course the user wants to reuse content from — it is the only way to obtain another course's id, which the get_course_outline / get_module_from_course / get_element_from_course / get_course_styles tools require. The library holds more than courses: `cardType` is \"Course\", \"Elearn\", \"Curriculum\", \"Quiz\", etc. The grab tools above work ONLY on `cardType: \"Course\"` results — for any other type, tell the user the source must be a Course instead of calling a grab tool on it. A non-empty `query` is REQUIRED: listing the whole library is not supported (accounts can have thousands of courses). Results are capped at 25; if more matches exist, the response says so — refine the query with more specific words rather than asking again.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "query": {
+      "type": "string",
+      "description": "Search text matched against course titles/content. Required and non-empty."
+     }
+    },
+    "required": [
+     "query"
+    ]
+   },
+   "isFrontend": true,
+   "category": "cross_course",
+   "source_file": "React/Components/Builder/mobi/crossCourseTools.ts"
+  },
+  {
+   "name": "get_course_outline",
+   "description": "Given another course's id (from find_courses), return a compact, text-only outline of that course: each module's id, header, type, element count, an addressing manifest (column ids, types, sub-item ids), and the text of each element. Use this to decide what to reuse, then call get_module_from_course / get_element_from_course with the ids it returns. Read-only.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "courseId": {
+      "type": "string",
+      "description": "The source course id, from find_courses."
+     }
+    },
+    "required": [
+     "courseId"
+    ]
+   },
+   "isFrontend": true,
+   "category": "cross_course",
+   "source_file": "React/Components/Builder/mobi/crossCourseTools.ts"
+  },
+  {
+   "name": "get_module_from_course",
+   "description": "Given a source course id and one of its module ids (from get_course_outline), return that module's FULL element tree — full column props plus sub-items (styling, layout, media), not the compact text-only projection — so you can faithfully recreate it. After calling this, recreate the module here with add_module then add_element / batch_update_elements, adapting as the user asked. The recreated module gets its own fresh ids; do NOT reuse the source ids. Read-only.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "sourceCourseId": {
+      "type": "string",
+      "description": "The source course id, from find_courses."
+     },
+     "sourceModuleId": {
+      "type": "string",
+      "description": "The module id within that course, from get_course_outline."
+     }
+    },
+    "required": [
+     "sourceCourseId",
+     "sourceModuleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": "cross_course",
+   "source_file": "React/Components/Builder/mobi/crossCourseTools.ts"
+  },
+  {
+   "name": "get_element_from_course",
+   "description": "Given a source course id and one of its element (column) ids (from get_course_outline), return that single element's FULL props (the cross-course twin of get_element_details) so you can faithfully recreate it. After calling this, recreate the element here with add_element then update_element. The recreated element gets a fresh id; do NOT reuse the source id. Read-only.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "sourceCourseId": {
+      "type": "string",
+      "description": "The source course id, from find_courses."
+     },
+     "sourceColumnId": {
+      "type": "string",
+      "description": "The element (column) id within that course, from get_course_outline."
+     }
+    },
+    "required": [
+     "sourceCourseId",
+     "sourceColumnId"
+    ]
+   },
+   "isFrontend": true,
+   "category": "cross_course",
+   "source_file": "React/Components/Builder/mobi/crossCourseTools.ts"
+  },
+  {
+   "name": "get_course_styles",
+   "description": "Given a source course id (from find_courses, cardType \"Course\" only), return that course's defaultStyles object — VISUAL STYLE ONLY: color palette, fonts, and heading/subheading/paragraph styles. Applying it means writing those style props onto the EXISTING elements here; it does NOT add, delete, or rewrite content, and does NOT copy the source course's wording, topic, quotes, or imagery. \"Style/look like course X\" changes appearance only. Read-only.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "sourceCourseId": {
+      "type": "string",
+      "description": "The source course id, from find_courses."
+     }
+    },
+    "required": [
+     "sourceCourseId"
+    ]
+   },
+   "isFrontend": true,
+   "category": "cross_course",
+   "source_file": "React/Components/Builder/mobi/crossCourseTools.ts"
+  },
+  {
+   "name": "get_assignment_rules",
+   "description": "List the automatic assignment rules on a card: each rule's id, criteria (field/value, or all-learners when empty), due-date configuration, and start/end window. Call before deleting a rule.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "cardId": {
+      "type": "string",
+      "description": "Card to operate on. Omit for the card currently open in the builder. When targeting a DIFFERENT card than the open one, state that card to the user first."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": "assignments",
+   "source_file": "React/Components/Builder/mobi/assignmentTools.ts"
+  },
+  {
+   "name": "get_assignment_rule_fields",
+   "description": "List the learner attributes assignment-rule criteria can match on (e.g. Department, JobTitle, Location, ManagerEmail, Group).",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": "assignments",
+   "source_file": "React/Components/Builder/mobi/assignmentTools.ts"
+  },
+  {
+   "name": "get_assignment_rule_values",
+   "description": "List the existing values for a rule field (the account's actual departments, job titles, …). ALWAYS call this before save_assignment_rule and copy an EXACT returned value — never invent one; a value that matches no learners assigns nothing. Entries are {Key, Value} pairs: Value is the display name to show the user; Key is what the rule stores (for Group, Key is the group id — save_assignment_rule accepts either and normalizes names to the id).",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "ruleField": {
+      "type": "string",
+      "enum": [
+       "Department",
+       "JobTitle",
+       "Location",
+       "ManagerEmail",
+       "Group"
+      ],
+      "description": "Which learner attribute to list values for."
+     }
+    },
+    "required": [
+     "ruleField"
+    ]
+   },
+   "isFrontend": true,
+   "category": "assignments",
+   "source_file": "React/Components/Builder/mobi/assignmentTools.ts"
+  },
+  {
+   "name": "save_assignment_rule",
+   "description": "Create an automatic assignment rule on a card. TAKES EFFECT IMMEDIATELY on save. Rules CANNOT be edited — to change one, delete it (delete_assignment_rule) and create a new one. Criteria: pass ruleField + ruleValue (value copied EXACTLY from get_assignment_rule_values). Omitting BOTH creates an ALL-LEARNERS rule — confirm that scope with the user before calling. Due dates: dueDateType \"none\" (default), \"absolute\" (requires dueDate ISO date), or \"relative\" (requires durationNumber = days after assignment). currentLearners: false (default) assigns only learners who match AFTER the rule exists; true also assigns everyone matching right now.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "cardId": {
+      "type": "string",
+      "description": "Card to operate on. Omit for the card currently open in the builder. When targeting a DIFFERENT card than the open one, state that card to the user first."
+     },
+     "ruleField": {
+      "type": "string",
+      "enum": [
+       "Department",
+       "JobTitle",
+       "Location",
+       "ManagerEmail",
+       "Group"
+      ]
+     },
+     "ruleValue": {
+      "type": "string",
+      "description": "Exact value from get_assignment_rule_values. For Group, the group name or id (names are normalized to the id)."
+     },
+     "dueDateType": {
+      "type": "string",
+      "enum": [
+       "none",
+       "absolute",
+       "relative"
+      ]
+     },
+     "dueDate": {
+      "type": "string",
+      "description": "ISO date — required when dueDateType is \"absolute\"."
+     },
+     "durationNumber": {
+      "type": "number",
+      "description": "Days after assignment — required when dueDateType is \"relative\"."
+     },
+     "currentLearners": {
+      "type": "boolean"
+     },
+     "startDate": {
+      "type": "string",
+      "description": "ISO date the rule starts applying (optional)."
+     },
+     "endDate": {
+      "type": "string",
+      "description": "ISO date the rule stops applying (optional)."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": "assignments",
+   "source_file": "React/Components/Builder/mobi/assignmentTools.ts"
+  },
+  {
+   "name": "delete_assignment_rule",
+   "description": "Delete an assignment rule. TAKES EFFECT IMMEDIATELY. Call get_assignment_rules first, confirm with the user WHICH rule, and pass its id.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "cardId": {
+      "type": "string",
+      "description": "Card to operate on. Omit for the card currently open in the builder. When targeting a DIFFERENT card than the open one, state that card to the user first."
+     },
+     "ruleId": {
+      "type": "string",
+      "description": "Rule id from get_assignment_rules."
+     }
+    },
+    "required": [
+     "ruleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": "assignments",
+   "source_file": "React/Components/Builder/mobi/assignmentTools.ts"
+  },
+  {
+   "name": "find_learners_for_assignment",
+   "description": "Search the account's learners by name/username for assignment work on a card. Returns each learner's id (pass it to set_learner_assignment), name, assigned state, due date, and completion. `search` is REQUIRED and must be non-empty — there is no \"list everyone\" mode; for account-wide operations use bulk_edit_learner_assignments filters instead.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "cardId": {
+      "type": "string",
+      "description": "Card to operate on. Omit for the card currently open in the builder. When targeting a DIFFERENT card than the open one, state that card to the user first."
+     },
+     "search": {
+      "type": "string",
+      "description": "Name/username fragment. Required, non-empty."
+     },
+     "page": {
+      "type": "number",
+      "description": "Result page, starting at 1. Omit for the default: all matches in one response (up to the server limit of 100)."
+     }
+    },
+    "required": [
+     "search"
+    ]
+   },
+   "isFrontend": true,
+   "category": "assignments",
+   "source_file": "React/Components/Builder/mobi/assignmentTools.ts"
+  },
+  {
+   "name": "set_learner_assignment",
+   "description": "Assign or unassign ONE learner on a card. TAKES EFFECT IMMEDIATELY. learnerId is the `id` from find_learners_for_assignment. Optional dueDate (ISO date) — applies only when assigning; it is ignored on unassign. forceReassignment re-assigns a learner who already completed the card.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "cardId": {
+      "type": "string",
+      "description": "Card to operate on. Omit for the card currently open in the builder. When targeting a DIFFERENT card than the open one, state that card to the user first."
+     },
+     "learnerId": {
+      "type": "string",
+      "description": "Learner id from find_learners_for_assignment."
+     },
+     "assigned": {
+      "type": "boolean",
+      "description": "true = assign, false = unassign."
+     },
+     "dueDate": {
+      "type": "string",
+      "description": "ISO due date (optional)."
+     },
+     "forceReassignment": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "learnerId",
+     "assigned"
+    ]
+   },
+   "isFrontend": true,
+   "category": "assignments",
+   "source_file": "React/Components/Builder/mobi/assignmentTools.ts"
+  },
+  {
+   "name": "bulk_edit_learner_assignments",
+   "description": "Assign or unassign EVERY learner matching a filter — a mass mutation that TAKES EFFECT IMMEDIATELY. REQUIRED WORKFLOW: state the filter and its expected scope to the user, get their explicit confirmation, and only then call with confirmed: true. The call is rejected without it. Filters combine (AND): search, department, jobTitle, location, managerEmail, group, assignedFilter (true = currently assigned only, false = currently unassigned only). NO filters = the ENTIRE account.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "cardId": {
+      "type": "string",
+      "description": "Card to operate on. Omit for the card currently open in the builder. When targeting a DIFFERENT card than the open one, state that card to the user first."
+     },
+     "confirmed": {
+      "type": "boolean",
+      "description": "Must be true, and only after the user explicitly confirmed the operation and its scope."
+     },
+     "assigned": {
+      "type": "boolean",
+      "description": "true = assign matches, false = unassign matches."
+     },
+     "search": {
+      "type": "string"
+     },
+     "department": {
+      "type": "string"
+     },
+     "jobTitle": {
+      "type": "string"
+     },
+     "location": {
+      "type": "string"
+     },
+     "managerEmail": {
+      "type": "string"
+     },
+     "group": {
+      "type": "string",
+      "description": "Group name or id — names are resolved to the account's group id."
+     },
+     "assignedFilter": {
+      "type": "boolean"
+     },
+     "setDueDate": {
+      "type": "boolean"
+     },
+     "dueDate": {
+      "type": "string",
+      "description": "ISO due date — used when setDueDate is true."
+     },
+     "forceReassignment": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "assigned",
+     "confirmed"
+    ]
+   },
+   "isFrontend": true,
+   "category": "assignments",
+   "source_file": "React/Components/Builder/mobi/assignmentTools.ts"
+  },
+  {
+   "name": "get_card_channels",
+   "description": "Read which channels this card belongs to. Returns TWO layers: `savedChannels` (what the server has for the draft) and `pendingChannels` (unsaved local edits, null when there are none), plus `effectiveChannels` (what saving right now would persist). Call before set_card_channels so you can pass the COMPLETE final list.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": "channels",
+   "source_file": "React/Components/Builder/mobi/channelTools.ts"
+  },
+  {
+   "name": "get_available_channels",
+   "description": "List the account's channels (id + name). Use the names when talking to the user and pass names or ids to set_card_channels.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": "channels",
+   "source_file": "React/Components/Builder/mobi/channelTools.ts"
+  },
+  {
+   "name": "set_card_channels",
+   "description": "Replace the card's channel list with the COMPLETE final list — this is a FULL REPLACEMENT, not an add/remove delta, so call get_card_channels first and include every channel that should remain. Accepts channel names (case-insensitive) or ids. This is a LOCAL change: it takes effect when the user saves the card. To remove the card from ALL channels pass an empty list AND clearAll: true — only after the user explicitly asked for that.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "channels": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "The complete final list of channel names or ids."
+     },
+     "clearAll": {
+      "type": "boolean",
+      "description": "Required (true) when channels is empty — confirms intentional removal from all channels."
+     }
+    },
+    "required": [
+     "channels"
+    ]
+   },
+   "isFrontend": true,
+   "category": "channels",
+   "source_file": "React/Components/Builder/mobi/channelTools.ts"
+  },
+  {
+   "name": "create_channel",
+   "description": "Create a new channel in the account. TAKES EFFECT IMMEDIATELY. Does NOT add this card to the new channel — follow with set_card_channels (including the existing channels plus the new one).",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "Name for the new channel."
+     }
+    },
+    "required": [
+     "name"
+    ]
+   },
+   "isFrontend": true,
+   "category": "channels",
+   "source_file": "React/Components/Builder/mobi/channelTools.ts"
+  },
+  {
+   "name": "get_card_achievements",
+   "description": "List achievements. With cardId (or a card open in the builder) returns the achievements linked to that card; with neither, returns the account's achievements. Archived (deleted) achievements are excluded. Each entry has an id for get_achievement_details / save_achievement.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "cardId": {
+      "type": "string",
+      "description": "Card to list achievements for. Omit for the open card, or for the account-wide list when no card is open."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": "achievements",
+   "source_file": "React/Components/Builder/mobi/achievementTools.ts"
+  },
+  {
+   "name": "get_achievement_details",
+   "description": "Load an achievement's full editable model — content fields, image path, fieldBoxes (the placeable text fields: label, left/top position, onImage), and linked cards/groups. Call with no achievementId to see the blank default model (available fields and default fieldBoxes) before creating.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "achievementId": {
+      "type": "string",
+      "description": "Achievement id. Omit for the blank default model."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": "achievements",
+   "source_file": "React/Components/Builder/mobi/achievementTools.ts"
+  },
+  {
+   "name": "save_achievement",
+   "description": "Create or update an achievement (badge/certificate) and link it to cards. TAKES EFFECT IMMEDIATELY. CREATION WORKFLOW (required): the user says what they want (never invent it); ALWAYS create the badge/certificate image first with generate_image; then call analyze_image on the generated image to find blank regions suited to text; then place the relevant fieldBoxes (name, date, title, …) into those blanks via the fieldBoxes parameter ({key: {left, top, onImage: true}}); then call this tool with the imagePath and placed boxes. A create without imagePath is rejected. Card links: on CREATE, linkCardIds omitted → the open card; on UPDATE, omitted → links unchanged (updating never links implicitly). An explicit list → those cards; an explicit [] → standalone (no card). Existing links on the achievement are always preserved. When linking a card other than the open one, state the target to the user first.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "achievementId": {
+      "type": "string",
+      "description": "Existing achievement id to update. Omit to create."
+     },
+     "title": {
+      "type": "string",
+      "description": "Achievement title. Required on create."
+     },
+     "description": {
+      "type": "string"
+     },
+     "achievementType": {
+      "type": "string",
+      "enum": [
+       "badge",
+       "certificate"
+      ]
+     },
+     "imagePath": {
+      "type": "string",
+      "description": "URL of the generated badge/certificate image. Required on create."
+     },
+     "credits": {
+      "type": "number"
+     },
+     "fieldBoxes": {
+      "type": "object",
+      "description": "Per-field placement overrides merged onto the model's fieldBoxes, e.g. {\"fullName\": {\"left\": 42, \"top\": 55, \"onImage\": true}}. Positions come from analyze_image blank regions."
+     },
+     "linkCardIds": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "Cards to link (appended). Omit = the open card on CREATE, links unchanged on UPDATE. [] = standalone."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": "achievements",
+   "source_file": "React/Components/Builder/mobi/achievementTools.ts"
+  },
+  {
+   "name": "get_course_settings",
+   "description": "Read the current course settings: hidden (hidden from channel view), searchHidden (hidden from search), durationEstimate (estimated minutes to complete, null = unset), publishDate / goDeadDate (ISO 8601 go-live / expiry instants, null = unset), and scheduled (true when publishDate is in the future — the course is forced hidden until it goes live). Also returns forcedOrder (learners must complete lessons in order), completionType / completionPercent / completionQuiz / completionSkillcheck (how learners complete the course), and the availableQuizzes / availableSkillchecks rosters ({id, header}).",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/cardSettingsTools.ts"
+  },
+  {
+   "name": "update_course_settings",
+   "description": "Update course settings: visibility (hidden / searchHidden), estimated duration, and publish/expire dates. Pass only the fields you want to change; omitted fields are left untouched. A course with a future publishDate is forced hidden from channel view and search until it goes live — hidden/searchHidden cannot be changed while scheduled. Course-specific: forcedOrder (true = Sequential, false = Any Order) and completion — completionType \"lesson\" (finish completionPercent % of each lesson), \"quiz\" (pass the completionQuiz quiz), or \"skillcheck\" (pass the completionSkillcheck skill check). Setting completionType to \"quiz\"/\"skillcheck\" defaults completionPercent to 100 and, when unset, the target to the LAST quiz/skill check in the course — call get_course_settings first for the rosters. LOCAL change — takes effect when the user saves the course.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "hidden": {
+      "type": "boolean",
+      "description": "true hides the course from learners' channel view."
+     },
+     "searchHidden": {
+      "type": "boolean",
+      "description": "true hides the course from learners' search results."
+     },
+     "durationEstimate": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "description": "Estimated minutes to complete (0-9999). null clears the estimate."
+     },
+     "publishDate": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "ISO 8601 date-time when the course goes live. A future value schedules it (forced hidden until then). null clears the schedule."
+     },
+     "goDeadDate": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "ISO 8601 date-time when the course expires for learners. null clears it."
+     },
+     "forcedOrder": {
+      "type": "boolean",
+      "description": "true = learners must complete lessons in order (Sequential); false = Any Order."
+     },
+     "completionType": {
+      "type": "string",
+      "enum": [
+       "lesson",
+       "quiz",
+       "skillcheck"
+      ],
+      "description": "How learners complete the course: \"lesson\" (percentage of each lesson), \"quiz\" (passing score on a quiz), or \"skillcheck\" (passing score on a skill check)."
+     },
+     "completionPercent": {
+      "type": "integer",
+      "description": "Percent 0-100. With completionType \"lesson\": the share of each lesson to finish."
+     },
+     "completionQuiz": {
+      "type": "string",
+      "description": "Module id of the quiz that completes the course (see availableQuizzes)."
+     },
+     "completionSkillcheck": {
+      "type": "string",
+      "description": "Module id of the skill check that completes the course (see availableSkillchecks)."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/cardSettingsTools.ts"
+  },
+  {
+   "name": "update_course_styles",
+   "description": "Change the course's default style settings — colors, global font, and heading/subheading/paragraph typography — and (by default) restyle all existing lessons to match, like the Styles tab's Apply button. Call get_course_theme FIRST and patch only what should change. `styles` is a partial patch of the settings shape it returns under `courseStyleSettings`: sections colors (primaryColor, secondaryColor1-5), globalFont (fontFamily, color), heading / subheading / paragraph (fontFamily, fontSize, color, fontWeight, fontStyle, textDecoration; paragraph also lineHeight). Leaves take the bare value, e.g. {\"colors\": {\"primaryColor\": \"#0a4f6e\"}, \"heading\": {\"fontFamily\": \"Georgia, serif\"}}; null clears a setting back to the system default. Font families must come from get_available_fonts (exact fontFamily stack). New elements always use the new styles; applyToExistingContent: false skips restyling what already exists. LOCAL change — takes effect when the user saves the course.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "styles": {
+      "type": "object",
+      "description": "Partial style patch. Example: {\"colors\": {\"primaryColor\": \"#0a4f6e\"}, \"paragraph\": {\"fontSize\": \"18px\", \"lineHeight\": \"1.6\"}}."
+     },
+     "applyToExistingContent": {
+      "type": "boolean",
+      "description": "Default true: restyle every existing lesson. false: only affect future elements."
+     }
+    },
+    "required": [
+     "styles"
+    ]
+   },
+   "isFrontend": true,
+   "category": "styles",
+   "source_file": "React/Components/Builder/mobi/styleTools.ts"
+  },
+  {
+   "name": "get_curriculum_contents",
+   "description": "Read the ordered list of courses this curriculum contains — per entry its position, cardId, header, and completionRequired flag — plus forcedOrder (whether learners must take them in order). Reflects unsaved local edits. Call before any add / remove / reorder / completion change.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": "curriculum_content",
+   "source_file": "React/Components/Builder/mobi/curriculumContentTools.ts"
+  },
+  {
+   "name": "find_courses_for_curriculum",
+   "description": "Search the account's courses that can be added to this curriculum (the same list the Edit tab's sidebar shows). Returns cardId + header per match, and whether each is already in the curriculum. You MUST find a course here before add_course_to_curriculum can add it — the add uses the full card record this search caches. Omit `search` to browse the first 100; pass a search string to narrow.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "search": {
+      "type": "string",
+      "description": "Text matched against course titles. Omit or empty to browse."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": "curriculum_content",
+   "source_file": "React/Components/Builder/mobi/curriculumContentTools.ts"
+  },
+  {
+   "name": "add_course_to_curriculum",
+   "description": "Add a course to the END of this curriculum's course list. LOCAL change — takes effect when the user saves. cardId must come from find_courses_for_curriculum in THIS conversation (the add needs the full card record that search caches). New entries start with completionRequired: true; use set_course_completion_required to change that, and reorder_curriculum_courses to position it.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "cardId": {
+      "type": "string",
+      "description": "Course cardId from find_courses_for_curriculum."
+     }
+    },
+    "required": [
+     "cardId"
+    ]
+   },
+   "isFrontend": true,
+   "category": "curriculum_content",
+   "source_file": "React/Components/Builder/mobi/curriculumContentTools.ts"
+  },
+  {
+   "name": "remove_course_from_curriculum",
+   "description": "Remove a course from this curriculum's course list (the course itself is not deleted). LOCAL change — takes effect when the user saves. Confirm with the user WHICH course before removing; get cardIds from get_curriculum_contents.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "cardId": {
+      "type": "string",
+      "description": "CardId of the entry to remove, from get_curriculum_contents."
+     }
+    },
+    "required": [
+     "cardId"
+    ]
+   },
+   "isFrontend": true,
+   "category": "curriculum_content",
+   "source_file": "React/Components/Builder/mobi/curriculumContentTools.ts"
+  },
+  {
+   "name": "reorder_curriculum_courses",
+   "description": "Reorder this curriculum's course list. LOCAL change — takes effect when the user saves. orderedCardIds must contain EVERY current course's cardId exactly once, in the desired new order (an exact permutation of get_curriculum_contents) — additions and removals are separate tools.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "orderedCardIds": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "Every current cardId exactly once, in the new order."
+     }
+    },
+    "required": [
+     "orderedCardIds"
+    ]
+   },
+   "isFrontend": true,
+   "category": "curriculum_content",
+   "source_file": "React/Components/Builder/mobi/curriculumContentTools.ts"
+  },
+  {
+   "name": "set_curriculum_order_mode",
+   "description": "Set whether learners must complete this curriculum's courses in the listed order (forcedOrder: true) or may take them in any order (false). LOCAL change — takes effect when the user saves.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "forcedOrder": {
+      "type": "boolean",
+      "description": "true = enforce the listed order."
+     }
+    },
+    "required": [
+     "forcedOrder"
+    ]
+   },
+   "isFrontend": true,
+   "category": "curriculum_content",
+   "source_file": "React/Components/Builder/mobi/curriculumContentTools.ts"
+  },
+  {
+   "name": "set_course_completion_required",
+   "description": "Set whether one course in this curriculum must be completed for the curriculum to count as complete. LOCAL change — takes effect when the user saves. cardId from get_curriculum_contents.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "cardId": {
+      "type": "string",
+      "description": "CardId of the entry to change."
+     },
+     "completionRequired": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "cardId",
+     "completionRequired"
+    ]
+   },
+   "isFrontend": true,
+   "category": "curriculum_content",
+   "source_file": "React/Components/Builder/mobi/curriculumContentTools.ts"
+  }
+ ],
+ "module_scoped": [
+  {
+   "name": "get_course_metadata",
+   "description": "Read the current course-level metadata (title, cover image URL, description). The same values are already in courseContext.courseMetadata — only call this tool if you need to confirm the latest state after an update.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "update_course_metadata",
+   "description": "Update course-level metadata: title (header), cover image URL (headerImagePath), or description. Pass only the fields you want to change; omitted fields are left untouched. Empty string is allowed and clears the field. For a \"generate a new cover image from <prompt>\" request, first call generate_image to get a URL, then call this tool with that URL as headerImagePath. Description is plain text. Use this for whole-course shell changes — not for module or element edits.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "header": {
+      "type": "string",
+      "description": "Course title shown in the top app bar."
+     },
+     "headerImagePath": {
+      "type": "string",
+      "description": "URL of the course cover image."
+     },
+     "description": {
+      "type": "string",
+      "description": "Plain-text course description shown on publish."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "get_course_theme",
+   "description": "Read the course's styling so new or transformed elements match it instead of falling back to generic defaults. Returns TWO layers: (1) `courseStyleSettings` — the explicit course style configuration (fonts, color palette, heading/subheading/paragraph styles, line height). These are frequently unset (`value: null`), meaning the instructor never configured them. (2) `derivedTheme` — the fonts, text/background/accent colors, font sizes, and line heights actually IN USE across the existing elements, each ranked most-used first. Reconcile the two: prefer an explicit `courseStyleSettings` value where one is set; otherwise fall back to the dominant (first) `derivedTheme` value. Apply by emitting matching inline styles in the rich-text HTML you author and by setting `accentColor` / `backgroundColor` props. Call this ONCE at the start of any task that creates or transforms elements, then REUSE the result for every element in that task — the theme does not change between elements, so do not call it again per element. Call it BEFORE add_element / transform_element when the user did not specify styling, so the result fits the course.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "add_module",
+   "description": "Add a new module (lesson or quiz) to the course and return its id and name. Does NOT navigate — the lesson the user is viewing stays put (MOBI-ADD-MODULE / MOBI-COURSE-NO-NAV). To populate the new lesson, pass the returned id as moduleId to element tools, or as a lesson's moduleId in generate_lesson_content. Lessons are ordered by position; pass position:'top' for an introduction/opening lesson so it lands first.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "type": {
+      "type": "string",
+      "enum": [
+       "lesson",
+       "quiz"
+      ],
+      "description": "Module type"
+     },
+     "name": {
+      "type": "string",
+      "description": "Optional name for the module. If omitted, a default name is generated."
+     },
+     "position": {
+      "type": "string",
+      "enum": [
+       "top",
+       "bottom"
+      ],
+      "description": "Where to place the new module in the course order. 'bottom' (default) appends it last; 'top' inserts it first — use 'top' for an introduction or opening lesson (MOBI-LESSON-INSERT-POS)."
+     }
+    },
+    "required": [
+     "type"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "rename_module",
+   "description": "Rename a module (lesson or quiz) by its ID.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "ID of the module to rename"
+     },
+     "name": {
+      "type": "string",
+      "description": "New name for the module"
+     }
+    },
+    "required": [
+     "moduleId",
+     "name"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "delete_module",
+   "description": "Delete a module from the course by its ID.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "ID of the module to delete"
+     }
+    },
+    "required": [
+     "moduleId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/courseTools.ts"
+  },
+  {
+   "name": "get_module_elements",
+   "description": "Get full details of all elements in a module (layout props stripped). If moduleId is omitted, uses the current working module (the active module, or the module being processed during a course-wide edit). Pass a moduleId to read another module — its element IDs are NOT in your courseContext, so fetch them here first if you need to reference them.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "moduleId": {
+      "type": "string",
+      "description": "Module ID. Omit to use active module."
+     }
+    },
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/moduleTools.ts"
+  },
+  {
+   "name": "get_element_details",
+   "description": "Get full details of one element by its column ID, including non-text props (image, src, theme, accentColor, alignment, dimensions, videoType, multipleOpen, etc.) that courseContext omits. Geometry/layout props (width, opacity, horizontalPosition, topPadding, bottomPadding, responsiveRow) are returned on the 0–100 builder-slider scale. Call this BEFORE changing any non-text prop to see current values; for text-only edits (heading, paragraph, text, title, label, body, slide/drawer/card text) courseContext already has what you need. For an element in another module, call get_module_elements(moduleId) first to fetch its IDs.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element"
+     }
+    },
+    "required": [
+     "columnId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "add_element",
+   "description": "Add a new element to the working module. Returns the new element's column ID. Use `position` to place it; it defaults to the end of the module. Set the element's REAL content in THIS call by passing `props` (preferred): a new element is only finished once it holds actual authored text and any required image — never leave it on its template placeholder text or with an empty required image slot. If you didn't supply the content in `props` (or the response comes back `incomplete: true`), follow up with update_element / batch_update_elements to fill it before ending your turn. There are no combined \"image + text\"-style layout types — build a side-by-side layout by adding each element as its own column with position \"left:<id>\"/\"right:<id>\".",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "type": {
+      "type": "string",
+      "description": "Element type (e.g. paragraph, image, video, carousel, accordion, heading1, heading2, etc.)"
+     },
+     "props": {
+      "type": "object",
+      "description": "Optional initial properties for the element, as a JSON object. Omit to use defaults."
+     },
+     "position": {
+      "type": "string",
+      "description": "Where to place the new element. One of: \"top\" (first row), \"bottom\" (last row — the default), \"above:<id>\" / \"below:<id>\" (a new row immediately above / below that element's row), or \"left:<id>\" / \"right:<id>\" (a new column in the SAME row, just to the left / right of that element — columns in the row are then resized to equal widths). A bare column id is treated as \"below:<id>\". Errors if the referenced id matches no element. NOTE: \"left:\"/\"right:\" (multi-column) is only valid in lesson modules, and dividers, spacers, forced-completion, and knowledge-check elements cannot share a multi-column row — add those with \"above:\"/\"below:\" instead."
+     }
+    },
+    "required": [
+     "type"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "delete_element",
+   "description": "Delete an element from the working module by its column ID.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to delete"
+     }
+    },
+    "required": [
+     "columnId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "merge_elements",
+   "description": "Merge one element into another in a single undo step: the SOURCE element's content is appended to the TARGET, then the source is deleted. For two same-type containers (e.g. two accordions) the source's sub-items are appended; otherwise the source's text bodies (heading/paragraph/list/table/question HTML) are appended after the target's and the combined text is re-shaped so list/HTML structure stays valid. Use this instead of hand-concatenating text + delete_element (which botches list HTML). The target is named by `columnId`; the source by `sourceColumnId` OR by `direction` ('above'/'below') relative to the target. Content lands on the target; selection stays on the target (MOBI-ELEMENT-MERGE).",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "Column ID of the TARGET element (kept; receives the merged content)."
+     },
+     "sourceColumnId": {
+      "type": "string",
+      "description": "Column ID of the SOURCE element (deleted after its content is merged in). Provide this or `direction`."
+     },
+     "direction": {
+      "type": "string",
+      "enum": [
+       "above",
+       "below"
+      ],
+      "description": "Choose the source as the element immediately above or below the target, instead of by id. Provide this or `sourceColumnId`."
+     }
+    },
+    "required": [
+     "columnId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "select_element",
+   "description": "Select an element in the builder, opening its editor panel. Applies to the active module only; during a course-wide edit of another module it is a no-op.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to select"
+     }
+    },
+    "required": [
+     "columnId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "update_element",
+   "description": "Update properties of ONE element (for 2+ elements use batch_update_elements; if a batch_update_elements call failed, fix and retry it rather than editing one at a time). Pass changed props under the \"props\" object — { columnId, props: { heading: \"...\", text: \"...\" } }. Props are shallow-merged (top-level keys replaced). Text props are HTML strings; style props are JavaScript objects (e.g. {\"backgroundColor\": \"#f8f8f8\"}), not CSS strings. Geometry/layout props use the 0–100 builder-slider scale: width, opacity, horizontalPosition (0=left, 50=center, 100=right), topPadding, bottomPadding — width: 30 means 30% (NOT a fraction); responsiveRow (true/false) applies to the element's row. backgroundColor always sets the ROW/outer background. On image and textOnImageV2 elements, the image's own fill (the \"Image Background Color\", shown through transparency or on load failure) is a SEPARATE key, imageColor — set imageColor to color the image fill and backgroundColor to color the row behind it; they are independent. Recoloring a background is a prop write here — it NEVER removes the image; keep the image unless the user explicitly asks to remove it. On a container element (flipCards, accordion, carousel, tabs, hotspots), backgroundColor sets the ROW/container background — to color individual cards/drawers/slides/tabs/markers, use update_sub_item / batch_update_sub_items instead. Pass the FULL columnId UUID exactly as shown — do not truncate. For non-text props (image, src, theme, accentColor, alignment, dimensions, videoType, multipleOpen) call get_element_details first to inspect current values; text props are already in courseContext. For an element in another module, call get_module_elements(moduleId) first to fetch its IDs. Some props accept only specific internal values (e.g. completionType, target, theme, mode) — get_element_schema returns them under valueConstraints (UI display labels are auto-mapped, unrecognized values rejected). On knowledge-check elements, answerStyle: \"textOnly\" | \"imageInAnswer\" converts the element between its text and image variants. Setting an image theme (imageOnTop/imageOnBottom/imageOnly/textOnImage/fullWidthImage/centeredImage) without an image renders an empty slot — supply `imagePrompt` or a URL in the same call.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to update"
+     },
+     "props": {
+      "type": "object",
+      "description": "Properties to merge, as a JSON object. Shallow merge — each key replaces the existing value."
+     }
+    },
+    "required": [
+     "columnId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "batch_update_elements",
+   "description": "Update 2+ elements in one call (single undo entry). Include EVERY element you are changing — one entry per element, all its changed props combined: updates: [{ columnId: \"<full-uuid>\", props: { heading: \"...\", paragraph: \"...\" } }, ...]. If this returns an error, fix the arguments and call it again — do not switch to per-element update_element. Props shallow-merge; text props are HTML strings, style props are JS objects (not CSS strings). Geometry/layout props (width, opacity, horizontalPosition, topPadding, bottomPadding) use the 0–100 slider scale — width: 30 means 30%, not 0.3; responsiveRow (true/false) is settable. backgroundColor sets the ROW/outer background; on image and textOnImageV2 the image's own fill is the separate imageColor key (set independently of the row backgroundColor). For non-text props (image, src, theme, accentColor, alignment, dimensions, videoType, multipleOpen) call get_element_details first; text props are already in courseContext. Elements in another module: call get_module_elements(moduleId) first. Use the FULL columnId UUID — never truncate. Some props accept only specific internal values (e.g. completionType, target, theme, mode) — get_element_schema returns them under valueConstraints (UI display labels auto-mapped, unrecognized values rejected). On knowledge-check elements, answerStyle: \"textOnly\" | \"imageInAnswer\" converts the element between its text and image variants.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "updates": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "columnId": {
+         "type": "string",
+         "description": "Element column ID"
+        },
+        "props": {
+         "type": "object",
+         "description": "Properties to shallow-merge, as a JSON object."
+        }
+       },
+       "required": [
+        "columnId",
+        "props"
+       ]
+      },
+      "description": "Array of { columnId, props } updates to apply"
+     }
+    },
+    "required": [
+     "updates"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "duplicate_element",
+   "description": "Duplicate an element. The copy is inserted directly below the original with new IDs.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to duplicate"
+     }
+    },
+    "required": [
+     "columnId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "move_element",
+   "description": "Move an element within the working module. Vertical (row-axis) moves return newPosition, the element's resulting 0-based row index; left/right moves return the element it was placed beside. The \"up\"/\"down\"/\"top\"/\"above:\"/\"below:\" forms reposition the element's whole row; \"left:\"/\"right:\" pull the element out of its row and place it as a column beside the target.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to move"
+     },
+     "position": {
+      "type": "string",
+      "description": "One of these forms ONLY — not a numeric index: \"up\" (one row earlier), \"down\" (one row later), \"top\" (to the very beginning), \"above:<id>\" / \"below:<id>\" (place this element's row immediately above / below the target's row), or \"left:<id>\" / \"right:<id>\" (place this element as a column just to the left / right of the target, in the SAME row — the row's columns are then resized to equal widths). A bare column id is treated as \"below:<id>\". NOTE: \"left:\"/\"right:\" (multi-column) is only valid in lesson modules, and dividers, spacers, forced-completion, and knowledge-check elements cannot share a multi-column row."
+     }
+    },
+    "required": [
+     "columnId",
+     "position"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "transform_element",
+   "description": "Transform an element into a different type IN PLACE — the element keeps its position AND its columnId, so any follow-up edit (image, props) can address it by the SAME columnId. Returns the unchanged columnId. Single undo entry. The element's IMAGES and sub-items (slides/drawers/tabs/cards) are carried over and remapped to the new type AUTOMATICALLY — you do NOT need to re-send or re-generate images that should stay the same. Element-level text (headings/body) and layout/styling are NOT carried: the new type starts from its clean factory defaults, so pass the text you want via `props`. The element's existing ROW background (and other row-level props) IS preserved across the transform. This is NOT a tool for recoloring — to change a background or color, call update_element (backgroundColor / imageColor), never transform; and never transform just to add or drop a background. Existing images are preserved even if you supply a new imagePrompt — to replace an image you must pass its new URL, not just a prompt. When you DO pass props, use the NEW type's prop keys (they differ by type, e.g. heading→paragraph uses \"paragraph\"; a standalone \"image\" stores its URL under \"src\", a carousel/accordion/tabs under per-sub-item \"image\"); props under keys the new type does not define are dropped. ALWAYS call get_element_schema BEFORE transforming — on the SOURCE type to see what content exists to preserve, and on newType to learn its required fields AND their exact formats (e.g. tabs/carousel/accordion sub-item \"title\" is rich-text HTML like `<p class=\"slate-p\"><strong>Label</strong></p>`, NOT plain text). AFTER transforming, VERIFY the result against newType's schema: confirm every required field — especially sub-item titles/labels — is populated in the correct format, and fix any gaps with update_sub_item / update_element before reporting done. Also confirm the result is in newType's sub-item count range (carousel 3–6, tabs 3–5, accordion 3–6, flipCards 2–4, hotspot 2–5) — top up via add_sub_item if the source had fewer — and that every image-theme sub-item has an image (carried or supplied). newType must be a single element type — there are NO combined \"image + text\" layout types. To SPLIT an element into a side-by-side layout, transform it to the first piece (e.g. \"image\", which keeps its content) then add the second piece as a column with add_element(position: \"right:<id>\").",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the element to transform"
+     },
+     "newType": {
+      "type": "string",
+      "description": "The new element type (e.g. accordion, carousel, paragraph, heading1)"
+     },
+     "props": {
+      "type": "object",
+      "description": "Optional properties to set on the transformed element (e.g. content carried over from the old element)."
+     }
+    },
+    "required": [
+     "columnId",
+     "newType"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "get_sub_items",
+   "description": "Get all sub-items (slides, tabs, drawers, cards) of a container element with their IDs and text-only content summaries. For hotspot/hotspotQuiz markers the summary also includes each marker's geometry (left/top/width/height) and its boolean `isCorrect` flag — read `isCorrect` here to see which spots are correct, and set it via update_sub_item / batch_update_sub_items. Other non-text fields (image, src, imageUrl, assetId, imagePrompt, theme, accentColor) are omitted — call get_element_details(columnId) when you need those.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the container element"
+     }
+    },
+    "required": [
+     "columnId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "add_sub_item",
+   "description": "Add a new sub-item (slide, tab, drawer, card) to a container element. Returns the new sub-item ID. Respect the container's count range (carousel 3–6, tabs 3–5, accordion 3–6, flipCards 2–4, hotspot 2–5). If the sub-item uses an image theme (imageOnTop/imageOnBottom/imageOnly/textOnImage/fullWidthImage/centeredImage) it renders an empty slot without an image — include an `imagePrompt` or image URL in the same write.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the container element"
+     },
+     "props": {
+      "type": "object",
+      "description": "Optional properties to shallow-merge onto the new sub-item defaults. Shape varies by container type: **flipCards**: `{ front: { image, imagePrompt, theme, text, backgroundColor, altText }, back: { same keys } }` (top-level image keys are silently ignored — they live under `front`/`back`. `backgroundColor` here is the per-side \"Card Color\" — NOT a row \"background color\" (that term is reserved for the row); it only renders for side themes textOnly/centeredImage/imageOnTop/imageOnBottom. Text color is set inside the `text` HTML, NOT via `backgroundColor`). **carousel slides / tabs / accordion drawers**: top-level `{ image, imagePrompt, theme, text, title }`. **hotspot markers**: top-level `{ contentImgSrc, contentAltText, label, text, theme, markerColor, contentBackgroundColor, left, top, width, height }` — `text` is the content-window body revealed when the marker is clicked (this is the marker's \"content\"); `label` is the short caption shown on the marker itself. `markerColor` is the \"Marker Color\" (the marker dot); `contentBackgroundColor` is the \"Content Color\" — the background of the click-popup content window that holds `text`/`contentImgSrc` (distinct from `markerColor`). Keep `contentBackgroundColor` an opaque, readable color (a transparent/unset value lets the image show through and makes the popup text unreadable); prefer a course-theme color. Neither is a row \"background color\" — that term is reserved for the row.Image lives at `contentImgSrc` (not `image`); `contentAltText` is the alt text for THAT per-marker content image (set via `update_sub_item` on the focused marker — see `activeSubItem` from `get_sub_items`), distinct from the element's main background-image alt text `altText` (an element-level prop set via `update_element`). Marker order in the list is NOT on-screen order — use `left` (0 = far left, 100 = far right) to order markers spatially. Marker `left`/`top` are 0-100 percentages of the image (origin top-left) and place the marker's TOP-LEFT corner, not its center. When a real image already exists (`src`/`image` URL), NEVER estimate marker positions: call `analyze_image` with `locate` listing each visible label or feature phrase (e.g. [\"Input Encoder\", \"Cell\"]), then center the marker on each returned box (0-1 fractions): left = (box.left + box.width/2)*100 - w/2 and top = (box.top + box.height/2)*100 - (w/2)*(image_width/image_height), where w is the marker `width` (default 10) - round/square markers render square in pixels, so the vertical offset needs that aspect correction. If a phrase returns no match, retry `analyze_image` with tasks: [\"text_regions\"] and match the returned text boxes yourself. Estimate only when the image does not exist yet (it will be generated from `imagePrompt`); once it exists, verify the positions with `analyze_image` and correct them. **hotspotQuiz markers**: top-level `{ label, isCorrect, markerColor, left, top, width }` — `isCorrect` is a boolean marking a marker as a correct answer; at least one marker must remain `isCorrect: true`. Position quiz markers with the same `analyze_image` grounding guidance as hotspot markers above. When changing an existing image's style, preserve the original `imagePrompt` content and append style hints rather than rewriting the visual concept from scratch."
+     }
+    },
+    "required": [
+     "columnId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "update_sub_item",
+   "description": "Update properties of a sub-item within a container element. Props are shallow-merged. For text-only sub-item edits (text, label, title, body, front.text/back.text on flipCards) get_sub_items already shows the current text. For non-text sub-item props (image, src, theme, accentColor) call get_element_details on the parent columnId first to inspect current values. Pass the FULL columnId and subItemId exactly as shown in courseContext.activeModuleManifest — do not truncate or abbreviate. Schema reminder: props must be a JSON object — sending it as a JSON-encoded string is a common error and silently fails. Per-element-type shape is documented on the props parameter — flipCards needs `front`/`back` nesting, hotspots use `contentImgSrc`, slides/tabs/drawers use top-level `image`. Only editor-producible formatting is kept; text-shadow, box-shadow, drop-shadow, filters, and arbitrary CSS are removed automatically — do not emit them. Setting an image theme (imageOnTop/imageOnBottom/imageOnly/textOnImage/fullWidthImage/centeredImage) without an image renders an empty slot — supply `imagePrompt` or a URL in the same call.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the container element"
+     },
+     "subItemId": {
+      "type": "string",
+      "description": "The ID of the sub-item to update"
+     },
+     "props": {
+      "type": "object",
+      "description": "Properties to shallow-merge onto the sub-item. Shape varies by container type: **flipCards**: `{ front: { image, imagePrompt, theme, text, backgroundColor, altText }, back: { same keys } }` (top-level image keys are silently ignored — they live under `front`/`back`. `backgroundColor` here is the per-side \"Card Color\" — NOT a row \"background color\" (that term is reserved for the row); it only renders for side themes textOnly/centeredImage/imageOnTop/imageOnBottom. Text color is set inside the `text` HTML, NOT via `backgroundColor`). **carousel slides / tabs / accordion drawers**: top-level `{ image, imagePrompt, theme, text, title }`. **hotspot markers**: top-level `{ contentImgSrc, contentAltText, label, text, theme, markerColor, contentBackgroundColor, left, top, width, height }` — `text` is the content-window body revealed when the marker is clicked (this is the marker's \"content\"); `label` is the short caption shown on the marker itself. `markerColor` is the \"Marker Color\" (the marker dot); `contentBackgroundColor` is the \"Content Color\" — the background of the click-popup content window that holds `text`/`contentImgSrc` (distinct from `markerColor`). Keep `contentBackgroundColor` an opaque, readable color (a transparent/unset value lets the image show through and makes the popup text unreadable); prefer a course-theme color. Neither is a row \"background color\" — that term is reserved for the row.Image lives at `contentImgSrc` (not `image`); `contentAltText` is the alt text for THAT per-marker content image (set via `update_sub_item` on the focused marker — see `activeSubItem` from `get_sub_items`), distinct from the element's main background-image alt text `altText` (an element-level prop set via `update_element`). Marker order in the list is NOT on-screen order — use `left` (0 = far left, 100 = far right) to order markers spatially. Marker `left`/`top` are 0-100 percentages of the image (origin top-left) and place the marker's TOP-LEFT corner, not its center. When a real image already exists (`src`/`image` URL), NEVER estimate marker positions: call `analyze_image` with `locate` listing each visible label or feature phrase (e.g. [\"Input Encoder\", \"Cell\"]), then center the marker on each returned box (0-1 fractions): left = (box.left + box.width/2)*100 - w/2 and top = (box.top + box.height/2)*100 - (w/2)*(image_width/image_height), where w is the marker `width` (default 10) - round/square markers render square in pixels, so the vertical offset needs that aspect correction. If a phrase returns no match, retry `analyze_image` with tasks: [\"text_regions\"] and match the returned text boxes yourself. Estimate only when the image does not exist yet (it will be generated from `imagePrompt`); once it exists, verify the positions with `analyze_image` and correct them. **hotspotQuiz markers**: top-level `{ label, isCorrect, markerColor, left, top, width }` — `isCorrect` is a boolean marking a marker as a correct answer; at least one marker must remain `isCorrect: true`. Position quiz markers with the same `analyze_image` grounding guidance as hotspot markers above. When changing an existing image's style, preserve the original `imagePrompt` content and append style hints rather than rewriting the visual concept from scratch."
+     }
+    },
+    "required": [
+     "columnId",
+     "subItemId",
+     "props"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "delete_sub_item",
+   "description": "Delete a sub-item from a container element. Cannot delete the last sub-item. Pass the FULL columnId and subItemId exactly as shown — do not truncate.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "The column ID of the container element"
+     },
+     "subItemId": {
+      "type": "string",
+      "description": "The ID of the sub-item to delete"
+     }
+    },
+    "required": [
+     "columnId",
+     "subItemId"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "batch_update_sub_items",
+   "description": "Update multiple sub-items within a container element at once. Creates a single undo entry. Use when modifying 2+ sub-items (slides, tabs, cards, etc.). For text-only sub-item edits you can call this directly using IDs from courseContext.activeModuleManifest. For non-text sub-item props (image, src, theme, accentColor) call get_element_details on the parent columnId first to inspect current values. Pass the FULL columnId and subItemId UUIDs exactly as shown — do not truncate or abbreviate. Schema reminder: props must be a JSON object — sending it as a JSON-encoded string is a common error and silently fails. Per-element-type shape is documented on the props parameter — flipCards needs `front`/`back` nesting, hotspots use `contentImgSrc`, slides/tabs/drawers use top-level `image`. Respect the container's count range (carousel 3–6, tabs 3–5, accordion 3–6, flipCards 2–4, hotspot 2–5). An image theme (imageOnTop/imageOnBottom/imageOnly/textOnImage/fullWidthImage/centeredImage) without an image renders an empty slot — supply `imagePrompt` or a URL in the same call.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "columnId": {
+      "type": "string",
+      "description": "Container element column ID"
+     },
+     "updates": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "subItemId": {
+         "type": "string",
+         "description": "Sub-item ID"
+        },
+        "props": {
+         "type": "object",
+         "description": "Properties to shallow-merge. Shape varies by container type: **flipCards**: `{ front: { image, imagePrompt, theme, text, backgroundColor, altText }, back: { same keys } }` (top-level image keys are silently ignored — they live under `front`/`back`. `backgroundColor` here is the per-side \"Card Color\" — NOT a row \"background color\" (that term is reserved for the row); it only renders for side themes textOnly/centeredImage/imageOnTop/imageOnBottom. Text color is set inside the `text` HTML, NOT via `backgroundColor`). **carousel slides / tabs / accordion drawers**: top-level `{ image, imagePrompt, theme, text, title }`. **hotspot markers**: top-level `{ contentImgSrc, contentAltText, label, text, theme, markerColor, contentBackgroundColor, left, top, width, height }` — `text` is the content-window body revealed when the marker is clicked (this is the marker's \"content\"); `label` is the short caption shown on the marker itself. `markerColor` is the \"Marker Color\" (the marker dot); `contentBackgroundColor` is the \"Content Color\" — the background of the click-popup content window that holds `text`/`contentImgSrc` (distinct from `markerColor`). Keep `contentBackgroundColor` an opaque, readable color (a transparent/unset value lets the image show through and makes the popup text unreadable); prefer a course-theme color. Neither is a row \"background color\" — that term is reserved for the row.Image lives at `contentImgSrc` (not `image`); `contentAltText` is the alt text for THAT per-marker content image (set via `update_sub_item` on the focused marker — see `activeSubItem` from `get_sub_items`), distinct from the element's main background-image alt text `altText` (an element-level prop set via `update_element`). Marker order in the list is NOT on-screen order — use `left` (0 = far left, 100 = far right) to order markers spatially. Marker `left`/`top` are 0-100 percentages of the image (origin top-left) and place the marker's TOP-LEFT corner, not its center. When a real image already exists (`src`/`image` URL), NEVER estimate marker positions: call `analyze_image` with `locate` listing each visible label or feature phrase (e.g. [\"Input Encoder\", \"Cell\"]), then center the marker on each returned box (0-1 fractions): left = (box.left + box.width/2)*100 - w/2 and top = (box.top + box.height/2)*100 - (w/2)*(image_width/image_height), where w is the marker `width` (default 10) - round/square markers render square in pixels, so the vertical offset needs that aspect correction. If a phrase returns no match, retry `analyze_image` with tasks: [\"text_regions\"] and match the returned text boxes yourself. Estimate only when the image does not exist yet (it will be generated from `imagePrompt`); once it exists, verify the positions with `analyze_image` and correct them. **hotspotQuiz markers**: top-level `{ label, isCorrect, markerColor, left, top, width }` — `isCorrect` is a boolean marking a marker as a correct answer; at least one marker must remain `isCorrect: true`. Position quiz markers with the same `analyze_image` grounding guidance as hotspot markers above. When changing an existing image's style, preserve the original `imagePrompt` content and append style hints rather than rewriting the visual concept from scratch."
+        }
+       },
+       "required": [
+        "subItemId",
+        "props"
+       ]
+      },
+      "description": "Array of { subItemId, props } updates to apply"
+     }
+    },
+    "required": [
+     "columnId",
+     "updates"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "get_available_fonts",
+   "description": "Returns the fonts available in this course builder as { displayName, fontFamily }. Use the EXACT fontFamily stack (the CSS value, NOT the displayName). There is NO top-level fontFamily prop on elements — a font is an inline style on every text-bearing <span> inside HTML props (paragraph, heading, etc.). To apply: fetch the element's HTML via get_element_details, then rewrite it so EVERY text-bearing <span> has 'font-family: <value>' in its inline style — replace any existing font-family on a span (do not duplicate); if a span has no style attribute, add style=\"font-family: <value>\"; include spans nested inside <a> tags; preserve everything else byte-for-byte (ids, classes, hrefs, target, other inline styles, inline tags like <strong>/<em>/<br>); then call update_element with the rewritten HTML under the same prop name. For elements with multiple HTML props (e.g. paragraphWithHeading1), update both in one call.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "get_element_schema",
+   "description": "Get the full sample/template props for an element type, including layout and styling keys (backgroundColor, opacity, topPadding, accentColor, theme, etc.) that are stripped from courseContext.availableElementTypes. Use this when the user asks for a styling, layout, or theming change and you're unsure of the exact prop key, or when adding a new sub-item from scratch in a container element (accordion, flashcards, flipCards, carousel) and you need to see the full sub-item shape. Returns the ComponentFactory defaults for that type. Geometry props in the sample (width, opacity, horizontalPosition, topPadding, bottomPadding) are shown on the same 0–100 slider scale you use when writing them. Image/video URL keys in the sample are placeholders (https://www.example.com/ThisIsAnExampleBlobUrl) — they signal the key exists and is settable; do not echo them back to update_element unless the user gave you a real URL. Image URL keys are interchangeable on WRITE regardless of which the sample shows (some types display `src`, others `image`): always write the URL under `image` — the builder syncs `src`/`imageUrl` automatically, so you never need a second call to switch the key. When present, valueConstraints lists enum-valued props with their allowed INTERNAL values (element props plus sub-item props like marker theme or flip-card front.theme/back.theme) — write the internal value, not the UI display label (common labels are auto-mapped). Skip this tool for content-only edits (text, heading, paragraph) — courseContext.availableElementTypes already covers those.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "type": {
+      "type": "string",
+      "description": "Element type (e.g. paragraph, flashcards, accordion). Must match a key in courseContext.availableElementTypes[].type."
+     }
+    },
+    "required": [
+     "type"
+    ]
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/elementTools/"
+  },
+  {
+   "name": "get_user_info",
+   "description": "Get basic information about the current user: their account name, username, first name, and last name. The userName is usually (but not always) the user's login email. Call this proactively before asking the user for their name, account, or contact info — including when filling out forms, submitting contact-form / bug-report submissions, or addressing the user by name. Only ask the user directly for identity info this tool does not return, or to confirm a username that may not be a valid email.",
+   "parameters": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   },
+   "isFrontend": true,
+   "category": null,
+   "source_file": "React/Components/Builder/mobi/userTools.ts"
+  }
+ ],
+ "errors": {}
+}

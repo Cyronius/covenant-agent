@@ -1,0 +1,1361 @@
+{
+ "generated": "2026-09-03",
+ "sources": {
+  "frontend": "lm-admin 9e89f9706",
+  "backend": "lm-python-functions d002886"
+ },
+ "tools": [
+  {
+   "name": "list_modules",
+   "desc": "List every module (lesson or quiz) in the course, in order.",
+   "params": [],
+   "returns": "LIST OBJ:module",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "list",
+    "entity": "module"
+   }
+  },
+  {
+   "name": "get_module",
+   "desc": "Fetch one module by id.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "the module",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    }
+   ],
+   "returns": "OBJ:module",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "get",
+    "entity": "module",
+    "id_param": 0
+   }
+  },
+  {
+   "name": "list_elements",
+   "desc": "Get full details of all elements in a module (layout props stripped).",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "Module ID. Omit to use active module.",
+     "required": false,
+     "field": [
+      "module",
+      "id"
+     ]
+    }
+   ],
+   "returns": "LIST OBJ:element",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "list",
+    "entity": "element"
+   }
+  },
+  {
+   "name": "get_element",
+   "desc": "Get full details of one element by its column ID, including non-text props (image, src, theme, accentColor, alignment, dimensions, videoType, multipleOpen,\u2026",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "The lesson to operate on \u2014 use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "columnId",
+     "type": "ID:element",
+     "desc": "The column ID of the element",
+     "required": true,
+     "field": [
+      "element",
+      "id"
+     ]
+    }
+   ],
+   "returns": "OBJ:element",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "get",
+    "entity": "element",
+    "id_param": 1
+   }
+  },
+  {
+   "name": "list_sub_items",
+   "desc": "Get all sub-items (slides, tabs, drawers, cards) of a container element with their IDs and text-only content summaries.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "The lesson to operate on \u2014 use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "columnId",
+     "type": "ID:element",
+     "desc": "The column ID of the container element",
+     "required": true,
+     "field": [
+      "element",
+      "id"
+     ]
+    }
+   ],
+   "returns": "LIST OBJ:sub_item",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "list",
+    "entity": "sub_item"
+   }
+  },
+  {
+   "name": "get_course_theme",
+   "desc": "Read the course's styling so new or transformed elements match it instead of falling back to generic defaults.",
+   "params": [],
+   "returns": "STR",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "get_course_theme"
+   }
+  },
+  {
+   "name": "get_available_fonts",
+   "desc": "Returns the fonts available in this course builder as { displayName, fontFamily }.",
+   "params": [],
+   "returns": "STR",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "get_available_fonts"
+   }
+  },
+  {
+   "name": "get_element_schema",
+   "desc": "Get the full sample/template props for an element type, including layout and styling keys (backgroundColor, opacity, topPadding, accentColor, theme, etc.)\u2026",
+   "params": [
+    {
+     "name": "type",
+     "type": "STR",
+     "desc": "Element type (e.g. paragraph, flashcards, accordion). Must match a key in courseContext.availableElementTypes[].type.",
+     "required": true
+    }
+   ],
+   "returns": "STR",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "get_element_schema"
+   }
+  },
+  {
+   "name": "get_course_metadata",
+   "desc": "Read the current course-level metadata (title, cover image URL, description).",
+   "params": [],
+   "returns": "OBJ:course",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "get_course_metadata"
+   }
+  },
+  {
+   "name": "get_course_outline",
+   "desc": "Given another course's id (from find_courses), return a compact, text-only outline of that course: each module's id, header, type, element count, an\u2026",
+   "params": [
+    {
+     "name": "courseId",
+     "type": "ID:course",
+     "desc": "The source course id, from find_courses.",
+     "required": true,
+     "field": [
+      "course",
+      "id"
+     ]
+    }
+   ],
+   "returns": "LIST OBJ:module",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "get_course_outline"
+   }
+  },
+  {
+   "name": "find_courses",
+   "desc": "Search the current account's course library by text and return matching cards as { id, header, cardType }.",
+   "params": [
+    {
+     "name": "query",
+     "type": "STR",
+     "desc": "Search text matched against course titles/content. Required and non-empty.",
+     "required": true
+    }
+   ],
+   "returns": "LIST OBJ:course",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "find_courses"
+   }
+  },
+  {
+   "name": "search_help",
+   "desc": "Search the help and knowledge bases with a question; returns the best passage.",
+   "params": [
+    {
+     "name": "query",
+     "type": "STR",
+     "desc": "The question to search the knowledge base with.",
+     "required": true
+    }
+   ],
+   "returns": "STR",
+   "effects": [
+    "READ"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "search_help"
+   }
+  },
+  {
+   "name": "add_module",
+   "desc": "Add a new module (lesson or quiz) to the course and return its id and name.",
+   "params": [
+    {
+     "name": "type",
+     "type": "STR",
+     "desc": "Module type (lesson | quiz)",
+     "required": true
+    },
+    {
+     "name": "name",
+     "type": "STR",
+     "desc": "Optional name for the module. If omitted, a default name is generated.",
+     "required": false
+    },
+    {
+     "name": "position",
+     "type": "STR",
+     "desc": "Where to place the new module in the course order. 'bottom' (default) appends it last; 'top' inserts it first \u2014 use 'top",
+     "required": false
+    }
+   ],
+   "returns": "OBJ:module",
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "create",
+    "entity": "module",
+    "param_fields": [
+     "type",
+     "name",
+     null
+    ],
+    "defaults": {
+     "name": "New module",
+     "type": "lesson",
+     "position": 99
+    }
+   }
+  },
+  {
+   "name": "rename_module",
+   "desc": "Rename a module (lesson or quiz) by its ID.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "ID of the module to rename",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "name",
+     "type": "STR",
+     "desc": "New name for the module",
+     "required": true
+    }
+   ],
+   "returns": "OBJ:module",
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "update",
+    "entity": "module",
+    "id_param": 0,
+    "set_from_params": {
+     "name": 1
+    }
+   }
+  },
+  {
+   "name": "delete_module",
+   "desc": "Delete a module from the course by its ID.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "ID of the module to delete",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    }
+   ],
+   "returns": null,
+   "effects": [
+    "DELETE"
+   ],
+   "impl": {
+    "op": "delete",
+    "entity": "module",
+    "id_param": 0
+   }
+  },
+  {
+   "name": "add_element",
+   "desc": "Add a new element to the working module.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "The lesson to operate on \u2014 use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "type",
+     "type": "STR",
+     "desc": "Element type (e.g. paragraph, image, video, carousel, accordion, heading1, heading2, etc.)",
+     "required": true
+    },
+    {
+     "name": "heading",
+     "type": "STR",
+     "desc": "props.heading",
+     "required": false,
+     "field": [
+      "element",
+      "heading"
+     ]
+    },
+    {
+     "name": "text",
+     "type": "STR",
+     "desc": "props.text",
+     "required": false,
+     "field": [
+      "element",
+      "text"
+     ]
+    },
+    {
+     "name": "backgroundColor",
+     "type": "STR",
+     "desc": "props.backgroundColor",
+     "required": false,
+     "field": [
+      "element",
+      "backgroundColor"
+     ]
+    },
+    {
+     "name": "fontFamily",
+     "type": "STR",
+     "desc": "props.fontFamily",
+     "required": false,
+     "field": [
+      "element",
+      "fontFamily"
+     ]
+    },
+    {
+     "name": "image",
+     "type": "STR",
+     "desc": "props.image",
+     "required": false,
+     "field": [
+      "element",
+      "image"
+     ]
+    },
+    {
+     "name": "position",
+     "type": "STR",
+     "desc": "Where to place the new element. One of: \"top\" (first row), \"bottom\" (last row \u2014 the default), \"above:<id>\" / \"below:<id>",
+     "required": false
+    }
+   ],
+   "returns": "OBJ:element",
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "create",
+    "entity": "element",
+    "param_fields": [
+     "module",
+     "type",
+     "heading",
+     "text",
+     "backgroundColor",
+     "fontFamily",
+     "image",
+     null
+    ],
+    "defaults": {
+     "module": "module_1",
+     "type": "paragraph",
+     "heading": "",
+     "text": "",
+     "backgroundColor": "",
+     "fontFamily": "",
+     "image": "",
+     "position": 99
+    }
+   },
+   "flattened_props": [
+    "heading",
+    "text",
+    "backgroundColor",
+    "fontFamily",
+    "image"
+   ]
+  },
+  {
+   "name": "update_element",
+   "desc": "Update properties of ONE element (for 2+ elements use batch_update_elements; if a batch_update_elements call failed, fix and retry it rather than editing one\u2026",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "The lesson to operate on \u2014 use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "columnId",
+     "type": "ID:element",
+     "desc": "The column ID of the element to update",
+     "required": true,
+     "field": [
+      "element",
+      "id"
+     ]
+    },
+    {
+     "name": "heading",
+     "type": "STR",
+     "desc": "props.heading",
+     "required": false,
+     "field": [
+      "element",
+      "heading"
+     ]
+    },
+    {
+     "name": "text",
+     "type": "STR",
+     "desc": "props.text",
+     "required": false,
+     "field": [
+      "element",
+      "text"
+     ]
+    },
+    {
+     "name": "backgroundColor",
+     "type": "STR",
+     "desc": "props.backgroundColor",
+     "required": false,
+     "field": [
+      "element",
+      "backgroundColor"
+     ]
+    },
+    {
+     "name": "fontFamily",
+     "type": "STR",
+     "desc": "props.fontFamily",
+     "required": false,
+     "field": [
+      "element",
+      "fontFamily"
+     ]
+    },
+    {
+     "name": "image",
+     "type": "STR",
+     "desc": "props.image",
+     "required": false,
+     "field": [
+      "element",
+      "image"
+     ]
+    }
+   ],
+   "returns": "OBJ:element",
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "update",
+    "entity": "element",
+    "id_param": 1,
+    "set_from_params": {
+     "heading": 2,
+     "text": 3,
+     "backgroundColor": 4,
+     "fontFamily": 5,
+     "image": 6
+    }
+   },
+   "flattened_props": [
+    "heading",
+    "text",
+    "backgroundColor",
+    "fontFamily",
+    "image"
+   ]
+  },
+  {
+   "name": "delete_element",
+   "desc": "Delete an element from the working module by its column ID.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "The lesson to operate on \u2014 use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "columnId",
+     "type": "ID:element",
+     "desc": "The column ID of the element to delete",
+     "required": true,
+     "field": [
+      "element",
+      "id"
+     ]
+    }
+   ],
+   "returns": null,
+   "effects": [
+    "DELETE"
+   ],
+   "impl": {
+    "op": "delete",
+    "entity": "element",
+    "id_param": 1
+   }
+  },
+  {
+   "name": "move_element",
+   "desc": "Move an element within the working module.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "The lesson to operate on \u2014 use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "columnId",
+     "type": "ID:element",
+     "desc": "The column ID of the element to move",
+     "required": true,
+     "field": [
+      "element",
+      "id"
+     ]
+    },
+    {
+     "name": "position",
+     "type": "STR",
+     "desc": "One of these forms ONLY \u2014 not a numeric index: \"up\" (one row earlier), \"down\" (one row later), \"top\" (to the very beginn",
+     "required": true
+    }
+   ],
+   "returns": "OBJ:element",
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "update",
+    "entity": "element",
+    "id_param": 1,
+    "set_from_params": {}
+   }
+  },
+  {
+   "name": "duplicate_element",
+   "desc": "Duplicate an element.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "The lesson to operate on \u2014 use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "columnId",
+     "type": "ID:element",
+     "desc": "The column ID of the element to duplicate",
+     "required": true,
+     "field": [
+      "element",
+      "id"
+     ]
+    }
+   ],
+   "returns": "OBJ:element",
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "duplicate_element"
+   }
+  },
+  {
+   "name": "transform_element",
+   "desc": "Transform an element into a different type IN PLACE \u2014 the element keeps its position AND its columnId, so any follow-up edit (image, props) can address it by\u2026",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "The lesson to operate on \u2014 use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "columnId",
+     "type": "ID:element",
+     "desc": "The column ID of the element to transform",
+     "required": true,
+     "field": [
+      "element",
+      "id"
+     ]
+    },
+    {
+     "name": "newType",
+     "type": "STR",
+     "desc": "The new element type (e.g. accordion, carousel, paragraph, heading1)",
+     "required": true
+    },
+    {
+     "name": "heading",
+     "type": "STR",
+     "desc": "props.heading",
+     "required": false,
+     "field": [
+      "element",
+      "heading"
+     ]
+    },
+    {
+     "name": "text",
+     "type": "STR",
+     "desc": "props.text",
+     "required": false,
+     "field": [
+      "element",
+      "text"
+     ]
+    },
+    {
+     "name": "backgroundColor",
+     "type": "STR",
+     "desc": "props.backgroundColor",
+     "required": false,
+     "field": [
+      "element",
+      "backgroundColor"
+     ]
+    },
+    {
+     "name": "fontFamily",
+     "type": "STR",
+     "desc": "props.fontFamily",
+     "required": false,
+     "field": [
+      "element",
+      "fontFamily"
+     ]
+    },
+    {
+     "name": "image",
+     "type": "STR",
+     "desc": "props.image",
+     "required": false,
+     "field": [
+      "element",
+      "image"
+     ]
+    }
+   ],
+   "returns": "OBJ:element",
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "update",
+    "entity": "element",
+    "id_param": 1,
+    "set_from_params": {
+     "heading": 3,
+     "text": 4,
+     "backgroundColor": 5,
+     "fontFamily": 6,
+     "image": 7,
+     "type": 2
+    }
+   },
+   "flattened_props": [
+    "heading",
+    "text",
+    "backgroundColor",
+    "fontFamily",
+    "image"
+   ]
+  },
+  {
+   "name": "add_sub_item",
+   "desc": "Add a new sub-item (slide, tab, drawer, card) to a container element.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "The lesson to operate on \u2014 use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "columnId",
+     "type": "ID:element",
+     "desc": "The column ID of the container element",
+     "required": true,
+     "field": [
+      "element",
+      "id"
+     ]
+    },
+    {
+     "name": "title",
+     "type": "STR",
+     "desc": "props.title",
+     "required": false,
+     "field": [
+      "sub_item",
+      "title"
+     ]
+    },
+    {
+     "name": "text",
+     "type": "STR",
+     "desc": "props.text",
+     "required": false,
+     "field": [
+      "sub_item",
+      "text"
+     ]
+    },
+    {
+     "name": "image",
+     "type": "STR",
+     "desc": "props.image",
+     "required": false,
+     "field": [
+      "sub_item",
+      "image"
+     ]
+    }
+   ],
+   "returns": "OBJ:sub_item",
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "create",
+    "entity": "sub_item",
+    "param_fields": [
+     null,
+     "element",
+     "title",
+     "text",
+     "image"
+    ],
+    "defaults": {
+     "element": "element_5",
+     "title": "",
+     "text": "",
+     "image": ""
+    }
+   },
+   "flattened_props": [
+    "title",
+    "text",
+    "image"
+   ]
+  },
+  {
+   "name": "update_sub_item",
+   "desc": "Update properties of a sub-item within a container element.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "The lesson to operate on \u2014 use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "columnId",
+     "type": "ID:element",
+     "desc": "The column ID of the container element",
+     "required": true,
+     "field": [
+      "element",
+      "id"
+     ]
+    },
+    {
+     "name": "subItemId",
+     "type": "ID:sub_item",
+     "desc": "The ID of the sub-item to update",
+     "required": true,
+     "field": [
+      "sub_item",
+      "id"
+     ]
+    },
+    {
+     "name": "title",
+     "type": "STR",
+     "desc": "props.title",
+     "required": false,
+     "field": [
+      "sub_item",
+      "title"
+     ]
+    },
+    {
+     "name": "text",
+     "type": "STR",
+     "desc": "props.text",
+     "required": false,
+     "field": [
+      "sub_item",
+      "text"
+     ]
+    },
+    {
+     "name": "image",
+     "type": "STR",
+     "desc": "props.image",
+     "required": false,
+     "field": [
+      "sub_item",
+      "image"
+     ]
+    }
+   ],
+   "returns": "OBJ:sub_item",
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "update",
+    "entity": "sub_item",
+    "id_param": 2,
+    "set_from_params": {
+     "title": 3,
+     "text": 4,
+     "image": 5
+    }
+   },
+   "flattened_props": [
+    "title",
+    "text",
+    "image"
+   ]
+  },
+  {
+   "name": "delete_sub_item",
+   "desc": "Delete a sub-item from a container element.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "The lesson to operate on \u2014 use `activeModuleId` from courseContext for the lesson the user is viewing, or another lesson",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "columnId",
+     "type": "ID:element",
+     "desc": "The column ID of the container element",
+     "required": true,
+     "field": [
+      "element",
+      "id"
+     ]
+    },
+    {
+     "name": "subItemId",
+     "type": "ID:sub_item",
+     "desc": "The ID of the sub-item to delete",
+     "required": true,
+     "field": [
+      "sub_item",
+      "id"
+     ]
+    }
+   ],
+   "returns": null,
+   "effects": [
+    "DELETE"
+   ],
+   "impl": {
+    "op": "delete",
+    "entity": "sub_item",
+    "id_param": 2
+   }
+  },
+  {
+   "name": "update_course_metadata",
+   "desc": "Update course-level metadata: title (header), cover image URL (headerImagePath), or description.",
+   "params": [
+    {
+     "name": "header",
+     "type": "STR",
+     "desc": "Course title shown in the top app bar.",
+     "required": false
+    },
+    {
+     "name": "headerImagePath",
+     "type": "STR",
+     "desc": "URL of the course cover image.",
+     "required": false
+    },
+    {
+     "name": "description",
+     "type": "STR",
+     "desc": "Plain-text course description shown on publish.",
+     "required": false
+    }
+   ],
+   "returns": "OBJ:course",
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "update_course_metadata"
+   }
+  },
+  {
+   "name": "update_course_styles",
+   "desc": "Change the course's default style settings \u2014 colors, global font, and heading/subheading/paragraph typography \u2014 and (by default) restyle all existing lessons\u2026",
+   "params": [
+    {
+     "name": "applyToExistingContent",
+     "type": "BOOL",
+     "desc": "Default true: restyle every existing lesson. false: only affect future elements.",
+     "required": false
+    },
+    {
+     "name": "fontFamily",
+     "type": "STR",
+     "desc": "styles.fontFamily",
+     "required": false
+    },
+    {
+     "name": "backgroundColor",
+     "type": "STR",
+     "desc": "styles.backgroundColor",
+     "required": false
+    },
+    {
+     "name": "headingColor",
+     "type": "STR",
+     "desc": "styles.headingColor",
+     "required": false
+    }
+   ],
+   "returns": null,
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "update_course_styles"
+   }
+  },
+  {
+   "name": "apply_to_lessons",
+   "desc": "Apply ONE instruction to multiple lessons concurrently (a course-wide edit).",
+   "params": [
+    {
+     "name": "instruction",
+     "type": "STR",
+     "desc": "The edit to apply to each lesson.",
+     "required": true
+    },
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "one lesson to apply it to (omit = every lesson)",
+     "required": false,
+     "field": [
+      "module",
+      "id"
+     ]
+    }
+   ],
+   "returns": null,
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "apply_to_lessons"
+   }
+  },
+  {
+   "name": "generate_lesson_content",
+   "desc": "Fill multiple lessons with content concurrently, each from its own brief.",
+   "params": [
+    {
+     "name": "moduleId",
+     "type": "ID:module",
+     "desc": "the lesson to fill",
+     "required": true,
+     "field": [
+      "module",
+      "id"
+     ]
+    },
+    {
+     "name": "brief",
+     "type": "STR",
+     "desc": "what the lesson should cover",
+     "required": true
+    }
+   ],
+   "returns": null,
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "generate_lesson_content"
+   }
+  },
+  {
+   "name": "add_course_to_curriculum",
+   "desc": "Add a course to the curriculum.",
+   "params": [
+    {
+     "name": "cardId",
+     "type": "STR",
+     "desc": "Course cardId from find_courses_for_curriculum.",
+     "required": true
+    }
+   ],
+   "returns": null,
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "add_course_to_curriculum"
+   }
+  },
+  {
+   "name": "course_search_and_create",
+   "desc": "Search for existing courses, create new ones if no matches found.",
+   "params": [
+    {
+     "name": "topic",
+     "type": "STR",
+     "desc": "topic of the course to find or create",
+     "required": true
+    }
+   ],
+   "returns": null,
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "course_search_and_create"
+   }
+  },
+  {
+   "name": "start_free_trial",
+   "desc": "Invoke this tool when the user approves course outline(s) and wants to proceed to signup.",
+   "params": [],
+   "returns": null,
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "start_free_trial"
+   }
+  },
+  {
+   "name": "submit_contact_form",
+   "desc": "Send a message to the team.",
+   "params": [
+    {
+     "name": "message",
+     "type": "STR",
+     "desc": "The message to send.",
+     "required": true
+    },
+    {
+     "name": "email",
+     "type": "STR",
+     "desc": "Contact email.",
+     "required": false
+    },
+    {
+     "name": "phone",
+     "type": "STR",
+     "desc": "Contact phone.",
+     "required": false
+    },
+    {
+     "name": "name",
+     "type": "STR",
+     "desc": "Sender name.",
+     "required": false
+    },
+    {
+     "name": "subject",
+     "type": "STR",
+     "desc": "Subject line.",
+     "required": false
+    }
+   ],
+   "returns": null,
+   "effects": [
+    "SEND"
+   ],
+   "impl": {
+    "op": "send",
+    "channel": "contact",
+    "param_map": [
+     "message",
+     "email",
+     "phone",
+     "name",
+     "subject"
+    ]
+   }
+  },
+  {
+   "name": "export_document",
+   "desc": "Export markdown, HTML, or CSV content as a downloadable file (pdf, docx, txt, md, html, csv).",
+   "params": [
+    {
+     "name": "title",
+     "type": "STR",
+     "desc": "Document title (rendered as the top heading).",
+     "required": true
+    },
+    {
+     "name": "content_markdown",
+     "type": "STR",
+     "desc": "The document body, in the language the format names (markdown for pdf/docx/txt/md).",
+     "required": true
+    },
+    {
+     "name": "format",
+     "type": "STR",
+     "desc": "Output format. (pdf | docx | txt | md | html | csv)",
+     "required": false
+    },
+    {
+     "name": "filename",
+     "type": "STR",
+     "desc": "Optional file name.",
+     "required": false
+    }
+   ],
+   "returns": "STR",
+   "effects": [
+    "WRITE"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "export_document"
+   }
+  },
+  {
+   "name": "generate_image",
+   "desc": "Generate an image and return its public URL.",
+   "params": [
+    {
+     "name": "prompt",
+     "type": "STR",
+     "desc": "Description of the image to generate (e.g., an avocado on a wooden cutting board). No style words unless the user named ",
+     "required": true
+    },
+    {
+     "name": "style",
+     "type": "STR",
+     "desc": "The style the user named, or auto to infer one from the subject and context.",
+     "required": false
+    },
+    {
+     "name": "context",
+     "type": "STR",
+     "desc": "One line on the course/lesson subject and the style of the existing images.",
+     "required": false
+    }
+   ],
+   "returns": "STR",
+   "effects": [
+    "EXTERNAL"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "generate_image"
+   }
+  },
+  {
+   "name": "edit_image",
+   "desc": "Edit an existing image and return the new image's public URL.",
+   "params": [
+    {
+     "name": "image_url",
+     "type": "STR",
+     "desc": "URL of the existing image to edit (e.g. the current image of the selected element).",
+     "required": true
+    },
+    {
+     "name": "prompt",
+     "type": "STR",
+     "desc": "Description of the change to make (e.g., make it cartoon style, replace the man with a woman).",
+     "required": true
+    }
+   ],
+   "returns": "STR",
+   "effects": [
+    "EXTERNAL"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "edit_image"
+   }
+  },
+  {
+   "name": "write_text",
+   "desc": "Write prose from a brief (what to write, in the requester's words) and the elements it is about. Returns the text.",
+   "params": [
+    {
+     "name": "brief",
+     "type": "STR",
+     "desc": "what to write, in the requester's words",
+     "required": true
+    },
+    {
+     "name": "data",
+     "type": "LIST OBJ:element",
+     "desc": "elements the text is about",
+     "required": true
+    }
+   ],
+   "returns": "STR",
+   "effects": [
+    "EXTERNAL"
+   ],
+   "impl": {
+    "op": "external",
+    "kind": "write_text"
+   }
+  }
+ ]
+}
