@@ -13,7 +13,8 @@ tool calls are the closest thing to a routing label we get for free.
   python -m harness.real_requests histogram         # shape histogram over turns
   python -m harness.real_requests inventory         # tool -> arg keys/types (coursebuilder world draft)
   python -m harness.real_requests sample --n 250    # -> data/real_sessions/eval_candidates.jsonl
-                                                    #    (scrubbed; human review before it becomes
+                                                    #    (strict-clean rows only: nothing to scrub;
+                                                    #     an eyeball pass, then it can ship as
                                                     #     data/holdout/e_real_sessions.jsonl)
                                                     #    + eval_session_ids.json (frozen; B2 excludes)
   python -m harness.real_requests pool              # -> data/real_sessions/b2_pool.jsonl (mining pool,
@@ -301,6 +302,24 @@ def eligible(turns: list) -> list:
             and not _NOT_A_REQUEST.search(t["user_text"])]
 
 
+# Owner rule (2026-09-02): the eval slice is drawn only from requests that
+# need no scrubbing at all, so the file can ship as-is after an eyeball.
+# Strict = no regex flag AND no capitalised word except sentence-initial
+# (or the pronoun I). Loses "change the font to Book Antiqua"-style rows,
+# but the pool has the same shapes without proper nouns (1,090 of 1,555).
+_MID_CAP = re.compile(r"(?<![.!?\n]\s)(?<!^)\b[A-Z][a-zA-Z']+\b")
+_CAP_OK = {"I", "I'm", "I'd", "I've", "I'll"}
+# bare domains ("sviworld.com") name an organisation; the URL regex only
+# catches http(s) links
+_BARE_DOMAIN = re.compile(r"\b[\w-]+\.(com|org|net|io|co|ai|edu|gov)\b", re.I)
+
+
+def strict_clean(text: str) -> bool:
+    if scrub(text)[1] or _BARE_DOMAIN.search(text):
+        return False
+    return not [w for w in _MID_CAP.findall(text) if w not in _CAP_OK]
+
+
 def _arg_shape(v):
     if isinstance(v, bool):
         return "BOOL"
@@ -366,6 +385,8 @@ def cmd_inventory(args) -> None:
 def cmd_sample(args) -> None:
     rng = random.Random(args.seed)
     turns = eligible(load_turns())
+    if not args.allow_flagged:
+        turns = [t for t in turns if strict_clean(t["user_text"])]
     # stratify by agent so mobi-cbiv doesn't drown everything, cap per account
     by_agent = collections.defaultdict(list)
     for t in turns:
@@ -436,6 +457,8 @@ def main() -> None:
     s.add_argument("--n", type=int, default=250)
     s.add_argument("--seed", type=int, default=20260902)
     s.add_argument("--max-per-account", type=int, default=12)
+    s.add_argument("--allow-flagged", action="store_true",
+                   help="sample from every eligible turn, not only strict-clean ones")
     args = ap.parse_args()
     {"extract": cmd_extract, "histogram": cmd_histogram, "inventory": cmd_inventory,
      "sample": cmd_sample, "pool": cmd_pool}[args.cmd](args)
