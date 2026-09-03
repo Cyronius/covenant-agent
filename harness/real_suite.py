@@ -161,8 +161,11 @@ def score_row(row: dict, task: dict) -> dict:
         "unnecessary_destructive": row.get("unnecessary_destructive", 0),
     }
     if exp_status == "ok" and not unmapped:
-        out["route_match"] = called_set == exp
-        out["route_write_match"] = (called_set - READ_TOOLS) == (exp - READ_TOOLS)
+        # a program that did not compile or run routed nothing, even when the
+        # expected write set is empty (read-only turns)
+        ran = row["compile_ok"] and row["status"] in ("ok", "effect_blocked")
+        out["route_match"] = ran and called_set == exp
+        out["route_write_match"] = ran and (called_set - READ_TOOLS) == (exp - READ_TOOLS)
     if task.get("content_bearing"):
         out["content_routed"] = bool(called_set & CONTENT_TOOLS)
     return out

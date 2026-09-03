@@ -48,6 +48,12 @@ def test_route_match_ignores_reads_only_in_the_write_variant():
     assert s["route_match"] is True
 
 
+def test_route_match_requires_a_run():
+    task = {"expected_tools": ["get_course_theme"], "expected_status": "ok"}
+    s = score_row(_row([], status="static_error", compile_ok=False), task)
+    assert s["route_match"] is False and s["route_write_match"] is False
+
+
 def test_abstain_scoring():
     task = {"expected_tools": [], "expected_status": "aborted"}
     assert score_row(_row([], "aborted", "AMBIGUOUS"), task)["correct_abstain"] is True
