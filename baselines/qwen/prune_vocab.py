@@ -33,6 +33,8 @@ sys.path.insert(0, str(ROOT))
 
 TEXT_SOURCES = [
     ("data/sft_s1.jsonl", "messages"),
+    ("data/sft_s2.jsonl", "messages"),
+    ("data/holdout/e_real_sessions.jsonl", "input_text"),
     ("data/holdout/e_foreign.jsonl", "input_text"),
     ("data/holdout/e_crowded.jsonl", "input_text"),
     ("data/holdout/e_ood_english.jsonl", "input_text"),
@@ -76,6 +78,12 @@ def main() -> None:
     ap.add_argument("--floor", type=int, default=40000,
                     help="keep the result tokens of the first N merges (general English)")
     ap.add_argument("--pad-to", type=int, default=64, help="pad the embedding rows to a multiple")
+    ap.add_argument("--used-ids", default=None, metavar="JSON",
+                    help="precomputed used-token-id list (from --dump-used on the dev "
+                         "machine) instead of reading TEXT_SOURCES; lets a rented pod "
+                         "prune without receiving any request text")
+    ap.add_argument("--dump-used", default=None, metavar="JSON",
+                    help="write the used-token-id list here and exit")
     args = ap.parse_args()
     src, out = Path(args.src), Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -93,8 +101,16 @@ def main() -> None:
     added = tj.get("added_tokens", [])
     print(f"tokenizer: {len(vocab)} vocab, {len(merges)} merges, {len(added)} added")
 
-    print("collecting used tokens:")
-    keep = used_token_ids(tok)
+    if args.used_ids:
+        keep = set(json.load(open(args.used_ids, encoding="utf-8")))
+        print(f"used tokens from {args.used_ids}: {len(keep)}")
+    else:
+        print("collecting used tokens:")
+        keep = used_token_ids(tok)
+        if args.dump_used:
+            json.dump(sorted(keep), open(args.dump_used, "w", encoding="utf-8"))
+            print(f"wrote {len(keep)} used token ids -> {args.dump_used}")
+            return
     n_used = len(keep)
     keep |= set(range(256))                       # byte-level bases (ids 0..255 in this vocab)
     keep |= {a["id"] for a in added}
