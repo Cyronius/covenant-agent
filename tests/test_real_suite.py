@@ -69,3 +69,39 @@ def test_content_routed_needs_a_content_tool():
     assert score_row(_row(["update_element"]), task)["content_routed"] is False
     assert score_row(_row(["write_text", "update_element"]), task)["content_routed"] is True
     assert "write_text" not in READ_TOOLS
+
+
+def test_coursebuilder_world_executes_a_hand_written_route():
+    """The generated world's impl descriptors must run in the sandbox: read
+    the lesson, add a knowledge check, retitle the selected element."""
+    import random
+    from core.pipeline import build
+    from harness.authoring import resolve
+    from harness.context import build_context
+    from harness.run import run_sandbox
+    from runtime.worlds import get_world
+    world = get_world("coursebuilder")
+    assert len(world["tools"]) >= 30
+    constants = [
+        {"type": "ID:module", "value": "module_2", "desc": "current lesson"},
+        {"type": "STR", "value": "knowledgeCheckMultipleChoice", "desc": "element type"},
+        {"type": "ID:element", "value": "element_4", "desc": "selected element"},
+        {"type": "STR", "value": "New heading", "desc": "heading"},
+    ]
+    ctx, sctx = build_context(world, constants, random.Random(9))
+    src = ("CALL @list_elements $0 -> r0\n"
+           "CALL @add_element $0 $1 -> r1\n"
+           "CALL @update_element $0 $2 $3 -> r2\n"
+           "STOP\n")
+    res = build(resolve(src, ctx), ctx)
+    assert res.compile_ok, res.rendered_diagnostics()
+    out = run_sandbox({"js": res.js, "state": world["default_state"], "tools": sctx["tools"],
+                       "fields": sctx["fields"], "constants": sctx["constants"],
+                       "now": world["now"], "approval": True, "error_injection": [],
+                       "initial_registers": {}})
+    assert out["status"] == "ok", out
+    names = [c["name"] for c in out["calls"]]
+    assert names == ["list_elements", "add_element", "update_element"]
+    els = out["state"]["entities"]["element"]
+    assert len(els) == 9 and els[-1]["type"] == "knowledgeCheckMultipleChoice"
+    assert next(e for e in els if e["id"] == "element_4")["heading"] == "New heading"
