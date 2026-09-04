@@ -28,6 +28,13 @@ def main():
     ap.add_argument("--grad-accum", type=int, default=4)
     ap.add_argument("--max-len", type=int, default=1280)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--grad-checkpointing", action="store_true",
+                    help="required at long --max-len: Qwen3.5's linear-attention "
+                         "layers keep large per-layer state and OOM a 24 GB card "
+                         "on a full-length row without it")
+    ap.add_argument("--liger", action="store_true",
+                    help="fused linear cross-entropy; the 248k vocab makes the "
+                         "materialised logits the largest tensor in the step")
     args = ap.parse_args()
 
     from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -64,11 +71,18 @@ def main():
         warmup_steps=100, bf16=True, max_length=args.max_len,
         logging_steps=50, save_strategy="steps", save_steps=500,
         save_total_limit=2, seed=args.seed,
+        # NOTE: install flash-linear-attention on the training box. Qwen3.5 is
+        # a hybrid model; without `fla` transformers falls back to a pure-torch
+        # chunked gated-delta-rule that is launch-bound and ~8x slower end to
+        # end (measured 1.05k vs 9.4k tok/s on a 4090, 2026-09-03).
         # NOTE: packing=True was tried for the mixed plain/crowded corpus
         # and was ~5x SLOWER on a 4090 (dense 3072-token batches every
         # step); plain padded batches win despite the waste. group_by_length
         # does not exist in TRL 1.12's SFTConfig.
-        assistant_only_loss=True, report_to=[])
+        assistant_only_loss=True, report_to=[],
+        gradient_checkpointing=args.grad_checkpointing,
+        gradient_checkpointing_kwargs={"use_reentrant": False},
+        use_liger_kernel=args.liger)
     model = AutoModelForCausalLM.from_pretrained(
         args.model, torch_dtype="bfloat16", attn_implementation="sdpa")
     trainer = SFTTrainer(model=model, args=cfg, train_dataset=ds,
