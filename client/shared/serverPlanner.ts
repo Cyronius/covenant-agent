@@ -20,7 +20,9 @@ export async function fetchServerPlanStatus(): Promise<ServerPlanStatus> {
   return (await res.json()) as ServerPlanStatus;
 }
 
-export async function createServerPlanner(): Promise<Planner> {
+/** @param model optional GGUF filename (GET /models); the server switches
+ *  checkpoint before warming. Omit to use whatever it already has loaded. */
+export async function createServerPlanner(model?: string): Promise<Planner> {
   const t0 = performance.now();
   const status = await fetchServerPlanStatus();
   if (!status.available) {
@@ -31,7 +33,7 @@ export async function createServerPlanner(): Promise<Planner> {
   const warm = await fetch('/plan', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ warm: true }),
+    body: JSON.stringify(model ? { warm: true, model } : { warm: true }),
   });
   if (!warm.ok) throw new Error(`server model load failed: ${warm.status} ${warm.statusText}`);
   const loadMs = performance.now() - t0;

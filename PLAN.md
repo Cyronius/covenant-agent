@@ -521,3 +521,26 @@ covenant-agent/
 - When a result fails its pass bar, write the failure in `results/Rn.md` and stop. Do not quietly widen the bar.
 - Do not add primitives to the IR, new model architectures, or new experiments without a note in this document explaining which result motivated it.
 - Prefer boring choices: standard transformer blocks, standard tokenizer, standard optimizers. Novelty budget is spent on the IR, constrained decoding, and the feedback loop — nowhere else.
+
+### Amendments
+
+- **2026-09-04 — `rpg` world, `engine` impl op, `post_hook`.** Added a
+  turn-based grid dungeon (`runtime/worlds/rpg.py`, rules in
+  `runtime/engines/rpg.js`) as a held-out world, plus an episode runner
+  (`harness/rpg_suite.py`) and a demo (`client/rpg-ui`). **Motivating
+  result:** `results/S2.md`'s E-real-sessions section — the planner
+  reproduces the corpus skeleton (list → FILTER → FOREACH → act) whatever
+  the request says, and scores near zero on a world it has not seen. Every
+  world to date is CRUD over records, so nothing in the suite separates "can
+  read a schema" from "can decide". This is R5's question (§7) asked with a
+  world whose semantics — position, adjacency, turn order — have no
+  analogue in the 143 generated themes, and it doubles as the bench for
+  choosing a different base model if the current one cannot play.
+  No IR change: programs are ordinary `CALL`/`STOP`. Two runtime additions,
+  both data-driven and world-agnostic: `impl {op: "engine", module, fn}`
+  dispatches a call to a whitelisted module under `runtime/engines/`, and a
+  world may declare a `post_hook` the sandbox runs once after each program
+  (the enemy phase). Episodes are scored by a terminal predicate plus a
+  progress funnel, not by `goal_success` state equality — a game has many
+  winning play-throughs. Results in `results/RPG.md`; plan in
+  `.claude/plans/rpg-demo-app.md`.

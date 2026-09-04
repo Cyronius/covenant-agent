@@ -1,7 +1,8 @@
 // @wllama/wllama planner. See ./llm.md for the API research notes behind
 // this file.
 //
-// The vendored bundle lives in src/vendor/wllama/index.js (NOT public/) and
+// The vendored bundle lives in client/shared/vendor/wllama/index.js (NOT
+// public/) and
 // is imported normally so Vite bundles it — Vite refuses to import anything
 // under public/ from application code ("this file is in /public ... should
 // not be imported from source code"), and since the bundle is a
@@ -9,9 +10,11 @@
 // is harmless. Only the wasm binary stays a public/ static asset,
 // referenced purely as a URL string (never imported).
 // @ts-expect-error — no type declarations shipped alongside the vendored JS
-import { Wllama } from '../vendor/wllama/index.js';
+import { Wllama } from './vendor/wllama/index.js';
 
-const WLLAMA_WASM_URL = '/vendor/wllama/wasm/wllama.wasm';
+// Each app serves its own copy of the binary from public/; override via
+// CreatePlannerOptions.wasmUrl if it is mounted elsewhere.
+const DEFAULT_WLLAMA_WASM_URL = '/vendor/wllama/wasm/wllama.wasm';
 
 // Matches baselines/qwen/run_a.py's default --ctx 4096.
 const DEFAULT_N_CTX = 4096;
@@ -44,6 +47,8 @@ export interface CreatePlannerOptions {
   /** called right before each stage starts — wllama exposes no real byte-level
    * progress (see llm.md), so this is staging only, not a percentage. */
   onStage?: (stage: LoadStage) => void;
+  /** where wllama.wasm is served from; defaults to the app's own public/ copy. */
+  wasmUrl?: string;
 }
 
 export async function createPlanner({
@@ -52,6 +57,7 @@ export async function createPlanner({
   nThreads,
   nGpuLayers,
   onStage,
+  wasmUrl = DEFAULT_WLLAMA_WASM_URL,
 }: CreatePlannerOptions): Promise<Planner> {
   if (!modelUrl) throw new Error('createPlanner: modelUrl is required');
   if (!grammarUrl) throw new Error('createPlanner: grammarUrl is required');
@@ -66,7 +72,7 @@ export async function createPlanner({
   }
   const grammarText = await grammarRes.text();
 
-  const wllama = new Wllama({ default: WLLAMA_WASM_URL });
+  const wllama = new Wllama({ default: wasmUrl });
 
   // Capability check only — see llm.md: wllama does not expose which
   // backend a given completion call actually dispatched to.

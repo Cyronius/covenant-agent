@@ -85,26 +85,52 @@ def build_prompt(task_input: str, registers: dict | None,
     return "\n".join(parts)
 
 
-def make_planner(llm, grammar, task, max_tokens, usage_sink):
-    prior: list[str] = []
+def generate(llm, grammar, user: str, max_tokens: int = 250,
+             template: str = "qwen") -> dict:
+    """One greedy, grammar-constrained completion. Returns
+    {text, usage, finish_reason}.
 
-    def plan(request, ctx, seg_idx, registers):
-        if seg_idx > 2:   # runaway guard: give up after 3 segments
-            return None
-        user = build_prompt(task["input_text"], registers, prior)
-        # Manual Qwen chat markup with an explicit empty think block: keeps
-        # the model in no-think mode (the grammar forbids <think> anyway,
-        # which would otherwise force "reasoning" in program syntax).
+    Templates are a per-model choice, not a global one:
+      qwen  hand-rolled ChatML with an explicit empty think block — keeps the
+            model in no-think mode (the grammar forbids <think> anyway, which
+            would otherwise force "reasoning" in program syntax). Our tuned
+            S1/S2 checkpoints were SFT'd against exactly this markup, so
+            changing it changes the distribution they were measured on.
+      chat  create_chat_completion, which applies the GGUF's own
+            tokenizer.chat_template — the path for any other instruct model
+            (harness/rpg_suite.py's cross-model comparison).
+    """
+    if template == "chat":
+        res = llm.create_chat_completion(
+            messages=[{"role": "system", "content": SYSTEM},
+                      {"role": "user", "content": user}],
+            grammar=grammar, temperature=0.0, max_tokens=max_tokens)
+        choice = res["choices"][0]
+        text = (choice["message"].get("content") or "").strip()
+    else:
         prompt = (f"<|im_start|>system\n{SYSTEM}<|im_end|>\n"
                   f"<|im_start|>user\n{user}<|im_end|>\n"
                   f"<|im_start|>assistant\n<think>\n\n</think>\n\n")
         res = llm.create_completion(
             prompt, grammar=grammar, temperature=0.0,
             max_tokens=max_tokens, stop=["<|im_end|>"])
-        text = res["choices"][0]["text"].strip()
-        usage_sink.append(res.get("usage", {}))
-        prior.append(text)
-        return text
+        choice = res["choices"][0]
+        text = choice["text"].strip()
+    return {"text": text, "usage": res.get("usage", {}),
+            "finish_reason": choice.get("finish_reason")}
+
+
+def make_planner(llm, grammar, task, max_tokens, usage_sink, template="qwen"):
+    prior: list[str] = []
+
+    def plan(request, ctx, seg_idx, registers):
+        if seg_idx > 2:   # runaway guard: give up after 3 segments
+            return None
+        user = build_prompt(task["input_text"], registers, prior)
+        res = generate(llm, grammar, user, max_tokens, template)
+        usage_sink.append(res["usage"])
+        prior.append(res["text"])
+        return res["text"]
 
     return plan
 

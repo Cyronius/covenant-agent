@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { InferenceControls } from './components/InferenceControls';
 import KanbanBoard from './components/KanbanBoard';
 import ChatPanel from './components/ChatPanel';
 import Toast from './components/Toast';
@@ -40,10 +41,11 @@ export default function App() {
     modelStatus,
     busy,
     toast,
-    cpuOnly,
-    toggleCpuOnly,
     inference,
     setInferenceMode,
+    models,
+    model,
+    selectModel,
     sendMessage,
     approveGate,
     cancelGate,
@@ -68,34 +70,14 @@ export default function App() {
               Tools
             </button>
           )}
-          <label
-            className="cpu-toggle"
-            title="Where the planner runs: in this browser (model download, WASM/WebGPU) or on the dev server's CPU via POST /plan. No GPU either way."
-          >
-            Inference
-            <select
-              value={inference}
-              disabled={busy || modelStatus.phase === 'loading'}
-              onChange={(e) => setInferenceMode(e.target.value === 'server' ? 'server' : 'browser')}
-            >
-              <option value="browser">browser</option>
-              <option value="server">server</option>
-            </select>
-          </label>
-          {inference === 'browser' && (
-            <label
-              className="cpu-toggle"
-              title="Force WASM-only decoding, skipping WebGPU offload. Changing this reloads the model."
-            >
-              <input
-                type="checkbox"
-                checked={cpuOnly}
-                disabled={modelStatus.phase !== 'ready' || busy}
-                onChange={toggleCpuOnly}
-              />
-              CPU only
-            </label>
-          )}
+          <InferenceControls
+            mode={inference}
+            model={model}
+            models={models}
+            disabled={busy || modelStatus.phase === 'loading'}
+            onMode={setInferenceMode}
+            onModel={selectModel}
+          />
           {ready && (
             <span className="model-status ready">
               <span className="dot" />

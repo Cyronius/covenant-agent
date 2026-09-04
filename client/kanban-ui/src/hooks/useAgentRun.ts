@@ -8,16 +8,28 @@
 // generation/compile/typecheck/effects/execution/approval-gate are real.
 // See .claude/plans/understory-kanban-frontend.md.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createPlanner, type LoadStage, type Planner } from '../lib/llm';
-import { createServerPlanner } from '../lib/serverPlanner';
-import { buildFullPrompt, STOP, type Registers } from '../lib/prompt';
-import { validate, type CallLogEntry } from '../lib/validate';
+import { type LoadStage, type Planner } from '../../../shared/llm';
+import {
+  createPlannerFor,
+  fetchModels,
+  loadModelPreference,
+  loadPreference,
+  saveModelPreference,
+  savePreference,
+  type InferenceMode,
+  type ModelInfo,
+} from '../../../shared/inference';
+import { buildFullPrompt, STOP, type Registers } from '../../../shared/prompt';
+import { validate, type CallLogEntry, type ValidateResponse } from '../../../shared/validate';
 import { fetchKanbanPrompt, describeCallSite } from '../lib/kanbanPrompt';
 import { describeCall, describeArg } from '../lib/describe';
 import { initialState, userById, TOOL_EFFECTS, type KanbanState, type Effect } from '../data/board';
 
-const MODEL_URL = '/models/qwen3.5-0.8b-s1-q8.gguf'; // multi-domain S1 checkpoint (104 domains) — condB was 2-domain (kanban+crm) and generalized worse: 80% holdout vs S1's 92.5% OOD (results/r2_b_0.8b_holdout.jsonl vs results/s1_0.8b_q8_ood.jsonl)
-const GRAMMAR_URL = '/agent_core.gbnf';
+// Which checkpoint to load is the server's call (GET /models), not a
+// hardcode here — see client/shared/inference.ts. This was pinned to the S1
+// checkpoint until 2026-09-04, which quietly kept the demo a generation
+// behind the eval suites.
+const APP_KEY = 'kanban-ui';
 const MAX_SEGMENTS = 4; // PAUSE continuations per request (harness MAX_SEGMENTS is the eval-side cap)
 
 export type ChatMessage =
@@ -28,27 +40,6 @@ export type ChatMessage =
   | { kind: 'agent-text'; id: string; text: string }
   | { kind: 'stats'; id: string; tokens: number; ms: number }
   | { kind: 'note'; id: string; text: string };
-
-const CPU_ONLY_KEY = 'kanban-ui:cpuOnly';
-const INFERENCE_KEY = 'kanban-ui:inference';
-
-export type InferenceMode = 'browser' | 'server';
-
-function loadInferencePref(): InferenceMode {
-  try {
-    return localStorage.getItem(INFERENCE_KEY) === 'server' ? 'server' : 'browser';
-  } catch {
-    return 'browser';
-  }
-}
-
-function loadCpuOnlyPref(): boolean {
-  try {
-    return localStorage.getItem(CPU_ONLY_KEY) === 'true';
-  } catch {
-    return false; // localStorage unavailable (private mode, etc.) — default on
-  }
-}
 
 export type ModelStatus =
   | { phase: 'loading'; stage: LoadStage }
@@ -96,8 +87,9 @@ export function useAgentRun() {
   const [modelStatus, setModelStatus] = useState<ModelStatus>({ phase: 'loading', stage: 'grammar' });
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [cpuOnly, setCpuOnly] = useState(loadCpuOnlyPref);
-  const [inference, setInference] = useState<InferenceMode>(loadInferencePref);
+  const [inference, setInference] = useState<InferenceMode>(() => loadPreference(APP_KEY));
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [model, setModel] = useState<string | null>(() => loadModelPreference(APP_KEY));
 
   const plannerRef = useRef<Planner | null>(null);
   const gateResolveRef = useRef<((approved: boolean) => void) | null>(null);
@@ -126,26 +118,23 @@ export function useAgentRun() {
     toastTimerRef.current = window.setTimeout(() => setToast(null), 2400);
   }, []);
 
-  // Shared by the initial mount load below and the CPU-only toggle reload
-  // further down — both just want "unload whatever's loaded (if anything),
-  // load fresh with this nGpuLayers setting, report loading/ready/error the
-  // same way".
-  const loadPlanner = useCallback(async (forceCpu: boolean, mode: InferenceMode) => {
+  // Shared by the initial mount load and every mode/model switch below: both
+  // want "unload whatever's loaded (if anything), load fresh under this
+  // backend and checkpoint, report loading/ready/error the same way". Both
+  // the backend and n_gpu_layers are load-time settings, so a switch always
+  // means loading again.
+  const loadPlanner = useCallback(async (mode: InferenceMode, name: string) => {
     try {
       if (plannerRef.current) {
         await plannerRef.current.unload();
         plannerRef.current = null;
       }
       setModelStatus({ phase: 'loading', stage: mode === 'server' ? 'model' : 'grammar' });
-      const planner =
-        mode === 'server'
-          ? await createServerPlanner()
-          : await createPlanner({
-              modelUrl: MODEL_URL,
-              grammarUrl: GRAMMAR_URL,
-              nGpuLayers: forceCpu ? 0 : undefined,
-              onStage: (stage) => setModelStatus({ phase: 'loading', stage }),
-            });
+      const planner = await createPlannerFor({
+        mode,
+        model: name,
+        onStage: (stage) => setModelStatus({ phase: 'loading', stage }),
+      });
       plannerRef.current = planner;
       setModelStatus({ phase: 'ready', backend: planner.backend, loadMs: planner.loadMs });
     } catch (err) {
@@ -166,51 +155,62 @@ export function useAgentRun() {
   // via an actual browser run: the model finished loading — confirmed in
   // wllama's own console output — but the UI sat on the loading screen
   // forever because `cancelled` had already flipped true).
+  //
+  // Which checkpoint to load comes from GET /models, so the first load waits
+  // for that list; a stored preference that the server no longer has falls
+  // back to the server's own default.
   useEffect(() => {
     if (loadStartedRef.current) return;
     loadStartedRef.current = true;
-    loadPlanner(cpuOnly, inference);
-    // Deliberately not depending on cpuOnly: only the very first mount's
-    // value matters here — the effect below owns every reload after that,
-    // including ones triggered by the toggle changing this same state.
+    (async () => {
+      let name = model;
+      try {
+        const list = await fetchModels();
+        setModels(list.models);
+        if (!name || !list.models.some((m) => m.name === name)) {
+          name = list.default ?? list.models[0]?.name ?? null;
+          setModel(name);
+        }
+      } catch {
+        // no /models (a plain static host): fall back to whatever is stored
+      }
+      if (!name) {
+        setModelStatus({ phase: 'error', message: 'no model available from GET /models' });
+        return;
+      }
+      loadPlanner(inference, name);
+    })();
+    // Only the first mount's values matter here; the effect below owns every
+    // reload after that, including ones this same state change triggers.
   }, [loadPlanner]);
 
   const setInferenceMode = useCallback((mode: InferenceMode) => {
     setInference((prev) => {
       if (prev === mode) return prev;
-      try {
-        localStorage.setItem(INFERENCE_KEY, mode);
-      } catch {
-        // localStorage unavailable — still switches for this session
-      }
+      savePreference(APP_KEY, mode);
       return mode;
     });
   }, []);
 
-  const toggleCpuOnly = useCallback(() => {
-    setCpuOnly((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(CPU_ONLY_KEY, String(next));
-      } catch {
-        // localStorage unavailable — toggle still works for this session
-      }
-      return next;
+  const selectModel = useCallback((name: string) => {
+    setModel((prev) => {
+      if (prev === name) return prev;
+      saveModelPreference(APP_KEY, name);
+      return name;
     });
   }, []);
 
-  // Reload the model whenever cpuOnly changes after the initial mount —
-  // n_gpu_layers is a load-time option, so there's no in-place switch.
-  // Guarded so this doesn't also fire for the mount effect's own initial
-  // value (that load is already in flight via the effect above).
-  const cpuOnlyMountedRef = useRef(false);
+  // Reload whenever the backend or the checkpoint changes after the initial
+  // mount. Guarded so this doesn't also fire for the mount effect's own
+  // initial values (that load is already in flight above).
+  const switchMountedRef = useRef(false);
   useEffect(() => {
-    if (!cpuOnlyMountedRef.current) {
-      cpuOnlyMountedRef.current = true;
+    if (!switchMountedRef.current) {
+      switchMountedRef.current = true;
       return;
     }
-    loadPlanner(cpuOnly, inference);
-  }, [cpuOnly, inference, loadPlanner]);
+    if (model) loadPlanner(inference, model);
+  }, [inference, model, loadPlanner]);
 
   const approveGate = useCallback(() => {
     gateResolveRef.current?.(true);
@@ -258,7 +258,7 @@ export function useAgentRun() {
           totalGenMs += gen.genMs;
           append({ kind: 'program', id: mkId(), text: gen.text });
 
-          let resp = await validate({
+          let resp: ValidateResponse<KanbanState> = await validate<KanbanState>({
             context: kp.context,
             world: kp.world,
             now: kp.now,
@@ -299,7 +299,7 @@ export function useAgentRun() {
               return;
             }
             approvalGranted = true;
-            resp = await validate({
+            resp = await validate<KanbanState>({
               context: kp.context,
               world: kp.world,
               now: kp.now,
@@ -377,10 +377,11 @@ export function useAgentRun() {
     modelStatus,
     busy,
     toast,
-    cpuOnly,
-    toggleCpuOnly,
     inference,
     setInferenceMode,
+    models,
+    model,
+    selectModel,
     sendMessage,
     approveGate,
     cancelGate,

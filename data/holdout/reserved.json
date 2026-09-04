@@ -2,7 +2,8 @@
  "comment": "Reserved at generation time; never enters training data (F4/R5).",
  "worlds": [
   "projects",
-  "coursebuilder"
+  "coursebuilder",
+  "rpg"
  ],
  "tools": {
   "kanban": [

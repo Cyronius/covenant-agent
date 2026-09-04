@@ -47,13 +47,18 @@ from core.ir import TaskContext, parse_type  # noqa: E402
 from core.pipeline import build  # noqa: E402
 from harness.context import build_context, sandbox_from_context, serialize_context  # noqa: E402
 from harness.run import run_sandbox  # noqa: E402
-from runtime.worlds import get_world  # noqa: E402
+from runtime.worlds import get_world, rpg  # noqa: E402
 
 APP_DIST = ROOT / "client" / "kanban-ui" / "dist"
+RPG_DIST = ROOT / "client" / "rpg-ui" / "dist"
 MODELS_DIR = ROOT / "baselines" / "qwen" / "models"
 GRAMMAR_FILE = ROOT / "baselines" / "qwen" / "agent_core.gbnf"
 TASKS_FILE = ROOT / "data" / "curriculum_tasks.jsonl"
-DEFAULT_PLAN_MODEL = MODELS_DIR / "qwen3.5-0.8b-s1-q8.gguf"
+DEFAULT_PLAN_MODEL = MODELS_DIR / "qwen3.5-0.8b-s2-pruned-q8.gguf"
+# Our own tuned checkpoints were SFT'd against the hand-rolled ChatML markup
+# in baselines/qwen/run_a.py; any other GGUF gets its own chat template
+# applied by llama-cpp-python instead (see ServerPlanner.generate_chat).
+TUNED_PREFIXES = ("qwen3.5-0.8b-s", "qwen3.5-2b-cond", "qwen3.5-0.8b-cond")
 # The writer uses the UNTUNED base weights: the merged S1 checkpoint has lost
 # its general writing (it echoes the data list back; measured 2026-09-02,
 # plan s2-consolidated-program §A8), while the base 0.8B writes a proper
@@ -97,6 +102,21 @@ class ServerPlanner:
             self._llm = Llama(model_path=str(self.model_path), n_ctx=self.n_ctx,
                               verbose=False)
 
+    def switch(self, name: str) -> dict:
+        """Load a different checkpoint from MODELS_DIR. One planner at a time:
+        a 2B Q8 is ~2.5 GB, so the previous model is dropped rather than
+        cached. The writer instance is untouched."""
+        target = MODELS_DIR / name
+        if "/" in name or "\\" in name or not target.exists():
+            raise ValueError(f"no such model: {name}")
+        with self._lock:
+            if self.model_path and target.samefile(self.model_path) and self._llm:
+                return self.status()
+            self._llm = None
+            self._grammar = None
+            self.model_path = target
+        return self.status()
+
     def generate(self, prompt: str, max_tokens: int, stop: list) -> dict:
         with self._lock:
             self._ensure()
@@ -107,6 +127,25 @@ class ServerPlanner:
             gen_ms = (time.perf_counter() - t0) * 1000
         choice = res["choices"][0]
         return {"text": choice["text"], "finish_reason": choice["finish_reason"],
+                "tokens_out": res.get("usage", {}).get("completion_tokens", 0),
+                "tokens_in": res.get("usage", {}).get("prompt_tokens", 0),
+                "gen_ms": gen_ms, "model": self.model_path.name}
+
+    def generate_chat(self, system: str, user: str, max_tokens: int) -> dict:
+        """For a model that is not one of ours: llama-cpp-python applies the
+        GGUF's own tokenizer.chat_template, so the client does not have to
+        know the markup. Same grammar, same greedy decoding."""
+        with self._lock:
+            self._ensure()
+            t0 = time.perf_counter()
+            res = self._llm.create_chat_completion(
+                messages=[{"role": "system", "content": system},
+                          {"role": "user", "content": user}],
+                grammar=self._grammar, temperature=0.0, max_tokens=max_tokens)
+            gen_ms = (time.perf_counter() - t0) * 1000
+        choice = res["choices"][0]
+        return {"text": choice["message"].get("content") or "",
+                "finish_reason": choice.get("finish_reason"),
                 "tokens_out": res.get("usage", {}).get("completion_tokens", 0),
                 "tokens_in": res.get("usage", {}).get("prompt_tokens", 0),
                 "gen_ms": gen_ms, "model": self.model_path.name}
@@ -227,18 +266,23 @@ class DevHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _resolve_static_path(self, url_path: str) -> Path | None:
-        """Map a URL path to a file under the built app (client/kanban-ui/dist),
-        guarding traversal. Unknown paths fall back to index.html (SPA)."""
+        """Map a URL path to a file under a built app, guarding traversal.
+        `/rpg/...` serves client/rpg-ui/dist, everything else the kanban app.
+        Unknown paths fall back to that app's index.html (SPA)."""
         rel = url_path.lstrip("/")
+        root = APP_DIST
+        if rel == "rpg" or rel.startswith("rpg/"):
+            root = RPG_DIST
+            rel = rel[4:]
         if rel == "" or rel == "/":
             rel = "index.html"
-        candidate = (APP_DIST / rel).resolve()
+        candidate = (root / rel).resolve()
         try:
-            candidate.relative_to(APP_DIST.resolve())
+            candidate.relative_to(root.resolve())
         except ValueError:
             return None
         if not candidate.is_file():
-            candidate = APP_DIST / "index.html"
+            candidate = root / "index.html"
         return candidate
 
     def _serve_file(self, path: Path, support_range: bool = False) -> None:
@@ -333,6 +377,12 @@ class DevHandler(BaseHTTPRequestHandler):
                 self._send_json(200, PLANNER.status())
                 return
 
+            if path == "/models":
+                # matched before the static fallback below, which would
+                # otherwise answer a bare /models with index.html
+                self._send_json(200, list_models())
+                return
+
             static_path = self._resolve_static_path(path)
             if static_path is None:
                 self._send_text(403, "Forbidden\n")
@@ -341,21 +391,65 @@ class DevHandler(BaseHTTPRequestHandler):
         except Exception:
             self._send_text(500, f"Internal error:\n{traceback.format_exc()}\n")
 
+    def do_HEAD(self) -> None:
+        """Headers only. wllama sends a HEAD for the GGUF before it starts
+        ranged GETs; without this, BaseHTTPRequestHandler answers 501 and the
+        browser console shows an error on every model load (it still works —
+        wllama falls back — but the error is noise, and Content-Length is
+        what lets it show real download progress).
+
+        A HEAD response carries no body, error paths included, so this sends
+        a bare status rather than going through _send_text."""
+        def status_only(code: int) -> None:
+            self.send_response(code)
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        path = self.path.split("?", 1)[0]
+        try:
+            if path.startswith("/models/"):
+                filename = path[len("/models/"):]
+                if "/" in filename or "\\" in filename or filename in ("", "."):
+                    status_only(400)
+                    return
+                target = MODELS_DIR / filename
+            elif path == "/agent_core.gbnf":
+                target = GRAMMAR_FILE
+            elif path in ("/plan/status", "/models"):
+                status_only(200)
+                return
+            else:
+                target = self._resolve_static_path(path)
+            if target is None:
+                status_only(403)
+                return
+            if not target.exists() or not target.is_file():
+                status_only(404)
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", guess_content_type(target))
+            self.send_header("Content-Length", str(target.stat().st_size))
+            self.send_header("Accept-Ranges", "bytes")
+            self.end_headers()
+        except Exception:
+            status_only(500)
+
     def do_POST(self) -> None:
         path = self.path.split("?", 1)[0]
-        if path not in ("/validate", "/kanban_prompt", "/plan", "/write"):
+        if path not in ("/validate", "/kanban_prompt", "/plan", "/write",
+                        "/rpg_new", "/rpg_prompt"):
             self._send_text(404, "Not found\n")
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
             raw = self.rfile.read(length) if length else b"{}"
             req = json.loads(raw.decode("utf-8"))
-            if path == "/plan":
-                resp = handle_plan(req)
-            elif path == "/write":
-                resp = handle_write(req)
-            else:
-                resp = handle_kanban_prompt(req) if path == "/kanban_prompt" else handle_validate(req)
+            handlers = {"/plan": handle_plan, "/write": handle_write,
+                        "/kanban_prompt": handle_kanban_prompt,
+                        "/rpg_new": handle_rpg_new,
+                        "/rpg_prompt": handle_rpg_prompt,
+                        "/validate": handle_validate}
+            resp = handlers[path](req)
             self._send_json(200, resp)
         except Exception as exc:
             self._send_json(500, {
@@ -569,17 +663,51 @@ def constants_from_board(request: str, state: dict, now: int | None = None) -> l
     return constants
 
 
+def list_models() -> dict:
+    """GET /models — the checkpoints on this machine, and how each one wants
+    to be prompted. `template: "qwen"` means the client builds the prompt
+    itself (byte-identical to the browser path); `"chat"` means it sends
+    system/user and the server applies the GGUF's own template."""
+    models = []
+    for path in sorted(MODELS_DIR.glob("*.gguf")):
+        # LoRA adapters live here too (run_a.py --lora) and are not loadable
+        # as a planner — they'd be offered in the picker and fail on select.
+        if "lora" in path.name.lower():
+            continue
+        tuned = path.name.lower().startswith(TUNED_PREFIXES)
+        models.append({"name": path.name,
+                       "template": "qwen" if tuned else "chat",
+                       "tuned": tuned,
+                       "size_mb": round(path.stat().st_size / 1e6)})
+    return {"default": PLANNER.model_path.name if PLANNER.model_path else None,
+            "loaded": PLANNER.model_path.name if (
+                PLANNER.model_path and PLANNER._llm is not None) else None,
+            "models": models}
+
+
 def handle_plan(req: dict) -> dict:
-    """POST /plan {prompt, max_tokens?, stop?} -> {text, tokens_out, gen_ms, ...};
-    {warm: true} just loads the model."""
+    """POST /plan -> {text, tokens_out, gen_ms, ...}. Either
+    {prompt} (client-templated, our tuned checkpoints) or {system, user}
+    (server-templated, any other GGUF). {warm: true} just loads the model;
+    {model: name} switches checkpoint first."""
+    name = req.get("model")
+    if name:
+        try:
+            PLANNER.switch(str(name))
+        except ValueError as exc:
+            return {"error": {"code": "NO_MODEL", "message": str(exc)}}
     if not PLANNER.available:
         return {"error": {"code": "NO_MODEL", "message": PLANNER.status().get("reason")}}
     if req.get("warm"):
         return PLANNER.warm()
+    max_tokens = int(req.get("max_tokens") or 250)
+    user = req.get("user")
+    if isinstance(user, str) and user:
+        return PLANNER.generate_chat(req.get("system") or "", user, max_tokens)
     prompt = req.get("prompt")
     if not isinstance(prompt, str) or not prompt:
-        return {"error": {"code": "BAD_REQUEST", "message": "plan needs 'prompt'"}}
-    max_tokens = int(req.get("max_tokens") or 250)
+        return {"error": {"code": "BAD_REQUEST",
+                          "message": "plan needs 'prompt' or 'user'"}}
     stop = req.get("stop") or ["<|im_end|>"]
     return PLANNER.generate(prompt, max_tokens, list(stop))
 
@@ -618,6 +746,44 @@ def handle_kanban_prompt(req: dict) -> dict:
         "context": ctx.to_json(),
         "world": "kanban",
         "now": world["now"],
+    }
+
+
+def handle_rpg_new(req: dict) -> dict:
+    """POST /rpg_new {scenario?} -> {state}. The server owns the starting
+    dungeon so the client never carries a second copy of the map."""
+    scenario = req.get("scenario") or "keep"
+    if scenario not in rpg.SCENARIOS:
+        return {"error": {"code": "BAD_REQUEST",
+                          "message": f"unknown scenario {scenario!r}"}}
+    return {"state": rpg.new_state(scenario)}
+
+
+def handle_rpg_prompt(req: dict) -> dict:
+    """POST /rpg_prompt {state} -> the turn's prompt.
+
+    The RPG's analogue of /kanban_prompt: instead of a typed request, the
+    request text *is* the rendered observation (rpg.observe), and the
+    constants are the things currently in view. `observation` carries the
+    structured window so the UI draws fog from the server's perception rule
+    rather than a second implementation of it. `state` comes back with
+    `memory` updated — the client must thread that copy forward."""
+    state = req.get("state")
+    if not isinstance(state, dict):
+        return {"error": {"code": "BAD_REQUEST", "message": "rpg_prompt needs 'state'"}}
+    world = get_world("rpg")
+    obs = rpg.observe(state)
+    state = dict(state, memory=obs.memory)
+    ctx, _sandbox = build_context(world, obs.constants)
+    return {
+        "input_text": serialize_context(obs.request, ctx),
+        "context": ctx.to_json(),
+        "world": "rpg",
+        "now": world["now"],
+        "state": state,
+        "observation": {"request": obs.request, "window": obs.window,
+                        "nearby": obs.nearby,
+                        "outcome": rpg.outcome(state)},
     }
 
 
@@ -707,6 +873,11 @@ def handle_validate(req: dict) -> dict:
     }
     if SELF_URL and PLANNER.available:
         payload["external_url"] = SELF_URL + "/write"  # EXTERNAL tools call back here
+    if world.get("post_hook"):
+        # worlds with a per-turn phase (the rpg enemy turn) — the sandbox runs
+        # it once after the program ends, so the demo and the offline suite
+        # advance the game identically
+        payload["post_hook"] = world["post_hook"]
     sres = run_sandbox(payload)
 
     return {
@@ -744,6 +915,7 @@ def main() -> None:
     print(f"covenant-agent dev server")
     print(f"  repo root:      {ROOT}")
     print(f"  app (if built): {APP_DIST}")
+    print(f"  /rpg (if built):{RPG_DIST}")
     print(f"  /plan model:    {PLANNER.model_path} (available={PLANNER.available})")
     print(f"  models dir:     {MODELS_DIR}")
     print(f"  grammar file:   {GRAMMAR_FILE}")

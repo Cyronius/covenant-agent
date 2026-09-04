@@ -1,9 +1,47 @@
 // Thin client for POST /validate — see server/README.md for the
 // full contract. Proxied through Vite's dev server to the running
 // `python server/dev_server.py` (see ../../vite.config.ts).
-import type { KanbanState } from '../data/board';
 import type { Registers } from './prompt';
-import type { KanbanContext } from './kanbanPrompt';
+
+/** The JSON form of core.ir.TaskContext, as POST /kanban_prompt and
+ *  POST /rpg_prompt return it. Shared by every world. */
+export interface ToolParamDecl {
+  sym: string;
+  type: string;
+  required: boolean;
+  desc: string;
+}
+
+export interface ToolDecl {
+  sym: string;
+  name: string;
+  desc: string;
+  params: ToolParamDecl[];
+  returns: string | null;
+  effects: string[];
+}
+
+export interface FieldDecl {
+  sym: string;
+  entity: string | null;
+  name: string;
+  type: string;
+  desc: string;
+}
+
+export interface ConstDecl {
+  sym: string;
+  type: string;
+  value: unknown;
+  desc: string;
+}
+
+export interface TaskContextJson {
+  tools: ToolDecl[];
+  fields: FieldDecl[];
+  constants: ConstDecl[];
+  initial_registers?: Record<string, string>;
+}
 
 export interface CallLogEntry {
   tool: string; // Tn symbol
@@ -13,16 +51,16 @@ export interface CallLogEntry {
   error: { code: string; message?: string } | null;
 }
 
-export interface ValidateRequest {
+export interface ValidateRequest<TState = unknown> {
   // Either task_id (one of the three fixed curriculum tasks) OR
   // context+world (as returned by POST /kanban_prompt, for a freely-typed
   // request) — see server/README.md's `/validate` section.
   task_id?: string;
-  context?: KanbanContext;
+  context?: TaskContextJson;
   world?: string;
   now?: number;
   text: string;
-  state: KanbanState | null;
+  state: TState | null;
   registers: Registers;
   pause_types: Record<string, string> | null;
   /**
@@ -35,7 +73,7 @@ export interface ValidateRequest {
   approval?: boolean;
 }
 
-export interface ValidateResponse {
+export interface ValidateResponse<TState = unknown> {
   status:
     | 'ok'
     | 'paused'
@@ -46,7 +84,7 @@ export interface ValidateResponse {
     | 'server_error'
     | string;
   diagnostics: string[];
-  final_state: KanbanState | null;
+  final_state: TState | null;
   registers: Registers;
   calls: CallLogEntry[];
   return_value: unknown;
@@ -58,7 +96,9 @@ export interface ValidateResponse {
   reason?: 'NOT_FOUND' | 'AMBIGUOUS' | 'UNSUPPORTED' | 'NEEDS_INFO' | string | null;
 }
 
-export async function validate(req: ValidateRequest): Promise<ValidateResponse> {
+export async function validate<TState = unknown>(
+  req: ValidateRequest<TState>
+): Promise<ValidateResponse<TState>> {
   const res = await fetch('/validate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -71,5 +111,5 @@ export async function validate(req: ValidateRequest): Promise<ValidateResponse> 
   if (!body) {
     throw new Error(`POST /validate failed: ${res.status} ${res.statusText}`);
   }
-  return body as ValidateResponse;
+  return body as ValidateResponse<TState>;
 }

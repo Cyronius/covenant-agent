@@ -1,12 +1,14 @@
-# client/kanban-ui/server — dev server
+# server — dev server
 
-Dev-only local server for the browser-inference stand-in
+Dev-only local server behind both demo apps (`client/kanban-ui`,
+`client/rpg-ui`) and the browser-inference stand-in
 (`.claude/plans/browser-inference-standin.md`). Pure Python stdlib —
 `http.server.ThreadingHTTPServer`, no Flask/FastAPI, no new dependencies.
 
-It does two things:
+It does these things:
 
-1. **Static file server** for everything under `client/kanban-ui/` (index.html,
+1. **Static file server** for the built apps — `client/kanban-ui/dist` at
+   `/`, `client/rpg-ui/dist` at `/rpg/` — (index.html,
    `src/*.js`, `vendor/wllama/*.wasm`, `fixtures/*.json`, ...), plus the
    large GGUF model file served in place from `baselines/qwen/models/`
    (never copied — it's ~0.8–2GB and gitignored) with `Range:` request
@@ -19,7 +21,31 @@ It does two things:
    parse/typecheck/compile/execute. Accepts either a `task_id` (looked up
    in `data/curriculum_tasks.jsonl`) or an inline `context`/`world`/`now`
    (as returned by `/kanban_prompt` below) — see the `/validate` section.
-3. **`POST /kanban_prompt`** — for `client/kanban-ui`'s free-typed chat:
+3. **`POST /rpg_new` and `POST /rpg_prompt`** — the grid-RPG demo
+   (`client/rpg-ui`, plan `.claude/plans/rpg-demo-app.md`). `/rpg_new
+   {scenario?}` deals a fresh dungeon and returns `{state}`; the server owns
+   the map so the client never carries a second copy. `/rpg_prompt {state}`
+   is that world's analogue of `/kanban_prompt`: instead of a typed request,
+   the request text *is* the rendered observation (`runtime/worlds/rpg.py`'s
+   `observe`), and the constants are the things currently in view. It
+   returns `{input_text, context, world: "rpg", now, state, observation}` —
+   feed `input_text` to `buildFullPrompt()`, send `context`/`world`/`now` to
+   `/validate`, and thread the **returned** `state` forward (its `memory`
+   has been advanced by the act of observing). `observation` carries the
+   window and the relative offsets so a UI can draw the same fog the prompt
+   describes rather than reimplementing the rule.
+
+4. **`GET /models` and model switching** — `GET /models` lists the GGUFs in
+   `baselines/qwen/models/` as `{default, loaded, models: [{name, template,
+   tuned, size_mb}]}`. `template` says how a checkpoint wants to be
+   prompted: `qwen` for our own tuned ones (the client builds the ChatML
+   markup they were SFT'd on, byte-identical to the browser path), `chat`
+   for anything else (send `{system, user}` and llama-cpp-python applies the
+   GGUF's own `tokenizer.chat_template`). `POST /plan {"model": name}`
+   switches checkpoint; one planner is loaded at a time and the previous is
+   dropped, since a 2B Q8 is ~2.5 GB.
+
+5. **`POST /kanban_prompt`** — for `client/kanban-ui`'s free-typed chat:
    given `{"request": "<anything>", "state": <a kanban board>}`, builds a
    fresh `TOOLS`/`FIELDS`/`CONSTANTS` context for the `kanban` world with
    `harness.context.build_context()`/`serialize_context()` (the same
@@ -107,6 +133,11 @@ Content-Type is set by extension: `.wasm` → `application/wasm`, `.js`/
   "error": null                // sandbox error object ({code, message}), only set on status == "error"
 }
 ```
+
+If the world declares a `post_hook` (`runtime/worlds/__init__.py`), the
+server adds it to the sandbox payload, so the world's per-turn phase — the
+RPG's enemy turn — runs once after the program ends. The demo and the
+offline suite therefore advance the game through exactly the same code.
 
 If `core.pipeline.build` doesn't compile (parse/typecheck/effect errors),
 the response is `{"status": "static_error", "diagnostics": [...], ...other fields null/empty...}`

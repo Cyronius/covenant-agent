@@ -20,7 +20,9 @@ produces valid data at every level). Next: R1 (IR fitness) and R2
 | `spec/examples/` | hand-written reference programs, Levels 0–10 (authoring form) |
 | `core/` | parser → typechecker → effect checker → JS compiler (`pipeline.build` is the one entry point) |
 | `runtime/sandbox.js` | Node `vm` sandbox: generic tool engine, effect gate, error injection, PAUSE |
-| `runtime/worlds/` | kanban, crm, projects (projects is held out for R5) |
+| `runtime/worlds/` | kanban, crm, projects, coursebuilder, rpg (the last three are held out) |
+| `runtime/engines/` | non-CRUD world rules the sandbox loads by name (`rpg.js`: the grid dungeon) |
+| `client/` | demo apps: `kanban-ui`, `rpg-ui`, and `shared/` (planner, prompt, validate, inference) |
 | `harness/` | task contexts + symbol assignment, runner, metrics, curriculum, authoring |
 | `data/gen/` | F4 backtranslation generator (worlds → programs → execution → English) |
 | `data/holdout/reserved.json` | worlds/tools that never enter training |

@@ -4,7 +4,7 @@
 // content — every word here traces back to the sandbox's own return value.
 import type { KanbanState } from '../data/board';
 import { cardById, userById } from '../data/board';
-import type { CallLogEntry } from './validate';
+import type { CallLogEntry } from '../../../shared/validate';
 
 export function describeArg(v: unknown, before: KanbanState, after: KanbanState): string {
   if (typeof v === 'string') {

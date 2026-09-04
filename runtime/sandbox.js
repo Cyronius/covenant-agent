@@ -5,10 +5,20 @@
  *
  * Reads one JSON job from stdin:
  *   { js, state, tools, fields, constants, now, approval,
- *     error_injection, initial_registers, max_ops }
+ *     error_injection, initial_registers, max_ops, post_hook }
  * Executes the compiled program in a bare `vm` context (no require, no fs,
  * no network — the only host object handed in is `rt`), against an in-memory
  * world state via a generic, data-driven tool engine.
+ *
+ * Two extension points beyond the generic CRUD ops, for worlds whose rules
+ * are not CRUD (the `rpg` grid world):
+ *   impl {op:"engine", module, fn}  — dispatch the call to a whitelisted
+ *     module under runtime/engines/. Loaded in the host, never in the vm
+ *     context, so the program still sees no require/fs/network.
+ *   post_hook {module, fn}          — run once after the program finishes or
+ *     halts on a tool error, before the result is written (the RPG's enemy
+ *     phase). Skipped when nothing executed (static errors never reach here;
+ *     an effect-blocked run is skipped explicitly).
  *
  * Writes one JSON result to stdout:
  *   { status: ok|paused|aborted|error|effect_blocked,
@@ -19,9 +29,22 @@
  */
 
 const vm = require("node:vm");
+const path = require("node:path");
 
 const DESTRUCTIVE = new Set(["DELETE", "SEND", "PAY"]);
 const WATCHDOG_MS = 5000;
+// Rule modules loadable by the `engine` op / post_hook. A hardcoded list, not
+// the world registry: harness/run.py honors a task's own `sandbox` payload,
+// impl descriptors included, so the whitelist is what actually guards this.
+const ENGINES = new Set(["rpg"]);
+
+function loadEngine(name) {
+  if (!ENGINES.has(name)) {
+    throw new ToolError("INVALID_ARGUMENT", `unknown engine ${name}`);
+  }
+  // __dirname, not cwd: harness/run.py spawns node without a cwd.
+  return require(path.join(__dirname, "engines", `${name}.js`));
+}
 
 class ToolError extends Error {
   constructor(code, message) {
@@ -190,6 +213,19 @@ function main(input) {
         state.payments.push(entry);
         return null;
       }
+      case "engine": {
+        // Non-CRUD world rules (runtime/engines/<module>.js). The module
+        // mutates `state` in place and returns the tool's value; it must
+        // validate before mutating, since a thrown ToolError still leaves
+        // this state as the run's result.
+        const mod = loadEngine(impl.module);
+        const fn = mod[impl.fn];
+        if (typeof fn !== "function") {
+          throw new ToolError("INVALID_ARGUMENT",
+                              `engine ${impl.module} has no ${impl.fn}`);
+        }
+        return fn(state, params, { now, ToolError, clone });
+      }
       default:
         throw new ToolError("INVALID_ARGUMENT", `bad impl op ${impl.op}`);
     }
@@ -344,7 +380,30 @@ function main(input) {
   const script = new vm.Script(input.js + "\nmain;", { filename: "program.js" });
   const programMain = script.runInContext(context, { timeout: 2000 });
 
+  // Runs after the program ends (normally or on a tool error), before the
+  // result is written: the world's per-turn phase, e.g. the RPG's enemies.
+  // Never on effect_blocked — nothing executed there.
+  const runPostHook = (status) => {
+    const hook = input.post_hook;
+    if (!hook || status === "effect_blocked") return null;
+    try {
+      const mod = loadEngine(hook.module);
+      const fn = mod[hook.fn];
+      if (typeof fn !== "function") {
+        return { code: "INVALID_ARGUMENT",
+                 message: `engine ${hook.module} has no ${hook.fn}` };
+      }
+      fn(state, { now, ToolError, clone });
+      return null;
+    } catch (e) {
+      return { code: e instanceof ToolError ? e.code : "JS_ERROR",
+               message: String(e && e.message) };
+    }
+  };
+
   const finish = (result) => {
+    const hookError = runPostHook(result.status);
+    if (hookError) result.post_hook_error = hookError;
     process.stdout.write(JSON.stringify(result) + "\n");
     process.exit(0);
   };
