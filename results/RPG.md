@@ -96,6 +96,32 @@ measure in a bigger Qwen, an LFM2.5-instruct, or anything else is whether it
 picks the right tool for a described situation at all — not whether it can
 reason about a grid.
 
+### A spot check on the untuned base: it fails differently
+
+Two turns of `Qwen3.5-0.8B-Q8_0` on its own chat template (a code-path check,
+not a scored arm — the real arm is in `eval_rpg.sh`) fail for a different
+reason, which is worth knowing before choosing a replacement model. It does
+not enumerate constants. It copies the shape of the worked example in the
+`SYSTEM` prompt — `CALL` a list tool, `FILTER`, then `FOREACH` — into a world
+that has no list tool and nothing to filter, and then repeats the loop body
+until it hits the 250-token cap (`finish_reason: length` on both turns,
+against `stop` on all 55 tuned-model turns):
+
+```
+CALL T0 -> r0
+FILTER r0 F1 EQ C4 -> r1
+FOREACH r1 -> r2
+  CALL T0 r2.F1
+  CALL T0 r2.F1
+  ... (to the token limit)
+```
+
+So the tuned model has learned to stop cleanly and to respect the constant
+table, and has not learned to read a tool description; the base model has
+neither. Both are anchored to the one worked example they are shown, which
+is the obvious next lever to test: the `SYSTEM` prompt's only demonstration
+is a kanban list-filter-loop, and every world since has been the same shape.
+
 ## What was held fixed
 
 Nothing was tuned to make this easier or harder:
@@ -149,6 +175,9 @@ python -m harness.rpg_suite --planner oracle --episodes 3   # 3/3 won
 python -m harness.rpg_suite --model baselines/qwen/models/qwen3.5-0.8b-s2r-q8.gguf \
     --episodes 3 --max-turns 20 --out results/logs/<tag>_e_rpg.jsonl
 python -m harness.rpg_suite --report results/logs/<tag>_e_rpg.jsonl
+
+# any non-Qwen GGUF: --template chat applies the model's own chat template
+python -m harness.rpg_suite --model <some.gguf> --template chat --episodes 3
 ```
 
 Each row carries the git SHA, model, template, grammar condition, seed and
