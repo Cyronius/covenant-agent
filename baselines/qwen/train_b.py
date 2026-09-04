@@ -32,6 +32,10 @@ def main():
                     help="required at long --max-len: Qwen3.5's linear-attention "
                          "layers keep large per-layer state and OOM a 24 GB card "
                          "on a full-length row without it")
+    ap.add_argument("--init-adapter", metavar="DIR",
+                    help="warm-start from an existing LoRA dir and keep "
+                         "training it (S2R continuation) instead of "
+                         "initialising a fresh adapter")
     ap.add_argument("--liger", action="store_true",
                     help="fused linear cross-entropy; the 248k vocab makes the "
                          "materialised logits the largest tensor in the step")
@@ -85,8 +89,19 @@ def main():
         use_liger_kernel=args.liger)
     model = AutoModelForCausalLM.from_pretrained(
         args.model, torch_dtype="bfloat16", attn_implementation="sdpa")
-    trainer = SFTTrainer(model=model, args=cfg, train_dataset=ds,
-                         peft_config=peft_cfg)
+    if args.init_adapter:
+        # Continue an existing adapter instead of starting from zero: the
+        # S2R pass teaches the real request distribution on top of a model
+        # that already fits the curriculum, so it needs ~1/4 the rows and a
+        # lower LR. peft_config must NOT also be passed -- the model is
+        # already a PeftModel and TRL would wrap a second adapter over it.
+        from peft import PeftModel
+        model = PeftModel.from_pretrained(model, args.init_adapter,
+                                          is_trainable=True)
+        trainer = SFTTrainer(model=model, args=cfg, train_dataset=ds)
+    else:
+        trainer = SFTTrainer(model=model, args=cfg, train_dataset=ds,
+                             peft_config=peft_cfg)
     trainer.train()
     trainer.save_model(args.out)
     print("LoRA saved ->", args.out)
