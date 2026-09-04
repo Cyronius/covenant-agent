@@ -7,11 +7,21 @@
 # none of these worlds appear in the training corpus) and scores it. L11 and
 # L16 are the abort levels; L12-L15, L17, L18 must NOT abort.
 #
-# Result on the S2 pruned Q8 (first 106 rows): 24/24 correct abstains,
-# 82/82 correct actions, 0 false abstains, and all four abort reasons used
-# (NOT_FOUND 11 / UNSUPPORTED 6 / AMBIGUOUS 6 / NEEDS_INFO 1) -- against
-# 0/73 correct abstains on e_real_sessions. The capability is present and
-# well-calibrated; only the trigger phrasing is out of distribution.
+# Result on the S2 pruned Q8, all 240 rows (2026-09-04): 240/240 goal, every
+# level 30/30. 60/60 correct abstains, 180/180 correct actions, 0 false
+# abstains, all four reasons used (NOT_FOUND 30 / AMBIGUOUS 14 /
+# UNSUPPORTED 12 / NEEDS_INFO 4) -- against 0/73 correct abstains on
+# e_real_sessions. The capability is present and perfectly calibrated on
+# unseen worlds; only the trigger phrasing is out of distribution.
+#
+# The same model across the phrasing gradient, goal rate:
+#   e_s2_levels    240/240 100%   synthetic, unseen worlds
+#   e_ood_english  189/200  95%   out-of-distribution synthetic English
+#   e_crowded       33/38   87%   synthetic + 60 distractor tools
+#   e_demo_requests 27/65   42%   hand-written human requests
+#   e_real_sessions  3/234   1%   real user turns
+# It does not degrade with task difficulty (crowded keeps 87% against 60
+# distractors); it degrades with distance from the corpus's phrasing.
 set -e
 cd /c/code/covenant-agent
 M=${1:-baselines/qwen/models/qwen3.5-0.8b-s2-pruned-q8.gguf}
