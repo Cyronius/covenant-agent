@@ -44,6 +44,16 @@ TEXT_SOURCES = [
 ]
 
 
+def resolve_data(rel: str) -> Path:
+    """Resolve a repo-relative data path against ROOT (dev-machine layout);
+    fall back to its basename in the cwd (a rented pod's upload is flattened,
+    so ROOT does not point at a real repo there)."""
+    p = ROOT / rel
+    if p.exists():
+        return p
+    return Path(Path(rel).name)
+
+
 def used_token_ids(tok) -> set:
     used = set()
     for rel, field in TEXT_SOURCES:
@@ -84,6 +94,10 @@ def main() -> None:
                          "prune without receiving any request text")
     ap.add_argument("--dump-used", default=None, metavar="JSON",
                     help="write the used-token-id list here and exit")
+    ap.add_argument("--check-corpus", default="data/sft_s1.jsonl",
+                    help="SFT corpus to verify tokenization identity against "
+                         "after pruning (repo-relative); pass the corpus this "
+                         "keep-set was actually built from, e.g. data/sft_s2.jsonl")
     args = ap.parse_args()
     src, out = Path(args.src), Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -211,7 +225,7 @@ def main() -> None:
     tok2 = AutoTokenizer.from_pretrained(str(out))
     bad = 0
     checked = 0
-    with open(ROOT / "data/sft_s1.jsonl", encoding="utf-8") as f:
+    with open(resolve_data(args.check_corpus), encoding="utf-8") as f:
         for i, line in enumerate(f):
             if i >= 2000:
                 break

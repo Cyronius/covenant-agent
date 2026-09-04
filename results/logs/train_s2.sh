@@ -12,6 +12,10 @@
 # Download back: lora_s2/ , merged_s2_pruned_hf/tokenizer.json (for local
 # identity checks), qwen3.5-0.8b-s2-pruned-q8.gguf and qwen3.5-0.8b-s2-q8.gguf.
 set -e
+# Ubuntu 24.04 base image marks system python externally-managed (PEP 668);
+# every pip install below (including llama.cpp's converter requirements) hits
+# this pod's system Python.
+export PIP_BREAK_SYSTEM_PACKAGES=1
 # Constrain torch to whatever CUDA build the image ships: the SFT deps
 # otherwise resolve a CPU wheel over it (hit 2026-09-03), and a swapped torch
 # also leaves torchvision mismatched, which makes transformers' lazy imports
@@ -46,7 +50,7 @@ python train_b.py --merge lora_s2 --model Qwen/Qwen3.5-0.8B --out merged_s2_hf
 
 # 2. Prune the merged vocab with the precomputed keep-set (B4 procedure).
 python prune_vocab.py --src merged_s2_hf --out merged_s2_pruned_hf --floor 40000 \
-    --used-ids s2_used_token_ids.json
+    --used-ids s2_used_token_ids.json --check-corpus data/sft_s2.jsonl
 
 # 3. GGUF: pruned Q8 and an unpruned Q8 for the A/B (IQ4 is quantized
 #    locally from the pruned Q8 with the existing imatrix, if wanted).
