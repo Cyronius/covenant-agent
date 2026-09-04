@@ -191,19 +191,38 @@ export function useDungeonRun() {
       const prompt = buildFullPrompt(kp.input_text, null, []);
       const gen = await planner.generate(prompt, { maxTokens: 250, stop: STOP });
 
-      const resp: ValidateResponse<RpgState> = await validate<RpgState>({
-        context: kp.context,
-        world: 'rpg',
-        now: kp.now,
-        text: gen.text,
-        state: kp.state,
-        registers: null,
-        pause_types: null,
-        approval: true, // nothing in this world is effect-gated
-      });
+      const run = (text: string) =>
+        validate<RpgState>({
+          context: kp.context,
+          world: 'rpg',
+          now: kp.now,
+          text,
+          state: kp.state,
+          registers: null,
+          pause_types: null,
+          approval: true, // nothing in this world is effect-gated
+        });
+
+      const resp: ValidateResponse<RpgState> = await run(gen.text);
 
       const before = kp.state;
-      const after = resp.final_state ?? before;
+      let after = resp.final_state ?? before;
+
+      // A program that doesn't compile never reaches the sandbox, so the
+      // enemy phase never fires and the clock never moves — auto-play would
+      // sit on the same turn forever against a model that mostly fails to
+      // compile (seen in the browser 2026-09-04: four log entries, all "turn
+      // 1"). Burn the turn with a no-op instead, which is exactly what
+      // harness/rpg_suite.py's _idle_turn does offline. An ABORT needs no
+      // such thing: it compiles and runs, so its post_hook already fired.
+      if (resp.status === 'static_error') {
+        try {
+          const idle = await run('STOP\n');
+          after = idle.final_state ?? after;
+        } catch {
+          // leave the state alone; the turn is simply lost
+        }
+      }
       const record: TurnRecord = {
         id: nextTurnId.current++,
         turn: before.turn,

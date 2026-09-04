@@ -318,3 +318,27 @@ def test_the_event_log_holds_one_turn_not_the_whole_episode():
     for turn in row["turn_log"]:
         last = turn["request"].split("Last turn: ")[1].split("\n")[0]
         assert last.count(";") <= 6, (turn["turn"], last)
+
+
+def test_a_turn_that_runs_nothing_does_not_repeat_last_turns_events():
+    # A program that fails to compile (or aborts) calls no tool, so it never
+    # reaches beginAction's clear. Without end_turn clearing too, the next
+    # observation reports the PREVIOUS turn's events again as "Last turn:" —
+    # telling the model it moved when it did not, for as long as it keeps
+    # failing. Caught 2026-09-04 in the browser: four straight no-compile
+    # turns all claimed "moved north".
+    state = rpg.new_state()
+    moved, _ = run(state, "CALL @move $2\nSTOP\n")
+    assert moved["status"] == "ok"
+    after_move = moved["state"]
+    assert any("moved" in line for line in after_move["log"])
+
+    # the turn the model wasted: nothing called, only the post_hook runs
+    idle, _ = run(after_move, "STOP\n")
+    assert idle["status"] == "ok"
+    assert not any("moved east" in line for line in idle["state"]["log"]), \
+        idle["state"]["log"]
+    assert idle["state"]["turn"] == after_move["turn"] + 1
+
+    last = rpg.observe(idle["state"]).request.split("Last turn: ")[1].split("\n")[0]
+    assert "moved east" not in last, last

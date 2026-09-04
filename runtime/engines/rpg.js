@@ -260,6 +260,14 @@ function interact(state, params, rt) {
 function end_turn(state) {
   const p = player(state);
   if (!p) return state;
+  // A turn whose program called no tool at all (it failed to compile, or it
+  // aborted) never reaches beginAction's clear, so last turn's events would
+  // survive into the next observation and be reported again as "Last turn:"
+  // — telling the model it moved when it did not, every turn, for as long as
+  // it keeps failing. Clear here so this turn reports only the enemy phase
+  // below. (Caught 2026-09-04 watching the browser demo: four straight
+  // no-compile turns all claimed "moved north".)
+  if (!(state.actions_this_turn > 0)) state.log = [];
   if (state.status === "playing" && p.hp > 0) {
     for (const e of enemies(state)) {
       if (e.hp <= 0) continue;
@@ -300,8 +308,8 @@ function end_turn(state) {
   }
   state.turn = (state.turn || 0) + 1;
   state.actions_this_turn = 0;
-  // A turn where nothing ran never reaches beginAction's clear, so cap the
-  // log rather than let a run of failed turns accumulate one.
+  // Belt and braces: one busy turn (3 actions + an enemy phase) is well
+  // under this, so the cap only ever fires if a clear is missed.
   if (state.log && state.log.length > 12) {
     state.log = state.log.slice(-12);
   }
