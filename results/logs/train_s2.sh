@@ -63,6 +63,12 @@ pip install -q -r llama.cpp/requirements/requirements-convert_hf_to_gguf.txt
 export LLAMA_CPP="$PWD/llama.cpp"
 python convert_pruned.py merged_s2_pruned_hf --outfile qwen3.5-0.8b-s2-pruned-q8.gguf --outtype q8_0
 python llama.cpp/convert_hf_to_gguf.py merged_s2_hf --outfile qwen3.5-0.8b-s2-q8.gguf --outtype q8_0
-python -m gguf.scripts.gguf_set_metadata qwen3.5-0.8b-s2-q8.gguf qwen35.block_count 24 --force
-python -m gguf.scripts.gguf_set_metadata qwen3.5-0.8b-s2-q8.gguf qwen35.nextn_predict_layers 0 --force
+# Both merged_s2_hf and merged_s2_pruned_hf were loaded via AutoModelForCausalLM
+# (train_b.py's merge, prune_vocab.py's --src load), so the NextN/MTP converter
+# bug (CONDITION_B.md) hits both GGUFs, not just one -- apply the fix to both or
+# the pruned file (eval_s2.sh's default model) silently fails check_tensor_dims.
+for f in qwen3.5-0.8b-s2-pruned-q8.gguf qwen3.5-0.8b-s2-q8.gguf; do
+    python -m gguf.scripts.gguf_set_metadata "$f" qwen35.block_count 24 --force
+    python -m gguf.scripts.gguf_set_metadata "$f" qwen35.nextn_predict_layers 0 --force
+done
 echo "=== train_s2 done: lora_s2/ merged_s2_pruned_hf/ *.gguf ==="
