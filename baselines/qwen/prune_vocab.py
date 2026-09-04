@@ -225,17 +225,31 @@ def main() -> None:
     tok2 = AutoTokenizer.from_pretrained(str(out))
     bad = 0
     checked = 0
+    dropped: set = set()          # corpus tokens the keep-set does not cover
     with open(resolve_data(args.check_corpus), encoding="utf-8") as f:
         for i, line in enumerate(f):
             if i >= 2000:
                 break
             for m in json.loads(line)["messages"]:
-                a = [remap[t] for t in tok(m["content"], add_special_tokens=False)["input_ids"]]
-                b = tok2(m["content"], add_special_tokens=False)["input_ids"]
+                ids = tok(m["content"], add_special_tokens=False)["input_ids"]
+                missing = [t for t in ids if t not in remap]
                 checked += 1
-                if a != b:
+                if missing:
+                    # A stale --used-ids: this corpus uses tokens the keep-set
+                    # was not built from, so they fall back to smaller pieces.
+                    # Report it instead of dying on KeyError three hours into
+                    # a run (hit 2026-09-04, S2R against the S2 keep-set).
+                    dropped.update(missing)
+                    bad += 1
+                    continue
+                if [remap[t] for t in ids] != tok2(m["content"], add_special_tokens=False)["input_ids"]:
                     bad += 1
     print(f"tokenization identity on 2000 corpus rows: {checked - bad}/{checked} identical")
+    if dropped:
+        ex = ", ".join(repr(tok.decode([t])) for t in sorted(dropped)[:8])
+        print(f"  {len(dropped)} corpus token ids are outside the keep-set, e.g. {ex}")
+        sys.exit("FAIL: --used-ids predates this corpus; rebuild the keep-set "
+                 "to include it (union the old set with the corpus's tokens)")
     if bad:
         sys.exit("FAIL: pruned tokenizer diverges on the corpus")
 
