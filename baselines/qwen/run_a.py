@@ -149,6 +149,15 @@ def main():
     ap.add_argument("--max-tokens", type=int, default=250)
     ap.add_argument("--domains", default=None, metavar="DIR",
                     help="register generated domain themes (S0 suites)")
+    ap.add_argument("--lora", default=None, metavar="GGUF",
+                    help="attach a GGUF LoRA adapter at runtime instead of "
+                         "using a merged checkpoint (plan "
+                         "writer-adapter-experiment, E1)")
+    ap.add_argument("--lora-scale", type=float, default=1.0)
+    ap.add_argument("--template", choices=["qwen", "chat"], default="qwen",
+                    help="qwen: hand-rolled ChatML + empty think block (the S1-S3 "
+                         "markup); chat: the GGUF's own chat_template via "
+                         "create_chat_completion (LFM2.5, any other instruct model)")
     args = ap.parse_args()
     if args.domains:
         from data.gen.domains import register_domains
@@ -160,7 +169,8 @@ def main():
         grammar = LlamaGrammar.from_string(
             Path(args.grammar).read_text(), verbose=False)
     llm = Llama(model_path=args.model, n_ctx=args.ctx,
-                n_threads=args.threads, verbose=False)
+                n_threads=args.threads, verbose=False,
+                lora_path=args.lora, lora_scale=args.lora_scale)
 
     tasks = load_tasks(Path(args.tasks))
     if args.n:
@@ -174,13 +184,18 @@ def main():
         for i, task in enumerate(tasks):
             usage: list = []
             row = run_task(task, make_planner(llm, grammar, task,
-                                              args.max_tokens, usage))
+                                              args.max_tokens, usage,
+                                              template=args.template))
             row["tokens_out"] = sum(u.get("completion_tokens", 0)
                                     for u in usage)
             row["tokens_in"] = sum(u.get("prompt_tokens", 0) for u in usage)
             row["condition"] = ("A-grammar" if grammar is not None
                                 else "A-unconstrained")
             row["model"] = Path(args.model).name
+            row["template"] = args.template
+            if args.lora:
+                row["lora"] = Path(args.lora).name
+                row["lora_scale"] = args.lora_scale
             f.write(json.dumps(row) + "\n")
             f.flush()
             rows.append(row)
@@ -194,6 +209,8 @@ def main():
     done = rows
     summary = {
         "model": Path(args.model).name,
+        "lora": Path(args.lora).name if args.lora else None,
+        "lora_scale": args.lora_scale if args.lora else None,
         "condition": rows[0]["condition"] if rows else None,
         "n": len(done),
         "compile_ok_rate": sum(r["compile_ok"] for r in done) / len(done),

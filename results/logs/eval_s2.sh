@@ -5,9 +5,11 @@
 set -e
 cd /c/code/covenant-agent
 M=${1:-baselines/qwen/models/qwen3.5-0.8b-s2-pruned-q8.gguf}
+# TEMPLATE=chat for models that use their own chat_template (LFM2.5).
+TPL="--template ${TEMPLATE:-qwen}"
 TAG=$(basename "$M" .gguf)
 run() {  # suite ctx extra...
-  python -m baselines.qwen.run_a --model "$M" --tasks "$1" --ctx "$2" ${@:3} \
+  python -m baselines.qwen.run_a --model "$M" --tasks "$1" --ctx "$2" $TPL ${@:3} \
       --out "results/logs/${TAG}_$(basename "$1" .jsonl).jsonl" \
       > "results/logs/${TAG}_$(basename "$1" .jsonl).log" 2>&1
   tail -c 600 "results/logs/${TAG}_$(basename "$1" .jsonl).log"

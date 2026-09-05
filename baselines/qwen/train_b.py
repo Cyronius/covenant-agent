@@ -32,6 +32,10 @@ def main():
                     help="required at long --max-len: Qwen3.5's linear-attention "
                          "layers keep large per-layer state and OOM a 24 GB card "
                          "on a full-length row without it")
+    ap.add_argument("--target-modules", default="q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj",
+                    help="comma-separated LoRA targets; the default is the Qwen "
+                         "attention+MLP set. LFM2.5: q_proj,k_proj,v_proj,out_proj,"
+                         "in_proj,w1,w2,w3 (attention, short-conv in/out, FFN)")
     ap.add_argument("--init-adapter", metavar="DIR",
                     help="warm-start from an existing LoRA dir and keep "
                          "training it (S2R continuation) instead of "
@@ -64,8 +68,7 @@ def main():
 
     peft_cfg = LoraConfig(
         r=args.rank, lora_alpha=args.rank * 2, lora_dropout=0.05,
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
-                        "gate_proj", "up_proj", "down_proj"],
+        target_modules=[m.strip() for m in args.target_modules.split(",") if m.strip()],
         task_type="CAUSAL_LM")
     cfg = SFTConfig(
         output_dir=args.out, num_train_epochs=args.epochs,
