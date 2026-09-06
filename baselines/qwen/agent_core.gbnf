@@ -6,8 +6,16 @@
 # The optional EFFECTS header is omitted (references omit it too).
 
 root      ::= line* termline
-line      ::= indent? (instr | "STOP" | ret | abort) nl
+line      ::= indent (instr | "STOP" | ret | abort) nl | instr nl
 termline  ::= ("STOP" | "PAUSE" | ret | abort) nl?
+# `line` requires an indent before STOP/RETURN/ABORT: at column 0 those are
+# only ever `termline`. With `indent?` they were also a legal `line`, so the
+# grammar stayed live after a top-level "STOP\n" and nothing stopped an
+# untuned model writing the program again — LFM2.5-8B-A1B and the 27B both
+# emitted a correct program then repeated it to the token cap. Everything
+# after a column-0 terminator is UNREACHABLE by definition, so this forbids
+# only programs the checker already rejects. Tuned checkpoints put ~1.0 on
+# EOG there and are unaffected (verified on E-crowded, 2026-09-06).
 # The newline after the terminator MUST be optional. SFT targets are
 # stripped (make_sft.py), so the tuned model puts ~1.0 on <|im_end|>
 # immediately after "STOP"; a mandatory `nl` leaves the grammar in a
