@@ -23,7 +23,7 @@ produces valid data at every level). Next: R1 (IR fitness) and R2
 | `runtime/worlds/` | kanban, crm, projects, coursebuilder, rpg (the last three are held out) |
 | `runtime/engines/` | non-CRUD world rules the sandbox loads by name (`rpg.js`: the grid dungeon) |
 | `client/` | demo apps: `kanban-ui`, `rpg-ui`, and `shared/` (planner, prompt, validate, inference) |
-| `harness/` | task contexts + symbol assignment, runner, metrics, curriculum, authoring |
+| `harness/` | task contexts + symbol assignment, runner, metrics, curriculum, authoring; `task_grammar.py` rebuilds the GBNF per task from the symbols that task declares |
 | `data/gen/` | F4 backtranslation generator (worlds → programs → execution → English) |
 | `data/holdout/reserved.json` | worlds/tools that never enter training |
 | `results/` | one file per result; the harness is the only source of accuracy numbers |

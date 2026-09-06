@@ -544,3 +544,22 @@ covenant-agent/
   progress funnel, not by `goal_success` state equality — a game has many
   winning play-throughs. Results in `results/RPG.md`; plan in
   `.claude/plans/rpg-demo-app.md`.
+
+- **2026-09-06 — per-task grammar (`harness/task_grammar.py`).** The GBNF is
+  now rebuilt for every task, with `tool`/`field`/`const` enumerating exactly
+  the `T`/`F`/`C` symbols that task's context declares (a digit trie, so live
+  grammar stacks stay at the branching factor rather than one per symbol).
+  This is §5's decoding condition **C4** restricted to what a context-free
+  grammar can see; per-entity field validity still belongs to the
+  typechecker, which cannot be expressed here. **Motivating result:**
+  `results/S2.md` §S3's E-crowded miss, which turned out to be the harness,
+  not the model — `agent_core.gbnf` read `num ::= [0-9] [0-9]?`, capping
+  every symbol at 99, so on contexts declaring 150+ fields the correct
+  program was unspellable and the sampler committed to a two-digit prefix
+  (`F14` for `F142`). 44 of 300 E-crowded and 122 of 300 `e_crowded_v2` tasks
+  needed a symbol ≥ 100; all 166 failed, and the rest scored 96–97%. Re-scored
+  on the unchanged S3 GGUF: E-crowded 82.0 → **96.3**, `e_crowded_v2` 57.7 →
+  **95.7**, so S3 passes 7 of 7. No IR or spec change — `spec/agent_core.md`
+  §3 always had `int = digit { digit }`; only the decoder disagreed.
+  `run_a.py --grammar-mode static` reproduces the old behaviour for
+  comparison with pre-2026-09-06 runs.

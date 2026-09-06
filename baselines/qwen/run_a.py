@@ -22,7 +22,43 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
 from harness.run import load_tasks, run_task  # noqa: E402
+from harness import task_grammar  # noqa: E402
 from core.ir import TaskContext  # noqa: E402
+
+
+class GrammarCache:
+    """Per-task GBNF, compiled once per distinct symbol table.
+
+    `task` mode enumerates the T/F/C symbols the prompt declares; `static`
+    is the old single grammar, whose two-digit `num` made every symbol above
+    99 undecodable (results/S2.md §S3). `none` is the unconstrained arm.
+    """
+
+    def __init__(self, mode: str, base_path: Path):
+        self.mode = mode
+        self.base = base_path.read_text() if mode != "none" else None
+        self._cache: dict = {}
+        self._static = None
+
+    @property
+    def condition(self) -> str:
+        return {"task": "A-grammar-task", "static": "A-grammar",
+                "none": "A-unconstrained"}[self.mode]
+
+    def for_task(self, task: dict):
+        if self.mode == "none":
+            return None
+        from llama_cpp import LlamaGrammar
+        if self.mode == "static":
+            if self._static is None:
+                self._static = LlamaGrammar.from_string(self.base,
+                                                        verbose=False)
+            return self._static
+        key = task_grammar.symbol_signature(task)
+        if key not in self._cache:
+            self._cache[key] = LlamaGrammar.from_string(
+                task_grammar.grammar_for_task(task, self.base), verbose=False)
+        return self._cache[key]
 
 SYSTEM = """You translate task requests into Agent Core programs.
 
@@ -86,9 +122,17 @@ def build_prompt(task_input: str, registers: dict | None,
 
 
 def generate(llm, grammar, user: str, max_tokens: int = 250,
-             template: str = "qwen") -> dict:
+             template: str = "qwen", shots: list | None = None) -> dict:
     """One greedy, grammar-constrained completion. Returns
     {text, usage, finish_reason}.
+
+    `shots` are worked examples as [(user, program), ...], prepended as prior
+    chat turns. The SYSTEM prompt carries one example and was written against
+    Qwen; an untuned model that fails on it may be failing on the format
+    rather than the task, and shots separate the two. LFM2.5-8B-A1B one-shot
+    never binds a register (`FILTER r0 …` with nothing bound, to the token
+    cap); at four shots it writes the reference skeleton and misses on symbol
+    choice instead.
 
     Templates are a per-model choice, not a global one:
       qwen  hand-rolled ChatML with an explicit empty think block — keeps the
@@ -100,15 +144,23 @@ def generate(llm, grammar, user: str, max_tokens: int = 250,
             tokenizer.chat_template — the path for any other instruct model
             (harness/rpg_suite.py's cross-model comparison).
     """
+    shots = shots or []
     if template == "chat":
+        messages = [{"role": "system", "content": SYSTEM}]
+        for shot_user, shot_program in shots:
+            messages.append({"role": "user", "content": shot_user})
+            messages.append({"role": "assistant", "content": shot_program})
+        messages.append({"role": "user", "content": user})
         res = llm.create_chat_completion(
-            messages=[{"role": "system", "content": SYSTEM},
-                      {"role": "user", "content": user}],
+            messages=messages,
             grammar=grammar, temperature=0.0, max_tokens=max_tokens)
         choice = res["choices"][0]
         text = (choice["message"].get("content") or "").strip()
     else:
-        prompt = (f"<|im_start|>system\n{SYSTEM}<|im_end|>\n"
+        turns = "".join(f"<|im_start|>user\n{u}<|im_end|>\n"
+                        f"<|im_start|>assistant\n<think>\n\n</think>\n\n"
+                        f"{p}<|im_end|>\n" for u, p in shots)
+        prompt = (f"<|im_start|>system\n{SYSTEM}<|im_end|>\n{turns}"
                   f"<|im_start|>user\n{user}<|im_end|>\n"
                   f"<|im_start|>assistant\n<think>\n\n</think>\n\n")
         res = llm.create_completion(
@@ -120,14 +172,31 @@ def generate(llm, grammar, user: str, max_tokens: int = 250,
             "finish_reason": choice.get("finish_reason")}
 
 
-def make_planner(llm, grammar, task, max_tokens, usage_sink, template="qwen"):
+def load_shots(path: Path, n: int, exclude: set) -> list:
+    """[(user prompt, program)] worked examples for `generate(shots=...)`."""
+    out = []
+    if not n:
+        return out
+    for line in open(path):
+        t = json.loads(line)
+        if t["id"] in exclude or t["level"] < 2:
+            continue
+        out.append((build_prompt(t["input_text"], None, []),
+                    "".join(t["reference"]["segments"]).strip()))
+        if len(out) >= n:
+            break
+    return out
+
+
+def make_planner(llm, grammar, task, max_tokens, usage_sink, template="qwen",
+                 shots=None):
     prior: list[str] = []
 
     def plan(request, ctx, seg_idx, registers):
         if seg_idx > 2:   # runaway guard: give up after 3 segments
             return None
         user = build_prompt(task["input_text"], registers, prior)
-        res = generate(llm, grammar, user, max_tokens, template)
+        res = generate(llm, grammar, user, max_tokens, template, shots)
         usage_sink.append(res["usage"])
         prior.append(res["text"])
         return res["text"]
@@ -144,6 +213,17 @@ def main():
                     help="first N tasks only (subset run)")
     ap.add_argument("--grammar", default="baselines/qwen/agent_core.gbnf")
     ap.add_argument("--no-grammar", action="store_true")
+    ap.add_argument("--shots", type=int, default=0, metavar="N",
+                    help="prepend N worked examples as prior chat turns "
+                         "(untuned arms only — a tuned checkpoint was SFT'd "
+                         "on the zero-shot markup)")
+    ap.add_argument("--shots-from", default="data/r1_tasks.jsonl")
+    ap.add_argument("--grammar-mode", choices=["task", "static"],
+                    default="task",
+                    help="task: rebuild the grammar per task from the symbols "
+                         "that task declares (default). static: the base file "
+                         "as-is — pre-2026-09-06 behaviour, kept only to "
+                         "reproduce older runs")
     ap.add_argument("--ctx", type=int, default=4096)
     ap.add_argument("--threads", type=int, default=None)
     ap.add_argument("--max-tokens", type=int, default=250)
@@ -163,11 +243,9 @@ def main():
         from data.gen.domains import register_domains
         register_domains(args.domains)
 
-    from llama_cpp import Llama, LlamaGrammar
-    grammar = None
-    if not args.no_grammar:
-        grammar = LlamaGrammar.from_string(
-            Path(args.grammar).read_text(), verbose=False)
+    from llama_cpp import Llama
+    grammars = GrammarCache("none" if args.no_grammar else args.grammar_mode,
+                            Path(args.grammar))
     llm = Llama(model_path=args.model, n_ctx=args.ctx,
                 n_threads=args.threads, verbose=False,
                 lora_path=args.lora, lora_scale=args.lora_scale)
@@ -175,6 +253,8 @@ def main():
     tasks = load_tasks(Path(args.tasks))
     if args.n:
         tasks = tasks[:args.n]
+    shots = load_shots(ROOT / args.shots_from, args.shots,
+                       {t["id"] for t in tasks})
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -183,14 +263,14 @@ def main():
     with open(out, "w") as f:
         for i, task in enumerate(tasks):
             usage: list = []
-            row = run_task(task, make_planner(llm, grammar, task,
-                                              args.max_tokens, usage,
-                                              template=args.template))
+            row = run_task(task, make_planner(llm, grammars.for_task(task),
+                                              task, args.max_tokens, usage,
+                                              template=args.template,
+                                              shots=shots))
             row["tokens_out"] = sum(u.get("completion_tokens", 0)
                                     for u in usage)
             row["tokens_in"] = sum(u.get("prompt_tokens", 0) for u in usage)
-            row["condition"] = ("A-grammar" if grammar is not None
-                                else "A-unconstrained")
+            row["condition"] = grammars.condition
             row["model"] = Path(args.model).name
             row["template"] = args.template
             if args.lora:

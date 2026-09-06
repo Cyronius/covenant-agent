@@ -52,7 +52,19 @@ cmp       ::= "EQ" | "LT" | "GT" | "CONTAINS"
 operand   ::= regfield | reg | const | "NOW" | "NULL" | num
 regfield  ::= reg "." field
 reg       ::= "r1" [0-5] | "r" [0-9]
+# These three rules are the *fallback* form. harness/task_grammar.py rewrites
+# them per task, enumerating exactly the T/F/C symbols the prompt declares, so
+# an undeclared symbol cannot be decoded at all. Use that path for anything
+# scored; this file alone is for callers with no symbol table to hand (the
+# browser demo fetches it as static text).
+#
+# `num` was [0-9] [0-9]? until 2026-09-06, which capped every symbol at 99.
+# Crowded contexts declare 150+ fields, so the right answer was unspellable:
+# llama.cpp masked the third digit and the sampler committed to the two-digit
+# prefix (F14 for F142), which the typechecker then reported as UNKNOWN_FIELD.
+# 122 of 300 e_crowded_v2 tasks needed an F>=100 and every one of them failed;
+# the remaining 178 scored 97.2%. See results/S2.md §S3.
 tool      ::= "T" num
 field     ::= "F" num
 const     ::= "C" num
-num       ::= [0-9] [0-9]?
+num       ::= [0-9] [0-9]? [0-9]?

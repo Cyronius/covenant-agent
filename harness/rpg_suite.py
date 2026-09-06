@@ -43,13 +43,15 @@ DEFAULT_MAX_TURNS = 40
 
 # A planner sees only the rendered request text and the turn index; it returns
 # the program plus whatever generation stats it has.
-#   plan(input_text, turn_idx, state) -> {text, tokens_in, tokens_out,
-#                                         gen_ms, finish_reason}
+#   plan(input_text, turn_idx, state, ctx) -> {text, tokens_in, tokens_out,
+#                                              gen_ms, finish_reason}
+# `ctx` is the turn's TaskContext: symbols are reassigned every turn, so a
+# per-task grammar has to be rebuilt every turn too (harness/task_grammar.py).
 Planner = Callable[[str, int, dict], dict]
 
 
 def oracle_planner(max_actions: int) -> Planner:
-    def plan(input_text, turn_idx, state):
+    def plan(input_text, turn_idx, state, ctx):
         t0 = time.perf_counter()
         text = rpg_oracle.plan_turn(state, budget=max_actions)
         return {"text": text, "authoring": True, "tokens_in": 0,
@@ -65,14 +67,23 @@ def gguf_planner(model: str, ctx: int, grammar_path: Optional[str],
     from llama_cpp import Llama, LlamaGrammar
 
     from baselines.qwen.run_a import generate
+    from harness import task_grammar
 
-    grammar = None
-    if grammar_path:
-        grammar = LlamaGrammar.from_string(
-            Path(grammar_path).read_text(), verbose=False)
+    base = Path(grammar_path).read_text() if grammar_path else None
+    cache: dict = {}
     llm = Llama(model_path=model, n_ctx=ctx, n_threads=threads, verbose=False)
 
-    def plan(input_text, turn_idx, state):
+    def plan(input_text, turn_idx, state, task_ctx):
+        grammar = None
+        if base is not None:
+            key = (tuple(sorted(task_ctx.tools)),
+                   tuple(sorted(task_ctx.fields)),
+                   tuple(sorted(task_ctx.constants)))
+            if key not in cache:
+                cache[key] = LlamaGrammar.from_string(
+                    task_grammar.grammar_for_context(task_ctx, base),
+                    verbose=False)
+            grammar = cache[key]
         t0 = time.perf_counter()
         res = generate(llm, grammar, input_text + "\nPROGRAM:",
                        max_tokens, template)
@@ -106,7 +117,7 @@ def run_episode(planner: Planner, *, scenario: str = "keep", seed: int = 0,
         ctx, sandbox_ctx = build_context(WORLD, obs.constants, rng)
         input_text = serialize_context(obs.request, ctx)
 
-        gen = planner(input_text, state["turn"], state)
+        gen = planner(input_text, state["turn"], state, ctx)
         text = gen["text"]
         if gen.get("authoring"):
             text = resolve(text, ctx)
@@ -293,8 +304,8 @@ def main() -> None:
             None if args.no_grammar else args.grammar,
             args.max_tokens, args.template, args.threads)
         model_name = Path(args.model).name
-        condition = ("grammar" if not args.no_grammar else "unconstrained") \
-            + f"/{args.template}"
+        condition = ("grammar-task" if not args.no_grammar
+                     else "unconstrained") + f"/{args.template}"
 
     meta = {"model": model_name, "condition": condition,
             "git_sha": git_sha(), "world": "rpg",
