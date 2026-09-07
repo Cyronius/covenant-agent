@@ -259,7 +259,7 @@ class Pause(Instr):
 ABORT_REASONS = ("NOT_FOUND", "AMBIGUOUS", "UNSUPPORTED", "NEEDS_INFO")
 # symbol kinds each reason may name (spec §4)
 ABORT_REF_KINDS = {"NOT_FOUND": "C", "NEEDS_INFO": "F", "AMBIGUOUS": "TFC",
-                   "UNSUPPORTED": ""}
+                   "UNSUPPORTED": "C"}
 ABORT_MAX_REFS = 2
 
 

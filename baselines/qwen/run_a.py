@@ -115,19 +115,16 @@ TRY [RETRY n] -> r       run body, catch tool errors; r gets OK or error code
 STOP | RETURN x | PAUSE  end program (PAUSE = report back; a continuation follows later)
 ABORT reason sym         decline without acting, naming what it is about:
                          NOT_FOUND Cn (nothing matches Cn) | NEEDS_INFO Fn (no value
-                         for Fn) | AMBIGUOUS a b (cannot choose between) | UNSUPPORTED
+                         for Fn) | AMBIGUOUS a b (cannot choose between) | UNSUPPORTED [Cn]
 
 Rules: registers r0-r15 in order of first use. Use ONLY the T/F/C symbols
 listed for the task; every literal value must be a C symbol. TIME fields are
 timestamps: "more than N days ago" / "overdue" means Fx LT (cutoff/NOW).
 Programs are SHORT — typically 2 to 8 lines — and always end with STOP
 (or PAUSE when the request says to report back before acting). If the
-request needs a tool that is not listed, is missing required values, or
-could mean several things, ABORT with the reason instead of guessing.
-If it names a record by a value (a person, a title), you cannot know
-statically whether it exists: list, FILTER on the name field, COUNT, and
-inside IF count EQ 0 write ABORT NOT_FOUND Cn (the name's constant); only
-then act on the match.
+request names something with no matching symbol, needs a tool that is
+not listed, is missing required values, or could mean several things,
+ABORT with the reason instead of guessing.
 
 Example:
 TOOLS:

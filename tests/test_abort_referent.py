@@ -75,9 +75,12 @@ def test_referent_kind_must_match_reason():
     assert codes == ["TYPE_ERROR"]
     assert res.rendered_diagnostics()[0].startswith(
         "TYPE_ERROR line:1 NEEDS_INFO:F C0")
-    # UNSUPPORTED admits none
+    # UNSUPPORTED admits a constant (the request fragment), not a field
     codes, _, _ = _check("ABORT UNSUPPORTED @card.title\n")
     assert codes == ["TYPE_ERROR"]
+    codes, _, _ = _check("ABORT UNSUPPORTED $0\n",
+                         [{"type": "STR", "value": "merge these", "desc": "x"}])
+    assert codes == []
 
 
 def test_referent_must_be_declared():
@@ -149,12 +152,25 @@ def test_not_found_is_founded_when_nothing_matches():
     assert check_abort(ctx, world["default_state"], "NOT_FOUND", ["C0"]) is None
 
 
+def _due_sym(ctx):
+    return next(f.sym for f in ctx.fields.values()
+                if f.entity == "card" and f.name == "due")
+
+
 def test_needs_info_is_unfounded_when_a_constant_of_that_type_exists():
+    world, ctx, _ = _ctx([{"type": "TIME", "value": 1700000000,
+                           "desc": "the deadline"}])
+    due = _due_sym(ctx)
+    msg = check_abort(ctx, world["default_state"], "NEEDS_INFO", [due])
+    assert msg == f"ABORT_UNFOUNDED NEEDS_INFO {due} has C0"
+
+
+def test_needs_info_on_a_str_field_is_unverifiable():
+    # a STR constant is nearly always present, so "has C0" would say nothing
     world, ctx, _ = _ctx([{"type": "STR", "value": "Write the report",
                            "desc": "title"}])
-    title = _title_sym(ctx)
-    msg = check_abort(ctx, world["default_state"], "NEEDS_INFO", [title])
-    assert msg == f"ABORT_UNFOUNDED NEEDS_INFO {title} has C0"
+    assert check_abort(ctx, world["default_state"], "NEEDS_INFO",
+                       [_title_sym(ctx)]) is None
 
 
 def test_needs_info_is_founded_when_no_constant_fits():

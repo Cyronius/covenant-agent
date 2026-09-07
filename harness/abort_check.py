@@ -57,9 +57,19 @@ def _not_found(ctx: TaskContext, state: dict, sym: str) -> Optional[str]:
     return None
 
 
+# Types for which "a constant of this type exists" says nothing: the
+# serializer extracts request fragments as STR constants, so nearly every
+# task has one. On the 2026-09-07 referent probe all 7 of the 27B's
+# NEEDS_INFO aborts named STR fields and all 7 were called unfounded by this
+# rule, while every one read as the right question to ask ("The edit to
+# apply to each lesson", "The question to search the knowledge base with").
+# A check with no discriminative power is not a check.
+_UNVERIFIABLE = {"STR"}
+
+
 def _needs_info(ctx: TaskContext, sym: str) -> Optional[str]:
     f = ctx.fields.get(sym)
-    if f is None:
+    if f is None or f.type[0] in _UNVERIFIABLE:
         return None
     for c in sorted(ctx.constants.values(), key=lambda c: int(c.sym[1:])):
         if _compatible(f.type, c.type):

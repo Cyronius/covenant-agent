@@ -140,12 +140,15 @@ faithfully, the correct program declines rather than guesses:
 | reason | when | referent |
 |---|---|---|
 | `NOT_FOUND C` | the request names a thing (a person, a record) and nothing matches it | the constant carrying the name |
-| `UNSUPPORTED` | the request needs an action no listed tool performs | none — there is no symbol for an absent verb |
+| `UNSUPPORTED [C]` | the request needs an action no listed tool performs | optionally the constant carrying the request fragment that asks for it — there is no symbol for an absent verb, but the serializer usually extracted the words |
 | `NEEDS_INFO F` | a required value (a title, an amount, a date) is neither in the request nor derivable from the context | the field or parameter whose value is missing |
 | `AMBIGUOUS a [b]` | the request could refer to several things and the context does not disambiguate | what would resolve it: the candidate symbols when the choice is among symbols (`T2 T5`), or the field whose value would select among records (`F4`) |
 
 **Referents.** A reason says what kind of failure; the referent says what it
-is about, in the program's own symbol vocabulary — up to two `T`/`F`/`C`
+is about, in the program's own symbol vocabulary. (`UNSUPPORTED` admitted
+none until the 2026-09-07 referent probe, where Qwen3.8-27B twice wrote
+`ABORT UNSUPPORTED C8` with `C8` the request text — "create standalone html
+files" — and was rejected for it. The instinct is right; it is admitted.) — up to two `T`/`F`/`C`
 symbols, never a register or a literal. The referent is what makes an abort
 *checkable* (`NOT_FOUND C2` can be tested against the world; `NEEDS_INFO F3`
 against the constant table) and *actionable* (a UI can ask for `F3` by its
