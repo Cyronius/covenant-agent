@@ -25,6 +25,8 @@ from harness.run import load_tasks, run_task  # noqa: E402
 from harness import task_grammar  # noqa: E402
 from core.ir import TaskContext  # noqa: E402
 from core.pipeline import build  # noqa: E402
+from core.ir import Abort  # noqa: E402
+from harness.abort_check import check_abort  # noqa: E402
 
 # PLAN.md §6 K2: the checker's structured diagnostics go back to the model as
 # input, up to N repair rounds. The rendered forms are a stable contract
@@ -45,6 +47,9 @@ How to read these:
   UNKNOWN_TOOL TN         no such tool symbol in this task
   UNREACHABLE N           line N follows a terminator and can never run
   PARSE_ERROR line:N ...  line N is not valid Agent Core
+  ABORT_UNFOUNDED R S ... your ABORT R S claimed something the task
+                          contradicts (the detail says what); act instead,
+                          or abort with a referent that holds
 
 Rewrite the WHOLE program with these fixed, using only the T/F/C symbols
 listed for the task. Line numbers are 1-based. Output ONLY the program."""
@@ -103,7 +108,9 @@ IF cond / ELSE           branch, bodies indented; cond compares operands, e.g. r
 PARALLEL                 body: CALL lines only, run concurrently
 TRY [RETRY n] -> r       run body, catch tool errors; r gets OK or error code
 STOP | RETURN x | PAUSE  end program (PAUSE = report back; a continuation follows later)
-ABORT reason             decline without acting: NOT_FOUND | AMBIGUOUS | UNSUPPORTED | NEEDS_INFO
+ABORT reason sym         decline without acting, naming what it is about:
+                         NOT_FOUND Cn (nothing matches Cn) | NEEDS_INFO Fn (no value
+                         for Fn) | AMBIGUOUS a b (cannot choose between) | UNSUPPORTED
 
 Rules: registers r0-r15 in order of first use. Use ONLY the T/F/C symbols
 listed for the task; every literal value must be a C symbol. TIME fields are
@@ -233,11 +240,22 @@ def make_planner(llm, grammar, task, max_tokens, usage_sink, template="qwen",
         rounds = 0
         while rounds < repair:
             result = build(text, ctx)
-            if result.compile_ok:
+            feedback = None
+            if not result.compile_ok:
+                feedback = result.rendered_diagnostics()
+            elif (result.program.body
+                  and isinstance(result.program.body[0], Abort)):
+                # a first-line abort is a static claim about the task; check
+                # its referent (spec §4). Aborts inside IF are runtime and
+                # belong to run_task.
+                a = result.program.body[0]
+                msg = check_abort(ctx, task["state"], a.reason, a.refs)
+                if msg:
+                    feedback = [msg]
+            if feedback is None:
                 break
             rounds += 1
-            res = generate(llm, grammar,
-                           repair_prompt(result.rendered_diagnostics()),
+            res = generate(llm, grammar, repair_prompt(feedback),
                            max_tokens, template,
                            (shots or []) + [(user, text)])
             usage_sink.append(res["usage"])

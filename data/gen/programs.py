@@ -697,10 +697,18 @@ ABSENT_TITLES = ["Q3 budget review", "Northwind onboarding", "Harbor lights",
 
 def sample_abort(world, profile, state, now, rng, alloc, holdout):
     """Level 11, NOT_FOUND flavor: a direct action on a record that does not
-    exist. Same frame shape as `direct`, so the English renders naturally,
-    but no ID constant is allocated for the record and the reference is
-    `ABORT NOT_FOUND`. (UNSUPPORTED / NEEDS_INFO / AMBIGUOUS flavors: see
-    harness/curriculum.py L11 examples; generator coverage is Lane C.)"""
+    exist. Same frame shape as `direct`, so the English renders naturally.
+
+    spec §4 0.3.0: the name IS a constant (`$n STR`), and the reference is
+    check-then-decline — list, filter on the name field, `ABORT NOT_FOUND $n`
+    inside the IF that finds nothing, else act. Before 0.3.0 the name had no
+    constant and the reference was a bare first-line `ABORT NOT_FOUND`: the
+    abort was decidable from the *shape of the constant table* without
+    reading the request, which is the same context-not-words cue behind the
+    demo over-abstention (results/S2.md). Entities with no name field or no
+    list tool keep a bare abort (the request refers by number, and there is
+    nothing to filter on). (UNSUPPORTED / NEEDS_INFO / AMBIGUOUS flavors:
+    data/gen/v2.py sample_abort_v2.)"""
     entity = rng.choice(sorted(profile["entities"]))
     prof = profile["entities"][entity]
     acts = visible_actions(prof, holdout, exclude_kinds={"send_field"})
@@ -717,6 +725,25 @@ def sample_abort(world, profile, state, now, rng, alloc, holdout):
         ids = [int(r["id"].split("_")[-1]) for r in _records(state, entity)
                if r["id"].split("_")[-1].isdigit()]
         display = prof["ref_word"].format(n=(max(ids) if ids else 0) + rng.randint(7, 40))
+    if nf and prof.get("list_tool"):
+        nref = alloc.get("STR", display,
+                         f"the {prof['noun']} named, verbatim: {display}")
+        # the action runs on the found record in the else-path, so its
+        # constants are allocated exactly as a `direct` sample's would be
+        info = build_action(act, entity, {"<v>": f"r3.@{entity}.id"},
+                            state, rng, alloc)
+        reg = "r4" if info["dest"] else None
+        seg = (f"CALL @{prof['list_tool']} -> r0\n"
+               f"FILTER r0 @{entity}.{nf} EQ {nref} -> r1\n"
+               f"COUNT r1 -> r2\n"
+               f"IF r2 EQ 0\n"
+               f"  ABORT NOT_FOUND {nref}\n"
+               f"FIRST r1 -> r3\n"
+               + action_line(info, reg) + "\nSTOP\n")
+        frame = {"recipe": "direct", "entity": entity, "noun": prof["noun"],
+                 "record": display, "action": info}
+        return GenSample(frame, [seg], alloc.items,
+                         tags=["abort", "not_found", "checked"])
     # build_action may still allocate the action's own constants (an enum
     # value, a message) — those are legitimately in the request.
     info = build_action(act, entity, {"<v>": "r0"}, state, rng, alloc)

@@ -580,11 +580,26 @@ CURRICULUM = [
     ),
     # ---------------- Effect gate (R7 groundwork) ----------------
     # ---------------- Level 11: abstain (ABORT) ----------------
+    # spec §4 0.3.0: every abort that admits a referent carries one, and
+    # NOT_FOUND is check-then-decline — the planner cannot know a record is
+    # absent without looking, so the name is a constant and the program
+    # fetches, filters, and aborts inside the IF that finds nothing.
     dict(
         id="L11_kanban_abort_not_found", level=11, world="kanban",
         request="Assign card 4 to Cyrus.",
-        constants=[{"type": "ID:card", "value": "card_4", "desc": "card 4"}],
-        segments=["ABORT NOT_FOUND\n"],
+        constants=[{"type": "ID:card", "value": "card_4", "desc": "card 4"},
+                   {"type": "STR", "value": "Cyrus",
+                    "desc": "the assignee named, verbatim: Cyrus"}],
+        segments=[
+            "CALL @list_users -> r0\n"
+            "FILTER r0 @user.name EQ $1 -> r1\n"
+            "COUNT r1 -> r2\n"
+            "IF r2 EQ 0\n"
+            "  ABORT NOT_FOUND $1\n"
+            "FIRST r1 -> r3\n"
+            "CALL @assign_card $0 r3.@user.id\n"
+            "STOP\n",
+        ],
         expected_status="aborted", tags=["abort"],
     ),
     dict(
@@ -599,7 +614,7 @@ CURRICULUM = [
         id="L11_kanban_abort_needs_info", level=11, world="kanban",
         request="Create a new card for Bob.",
         constants=[{"type": "ID:user", "value": "user_1", "desc": "Bob"}],
-        segments=["ABORT NEEDS_INFO\n"],
+        segments=["ABORT NEEDS_INFO @card.title\n"],
         expected_status="aborted", tags=["abort"],
     ),
     dict(
@@ -607,7 +622,7 @@ CURRICULUM = [
         request="Message him about the release.",
         constants=[{"type": "STR", "value": "The release is going out today.",
                     "desc": "message text"}],
-        segments=["ABORT AMBIGUOUS\n"],
+        segments=["ABORT AMBIGUOUS @user.name\n"],
         expected_status="aborted", tags=["abort"],
     ),
     # ---------------- Level 12: FORMAT (templated text from data) ----------------

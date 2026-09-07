@@ -1,6 +1,6 @@
 # Agent Core IR — Specification (F1)
 
-**Version:** 0.2.0 (0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
+**Version:** 0.3.0 (0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
 **Status:** Foundation draft. Every change to this document must land in the same
 commit as the matching changes to `core/` (parser, typechecker, effects, compiler),
 `data/gen/`, and `spec/examples/`, with round-trip tests passing.
@@ -78,8 +78,9 @@ try         = "TRY" [ "RETRY" int ] "->" reg ;   (* block head *)
 return      = "RETURN" operand ;
 stop        = "STOP" ;
 pause       = "PAUSE" ;
-abort       = "ABORT" reason ;
+abort       = "ABORT" reason { symbol } ;      (* at most two symbols *)
 reason      = "NOT_FOUND" | "AMBIGUOUS" | "UNSUPPORTED" | "NEEDS_INFO" ;
+symbol      = tool | field | const ;
 
 operand     = reg | reg "." field | const | "NOW" | "NULL" | int ;
 reg         = "r0" … "r15" ;
@@ -136,15 +137,34 @@ faithfully, the correct program declines rather than guesses:
 
 | reason | when |
 |---|---|
-| `NOT_FOUND` | the request names an entity (a person, a record) that has no matching symbol in the context |
-| `UNSUPPORTED` | the request needs an action no listed tool performs |
-| `NEEDS_INFO` | a required value (a title, an amount, a date) is neither in the request nor derivable from the context |
-| `AMBIGUOUS` | the request could refer to several things and the context does not disambiguate |
+| reason | when | referent |
+|---|---|---|
+| `NOT_FOUND C` | the request names a thing (a person, a record) and nothing matches it | the constant carrying the name |
+| `UNSUPPORTED` | the request needs an action no listed tool performs | none — there is no symbol for an absent verb |
+| `NEEDS_INFO F` | a required value (a title, an amount, a date) is neither in the request nor derivable from the context | the field or parameter whose value is missing |
+| `AMBIGUOUS a [b]` | the request could refer to several things and the context does not disambiguate | what would resolve it: the candidate symbols when the choice is among symbols (`T2 T5`), or the field whose value would select among records (`F4`) |
 
-`ABORT` is legal inside an `IF` body (check, then decline). The reason is
-a closed enum, not free text, so the value channel stays out of the token
-stream. An abstain task is scored correct only when the status *and* the
-reason match the reference (`correct_abstain` in the harness).
+**Referents.** A reason says what kind of failure; the referent says what it
+is about, in the program's own symbol vocabulary — up to two `T`/`F`/`C`
+symbols, never a register or a literal. The referent is what makes an abort
+*checkable* (`NOT_FOUND C2` can be tested against the world; `NEEDS_INFO F3`
+against the constant table) and *actionable* (a UI can ask for `F3` by its
+description). Referents are optional in the grammar so earlier programs stay
+valid, and expected wherever the reason admits one; a referent of the wrong
+kind for its reason is a `TYPE_ERROR`, an undeclared one is `UNKNOWN_TOOL` /
+`UNKNOWN_FIELD ABORT <sym>` / `UNBOUND <sym>`.
+
+`NOT_FOUND` is a claim about the world, and the planner cannot see the
+world statically. The faithful form is check-then-decline: fetch, filter on
+the named value, and `ABORT NOT_FOUND C` inside the `IF` that finds nothing —
+`ABORT` is legal inside an `IF` body for exactly this. A bare first-line
+`ABORT NOT_FOUND` asserts absence the planner has not observed.
+
+The reason is a closed enum and the referents are symbols, so the value
+channel stays out of the token stream. An abstain task is scored correct
+when the status *and* the reason match the reference (`correct_abstain`);
+where the reference carries referents, `abort_referent_match` records
+whether those matched too, and does not gate `correct_abstain`.
 
 ### Execution boundary (`PAUSE`)
 
@@ -228,7 +248,15 @@ UNKNOWN_FIELD <reg> <sym>
 MISSING_ARG <tool> <field>
 UNREACHABLE <line>
 EFFECT_UNDECLARED <effect>
+ABORT_UNFOUNDED <reason> <sym> <detail>
 ```
+
+`ABORT_UNFOUNDED` is not a static diagnostic: the harness emits it after
+checking an abort's referent against the task (`harness/abort_check.py`) —
+`NOT_FOUND C2` when a record matches `C2`'s value, `NEEDS_INFO F3` when a
+constant of `F3`'s type is present, `AMBIGUOUS T5` when only one candidate
+is named. It confirms or denies what the program itself asserted and reveals
+nothing about the reference, which is what lets a repair round consume it.
 
 `<site>` is `line:<n>` with the 1-based source line. Parsers report syntax
 errors as structured `PARSE_ERROR line:<n> <detail>`, never Python exceptions.

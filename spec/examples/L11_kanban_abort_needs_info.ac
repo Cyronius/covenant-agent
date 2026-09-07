@@ -3,4 +3,4 @@
 # $0: ID:user = 'user_1' — Bob
 # expected status: aborted
 
-ABORT NEEDS_INFO
+ABORT NEEDS_INFO @card.title

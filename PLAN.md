@@ -563,3 +563,27 @@ covenant-agent/
   §3 always had `int = digit { digit }`; only the decoder disagreed.
   `run_a.py --grammar-mode static` reproduces the old behaviour for
   comparison with pre-2026-09-06 runs.
+
+- **2026-09-07 — `ABORT` referents (spec 0.3.0).** `ABORT reason` now takes
+  up to two symbol operands naming what the reason is about — `NOT_FOUND C2`,
+  `NEEDS_INFO F3`, `AMBIGUOUS T2 T5` / `AMBIGUOUS F4`; `UNSUPPORTED` takes
+  none. Referents are optional in the grammar (every prior program and
+  checkpoint stays valid) and expected wherever the reason admits one; the
+  typechecker enforces the kind and that the symbol is declared. The
+  harness records `abort_refs` and `abort_referent_match` (informational —
+  `correct_abstain` still keys on status + reason), and
+  `harness/abort_check.py` tests a referent against the task and emits
+  `ABORT_UNFOUNDED …` (§9) when the claim fails — `run_a.py --repair` feeds
+  that back like any diagnostic. `NOT_FOUND` in the generator and curriculum
+  is now check-then-decline (list → filter on the name → `ABORT NOT_FOUND C`
+  inside the empty branch), with the name allocated as a constant.
+  **Motivating result:** `results/S2.md` — Qwen3.8-27B's one miss that K2
+  repair could not reach was a bare `ABORT NEEDS_INFO` with nothing to
+  check or ask; S3's 27 demo / 58 real-session `NEEDS_INFO` aborts were
+  opaque for the same reason; and `real_suite.py` scored any non-`NOT_FOUND`
+  abort as correct because the reference could say no more. The old
+  `NOT_FOUND` recipe signalled absence by *not allocating* the name's
+  constant, so the abort was decidable from the constant table's shape
+  without reading the request — the same context-not-words cue behind the
+  demo over-abstention. Plan: `.claude/plans/abort-referent.md`. Corpus
+  regen and the retrain that carries this to the 0.8B are the plan's step 3.

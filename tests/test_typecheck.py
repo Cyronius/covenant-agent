@@ -139,7 +139,7 @@ def test_abort_inside_if_is_a_valid_early_exit():
         "CALL @delete_card r1\n"
         "STOP\n")
     assert codes == []
-    assert 'rt.abort("NOT_FOUND")' in res.js
+    assert 'rt.abort("NOT_FOUND", [])' in res.js
 
 
 def _fmt_ctx():

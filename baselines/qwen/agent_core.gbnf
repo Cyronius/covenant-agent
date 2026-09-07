@@ -28,7 +28,8 @@ termline  ::= ("STOP" | "PAUSE" | ret | abort) nl?
 # "PAUSE\n" was ambiguous and the same masking hit every L10 task. STOP
 # stays in `line` for early exits inside IF bodies.
 ret       ::= "RETURN " operand
-abort     ::= "ABORT " ("NOT_FOUND" | "AMBIGUOUS" | "UNSUPPORTED" | "NEEDS_INFO")
+abort     ::= "ABORT " ("NOT_FOUND" | "AMBIGUOUS" | "UNSUPPORTED" | "NEEDS_INFO") (" " sym)? (" " sym)?
+sym       ::= tool | field | const
 indent    ::= "  " | "    " | "      " | "        "
 nl        ::= "\n"
 

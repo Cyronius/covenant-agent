@@ -136,6 +136,7 @@ def run_task(task: dict, planner: Planner) -> dict:
 
     exec_ok = status in ("ok", "effect_blocked", "aborted") and compile_ok
     abort_reason = sres.get("reason") if (sres and status == "aborted") else None
+    abort_refs = list(sres.get("refs") or []) if (sres and status == "aborted") else []
     if status == "error" and sres is not None:
         err = sres.get("error", {})
         diagnostics.append(f"RUNTIME {err.get('code')} {err.get('message', '')}")
@@ -147,7 +148,8 @@ def run_task(task: dict, planner: Planner) -> dict:
         final_state=final_state, call_log=call_log,
         sandbox_tools=sandbox_ctx["tools"],
         n_instructions=n_instructions or None, pauses=pauses,
-        latency=lat, diagnostics=diagnostics, abort_reason=abort_reason)
+        latency=lat, diagnostics=diagnostics, abort_reason=abort_reason,
+        abort_refs=abort_refs)
     return row
 
 

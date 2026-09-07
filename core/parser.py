@@ -10,7 +10,7 @@ import re
 from typing import List, Optional, Tuple
 
 from . import diagnostics as dg
-from .ir import (ABORT_REASONS, CMPS, EFFECTS, NUM_REGISTERS, Abort, Call,
+from .ir import (ABORT_MAX_REFS, ABORT_REASONS, CMPS, EFFECTS, NUM_REGISTERS, Abort, Call,
                  Clause, Const, Count,
                  Filter, First, Foreach, Format, Get, If, IntLit, Let, MapF,
                  Now, Null,
@@ -22,6 +22,7 @@ _REGFIELD_RE = re.compile(r"^r(\d{1,2})\.(F\d+)$")
 _TOOL_RE = re.compile(r"^T\d+$")
 _FIELD_RE = re.compile(r"^F\d+$")
 _CONST_RE = re.compile(r"^C\d+$")
+_SYM_RE = re.compile(r"^[TFC]\d+$")   # ABORT referents: any symbol kind
 _INT_RE = re.compile(r"^\d+$")
 
 BLOCK_HEADS = ("FOREACH", "IF", "ELSE", "PARALLEL", "TRY")
@@ -212,10 +213,14 @@ def _parse_instr(toks: List[str], line: int):
             raise _ParseFail(dg.parse_error(line, "PAUSE takes no arguments"))
         return Pause(line=line)
     if op == "ABORT":
-        if len(rest) != 1 or rest[0] not in ABORT_REASONS:
+        if not rest or rest[0] not in ABORT_REASONS:
             raise _ParseFail(dg.parse_error(
-                line, "ABORT takes one reason: " + "|".join(ABORT_REASONS)))
-        return Abort(rest[0], line=line)
+                line, "ABORT takes a reason: " + "|".join(ABORT_REASONS)))
+        refs = rest[1:]
+        if len(refs) > ABORT_MAX_REFS or any(not _SYM_RE.match(r) for r in refs):
+            raise _ParseFail(dg.parse_error(
+                line, f"ABORT referents: up to {ABORT_MAX_REFS} T/F/C symbols"))
+        return Abort(rest[0], refs=list(refs), line=line)
     raise _ParseFail(dg.parse_error(line, f"unknown instruction {op!r}"))
 
 

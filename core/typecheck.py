@@ -15,7 +15,7 @@ from dataclasses import dataclass, field as dc_field
 from typing import Dict, List, Optional
 
 from . import diagnostics as dg
-from .ir import (Abort, Format, Call, Clause, Const, Count, Filter, First, Foreach, Get, If,
+from .ir import (ABORT_REF_KINDS, Abort, Format, Call, Clause, Const, Count, Filter, First, Foreach, Get, If,
                  IntLit, Let, MapF, Now, Null, Parallel, Pause, Pred, Program,
                  Reg, RegField, Return, Select, SetF, Sort, Stop, TaskContext,
                  Try, Type, format_type)
@@ -318,12 +318,31 @@ class _Checker:
         if isinstance(instr, Stop):
             return True
         if isinstance(instr, Abort):
+            self._check_abort(instr)
             return True
         if isinstance(instr, Pause):
             self.pause_envs.append(
                 {f"r{n}": format_type(t) for n, t in sorted(env.items())})
             return True
         raise AssertionError(instr)
+
+    def _check_abort(self, instr: Abort):
+        # spec §4: referents are symbols of the kind the reason admits, and
+        # must be declared. A wrong kind is a TYPE_ERROR whose "expected" is
+        # the reason with its admitted kinds, e.g. `NEEDS_INFO:F`.
+        allowed = ABORT_REF_KINDS[instr.reason]
+        for ref in instr.refs:
+            kind = ref[0]
+            if kind not in allowed:
+                self.diags.append(dg.type_error(
+                    instr.line, f"{instr.reason}:{allowed or 'none'}", ref))
+                continue
+            if kind == "T" and ref not in self.ctx.tools:
+                self.diags.append(dg.unknown_tool(instr.line, ref))
+            elif kind == "F" and ref not in self.ctx.fields:
+                self.diags.append(dg.unknown_field(instr.line, "ABORT", ref))
+            elif kind == "C" and ref not in self.ctx.constants:
+                self.diags.append(dg.unbound(instr.line, ref))
 
     def _check_call(self, call: Call, env: dict, defer_bind: bool = False):
         ln = call.line

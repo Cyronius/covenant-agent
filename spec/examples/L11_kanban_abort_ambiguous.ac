@@ -3,4 +3,4 @@
 # $0: STR = 'The release is going out today.' — message text
 # expected status: aborted
 
-ABORT AMBIGUOUS
+ABORT AMBIGUOUS @user.name

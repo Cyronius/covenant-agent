@@ -94,6 +94,10 @@ export interface ValidateResponse<TState = unknown> {
   error: { code: string; message?: string; tool?: string; effect?: string; args?: unknown[] } | null;
   /** ABORT reason (spec §4) when status === 'aborted'. */
   reason?: 'NOT_FOUND' | 'AMBIGUOUS' | 'UNSUPPORTED' | 'NEEDS_INFO' | string | null;
+  /** ABORT referents (spec §4 0.3.0): the T/F/C symbols the reason is about,
+   * so the UI can ask for the thing by its description instead of showing
+   * the enum. Empty for a bare abort. */
+  refs?: string[];
 }
 
 export async function validate<TState = unknown>(

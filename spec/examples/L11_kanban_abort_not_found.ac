@@ -1,6 +1,14 @@
 # L11_kanban_abort_not_found  (level 11, world kanban)
 # request: Assign card 4 to Cyrus.
 # $0: ID:card = 'card_4' — card 4
+# $1: STR = 'Cyrus' — the assignee named, verbatim: Cyrus
 # expected status: aborted
 
-ABORT NOT_FOUND
+CALL @list_users -> r0
+FILTER r0 @user.name EQ $1 -> r1
+COUNT r1 -> r2
+IF r2 EQ 0
+  ABORT NOT_FOUND $1
+FIRST r1 -> r3
+CALL @assign_card $0 r3.@user.id
+STOP

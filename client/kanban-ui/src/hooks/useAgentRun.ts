@@ -20,7 +20,7 @@ import {
   type ModelInfo,
 } from '../../../shared/inference';
 import { buildFullPrompt, STOP, type Registers } from '../../../shared/prompt';
-import { validate, type CallLogEntry, type ValidateResponse } from '../../../shared/validate';
+import { validate, type CallLogEntry, type TaskContextJson, type ValidateResponse } from '../../../shared/validate';
 import { fetchKanbanPrompt, describeCallSite } from '../lib/kanbanPrompt';
 import { describeCall, describeArg } from '../lib/describe';
 import { initialState, userById, TOOL_EFFECTS, type KanbanState, type Effect } from '../data/board';
@@ -60,6 +60,32 @@ const ABORT_COPY: Record<string, string> = {
   UNSUPPORTED: "I don't have a tool that does that.",
   NEEDS_INFO: 'I need more details before I can do that.',
 };
+
+/** Turn `ABORT reason refs` into a sentence using the context's own
+ *  descriptions. Returns undefined for a bare abort so the enum copy applies. */
+function describeAbort(reason: string, refs: string[], ctx: TaskContextJson): string | undefined {
+  if (!refs.length) return undefined;
+  const desc = (sym: string): string => {
+    const k = sym[0];
+    const d = k === 'T' ? ctx.tools.find((t) => t.sym === sym)?.desc
+      : k === 'F' ? ctx.fields.find((f) => f.sym === sym)?.desc
+      : ctx.constants.find((c) => c.sym === sym);
+    if (k === 'C' && d && typeof d === 'object') return `"${String((d as { value: unknown }).value)}"`;
+    return typeof d === 'string' ? d : sym;
+  };
+  switch (reason) {
+    case 'NOT_FOUND':
+      return `I couldn't find anything matching ${desc(refs[0])}.`;
+    case 'NEEDS_INFO':
+      return `I need one more thing: ${desc(refs[0])}.`;
+    case 'AMBIGUOUS':
+      return refs.length > 1
+        ? `That could mean ${desc(refs[0])} or ${desc(refs[1])} — which did you mean?`
+        : `There's more than one match — which one? (tell me the ${desc(refs[0])})`;
+    default:
+      return undefined;
+  }
+}
 
 const EFFECT_COPY: Record<string, string> = {
   DELETE: "This can't be undone.",
@@ -319,8 +345,13 @@ export function useAgentRun() {
 
           if (resp.status === 'aborted') {
             // The planner declined (ABORT) — nothing ran past any reads.
+            // With a referent (spec §4 0.3.0) the abort is a question we can
+            // put to the user in the schema's own words.
             const reason = resp.reason ?? '';
-            append({ kind: 'agent-text', id: mkId(), text: ABORT_COPY[reason] ?? `Can't do that (${reason || 'no reason given'}).` });
+            const text = describeAbort(reason, resp.refs ?? [], kp.context)
+              ?? ABORT_COPY[reason]
+              ?? `Can't do that (${reason || 'no reason given'}).`;
+            append({ kind: 'agent-text', id: mkId(), text });
             return;
           }
 

@@ -234,14 +234,19 @@ def sample_abort_v2(world, profile, state, now, rng, alloc, holdout):
             raise SampleError("no actions")
         info = build_action(rng.choice(acts), child, {"<v>": "r0"}, state, rng, alloc)
         frame = {"recipe": "abort_ambiguous", "noun": prof["noun"], "action": info}
-        return GenSample(frame, ["ABORT AMBIGUOUS\n"], alloc.items, tags=["abort", "ambiguous"])
+        # spec §4 0.3.0: the referent is the field whose value would pick one
+        nf = v2.get("name_field")
+        seg = f"ABORT AMBIGUOUS @{child}.{nf}\n" if nf else "ABORT AMBIGUOUS\n"
+        return GenSample(frame, [seg], alloc.items, tags=["abort", "ambiguous"])
     if flavour == "needs_info":
         if not v2["name_field"]:
             raise SampleError("needs_info needs a name field")
         parent, _ = _parent(v2, state, rng, alloc)
         frame = {"recipe": "abort_needs_info", "noun": prof["noun"],
                  "parent_name": parent["name"], "parent_noun": v2["parent_noun"]}
-        return GenSample(frame, ["ABORT NEEDS_INFO\n"], alloc.items, tags=["abort", "needs_info"])
+        # spec §4 0.3.0: what is missing is the new record's name
+        seg = f"ABORT NEEDS_INFO @{child}.{v2['name_field']}\n"
+        return GenSample(frame, [seg], alloc.items, tags=["abort", "needs_info"])
     rec, display, ref = _named_record(prof, child, state, rng, alloc)
     template, verb = rng.choice(UNSUPPORTED)
     frame = {"recipe": "abort_unsupported", "noun": prof["noun"], "record": display,

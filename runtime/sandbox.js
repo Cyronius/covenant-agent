@@ -365,8 +365,10 @@ function main(input) {
     first: (list) => (list.length ? list[0] : null),
     ret: (v) => ({ __kind: "return", value: v }),
     stop: () => ({ __kind: "stop" }),
-    // spec §4 ABORT: the program declines to act; reason is a closed enum.
-    abort: (reason) => ({ __kind: "abort", reason }),
+    // spec §4 ABORT: the program declines to act; reason is a closed enum,
+    // refs are the symbols it is about (checkable by the harness, askable
+    // by a UI).
+    abort: (reason, refs) => ({ __kind: "abort", reason, refs: refs || [] }),
     pause(regs) {
       const out = {};
       for (const [k, v] of Object.entries(regs)) {
@@ -423,7 +425,8 @@ function main(input) {
       } else if (marker && marker.__kind === "return") {
         finish({ status: "ok", return_value: marker.value, ...base });
       } else if (marker && marker.__kind === "abort") {
-        finish({ status: "aborted", reason: marker.reason, ...base });
+        finish({ status: "aborted", reason: marker.reason,
+                 refs: marker.refs || [], ...base });
       } else {
         finish({ status: "ok", return_value: null, ...base });
       }

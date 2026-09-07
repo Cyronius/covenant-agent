@@ -183,7 +183,8 @@ class _Emitter:
         elif isinstance(instr, Stop):
             self.out(depth, "return rt.stop();")
         elif isinstance(instr, Abort):
-            self.out(depth, f'return rt.abort("{instr.reason}");')
+            refs = ", ".join(f'"{r}"' for r in instr.refs)
+            self.out(depth, f'return rt.abort("{instr.reason}", [{refs}]);')
         elif isinstance(instr, Pause):
             regs = sorted(self.assigned)
             pairs = ", ".join(f"r{n}: r{n}" for n in regs)

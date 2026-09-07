@@ -890,6 +890,7 @@ def handle_validate(req: dict) -> dict:
         "pause_envs": result.pause_envs if sres.get("status") == "paused" else None,
         "error": sres.get("error"),
         "reason": sres.get("reason"),  # ABORT reason when status == 'aborted'
+        "refs": sres.get("refs") or [],  # ABORT referents (spec §4 0.3.0)
     }
 
 

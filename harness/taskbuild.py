@@ -36,6 +36,7 @@ def execute_segments(segments: List[str], ctx: TaskContext, sandbox_ctx: dict,
     status = "error"
     return_value = None
     abort_reason = None
+    abort_refs: list = []
     cur_ctx = ctx
     for i, text in enumerate(segments):
         res = build(text, cur_ctx)
@@ -71,13 +72,14 @@ def execute_segments(segments: List[str], ctx: TaskContext, sandbox_ctx: dict,
             return_value = sres.get("return_value")
         if status == "aborted":
             abort_reason = sres.get("reason")
+            abort_refs = list(sres.get("refs") or [])
         if i != len(segments) - 1:
             raise ReferenceError(
                 f"reference terminated at segment {i} with status {status}")
     return {"state": state, "call_log": call_log,
             "instructions": instructions, "calls": len(call_log),
             "pauses": pauses, "status": status, "return_value": return_value,
-            "abort_reason": abort_reason}
+            "abort_reason": abort_reason, "abort_refs": abort_refs}
 
 
 def build_task(*, task_id: str, level: int, world_name: str, request: str,
@@ -135,6 +137,7 @@ def build_task(*, task_id: str, level: int, world_name: str, request: str,
             "pauses": ref["pauses"],
             "return_value": ref["return_value"],
             "abort_reason": ref["abort_reason"],
+            "abort_refs": ref.get("abort_refs", []),
         },
         "tags": tags or [],
         "provenance": provenance or {},

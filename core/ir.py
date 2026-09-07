@@ -6,7 +6,7 @@ line so diagnostics and UNREACHABLE reports can point at real lines.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 EFFECTS = ("READ", "WRITE", "DELETE", "SEND", "PAY", "EXTERNAL")
 DESTRUCTIVE_EFFECTS = ("DELETE", "SEND", "PAY")
@@ -253,13 +253,20 @@ class Pause(Instr):
 
 
 # spec §4 ABORT: the planner declines to act. Reasons are a closed enum so
-# the value channel stays out of the token stream.
+# the value channel stays out of the token stream; referents are symbols
+# (T/F/C, at most two) naming what the reason is about — which is what lets
+# the harness check the abort and a UI act on it.
 ABORT_REASONS = ("NOT_FOUND", "AMBIGUOUS", "UNSUPPORTED", "NEEDS_INFO")
+# symbol kinds each reason may name (spec §4)
+ABORT_REF_KINDS = {"NOT_FOUND": "C", "NEEDS_INFO": "F", "AMBIGUOUS": "TFC",
+                   "UNSUPPORTED": ""}
+ABORT_MAX_REFS = 2
 
 
 @dataclass
 class Abort(Instr):
     reason: str
+    refs: List[str] = field(default_factory=list)
 
 
 @dataclass
