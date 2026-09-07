@@ -18,10 +18,14 @@ ab=[r for r in rows if r.get('expected_status')=='aborted']
 with open('data/holdout/_probe38_abstain.jsonl','w') as f:
     for r in random.sample(ab, 15): f.write(json.dumps(r)+"\n")
 PY2
+# No --domains: it registers the 143 generated theme worlds and one of them
+# shadows the built-in `coursebuilder` the real-session rows run against
+# (KeyError 'add_sub_item' in sandbox_from_context). eval_s2.sh runs the
+# real suite without it for the same reason; kanban is built-in too.
 run() {  # slice ctx
   OUT="results/logs/qwen38-27b_referent_$1"
   python -m baselines.qwen.run_a --model "$M" --template qwen \
-      --tasks "data/holdout/$2" --ctx "$3" --domains data/gen/themes \
+      --tasks "data/holdout/$2" --ctx "$3" \
       --out "${OUT}.jsonl" > "${OUT}.log" 2>&1
   echo "done $1: $(grep -E '\"(goal_success_rate|compile_ok_rate)\"' "${OUT}.log" | tr -d ' \n')"
 }
