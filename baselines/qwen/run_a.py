@@ -24,6 +24,34 @@ sys.path.insert(0, str(ROOT))
 from harness.run import load_tasks, run_task  # noqa: E402
 from harness import task_grammar  # noqa: E402
 from core.ir import TaskContext  # noqa: E402
+from core.pipeline import build  # noqa: E402
+
+# PLAN.md §6 K2: the checker's structured diagnostics go back to the model as
+# input, up to N repair rounds. The rendered forms are a stable contract
+# (core/diagnostics.py) but they are terse and unlabelled — TYPE_ERROR prints
+# expected then got with nothing saying which is which — so the legend is part
+# of the prompt.
+REPAIR_LEGEND = """\
+The program does not compile. The checker reports:
+
+%s
+
+How to read these:
+  TYPE_ERROR line:N A B   position on line N requires type A, you supplied B
+  UNBOUND rN              rN is read before anything binds it; bind it with
+                          `-> rN` on an earlier line (usually a CALL)
+  UNKNOWN_FIELD rN FN     FN is not a field of the entity rN holds
+  MISSING_ARG TN FN       tool TN requires parameter FN; supply it positionally
+  UNKNOWN_TOOL TN         no such tool symbol in this task
+  UNREACHABLE N           line N follows a terminator and can never run
+  PARSE_ERROR line:N ...  line N is not valid Agent Core
+
+Rewrite the WHOLE program with these fixed, using only the T/F/C symbols
+listed for the task. Line numbers are 1-based. Output ONLY the program."""
+
+
+def repair_prompt(rendered: list) -> str:
+    return REPAIR_LEGEND % "\n".join("  " + d for d in rendered[:8])
 
 
 class GrammarCache:
@@ -189,7 +217,7 @@ def load_shots(path: Path, n: int, exclude: set) -> list:
 
 
 def make_planner(llm, grammar, task, max_tokens, usage_sink, template="qwen",
-                 shots=None):
+                 shots=None, repair=0, repair_sink=None):
     prior: list[str] = []
 
     def plan(request, ctx, seg_idx, registers):
@@ -198,8 +226,27 @@ def make_planner(llm, grammar, task, max_tokens, usage_sink, template="qwen",
         user = build_prompt(task["input_text"], registers, prior)
         res = generate(llm, grammar, user, max_tokens, template, shots)
         usage_sink.append(res["usage"])
-        prior.append(res["text"])
-        return res["text"]
+        text = res["text"]
+
+        # K2 repair rounds. Static diagnostics only: run_task owns execution,
+        # and every failure worth repairing so far is a compile-time one.
+        rounds = 0
+        while rounds < repair:
+            result = build(text, ctx)
+            if result.compile_ok:
+                break
+            rounds += 1
+            res = generate(llm, grammar,
+                           repair_prompt(result.rendered_diagnostics()),
+                           max_tokens, template,
+                           (shots or []) + [(user, text)])
+            usage_sink.append(res["usage"])
+            text = res["text"]
+        if repair_sink is not None:
+            repair_sink.append(rounds)
+
+        prior.append(text)
+        return text
 
     return plan
 
@@ -213,6 +260,10 @@ def main():
                     help="first N tasks only (subset run)")
     ap.add_argument("--grammar", default="baselines/qwen/agent_core.gbnf")
     ap.add_argument("--no-grammar", action="store_true")
+    ap.add_argument("--repair", type=int, default=0, metavar="N",
+                    help="up to N repair rounds per segment, feeding the "
+                         "checker's diagnostics back as input (PLAN.md §6 "
+                         "condition K2). 0 = single-shot (K0)")
     ap.add_argument("--shots", type=int, default=0, metavar="N",
                     help="prepend N worked examples as prior chat turns "
                          "(untuned arms only — a tuned checkpoint was SFT'd "
@@ -263,14 +314,18 @@ def main():
     with open(out, "w") as f:
         for i, task in enumerate(tasks):
             usage: list = []
+            repairs: list = []
             row = run_task(task, make_planner(llm, grammars.for_task(task),
                                               task, args.max_tokens, usage,
                                               template=args.template,
-                                              shots=shots))
+                                              shots=shots, repair=args.repair,
+                                              repair_sink=repairs))
             row["tokens_out"] = sum(u.get("completion_tokens", 0)
                                     for u in usage)
             row["tokens_in"] = sum(u.get("prompt_tokens", 0) for u in usage)
-            row["condition"] = grammars.condition
+            row["condition"] = grammars.condition + (
+                f"+K2repair{args.repair}" if args.repair else "")
+            row["repair_rounds"] = sum(repairs)
             row["model"] = Path(args.model).name
             row["template"] = args.template
             if args.lora:
