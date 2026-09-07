@@ -62,9 +62,11 @@ def repair_prompt(rendered: list) -> str:
 class GrammarCache:
     """Per-task GBNF, compiled once per distinct symbol table.
 
-    `task` mode enumerates the T/F/C symbols the prompt declares; `static`
-    is the old single grammar, whose two-digit `num` made every symbol above
-    99 undecodable (results/S2.md §S3). `none` is the unconstrained arm.
+    `task` mode enumerates the T/F/C symbols the prompt declares; `typed`
+    adds per-tool CALL rules whose slots admit only type-compatible symbols
+    (PLAN.md §5 condition C4); `static` is the old single grammar, whose
+    two-digit `num` made every symbol above 99 undecodable (results/S2.md
+    §S3). `none` is the unconstrained arm.
     """
 
     def __init__(self, mode: str, base_path: Path):
@@ -75,8 +77,8 @@ class GrammarCache:
 
     @property
     def condition(self) -> str:
-        return {"task": "A-grammar-task", "static": "A-grammar",
-                "none": "A-unconstrained"}[self.mode]
+        return {"task": "A-grammar-task", "typed": "A-grammar-typed",
+                "static": "A-grammar", "none": "A-unconstrained"}[self.mode]
 
     def for_task(self, task: dict):
         if self.mode == "none":
@@ -87,10 +89,13 @@ class GrammarCache:
                 self._static = LlamaGrammar.from_string(self.base,
                                                         verbose=False)
             return self._static
-        key = task_grammar.symbol_signature(task)
+        typed = self.mode == "typed"
+        key = (task_grammar.typed_signature(task) if typed
+               else task_grammar.symbol_signature(task))
         if key not in self._cache:
             self._cache[key] = LlamaGrammar.from_string(
-                task_grammar.grammar_for_task(task, self.base), verbose=False)
+                task_grammar.grammar_for_task(task, self.base, typed=typed),
+                verbose=False)
         return self._cache[key]
 
 SYSTEM = """You translate task requests into Agent Core programs.
@@ -290,12 +295,13 @@ def main():
                          "(untuned arms only — a tuned checkpoint was SFT'd "
                          "on the zero-shot markup)")
     ap.add_argument("--shots-from", default="data/r1_tasks.jsonl")
-    ap.add_argument("--grammar-mode", choices=["task", "static"],
+    ap.add_argument("--grammar-mode", choices=["task", "typed", "static"],
                     default="task",
                     help="task: rebuild the grammar per task from the symbols "
-                         "that task declares (default). static: the base file "
-                         "as-is — pre-2026-09-06 behaviour, kept only to "
-                         "reproduce older runs")
+                         "that task declares (default). typed: task plus "
+                         "per-tool CALL rules with type-checked slots (C4). "
+                         "static: the base file as-is — pre-2026-09-06 "
+                         "behaviour, kept only to reproduce older runs")
     ap.add_argument("--ctx", type=int, default=4096)
     ap.add_argument("--threads", type=int, default=None)
     ap.add_argument("--max-tokens", type=int, default=250)
