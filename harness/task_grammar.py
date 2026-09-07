@@ -246,7 +246,12 @@ def _compatible(want, have) -> bool:
 
 
 def _type_id(tstr: str) -> str:
-    return tstr.replace(":", "_").replace(" ", "_")
+    # llama.cpp's GBNF lexer allows only [a-zA-Z0-9-] in rule names; an
+    # underscore makes `op_ID_user` parse as `op` and the sampler then
+    # dereferences a null grammar (access violation, 2026-09-07).
+    # entity names carry underscores too (`barrel_lot`); they never carry
+    # hyphens, so the mapping is collision-free
+    return tstr.replace(":", "-").replace(" ", "-").replace("_", "-")
 
 
 def typed_call_rules(task: dict) -> tuple:
@@ -260,19 +265,19 @@ def typed_call_rules(task: dict) -> tuple:
 
     def op_class(tstr: str) -> str:
         tid = _type_id(tstr)
-        name = f"op_{tid}"
+        name = f"op-{tid}"
         if name in op_rules:
             return name
         want = parse_type(tstr)
         alts = ["reg"]
         fsyms = [int(s[1:]) for s, t in fields if _compatible(want, t)]
         if fsyms:
-            op_rules[f"cf_{tid}"] = f'"F" ({digit_trie_expr(fsyms)})'
-            alts.append(f'reg "." cf_{tid}')
+            op_rules[f"cf-{tid}"] = f'"F" ({digit_trie_expr(fsyms)})'
+            alts.append(f'reg "." cf-{tid}')
         csyms = [int(s[1:]) for s, t in consts if _compatible(want, t)]
         if csyms:
-            op_rules[f"cc_{tid}"] = f'"C" ({digit_trie_expr(csyms)})'
-            alts.append(f"cc_{tid}")
+            op_rules[f"cc-{tid}"] = f'"C" ({digit_trie_expr(csyms)})'
+            alts.append(f"cc-{tid}")
         alts.append('"NULL"')
         if want[0] == "TIME":
             alts.append('"NOW"')
@@ -310,3 +315,18 @@ def typed_signature(task: dict) -> tuple:
                   for t in ctx.get("tools", [])),
             tuple(sorted((f["sym"], f["type"]) for f in ctx.get("fields", []))),
             tuple(sorted((c["sym"], c["type"]) for c in ctx.get("constants", []))))
+
+
+_GBNF_NAME = re.compile(r"^[a-zA-Z0-9-]+$")
+
+
+def check_gbnf_names(text: str) -> List[str]:
+    """Rule names llama.cpp's lexer would reject. `LlamaGrammar.from_string`
+    prints the parse error and returns anyway, so this is the check."""
+    bad = []
+    for line in text.splitlines():
+        if "::=" in line and not line.lstrip().startswith("#"):
+            name = line.split("::=")[0].strip()
+            if not _GBNF_NAME.match(name):
+                bad.append(name)
+    return bad
