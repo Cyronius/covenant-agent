@@ -16,8 +16,7 @@ random.seed(7)
 rows=[json.loads(l) for l in open('data/holdout/e_real_sessions.jsonl')]
 ab=[r for r in rows if r.get('expected_status')=='aborted']
 with open('data/holdout/_probe38_abstain.jsonl','w') as f:
-    for r in random.sample(ab, 15): f.write(json.dumps(r)+"
-")
+    for r in random.sample(ab, 15): f.write(json.dumps(r)+"\n")
 PY2
 run() {  # slice ctx
   OUT="results/logs/qwen38-27b_referent_$1"
