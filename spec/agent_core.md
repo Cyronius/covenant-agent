@@ -1,6 +1,6 @@
 # Agent Core IR — Specification (F1)
 
-**Version:** 0.3.0 (0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
+**Version:** 0.3.1 (0.3.1, 2026-09-08: runtime errors as a segment boundary, §4/§9; 0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
 **Status:** Foundation draft. Every change to this document must land in the same
 commit as the matching changes to `core/` (parser, typechecker, effects, compiler),
 `data/gen/`, and `spec/examples/`, with round-trip tests passing.
@@ -181,6 +181,14 @@ segment 1 → PAUSE (registers out) → planner → segment 2 (registers in) →
 A continuation segment's typechecking environment is seeded with the returned
 register types; its input context includes the serialized register values.
 
+A segment that raises outside `TRY` is a boundary of the same kind when the
+harness runs reactively (`run_task(react_on_error=True)`, R4): the sandbox
+reports the failing line and the registers bound so far, the state is what
+the completed calls left (the raising call did not write), and the planner
+is re-invoked with the rendered `RUNTIME` diagnostic (§9), the calls that
+ran, and those registers pre-bound — typed from the failed program's final
+environment. Without the reactive flag the error ends the task.
+
 ## 5. Registers
 
 - 16 registers, `r0`–`r15`. Rebinding is allowed; the typechecker tracks the
@@ -252,7 +260,14 @@ MISSING_ARG <tool> <field>
 UNREACHABLE <line>
 EFFECT_UNDECLARED <effect>
 ABORT_UNFOUNDED <reason> <sym> <detail>
+RUNTIME <code> line:<n> <detail>
 ```
+
+`RUNTIME` is not static either: it is a sandbox error outside `TRY`, with
+the tool error code (§8) or `JS_ERROR`, the 1-based source line of the
+instruction that raised (0 if none ran), and the sandbox's message — e.g.
+`RUNTIME INDEX_OUT_OF_RANGE line:3 index 0 of 0`. It is the failed
+segment's verdict in a reactive run (§4, execution boundary).
 
 `ABORT_UNFOUNDED` is not a static diagnostic: the harness emits it after
 checking an abort's referent against the task (`harness/abort_check.py`) —

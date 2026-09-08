@@ -73,7 +73,9 @@ def metrics_row(task: dict, *, parse_ok: bool, compile_ok: bool,
                 tokens_in: Optional[int] = None,
                 tokens_out: Optional[int] = None,
                 abort_reason: Optional[str] = None,
-                abort_refs: Optional[List[str]] = None) -> dict:
+                abort_refs: Optional[List[str]] = None,
+                segments: Optional[int] = None,
+                error_turns: int = 0) -> dict:
     expected_status = task.get("expected_status", "ok")
     ref = task.get("reference", {})
     goal = (status == expected_status and final_state is not None
@@ -112,6 +114,10 @@ def metrics_row(task: dict, *, parse_ok: bool, compile_ok: bool,
         "unnecessary_destructive": unnecessary_destructive(
             call_log, ref.get("call_log", []), sandbox_tools),
         "pauses": pauses,
+        # reactive execution (R4): planner turns that compiled and ran, and
+        # how many of them were replies to a runtime error
+        "segments": segments,
+        "error_turns": error_turns,
         "latency_encode_ms": latency.get("encode"),
         "latency_generate_ms": latency.get("generate"),
         "latency_validate_ms": latency.get("validate"),

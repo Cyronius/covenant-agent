@@ -25,6 +25,9 @@ class BuildResult:
     js: Optional[str] = None
     static_effects: List[str] = field(default_factory=list)
     pause_envs: List[dict] = field(default_factory=list)
+    # register types at the program's end: after a runtime error the
+    # reactive harness types the sandbox's bound registers from this
+    final_env: dict = field(default_factory=dict)
 
     def rendered_diagnostics(self) -> List[str]:
         return [d.render() for d in self.diagnostics]
@@ -41,7 +44,8 @@ def build(text: str, ctx: TaskContext) -> BuildResult:
     if diags:
         return BuildResult(parse_ok=True, compile_ok=False, diagnostics=diags,
                            program=program, static_effects=effects,
-                           pause_envs=tc.pause_envs)
+                           pause_envs=tc.pause_envs, final_env=tc.final_env)
     return BuildResult(parse_ok=True, compile_ok=True, program=program,
                        js=compile_program(program, ctx),
-                       static_effects=effects, pause_envs=tc.pause_envs)
+                       static_effects=effects, pause_envs=tc.pause_envs,
+                       final_env=tc.final_env)

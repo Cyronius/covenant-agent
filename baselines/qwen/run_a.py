@@ -146,11 +146,40 @@ STOP
 
 Output ONLY the program, nothing else."""
 
+# reactive-execution.md §2: observe-then-decide. Appended to SYSTEM under
+# --reactive-prompt; both arms of a reactive comparison carry it, so the
+# --react delta is the harness rule's alone (greedy decoding flips a few
+# per-task outcomes on any prompt change: results/S2.md).
+REACTIVE = """
+
+You do not have to finish in one program. When the next step depends on a
+value you have not seen — whether a lookup matched anything, how many
+elements a FILTER kept, which record to pick — end the program with PAUSE
+right after that read. You are then called again with the registers and
+their actual values, and you write only the continuation (act, or ABORT
+with the reason you can now see). If a program fails at runtime you are
+also called again: you see which line failed and why, which calls already
+ran, and what is bound; write the continuation from there."""
+
 
 def build_prompt(task_input: str, registers: dict | None,
-                 prior: list[str]) -> str:
+                 prior: list[str], feedback: dict | None = None) -> str:
     parts = [task_input.strip()]
-    if prior:
+    if feedback:
+        parts.append("PROGRAM SO FAR (ran until it FAILED at runtime):")
+        parts += [p.strip() for p in prior]
+        parts.append("FAILURE: " + feedback["error"])
+        calls = feedback.get("calls") or []
+        parts.append("CALLS THAT RAN: " + (", ".join(
+            f"{c['name']}({'ok' if c.get('ok', True) else 'error'})"
+            for c in calls) or "none"))
+        parts.append("REGISTERS STILL BOUND (values from the run):")
+        parts.append(json.dumps(registers, default=str)[:1500])
+        parts.append("The failing line and everything after it did not run. "
+                     "Write ONLY the continuation program from this state "
+                     "(registers above are still bound; do not re-fetch); "
+                     "if the request cannot be done, ABORT with the reason.")
+    elif prior:
         parts.append("PROGRAM SO FAR (already executed, ended at PAUSE):")
         parts += [p.strip() for p in prior]
         parts.append("REGISTERS NOW BOUND (values from the run):")
@@ -162,7 +191,8 @@ def build_prompt(task_input: str, registers: dict | None,
 
 
 def generate(llm, grammar, user: str, max_tokens: int = 250,
-             template: str = "qwen", shots: list | None = None) -> dict:
+             template: str = "qwen", shots: list | None = None,
+             system: str = SYSTEM) -> dict:
     """One greedy, grammar-constrained completion. Returns
     {text, usage, finish_reason}.
 
@@ -186,7 +216,7 @@ def generate(llm, grammar, user: str, max_tokens: int = 250,
     """
     shots = shots or []
     if template == "chat":
-        messages = [{"role": "system", "content": SYSTEM}]
+        messages = [{"role": "system", "content": system}]
         for shot_user, shot_program in shots:
             messages.append({"role": "user", "content": shot_user})
             messages.append({"role": "assistant", "content": shot_program})
@@ -200,7 +230,7 @@ def generate(llm, grammar, user: str, max_tokens: int = 250,
         turns = "".join(f"<|im_start|>user\n{u}<|im_end|>\n"
                         f"<|im_start|>assistant\n<think>\n\n</think>\n\n"
                         f"{p}<|im_end|>\n" for u, p in shots)
-        prompt = (f"<|im_start|>system\n{SYSTEM}<|im_end|>\n{turns}"
+        prompt = (f"<|im_start|>system\n{system}<|im_end|>\n{turns}"
                   f"<|im_start|>user\n{user}<|im_end|>\n"
                   f"<|im_start|>assistant\n<think>\n\n</think>\n\n")
         res = llm.create_completion(
@@ -229,14 +259,16 @@ def load_shots(path: Path, n: int, exclude: set) -> list:
 
 
 def make_planner(llm, grammar, task, max_tokens, usage_sink, template="qwen",
-                 shots=None, repair=0, repair_sink=None):
+                 shots=None, repair=0, repair_sink=None, max_segments=3,
+                 system=SYSTEM):
     prior: list[str] = []
 
-    def plan(request, ctx, seg_idx, registers):
-        if seg_idx > 2:   # runaway guard: give up after 3 segments
+    def plan(request, ctx, seg_idx, registers, feedback=None):
+        if seg_idx >= max_segments:   # runaway guard
             return None
-        user = build_prompt(task["input_text"], registers, prior)
-        res = generate(llm, grammar, user, max_tokens, template, shots)
+        user = build_prompt(task["input_text"], registers, prior, feedback)
+        res = generate(llm, grammar, user, max_tokens, template, shots,
+                       system)
         usage_sink.append(res["usage"])
         text = res["text"]
 
@@ -245,9 +277,9 @@ def make_planner(llm, grammar, task, max_tokens, usage_sink, template="qwen",
         rounds = 0
         while rounds < repair:
             result = build(text, ctx)
-            feedback = None
+            diag_fb = None
             if not result.compile_ok:
-                feedback = result.rendered_diagnostics()
+                diag_fb = result.rendered_diagnostics()
             elif (result.program.body
                   and isinstance(result.program.body[0], Abort)):
                 # a first-line abort is a static claim about the task; check
@@ -256,13 +288,13 @@ def make_planner(llm, grammar, task, max_tokens, usage_sink, template="qwen",
                 a = result.program.body[0]
                 msg = check_abort(ctx, task["state"], a.reason, a.refs)
                 if msg:
-                    feedback = [msg]
-            if feedback is None:
+                    diag_fb = [msg]
+            if diag_fb is None:
                 break
             rounds += 1
-            res = generate(llm, grammar, repair_prompt(feedback),
+            res = generate(llm, grammar, repair_prompt(diag_fb),
                            max_tokens, template,
-                           (shots or []) + [(user, text)])
+                           (shots or []) + [(user, text)], system)
             usage_sink.append(res["usage"])
             text = res["text"]
         if repair_sink is not None:
@@ -301,6 +333,19 @@ def main():
                          "behaviour, kept only to reproduce older runs")
     ap.add_argument("--ctx", type=int, default=4096)
     ap.add_argument("--threads", type=int, default=None)
+    ap.add_argument("--gpu-layers", type=int, default=0, metavar="N",
+                    help="llama.cpp n_gpu_layers (-1 = all); 0 on the dev "
+                         "box, -1 on a pod")
+    ap.add_argument("--react", action="store_true",
+                    help="PLAN.md R4 / reactive-execution.md: a runtime "
+                         "error returns to the planner as a turn instead of "
+                         "ending the task (harness react_on_error)")
+    ap.add_argument("--reactive-prompt", action="store_true",
+                    help="append the observe-then-decide paragraph to the "
+                         "SYSTEM prompt (when to PAUSE, what comes back)")
+    ap.add_argument("--max-segments", type=int, default=None, metavar="N",
+                    help="planner turns per task before giving up "
+                         "(default 3; 5 with --react)")
     ap.add_argument("--max-tokens", type=int, default=250)
     ap.add_argument("--domains", default=None, metavar="DIR",
                     help="register generated domain themes (S0 suites)")
@@ -323,7 +368,10 @@ def main():
                             Path(args.grammar))
     llm = Llama(model_path=args.model, n_ctx=args.ctx,
                 n_threads=args.threads, verbose=False,
+                n_gpu_layers=args.gpu_layers,
                 lora_path=args.lora, lora_scale=args.lora_scale)
+    system = SYSTEM + (REACTIVE if args.reactive_prompt else "")
+    max_segments = args.max_segments or (5 if args.react else 3)
 
     tasks = load_tasks(Path(args.tasks))
     if args.n:
@@ -343,12 +391,17 @@ def main():
                                               task, args.max_tokens, usage,
                                               template=args.template,
                                               shots=shots, repair=args.repair,
-                                              repair_sink=repairs))
+                                              repair_sink=repairs,
+                                              max_segments=max_segments,
+                                              system=system),
+                           react_on_error=args.react)
             row["tokens_out"] = sum(u.get("completion_tokens", 0)
                                     for u in usage)
             row["tokens_in"] = sum(u.get("prompt_tokens", 0) for u in usage)
             row["condition"] = grammars.condition + (
-                f"+K2repair{args.repair}" if args.repair else "")
+                f"+K2repair{args.repair}" if args.repair else "") + (
+                "+K3prompt" if args.reactive_prompt else "") + (
+                "+K3react" if args.react else "")
             row["repair_rounds"] = sum(repairs)
             row["model"] = Path(args.model).name
             row["template"] = args.template
@@ -381,6 +434,11 @@ def main():
         "gen_ms_p95": sorted(r["latency_generate_ms"]
                              for r in done)[int(0.95 * len(done))],
         "tokens_out_p50": statistics.median(r["tokens_out"] for r in done),
+        "pauses_mean": sum(r["pauses"] for r in done) / len(done),
+        "pauses_p95": sorted(r["pauses"] for r in done)[int(0.95 * len(done))],
+        "error_turns_total": sum(r.get("error_turns", 0) for r in done),
+        "tasks_with_pause": sum(1 for r in done if r["pauses"]),
+        "tasks_with_error_turn": sum(1 for r in done if r.get("error_turns")),
     }
     for r in done:
         b = summary["by_level"].setdefault(r["level"],

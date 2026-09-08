@@ -92,6 +92,7 @@ function main(input) {
 
   const calls = [];
   let ops = 0;
+  let line = 0;  // source line of the instruction now executing (rt.at)
   const idCounters = new Map();
 
   function budget() {
@@ -231,9 +232,22 @@ function main(input) {
     }
   }
 
+  // registers bound so far, for the error report: the compiled program
+  // installs rt.snapshot over its own locals (core/compile.py emit)
+  const boundRegisters = () => {
+    const out = {};
+    if (typeof rt.snapshot !== "function") return out;
+    for (const [k, v] of Object.entries(rt.snapshot())) {
+      if (v !== undefined) out[k] = v;
+    }
+    return out;
+  };
+
   const rt = {
     ToolError,
     isToolError: (e) => e instanceof ToolError,
+    snapshot: null,
+    at(n) { line = n; },
     async call(sym, args) {
       budget();
       const tool = toolsBySym.get(sym);
@@ -433,7 +447,10 @@ function main(input) {
     })
     .catch((e) => {
       clearTimeout(watchdog);
-      const base = { state, calls, ops };
+      // a failed segment reports where it stopped and what it had bound, so
+      // a planner can continue from the state the sandbox left (reads are
+      // free; a failed write did not happen)
+      const base = { state, calls, ops, line, registers: boundRegisters() };
       if (e instanceof EffectBlocked) {
         finish({ status: "effect_blocked",
                  error: { code: "EFFECT_BLOCKED", tool: e.tool,

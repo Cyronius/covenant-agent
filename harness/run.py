@@ -8,6 +8,14 @@ A *planner* is any callable (request, ctx, seg_idx, registers) -> Agent Core
 text. `reference_planner` replays a task's stored reference segments; model
 planners (R2+) plug in the same way.
 
+Reactive execution (reactive-execution.md §2B): with `react_on_error=True`
+a segment that raises outside TRY is not the verdict. The planner is called
+again with a fifth argument, `feedback`, carrying the rendered runtime error
+(`RUNTIME <code> line:<n> <detail>`), the calls that ran, and the registers
+the sandbox had bound; it writes a continuation from the state the sandbox
+left. Reactive planners therefore take (request, ctx, seg_idx, registers,
+feedback); feedback is None for a normal or post-PAUSE segment.
+
 CLI: python -m harness.run --tasks path.jsonl [--out metrics.jsonl]
      runs every task with its reference program (harness self-check).
 """
@@ -61,7 +69,24 @@ def reference_planner(task: dict) -> Planner:
     return plan
 
 
-def run_task(task: dict, planner: Planner) -> dict:
+def _runtime_diag(sres: dict) -> str:
+    err = sres.get("error", {})
+    return dg.runtime_error(err.get("code"), sres.get("line", 0) or 0,
+                            err.get("message", "")).render()
+
+
+def _seed_registers(ctx_json: dict, registers: Dict, env: dict) -> TaskContext:
+    """Fresh context whose initial registers are the sandbox's bound
+    registers, typed from the checker's environment (a PAUSE env or, after
+    a runtime error, the program's final env)."""
+    ctx = TaskContext.from_json(ctx_json)
+    ctx.initial_registers = {
+        r: parse_type(t) for r, t in env.items() if r in registers}
+    return ctx
+
+
+def run_task(task: dict, planner: Planner,
+             react_on_error: bool = False) -> dict:
     """Execute one task with a planner; return the metrics row (JSONL-ready)."""
     ctx = TaskContext.from_json(task["context"])
     world = get_world(task["world"])
@@ -70,6 +95,9 @@ def run_task(task: dict, planner: Planner) -> dict:
     state = task["state"]
     registers: Dict = {}
     pauses = 0
+    segments = 0
+    error_turns = 0
+    feedback: Optional[dict] = None
     call_log: list = []
     n_instructions = 0
     status = "error"
@@ -81,11 +109,16 @@ def run_task(task: dict, planner: Planner) -> dict:
 
     for seg_idx in range(MAX_SEGMENTS):
         t0 = time.perf_counter()
-        text = planner(task["request"], ctx, seg_idx, registers)
+        if react_on_error:
+            text = planner(task["request"], ctx, seg_idx, registers, feedback)
+        else:
+            text = planner(task["request"], ctx, seg_idx, registers)
         lat["generate"] += (time.perf_counter() - t0) * 1000
         if text is None:
             status = "planner_exhausted"
             break
+        segments += 1
+        feedback = None
 
         t0 = time.perf_counter()
         result = build(text, ctx)
@@ -118,17 +151,32 @@ def run_task(task: dict, planner: Planner) -> dict:
 
         status = sres["status"]
         final_state = sres.get("state", state)
-        call_log += sres.get("calls", [])
+        seg_calls = sres.get("calls", [])
+        call_log += seg_calls
         if status == "paused":
             pauses += 1
             state = final_state
             registers = sres["registers"]
             # seed the next segment's typing environment from this PAUSE
             pause_env = result.pause_envs[0] if result.pause_envs else {}
-            ctx = TaskContext.from_json(task["context"])
-            ctx.initial_registers = {
-                r: parse_type(t) for r, t in pause_env.items()
-                if r in registers}
+            ctx = _seed_registers(task["context"], registers, pause_env)
+            continue
+        if status == "error" and react_on_error:
+            # the failed segment becomes a planner turn: the state is what
+            # the sandbox left (its calls ran; the raising one did not
+            # write), its registers stay bound, and the error is the input
+            error_turns += 1
+            rendered = _runtime_diag(sres)
+            diagnostics.append(rendered)
+            state = final_state
+            registers = sres.get("registers") or {}
+            ctx = _seed_registers(task["context"], registers,
+                                  result.final_env)
+            feedback = {"error": rendered,
+                        "calls": [{"name": c.get("name"),
+                                   "ok": c.get("ok", True)}
+                                  for c in seg_calls],
+                        "registers": registers}
             continue
         break
     else:
@@ -138,8 +186,7 @@ def run_task(task: dict, planner: Planner) -> dict:
     abort_reason = sres.get("reason") if (sres and status == "aborted") else None
     abort_refs = list(sres.get("refs") or []) if (sres and status == "aborted") else []
     if status == "error" and sres is not None:
-        err = sres.get("error", {})
-        diagnostics.append(f"RUNTIME {err.get('code')} {err.get('message', '')}")
+        diagnostics.append(_runtime_diag(sres))
 
     row = M.metrics_row(
         task,
@@ -149,7 +196,7 @@ def run_task(task: dict, planner: Planner) -> dict:
         sandbox_tools=sandbox_ctx["tools"],
         n_instructions=n_instructions or None, pauses=pauses,
         latency=lat, diagnostics=diagnostics, abort_reason=abort_reason,
-        abort_refs=abort_refs)
+        abort_refs=abort_refs, segments=segments, error_turns=error_turns)
     return row
 
 

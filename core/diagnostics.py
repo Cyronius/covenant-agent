@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 CODES = (
     "PARSE_ERROR", "UNBOUND", "TYPE_ERROR", "UNKNOWN_TOOL", "UNKNOWN_FIELD",
-    "MISSING_ARG", "UNREACHABLE", "EFFECT_UNDECLARED",
+    "MISSING_ARG", "UNREACHABLE", "EFFECT_UNDECLARED", "RUNTIME",
 )
 
 
@@ -24,6 +24,9 @@ class Diagnostic:
             return f"TYPE_ERROR line:{self.line} {expected} {got}"
         if self.code == "UNREACHABLE":
             return f"UNREACHABLE {self.line}"
+        if self.code == "RUNTIME":
+            code, detail = self.args
+            return f"RUNTIME {code} line:{self.line} {detail}".rstrip()
         return f"{self.code} {' '.join(map(str, self.args))}"
 
     def __str__(self) -> str:
@@ -60,3 +63,11 @@ def unreachable(line: int) -> Diagnostic:
 
 def effect_undeclared(effect: str) -> Diagnostic:
     return Diagnostic("EFFECT_UNDECLARED", (effect,), 0)
+
+
+def runtime_error(code: str, line: int, detail: str = "") -> Diagnostic:
+    """A sandbox error outside TRY, rendered `RUNTIME <code> line:<n> <detail>`.
+    Line 0 means the sandbox raised before any instruction ran (or the
+    program has no line markers). The reactive harness feeds this string to
+    the planner as the failed segment's verdict."""
+    return Diagnostic("RUNTIME", (code, detail), line)

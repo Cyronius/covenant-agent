@@ -117,6 +117,11 @@ class _Emitter:
         return f"r{dst.n} = "
 
     def instr(self, instr, depth: int):
+        # source line marker: a runtime error reports the line it raised on
+        # (spec §9 RUNTIME <code> line:<n>), and the reactive harness hands
+        # that line back to the planner (reactive-execution.md §2B).
+        if getattr(instr, "line", 0):
+            self.out(depth, f"rt.at({instr.line});")
         if isinstance(instr, Let):
             self.out(depth, f"{self._assign(instr.dst)}{self.operand(instr.op)};")
         elif isinstance(instr, Get):
@@ -199,6 +204,10 @@ class _Emitter:
         self.out(0, "async function main(rt) {")
         if decl:
             self.out(1, f"let {decl};")
+            # live view of every register for the sandbox: on a runtime
+            # error it reports what was bound so far, the way PAUSE does
+            pairs = ", ".join(f"r{n}: r{n}" for n in sorted(regs))
+            self.out(1, f"rt.snapshot = () => ({{{pairs}}});")
         for rname in sorted(self.ctx.initial_registers,
                             key=lambda r: int(r[1:])):
             self.out(1, f'{rname} = rt.initial("{rname}");')
