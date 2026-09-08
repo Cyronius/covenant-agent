@@ -1,0 +1,6 @@
+done v2stdlib _conf_crowded65: "compile_ok_rate":0.7538461538461538,"goal_success_rate":0.5230769230769231,
+done v2letters _conf_crowded65: "compile_ok_rate":0.676923076923077,"goal_success_rate":0.47692307692307695,
+done v2kinds _conf_crowded65: "compile_ok_rate":0.6923076923076923,"goal_success_rate":0.46153846153846156,
+done v2stdlib e_demo_requests: "compile_ok_rate":0.8461538461538461,"goal_success_rate":0.8307692307692308,
+done v2kinds e_demo_requests: "compile_ok_rate":0.9230769230769231,"goal_success_rate":0.8307692307692308,
+=== spec040_conf2 done ===

@@ -116,8 +116,8 @@ GET r.Fn -> r            extract field
 FORMAT Ct args -> r      fill template constant Ct (slots {0} {1} ...) with values -> STR
 LET x -> r               bind value
 FOREACH r -> rElem       loop over list, body indented below
-IF cond / ELSE           branch, bodies indented; cond compares operands, e.g. r0 EQ C1,
-                         or tests a list: IF EMPTY r1 / IF NOT EMPTY r1
+IF cond / ELSE           branch, bodies indented; cond compares operands, e.g. r0 EQ C1;
+                         after a CALL or FILTER bound r1, IF EMPTY r1 tests "nothing matched"
 PARALLEL                 body: CALL lines only, run concurrently
 TRY [RETRY n] -> r       run body, catch tool errors; r gets OK or error code
 STOP | RETURN x | PAUSE  end program (PAUSE = report back; a continuation follows later)
@@ -193,7 +193,7 @@ def typed_system(system: str) -> str:
 # spec 0.4.0 step-0b control (`--no-stdlib`): the 0.3.x prompt, without the
 # MOST/LEAST and EMPTY lines, paired with the grammar that cannot decode them.
 _STDLIB_LINES = ("MOST r Fn [rc] -> r", "                         rc, optional",
-                 "                         or tests a list: IF EMPTY")
+                 "                         after a CALL or FILTER bound r1, IF EMPTY")
 
 
 def system_without_stdlib(system: str) -> str:
@@ -202,7 +202,7 @@ def system_without_stdlib(system: str) -> str:
         if any(line.startswith(p) for p in _STDLIB_LINES):
             continue
         if line.startswith("IF cond / ELSE"):
-            line = line.rstrip(",")
+            line = line.rstrip(";,")
         out.append(line)
     return "\n".join(out)
 
