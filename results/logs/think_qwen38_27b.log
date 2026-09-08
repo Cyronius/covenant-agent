@@ -1,0 +1,7 @@
+done think _smoke8b_known: "compile_ok_rate":1.0,"goal_success_rate":0.7142857142857143,"gen_ms_p50":8140.07463096641,"tokens_out_p50":575,
+done think _smoke8b_demo: "compile_ok_rate":1.0,"goal_success_rate":0.9,"gen_ms_p50":4781.704552937299,"tokens_out_p50":277.5,
+done think _smoke8b_crowded: "compile_ok_rate":0.875,"goal_success_rate":0.75,"gen_ms_p50":12181.709659984335,"tokens_out_p50":780.0,
+done thinkr _smoke8b_known: "compile_ok_rate":1.0,"goal_success_rate":0.7142857142857143,"gen_ms_p50":8194.705319823697,"tokens_out_p50":575,
+done thinkr _smoke8b_demo: "compile_ok_rate":1.0,"goal_success_rate":0.9,"gen_ms_p50":4881.913456483744,"tokens_out_p50":277.5,
+done thinkr _smoke8b_crowded: "compile_ok_rate":0.875,"goal_success_rate":0.75,"gen_ms_p50":12226.314511965029,"tokens_out_p50":780.0,
+=== think_qwen38_27b done ===

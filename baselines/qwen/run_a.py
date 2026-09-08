@@ -192,9 +192,16 @@ def build_prompt(task_input: str, registers: dict | None,
 
 def generate(llm, grammar, user: str, max_tokens: int = 250,
              template: str = "qwen", shots: list | None = None,
-             system: str = SYSTEM) -> dict:
+             system: str = SYSTEM, think: int = 0) -> dict:
     """One greedy, grammar-constrained completion. Returns
-    {text, usage, finish_reason}.
+    {text, usage, finish_reason[, think]}.
+
+    `think` > 0 is the design-tax ladder's rung 1 (reactive-execution.md
+    §4): a two-phase decode. Phase one is unconstrained free text inside the
+    model's own <think> block, greedy, up to `think` tokens or `</think>`;
+    phase two is the grammar-constrained program with that reasoning in
+    the context. Qwen template only: the hand-rolled ChatML is what makes
+    the think block addressable. The reasoning text comes back as `think`.
 
     `shots` are worked examples as [(user, program), ...], prepended as prior
     chat turns. The SYSTEM prompt carries one example and was written against
@@ -232,12 +239,31 @@ def generate(llm, grammar, user: str, max_tokens: int = 250,
                         f"{p}<|im_end|>\n" for u, p in shots)
         prompt = (f"<|im_start|>system\n{system}<|im_end|>\n{turns}"
                   f"<|im_start|>user\n{user}<|im_end|>\n"
-                  f"<|im_start|>assistant\n<think>\n\n</think>\n\n")
+                  f"<|im_start|>assistant\n<think>\n")
+        thought = None
+        think_usage: dict = {}
+        if think > 0:
+            tres = llm.create_completion(
+                prompt, temperature=0.0, max_tokens=think,
+                stop=["</think>", "<|im_end|>"])
+            thought = tres["choices"][0]["text"]
+            think_usage = tres.get("usage", {})
+            prompt += thought.rstrip() + "\n</think>\n\n"
+        else:
+            prompt += "\n</think>\n\n"
         res = llm.create_completion(
             prompt, grammar=grammar, temperature=0.0,
             max_tokens=max_tokens, stop=["<|im_end|>"])
         choice = res["choices"][0]
         text = choice["text"].strip()
+        if thought is not None:
+            usage = dict(res.get("usage", {}))
+            usage["think_tokens"] = think_usage.get("completion_tokens", 0)
+            usage["completion_tokens"] = (usage.get("completion_tokens", 0)
+                                          + usage["think_tokens"])
+            return {"text": text, "usage": usage,
+                    "finish_reason": choice.get("finish_reason"),
+                    "think": thought.strip()}
     return {"text": text, "usage": res.get("usage", {}),
             "finish_reason": choice.get("finish_reason")}
 
@@ -260,17 +286,20 @@ def load_shots(path: Path, n: int, exclude: set) -> list:
 
 def make_planner(llm, grammar, task, max_tokens, usage_sink, template="qwen",
                  shots=None, repair=0, repair_sink=None, max_segments=3,
-                 system=SYSTEM):
+                 system=SYSTEM, think=0):
     prior: list[str] = []
+    thoughts: list[str] = []
 
     def plan(request, ctx, seg_idx, registers, feedback=None):
         if seg_idx >= max_segments:   # runaway guard
             return None
         user = build_prompt(task["input_text"], registers, prior, feedback)
         res = generate(llm, grammar, user, max_tokens, template, shots,
-                       system)
+                       system, think)
         usage_sink.append(res["usage"])
         text = res["text"]
+        if "think" in res:
+            thoughts.append(res["think"])
 
         # K2 repair rounds. Static diagnostics only: run_task owns execution,
         # and every failure worth repairing so far is a compile-time one.
@@ -294,15 +323,19 @@ def make_planner(llm, grammar, task, max_tokens, usage_sink, template="qwen",
             rounds += 1
             res = generate(llm, grammar, repair_prompt(diag_fb),
                            max_tokens, template,
-                           (shots or []) + [(user, text)], system)
+                           (shots or []) + [(user, text)], system, think)
             usage_sink.append(res["usage"])
             text = res["text"]
+            if "think" in res:
+                thoughts.append(res["think"])
         if repair_sink is not None:
             repair_sink.append(rounds)
 
         prior.append(text)
         return text
 
+    plan.prior = prior   # the segments as generated, for the metrics row
+    plan.thoughts = thoughts
     return plan
 
 
@@ -343,6 +376,10 @@ def main():
     ap.add_argument("--reactive-prompt", action="store_true",
                     help="append the observe-then-decide paragraph to the "
                          "SYSTEM prompt (when to PAUSE, what comes back)")
+    ap.add_argument("--think", type=int, default=0, metavar="N",
+                    help="ladder rung 1: up to N tokens of free reasoning "
+                         "in the model's <think> block before the "
+                         "grammar-constrained program (qwen template only)")
     ap.add_argument("--max-segments", type=int, default=None, metavar="N",
                     help="planner turns per task before giving up "
                          "(default 3; 5 with --react)")
@@ -387,21 +424,29 @@ def main():
         for i, task in enumerate(tasks):
             usage: list = []
             repairs: list = []
-            row = run_task(task, make_planner(llm, grammars.for_task(task),
-                                              task, args.max_tokens, usage,
-                                              template=args.template,
-                                              shots=shots, repair=args.repair,
-                                              repair_sink=repairs,
-                                              max_segments=max_segments,
-                                              system=system),
-                           react_on_error=args.react)
+            planner = make_planner(llm, grammars.for_task(task), task,
+                                   args.max_tokens, usage,
+                                   template=args.template, shots=shots,
+                                   repair=args.repair, repair_sink=repairs,
+                                   max_segments=max_segments, system=system,
+                                   think=args.think)
+            row = run_task(task, planner, react_on_error=args.react)
+            if args.think:
+                row["think"] = list(planner.thoughts)
+                row["think_tokens"] = sum(u.get("think_tokens", 0)
+                                          for u in usage)
+            # what the model wrote, segment by segment (after any repair
+            # rounds): rows used to carry only the diagnostics, and reading
+            # a failure meant re-generating it
+            row["programs"] = list(planner.prior)
             row["tokens_out"] = sum(u.get("completion_tokens", 0)
                                     for u in usage)
             row["tokens_in"] = sum(u.get("prompt_tokens", 0) for u in usage)
             row["condition"] = grammars.condition + (
                 f"+K2repair{args.repair}" if args.repair else "") + (
                 "+K3prompt" if args.reactive_prompt else "") + (
-                "+K3react" if args.react else "")
+                "+K3react" if args.react else "") + (
+                f"+think{args.think}" if args.think else "")
             row["repair_rounds"] = sum(repairs)
             row["model"] = Path(args.model).name
             row["template"] = args.template
