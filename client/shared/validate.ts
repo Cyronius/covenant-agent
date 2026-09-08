@@ -30,10 +30,15 @@ export interface FieldDecl {
 }
 
 export interface ConstDecl {
+  /** C<n> (spec 0.3.x) or S/N/B/D/I<n> (0.4.0 typed letters). */
   sym: string;
   type: string;
   value: unknown;
   desc: string;
+  /** 0.4.0 §2.2 string kind: "name" | "text" | "enum:<entity>.<field>". */
+  kind?: string;
+  /** position in the task's constants list; absent for schema enum values. */
+  index?: number | null;
 }
 
 export interface TaskContextJson {

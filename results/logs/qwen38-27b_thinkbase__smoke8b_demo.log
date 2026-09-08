@@ -1,0 +1,50 @@
+{
+  "model": "Qwen3.8-27B-UD-IQ3_S.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar-task+think1024-stdlib",
+  "n": 10,
+  "compile_ok_rate": 1.0,
+  "goal_success_rate": 0.9,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 2,
+      "compile": 2,
+      "goal": 2
+    },
+    "1": {
+      "n": 2,
+      "compile": 2,
+      "goal": 2
+    },
+    "3": {
+      "n": 1,
+      "compile": 1,
+      "goal": 1
+    },
+    "11": {
+      "n": 1,
+      "compile": 1,
+      "goal": 0
+    },
+    "12": {
+      "n": 2,
+      "compile": 2,
+      "goal": 2
+    },
+    "13": {
+      "n": 2,
+      "compile": 2,
+      "goal": 2
+    }
+  },
+  "gen_ms_p50": 4621.334557479713,
+  "gen_ms_p95": 12540.898159029894,
+  "tokens_out_p50": 277.5,
+  "pauses_mean": 0.0,
+  "pauses_p95": 0,
+  "error_turns_total": 0,
+  "tasks_with_pause": 0,
+  "tasks_with_error_turn": 0
+}
