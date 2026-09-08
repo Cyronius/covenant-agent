@@ -6,7 +6,7 @@ data/holdout/*.jsonl
 !data/holdout/e_demo_requests.jsonl
 # strict-clean real requests, request text + tool names only (owner rule 2026-09-02)
 !data/holdout/e_real_sessions.jsonl
-data/s2_shards/
+data/*_shards/
 data/r1_batches/
 data/r1_authored/
 .claude/plans/
