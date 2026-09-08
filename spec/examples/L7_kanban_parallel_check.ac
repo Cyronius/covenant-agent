@@ -7,7 +7,6 @@ PARALLEL
   CALL @list_cards -> r0
   CALL @get_user $0 -> r1
 FILTER r0 @card.assignee EQ $0 AND @card.due LT NOW -> r2
-COUNT r2 -> r3
-IF r3 GT 0
+IF NOT EMPTY r2
   CALL @send_message r1 $1
 STOP

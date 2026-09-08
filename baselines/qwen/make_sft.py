@@ -21,7 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
-from baselines.qwen.run_a import SYSTEM, build_prompt  # noqa: E402
+from baselines.qwen.run_a import SYSTEM, build_prompt, typed_system  # noqa: E402
 from core.ir import TaskContext  # noqa: E402
 from core.pipeline import build  # noqa: E402
 from harness.context import sandbox_from_context  # noqa: E402
@@ -56,7 +56,13 @@ def main():
     ap.add_argument("--no-continuations", action="store_true")
     ap.add_argument("--domains", default=None, metavar="DIR",
                     help="register generated domain themes first")
+    ap.add_argument("--symbols", choices=["classic", "typed"],
+                    default="classic",
+                    help="system prompt legend: 0.3.x C symbols, or the "
+                         "0.4.0 typed letters (must match the surface the "
+                         "tasks were serialized in)")
     args = ap.parse_args()
+    system = typed_system(SYSTEM) if args.symbols == "typed" else SYSTEM
     if args.domains:
         from data.gen.domains import register_domains
         register_domains(args.domains)
@@ -64,6 +70,12 @@ def main():
     from concurrent.futures import ThreadPoolExecutor
 
     tasks = [json.loads(l) for l in open(args.tasks)]
+    # the legend in the system prompt and the symbols in input_text have to
+    # be the same surface: a corpus that mixes them teaches neither
+    typed_rows = {t.get("symbols", "classic") for t in tasks}
+    if typed_rows != {args.symbols}:
+        raise SystemExit(f"--symbols {args.symbols} but tasks carry "
+                         f"{sorted(typed_rows)}")
     multi = [] if args.no_continuations else [
         t for t in tasks if len(t["reference"]["segments"]) > 1]
     # sandbox runs are subprocess-bound; thread pool parallelizes Node spawns
@@ -80,7 +92,7 @@ def main():
         for task in tasks:
             segs = task["reference"]["segments"]
             out.write(json.dumps({"messages": [
-                {"role": "system", "content": SYSTEM},
+                {"role": "system", "content": system},
                 {"role": "user",
                  "content": build_prompt(task["input_text"], None, [])},
                 {"role": "assistant", "content": segs[0].strip()},
@@ -92,7 +104,7 @@ def main():
                     n_skip += 1
                     continue
                 out.write(json.dumps({"messages": [
-                    {"role": "system", "content": SYSTEM},
+                    {"role": "system", "content": system},
                     {"role": "user",
                      "content": build_prompt(task["input_text"], regs,
                                              [segs[0].strip()])},

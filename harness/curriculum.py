@@ -192,18 +192,12 @@ CURRICULUM = [
         segments=["CALL @list_customers -> r0\n"
                   "CALL @list_tickets -> r1\n"
                   "FILTER r1 @ticket.status EQ $0 -> r2\n"
-                  "FIRST r0 -> r3\n"
-                  "FILTER r2 @ticket.customer EQ r3.@customer.id -> r4\n"
-                  "COUNT r4 -> r5\n"
-                  "FOREACH r0 -> r6\n"
-                  "  FILTER r2 @ticket.customer EQ r6.@customer.id -> r7\n"
-                  "  COUNT r7 -> r8\n"
-                  "  IF r8 GT r5\n"
-                  "    LET r8 -> r5\n"
-                  "    LET r6 -> r3\n"
-                  "CALL @get_staff r3.@customer.manager -> r9\n"
-                  "GET r9.@user.email -> r10\n"
-                  "CALL @send_email r10 $1\n"
+                  "MOST r2 @ticket.customer -> r3\n"
+                  "FILTER r0 @customer.id EQ r3 -> r4\n"
+                  "FIRST r4 -> r5\n"
+                  "CALL @get_staff r5.@customer.manager -> r6\n"
+                  "GET r6.@user.email -> r7\n"
+                  "CALL @send_email r7 $1\n"
                   "STOP\n"],
     ),
     dict(
@@ -215,18 +209,28 @@ CURRICULUM = [
             {"type": "STR", "value": "You have the most unfinished cards.",
              "desc": "message text"},
         ],
+        segments=["CALL @list_cards -> r0\n"
+                  "FILTER r0 NOT @card.status EQ $0 AND @card.archived EQ $1 -> r1\n"
+                  "MOST r1 @card.assignee -> r2\n"
+                  "CALL @send_message r2 $2\n"
+                  "STOP\n"],
+    ),
+    # spec 0.4.0 §4: the candidate list is what makes "fewest" answerable —
+    # the user with none at all is absent from the filtered list.
+    dict(
+        id="L4_kanban_quietest_user", level=4, world="kanban",
+        request="Message whoever has the fewest unfinished cards on the "
+                "board.",
+        constants=[
+            {"type": "STR", "value": "done", "desc": "the completed status"},
+            {"type": "BOOL", "value": False, "desc": "false"},
+            {"type": "STR", "value": "You have the fewest unfinished cards.",
+             "desc": "message text"},
+        ],
         segments=["CALL @list_users -> r0\n"
                   "CALL @list_cards -> r1\n"
                   "FILTER r1 NOT @card.status EQ $0 AND @card.archived EQ $1 -> r2\n"
-                  "FIRST r0 -> r3\n"
-                  "FILTER r2 @card.assignee EQ r3.@user.id -> r4\n"
-                  "COUNT r4 -> r5\n"
-                  "FOREACH r0 -> r6\n"
-                  "  FILTER r2 @card.assignee EQ r6.@user.id -> r7\n"
-                  "  COUNT r7 -> r8\n"
-                  "  IF r8 GT r5\n"
-                  "    LET r8 -> r5\n"
-                  "    LET r6 -> r3\n"
+                  "LEAST r2 @card.assignee r0 -> r3\n"
                   "CALL @send_message r3 $2\n"
                   "STOP\n"],
     ),
@@ -402,8 +406,7 @@ CURRICULUM = [
                   "  CALL @list_cards -> r0\n"
                   "  CALL @get_user $0 -> r1\n"
                   "FILTER r0 @card.assignee EQ $0 AND @card.due LT NOW -> r2\n"
-                  "COUNT r2 -> r3\n"
-                  "IF r3 GT 0\n"
+                  "IF NOT EMPTY r2\n"
                   "  CALL @send_message r1 $1\n"
                   "STOP\n"],
     ),
@@ -593,11 +596,10 @@ CURRICULUM = [
         segments=[
             "CALL @list_users -> r0\n"
             "FILTER r0 @user.name EQ $1 -> r1\n"
-            "COUNT r1 -> r2\n"
-            "IF r2 EQ 0\n"
+            "IF EMPTY r1\n"
             "  ABORT NOT_FOUND $1\n"
-            "FIRST r1 -> r3\n"
-            "CALL @assign_card $0 r3.@user.id\n"
+            "FIRST r1 -> r2\n"
+            "CALL @assign_card $0 r2.@user.id\n"
             "STOP\n",
         ],
         expected_status="aborted", tags=["abort"],

@@ -42,7 +42,8 @@ if _DOMAIN_SPLIT.exists():
 
 
 def gen_one(level: int, seed: int, holdout: bool, teacher: str,
-            crowd: tuple | None = None) -> dict:
+            crowd: tuple | None = None, symbols: str = "classic",
+            enums: bool = False, kinds: bool = False) -> dict:
     rng = random.Random(seed)
     if holdout:
         pool = [w for w in RESERVED["worlds"] if w in programs.PROFILES]
@@ -79,14 +80,21 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
     if holdout_tools:
         visible = [t["name"] for t in world["tools"]
                    if t["name"] not in holdout_tools]
-    ctx, sandbox_ctx = build_context(world, sample.constants,
-                                     random.Random(seed ^ 0x5EED), visible)
+    constants = sample.constants
+    if not kinds:
+        # the identical-prompt control: enum kinds are what --enums means,
+        # name/text are what --kinds adds (spec 0.4.0 §2.2)
+        constants = [{k: v for k, v in c.items() if k != "kind"}
+                     for c in constants]
+    ctx, sandbox_ctx = build_context(world, constants,
+                                     random.Random(seed ^ 0x5EED), visible,
+                                     symbols=symbols, enums=enums)
     segments = [resolve(s, ctx) for s in sample.segments]
 
     task = build_task(
         task_id=f"{world_name}_L{level}_{seed}", level=level,
         world_name=world_name, request=request,
-        constants=sample.constants, segments=segments, seed=seed,
+        constants=constants, segments=segments, seed=seed,
         error_injection=sample.error_injection or None,
         # abstain recipes (level 11) reference ABORT; the sandbox reports it
         expected_status="aborted" if "abort" in sample.tags else "ok",
@@ -110,6 +118,8 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
     task["input_text"] = serialize_context(request, ctx)
     res = build(segments[0], TaskContext.from_json(task["context"]))
     task["effects"] = res.static_effects
+    task["spec_version"] = "0.4.0"
+    task["symbols"] = symbols
     return task
 
 
@@ -166,6 +176,17 @@ def main():
     ap.add_argument("--domains", default=None, metavar="DIR",
                     help="register generated domain themes from DIR before "
                          "generating (S0 multi-domain worldgen)")
+    ap.add_argument("--symbols", default="classic",
+                    choices=["classic", "typed"],
+                    help="constant symbols: C0.. (0.3.x) or the 0.4.0 typed "
+                         "letters S/N/B/D/I")
+    ap.add_argument("--enums", action="store_true",
+                    help="emit the schema's enum values as constants for "
+                         "every entity the visible tools touch (spec 0.4.0 "
+                         "§2.3)")
+    ap.add_argument("--kinds", action="store_true",
+                    help="declare string kinds (name / text / enum) on STR "
+                         "constants (spec 0.4.0 §2.2)")
     ap.add_argument("--crowd", default=None, metavar="MIN:MAX",
                     help="add MIN..MAX distractor tools from other domains "
                          "to each task's context (E-crowded)")
@@ -197,7 +218,9 @@ def main():
                 seed_cursor += 1
                 try:
                     candidate = gen_one(level, seed_cursor, args.holdout,
-                                        args.teacher, crowd=crowd)
+                                        args.teacher, crowd=crowd,
+                                        symbols=args.symbols,
+                                        enums=args.enums, kinds=args.kinds)
                 except (programs.SampleError, ReferenceError):
                     failures += 1
                     continue

@@ -111,7 +111,8 @@ def sample_format(world, profile, state, now, rng, alloc, holdout):
     tpl = "Reminder: {0} is due {1}."
     tref = alloc.get("STR", tpl,
                      f"message template: {tpl} (fill {{0}} with the {prof['noun'][0]}'s "
-                     f"{words0}, {{1}} with its {tf.replace('_', ' ')})")
+                     f"{words0}, {{1}} with its {tf.replace('_', ' ')})",
+                     kind="text")
     seg = (f"CALL @{prof['get_tool']} {ref} -> r0\n"
            f"FORMAT {tref} r0.@{child}.{slot0} r0.@{child}.{tf} -> r1\n"
            f"CALL @{v2['send']} r0.@{child}.{v2['ref_field']} r1\nSTOP\n")
@@ -130,11 +131,13 @@ def sample_create(world, profile, state, now, rng, alloc, holdout):
     title = None
     if v2["name_field"]:
         title = _new_title(v2, state, rng)
-        args.append(alloc.get("STR", title, f'the text "{title}"'))
+        args.append(alloc.get("STR", title, f'the text "{title}"',
+                              kind="text"))
     enum_phrase = None
     if not v2["name_field"] or rng.random() < 0.5:
         val = rng.choice(v2["enum_values"])
-        args.append(alloc.get("STR", val, f"the {val} {v2['enum_field']}"))
+        args.append(alloc.get("STR", val, f"the {val} {v2['enum_field']}",
+                              kind=f"enum:{child}.{v2['enum_field']}"))
         enum_phrase = v2["enum_phrases"][val][0]
     follow = None
     if rng.random() < 0.4:
@@ -200,7 +203,8 @@ def sample_content(world, profile, state, now, rng, alloc, holdout):
             raise SampleError("no matching records")
         parent, pref = _parent(v2, state, rng, alloc)
         brief = rng.choice(BRIEFS)
-        bref = alloc.get("STR", brief, f"the brief, verbatim: {brief}")
+        bref = alloc.get("STR", brief, f"the brief, verbatim: {brief}",
+                         kind="text")
         seg = (f"CALL @{prof['list_tool']} -> r0\n"
                f"FILTER r0 {clause_expr(clauses)} -> r1\n"
                f"CALL @{v2['writer']} {bref} r1 -> r2\n"
@@ -211,9 +215,11 @@ def sample_content(world, profile, state, now, rng, alloc, holdout):
         return GenSample(frame, [seg], alloc.items, tags=["content", "writer"])
     rec, display, ref = _named_record(prof, child, state, rng, alloc)
     prompt = rng.choice(IMAGE_PROMPTS)
-    pref = alloc.get("STR", prompt, f"the image prompt, verbatim: {prompt}")
+    pref = alloc.get("STR", prompt, f"the image prompt, verbatim: {prompt}",
+                     kind="text")
     style = rng.choice(IMAGE_STYLES) if rng.random() < 0.4 else None
-    sref = alloc.get("STR", style, f"image style: {style}") if style else ""
+    sref = (alloc.get("STR", style, f"image style: {style}", kind="text")
+            if style else "")
     seg = (f"CALL @{v2['image']} {pref}{(' ' + sref) if sref else ''} -> r0\n"
            f"CALL @{v2['set_image']} {ref} r0\nSTOP\n")
     frame = {"recipe": "content_image", "noun": prof["noun"], "record": display,
@@ -258,7 +264,7 @@ def sample_abort_v2(world, profile, state, now, rng, alloc, holdout):
 def sample_search(world, profile, state, now, rng, alloc, holdout):
     v2 = _v2(profile)
     q = rng.choice(QUESTIONS)
-    qref = alloc.get("STR", q, f"the question, verbatim: {q}")
+    qref = alloc.get("STR", q, f"the question, verbatim: {q}", kind="text")
     if rng.random() < 0.6:
         seg = f"CALL @{v2['search']} {qref} -> r0\nRETURN r0\n"
         frame = {"recipe": "search", "question": q, "send_to": None}
@@ -280,8 +286,8 @@ def sample_note(world, profile, state, now, rng, alloc, holdout):
         rec, display, ref = _named_record(prof, child, state, rng, alloc)
         title = rng.choice(NOTE_TITLES)
         text = rng.choice(NOTE_TEXTS)
-        tref = alloc.get("STR", title, f'the text "{title}"')
-        xref = alloc.get("STR", text, f'the text "{text}"')
+        tref = alloc.get("STR", title, f'the text "{title}"', kind="text")
+        xref = alloc.get("STR", text, f'the text "{text}"', kind="text")
         seg = f"CALL @{v2['add_note']} {ref} {xref} {tref} -> r0\nSTOP\n"
         frame = {"recipe": "note_add", "noun": prof["noun"], "record": display,
                  "title": title, "text": text}
@@ -294,13 +300,14 @@ def sample_note(world, profile, state, now, rng, alloc, holdout):
     nf = prof.get("name_field")
     display = rec[nf] if nf else prof["ref_word"].format(n=rec["id"].split("_")[-1])
     ref = alloc.get(f"ID:{child}", rec["id"], display)
-    tref = alloc.get("STR", n["title"], f'the text "{n["title"]}"')
+    tref = alloc.get("STR", n["title"], f'the {note} titled, verbatim: {n["title"]}',
+                     kind="name")
     head = (f"CALL @{v2['list_notes']} {ref} -> r0\n"
             f"FILTER r0 @{note}.title EQ {tref} -> r1\n"
             f"FOREACH r1 -> r2\n")
     if variant == "edit":
         text = rng.choice([t for t in NOTE_TEXTS if t != n["text"]])
-        xref = alloc.get("STR", text, f'the text "{text}"')
+        xref = alloc.get("STR", text, f'the text "{text}"', kind="text")
         seg = head + f"  CALL @{v2['update_note']} {ref} r2.@{note}.id {xref} -> r3\nSTOP\n"
         frame = {"recipe": "note_edit", "noun": prof["noun"], "record": display,
                  "title": n["title"], "text": text}

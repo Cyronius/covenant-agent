@@ -36,12 +36,23 @@ class ConstAlloc:
         self.items: List[dict] = []
         self._index = {}
 
-    def get(self, type_: str, value, desc: str) -> str:
+    def get(self, type_: str, value, desc: str, kind: str = "") -> str:
+        """`kind` (spec 0.4.0 §2.2) is declaration metadata on STR constants:
+        `name` (a lookup key or ABORT referent), `text` (content the program
+        passes through), `enum:<entity>.<field>`. First kind seen wins on a
+        deduplicated constant; harness.context._kinded fills in enum kinds
+        the sampler did not name."""
         key = (type_, json.dumps(value, sort_keys=True))
         if key in self._index:
-            return f"${self._index[key]}"
+            i = self._index[key]
+            if kind and not self.items[i].get("kind"):
+                self.items[i]["kind"] = kind
+            return f"${i}"
         i = len(self.items)
-        self.items.append({"type": type_, "value": value, "desc": desc})
+        item = {"type": type_, "value": value, "desc": desc}
+        if kind:
+            item["kind"] = kind
+        self.items.append(item)
         self._index[key] = i
         return f"${i}"
 
@@ -49,8 +60,8 @@ class ConstAlloc:
         """Speculative allocation: indices stay aligned with the parent, so
         clause expressions minted in the clone stay valid after adopt()."""
         c = ConstAlloc()
-        c.items = list(self.items)
-        c._index = dict(self._index)
+        c.items = [dict(it) for it in self.items]   # kinds are mutated in
+        c._index = dict(self._index)                # place; don't alias
         return c
 
     def adopt(self, other: "ConstAlloc"):
@@ -75,7 +86,8 @@ def sample_clause(spec: dict, entity: str, state: dict, now: int,
     f = spec["field"]
     if spec["kind"] == "enum":
         v = rng.choice(spec["values"])
-        ref = alloc.get("STR", v, spec["desc"].format(v=v))
+        ref = alloc.get("STR", v, spec["desc"].format(v=v),
+                        kind=f"enum:{entity}.{f}")
         return {"expr": f"@{entity}.{f} EQ {ref}",
                 "sem": {"field": f, "op": "EQ", "value": v},
                 "phrase": spec["phrases"][v], "tags": []}
@@ -133,7 +145,8 @@ def fixed_clause(c: dict, entity: str, profile_entity: dict, now: int,
                 if s["field"] == c["field"] and s["kind"] == c["kind"])
     f = c["field"]
     if c["kind"] == "enum":
-        ref = alloc.get("STR", c["value"], spec["desc"].format(v=c["value"]))
+        ref = alloc.get("STR", c["value"], spec["desc"].format(v=c["value"]),
+                        kind=f"enum:{entity}.{f}")
         return {"expr": f"@{entity}.{f} EQ {ref}",
                 "sem": {"field": f, "op": "EQ", "value": c["value"]}}
     if c["kind"] == "bool":
@@ -209,16 +222,19 @@ def build_action(action: dict, entity: str, subst: dict, state: dict,
                 f"{subst['<outer>']}.@{outer_entity}.{a['outer_field']}")
         elif isinstance(a, dict) and "const_text" in a:
             text = rng.choice(TEXT_BANKS[a["const_text"]["bank"]])
-            exprs.append(alloc.get("STR", text, "message text"))
+            exprs.append(alloc.get("STR", text, "message text",
+                                   kind="text"))
         elif isinstance(a, dict) and "const_text_addr" in a:
             spec = a["const_text_addr"]
-            exprs.append(alloc.get("STR", spec["value"], spec["desc"]))
+            exprs.append(alloc.get("STR", spec["value"], spec["desc"],
+                                   kind="name"))
         elif isinstance(a, dict) and "const_enum" in a:
             spec = a["const_enum"]
             v = rng.choice(spec["values"])
             info["enum_value"] = v
             info["to_value"] = action.get("value_phrases", {}).get(v, v)
-            exprs.append(alloc.get("STR", v, spec["desc"].format(v=v)))
+            exprs.append(alloc.get("STR", v, spec["desc"].format(v=v),
+                                   kind=f"enum:{entity}.{spec['field']}"))
         elif isinstance(a, dict) and "const_int" in a:
             spec = a["const_int"]
             v = rng.randint(*spec["range"])
@@ -304,9 +320,10 @@ def sample_direct(world, profile, state, now, rng, alloc, holdout, level=0):
         else:
             spec = tgt["const_text_addr"]
             name = spec["desc"]
-            tref = alloc.get("STR", spec["value"], spec["desc"])
+            tref = alloc.get("STR", spec["value"], spec["desc"],
+                             kind="name")
         text = rng.choice(TEXT_BANKS[ds["text_bank"]])
-        cref = alloc.get("STR", text, "message text")
+        cref = alloc.get("STR", text, "message text", kind="text")
         verb = rng.choice(ds["verbs"]).format(name=name)
         seg = f"CALL @{ds['tool']} {tref} {cref}\nSTOP\n"
         frame = {"recipe": "direct_send", "verb": verb, "text": text}
@@ -394,35 +411,97 @@ def sample_filter_act(world, profile, state, now, rng, alloc, holdout,
     return GenSample(frame, [seg], alloc.items, tags=tags)
 
 
-def sample_argmax(world, profile, state, now, rng, alloc, holdout):
+def _extreme_counts(state, o, i, link, clauses):
+    """Per-candidate match counts for MOST/LEAST: {outer id -> n} over every
+    outer record, and the same restricted to the ids actually present."""
+    over_all = {r["id"]: 0 for r in _records(state, o)}
+    for rec in matches(state, i, clauses):
+        key = rec.get(link)
+        if key in over_all:
+            over_all[key] += 1
+    present = {k: v for k, v in over_all.items() if v}
+    return over_all, present
+
+
+def _sample_extreme(world, profile, state, now, rng, alloc, holdout, least):
+    """Level 4 argmax/argmin by count — spec 0.4.0 §4 `MOST` / `LEAST`.
+
+    Before 0.4.0 this was a 14-line COUNT/FOREACH/IF/LET loop over the outer
+    list; a thinking 27B read the primitives and declared the task
+    UNSUPPORTED (results/R4.md §3), and the tuned 0.8B learned the loop as a
+    trick. `MOST` is the named form. `LEAST` always passes the candidate list
+    so a candidate with zero matches can win — the answer to "the fewest" is
+    usually absent from the filtered list entirely.
+
+    The sample is rejected unless the winner is unique: with ties the request
+    has no single right answer in English, and the tie rule (first key seen)
+    would be scored as if it did."""
     pair = rng.choice(profile["pairs"])
     inner_prof = profile["entities"][pair["inner"]]
-    trial = alloc.clone()
-    inner_clauses = _sample_clauses(inner_prof, pair["inner"], state, now,
-                                    rng, trial, 1, False)
-    alloc.adopt(trial)
     o, i, link = pair["outer"], pair["inner"], pair["link_field"]
-    notify = build_action(pair["notify"], i, {"<outer>": "r3"}, state, rng,
+    if not _records(state, o):
+        raise SampleError("no outer records")
+    needs_obj = any(isinstance(a, dict) and "outer_field" in a
+                    for a in pair["notify"]["args"])
+    for _ in range(6):
+        trial = alloc.clone()
+        inner_clauses = _sample_clauses(inner_prof, pair["inner"], state, now,
+                                        rng, trial, 1, False)
+        if any(c["sem"]["field"] == link for c in inner_clauses):
+            # a clause on the link field pins the answer before MOST runs
+            # ("the importer with the most declarations filed by Wayne Tech")
+            continue
+        over_all, present = _extreme_counts(state, o, i, link, inner_clauses)
+        pool = over_all if least else present
+        if not pool:
+            continue
+        best = min(pool.values()) if least else max(pool.values())
+        if sum(1 for v in pool.values() if v == best) == 1:
+            alloc.adopt(trial)
+            break
+    else:
+        raise SampleError("no unique count winner")
+
+    use_outer = least or needs_obj
+    lines = []
+    if use_outer:
+        lines.append(f"CALL @{pair['outer_list']} -> r0")
+    inner_reg = "r1" if use_outer else "r0"
+    filt_reg = "r2" if use_outer else "r1"
+    ext_reg = "r3" if use_outer else "r2"
+    lines += [f"CALL @{inner_prof['list_tool']} -> {inner_reg}",
+              f"FILTER {inner_reg} {clause_expr(inner_clauses)} -> {filt_reg}"]
+    op = "LEAST" if least else "MOST"
+    cands = " r0" if least else ""
+    lines.append(f"{op} {filt_reg} @{i}.{link}{cands} -> {ext_reg}")
+    if needs_obj:
+        # the notify reads a field off the winning record, so turn the id
+        # back into the record
+        lines += [f"FILTER r0 @{o}.id EQ {ext_reg} -> r4", "FIRST r4 -> r5"]
+        target = "r5"
+    else:
+        target = ext_reg
+    notify = build_action(pair["notify"], i, {"<outer>": target}, state, rng,
                           alloc, outer_entity=o)
-    seg = (f"CALL @{pair['outer_list']} -> r0\n"
-           f"CALL @{inner_prof['list_tool']} -> r1\n"
-           f"FILTER r1 {clause_expr(inner_clauses)} -> r2\n"
-           f"FIRST r0 -> r3\n"
-           f"FILTER r2 @{i}.{link} EQ r3.@{o}.id -> r4\n"
-           f"COUNT r4 -> r5\n"
-           f"FOREACH r0 -> r6\n"
-           f"  FILTER r2 @{i}.{link} EQ r6.@{o}.id -> r7\n"
-           f"  COUNT r7 -> r8\n"
-           f"  IF r8 GT r5\n"
-           f"    LET r8 -> r5\n"
-           f"    LET r6 -> r3\n"
-           + action_line(notify, None) + "\nSTOP\n")
-    frame = {"recipe": "argmax_count", "outer_noun": pair["outer_noun"],
+    lines += [action_line(notify, None), "STOP"]
+    frame = {"recipe": "argmin_count" if least else "argmax_count",
+             "outer_noun": pair["outer_noun"],
              "inner_noun": inner_prof["noun"],
              "clauses": [{"phrase": c["phrase"], "neg": False}
                          for c in inner_clauses],
              "action": notify}
+    seg = "\n".join(lines) + "\n"
     return GenSample(frame, [seg], alloc.items, tags=["adv:quantifier"])
+
+
+def sample_argmax(world, profile, state, now, rng, alloc, holdout):
+    return _sample_extreme(world, profile, state, now, rng, alloc, holdout,
+                           least=False)
+
+
+def sample_argmin(world, profile, state, now, rng, alloc, holdout):
+    return _sample_extreme(world, profile, state, now, rng, alloc, holdout,
+                           least=True)
 
 
 def sample_sort(world, profile, state, now, rng, alloc, holdout,
@@ -549,10 +628,17 @@ def sample_parallel(world, profile, state, now, rng, alloc, holdout):
     rec = rng.choice(recs)
     name = rec[pair["outer_name"]]
     ref = alloc.get(f"ID:{o}", rec["id"], f"{name}'s id")
-    trial = alloc.clone()
-    inner_clauses = _sample_clauses(inner_prof, i, state, now, rng, trial,
-                                    1, False)
-    alloc.adopt(trial)
+    for _ in range(6):
+        trial = alloc.clone()
+        inner_clauses = _sample_clauses(inner_prof, i, state, now, rng, trial,
+                                        1, False)
+        # the FILTER already pins the link field to `ref`; a clause on the
+        # same field renders as "Yara Quist's shoots for Yara Quist"
+        if not any(c["sem"]["field"] == link for c in inner_clauses):
+            alloc.adopt(trial)
+            break
+    else:
+        raise SampleError("inner clause collides with the link field")
     variant = rng.choice(["foreach", "count"])
     if variant == "foreach":
         acts = visible_actions(inner_prof, holdout,
@@ -567,8 +653,7 @@ def sample_parallel(world, profile, state, now, rng, alloc, holdout):
     else:
         info = build_action(pair["notify"], i, {"<outer>": "r0"}, state,
                             rng, alloc, outer_entity=o)
-        tail = (f"COUNT r2 -> r3\n"
-                f"IF r3 GT 0\n"
+        tail = (f"IF NOT EMPTY r2\n"
                 f"  {action_line(info, None)}\n"
                 "STOP\n")
     seg = (f"PARALLEL\n"
@@ -631,9 +716,9 @@ def sample_recovery(world, profile, state, now, rng, alloc, holdout):
     else:
         spec = tgt["const_text_addr"]
         fname = spec["desc"]
-        tref = alloc.get("STR", spec["value"], spec["desc"])
+        tref = alloc.get("STR", spec["value"], spec["desc"], kind="name")
     text = rng.choice(TEXT_BANKS[fb["text_bank"]])
-    fb_text = alloc.get("STR", text, "failure notice text")
+    fb_text = alloc.get("STR", text, "failure notice text", kind="text")
     fb_verb = rng.choice(fb["verbs"]).format(name=fname)
     code = rng.choice(["NOT_FOUND", "PERMISSION_DENIED"])
     seg = (f"TRY -> r0\n"
@@ -727,18 +812,18 @@ def sample_abort(world, profile, state, now, rng, alloc, holdout):
         display = prof["ref_word"].format(n=(max(ids) if ids else 0) + rng.randint(7, 40))
     if nf and prof.get("list_tool"):
         nref = alloc.get("STR", display,
-                         f"the {prof['noun']} named, verbatim: {display}")
+                         f"the {prof['noun'][0]} named, verbatim: {display}",
+                         kind="name")
         # the action runs on the found record in the else-path, so its
         # constants are allocated exactly as a `direct` sample's would be
-        info = build_action(act, entity, {"<v>": f"r3.@{entity}.id"},
+        info = build_action(act, entity, {"<v>": f"r2.@{entity}.id"},
                             state, rng, alloc)
-        reg = "r4" if info["dest"] else None
+        reg = "r3" if info["dest"] else None
         seg = (f"CALL @{prof['list_tool']} -> r0\n"
                f"FILTER r0 @{entity}.{nf} EQ {nref} -> r1\n"
-               f"COUNT r1 -> r2\n"
-               f"IF r2 EQ 0\n"
+               f"IF EMPTY r1\n"
                f"  ABORT NOT_FOUND {nref}\n"
-               f"FIRST r1 -> r3\n"
+               f"FIRST r1 -> r2\n"
                + action_line(info, reg) + "\nSTOP\n")
         frame = {"recipe": "direct", "entity": entity, "noun": prof["noun"],
                  "record": display, "action": info}
@@ -762,6 +847,7 @@ RECIPES = {
          lambda *a: sample_filter_act(
              *a, n_clauses=random.Random().randint(2, 3), force_neg=True))],
     4: [("argmax", lambda *a: sample_argmax(*a)),
+        ("argmin", lambda *a: sample_argmin(*a)),
         ("sort", lambda *a: sample_sort(*a))],
     5: [("branch", lambda *a: sample_branch(*a))],
     6: [("nested", lambda *a: sample_nested(*a))],

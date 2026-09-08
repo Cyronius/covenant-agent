@@ -131,6 +131,13 @@ def main() -> None:
     ap.add_argument("--out", default="data/real_train_tasks.jsonl")
     ap.add_argument("--seed", type=int, default=20260905)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--symbols", choices=["classic", "typed"],
+                    default="classic",
+                    help="0.4.0 typed constant letters (spec §2.1)")
+    ap.add_argument("--enums", action="store_true",
+                    help="emit the schema's enum values as constants (§2.3)")
+    ap.add_argument("--kinds", action="store_true",
+                    help="declare string kinds on STR constants (§2.2)")
     args = ap.parse_args()
 
     pool = [json.loads(l) for l in open(POOL, encoding="utf-8")]
@@ -154,7 +161,8 @@ def main() -> None:
     if args.limit:
         keep = keep[:args.limit]
 
-    tasks = build_rows(keep, args.seed)
+    tasks = build_rows(keep, args.seed, symbols=args.symbols,
+                       enums=args.enums, kinds=args.kinds)
     out_rows = []
     for task in tasks:
         if task["expected_status"] == "aborted":

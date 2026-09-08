@@ -6,9 +6,8 @@
 
 CALL @list_users -> r0
 FILTER r0 @user.name EQ $1 -> r1
-COUNT r1 -> r2
-IF r2 EQ 0
+IF EMPTY r1
   ABORT NOT_FOUND $1
-FIRST r1 -> r3
-CALL @assign_card $0 r3.@user.id
+FIRST r1 -> r2
+CALL @assign_card $0 r2.@user.id
 STOP

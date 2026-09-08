@@ -112,9 +112,16 @@ def render(frame: dict, rng: random.Random):
         else:
             core = act.format(obj=f"{q} {np}")
         return _wrap(core, style, rng), style
-    if r == "argmax_count":
+    if r in ("argmax_count", "argmin_count"):
         np = _np(frame["inner_noun"], frame["clauses"], rng)
-        winner = f"the {frame['outer_noun'][0]} with the most {np}"
+        if r == "argmax_count":
+            sup = rng.choice(["the most", "the highest number of",
+                              "the largest number of"])
+        else:
+            # "fewest" includes candidates with none at all -- the reason
+            # LEAST carries the candidate list (spec 0.4.0 §4)
+            sup = rng.choice(["the fewest", "the least", "the lowest number of"])
+        winner = f"the {frame['outer_noun'][0]} with {sup} {np}"
         core = f"{frame['action']['verb']} {winner}"
         return _wrap(core, style, rng), style
     if r == "extreme_sort":

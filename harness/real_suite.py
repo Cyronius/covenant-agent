@@ -208,6 +208,13 @@ def main() -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("build")
     b.add_argument("--seed", type=int, default=20260902)
+    b.add_argument("--symbols", choices=["classic", "typed"],
+                   default="classic",
+                   help="0.4.0 typed constant letters (spec §2.1)")
+    b.add_argument("--enums", action="store_true",
+                   help="emit the schema's enum values as constants (§2.3)")
+    b.add_argument("--kinds", action="store_true",
+                   help="declare string kinds on STR constants (§2.2)")
     s = sub.add_parser("score")
     s.add_argument("run")
     s.add_argument("--tasks", default=str(OUT))

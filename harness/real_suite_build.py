@@ -63,30 +63,45 @@ def constants_for(request: str, world: dict) -> list:
         {"type": "ID:course", "value": st["course"][0]["id"], "desc": "this course"},
         {"type": "BOOL", "value": True, "desc": "true"},
         {"type": "BOOL", "value": False, "desc": "false"},
-        {"type": "STR", "value": "lesson", "desc": "module type: lesson"},
-        {"type": "STR", "value": "quiz", "desc": "module type: quiz"},
-        {"type": "STR", "value": "bottom", "desc": "position: bottom (end of the lesson)"},
+        {"type": "STR", "value": "lesson", "desc": "module type: lesson",
+         "kind": "enum:module.type"},
+        {"type": "STR", "value": "quiz", "desc": "module type: quiz",
+         "kind": "enum:module.type"},
+        {"type": "STR", "value": "bottom",
+         "desc": "position: bottom (end of the lesson)", "kind": "text"},
     ]
     seen_types = set()
     for rx, ty in ELEMENT_TYPES:
         if rx.search(request) and ty not in seen_types:
             seen_types.add(ty)
-            out.append({"type": "STR", "value": ty, "desc": f"element type: {ty}"})
+            # element.type is not declared in world["enums"] -- the palette
+            # has ~18 values and emitting all of them for every request is
+            # the cost R5 measured -- but the kind still narrows the slot
+            out.append({"type": "STR", "value": ty,
+                        "desc": f"element type: {ty}",
+                        "kind": "enum:element.type"})
     for m in _HEX.finditer(request):
-        out.append({"type": "STR", "value": m.group(0), "desc": f"the colour {m.group(0)}"})
+        out.append({"type": "STR", "value": m.group(0),
+                    "desc": f"the colour {m.group(0)}", "kind": "text"})
     for m in _RGB.finditer(request):
-        out.append({"type": "STR", "value": m.group(0), "desc": f"the colour {m.group(0)}"})
+        out.append({"type": "STR", "value": m.group(0),
+                    "desc": f"the colour {m.group(0)}", "kind": "text"})
     for m in _INT.finditer(request):
         v = int(m.group(1))
         if 1 <= v <= 100 and not any(c["type"] == "INT" and c["value"] == v for c in out):
             out.append({"type": "INT", "value": v, "desc": f"the number {v}"})
     out.extend(literals_from_request(request, world["now"]))
     out.append({"type": "STR", "value": request,
-                "desc": "the request itself, verbatim (brief for write_text / generate_image / apply_to_lessons)"})
+                "desc": "the request itself, verbatim (brief for write_text / generate_image / apply_to_lessons)",
+                "kind": "text"})
     return out
 
 
-def build_rows(candidates: list, seed: int) -> list:
+def build_rows(candidates: list, seed: int, symbols: str = "classic",
+               enums: bool = False, kinds: bool = False) -> list:
+    """`symbols`/`enums`/`kinds` select the 0.4.0 surface (spec 0.4.0
+    §2.1/§2.2/§2.3). Off by default so the stored suite rebuilds byte for
+    byte; `constants_for` always writes the kinds and this strips them."""
     world = get_world("coursebuilder")
     if not world["tools"]:
         raise SystemExit("coursebuilder world has no tools: run python -m data.gen.world_from_schemas first")
@@ -94,7 +109,12 @@ def build_rows(candidates: list, seed: int) -> list:
     for i, c in enumerate(candidates):
         request = c["request"]
         constants = constants_for(request, world)
-        ctx, _ = build_context(world, constants, random.Random(seed * 1000003 + i))
+        if not kinds:
+            constants = [{k: v for k, v in c.items() if k != "kind"}
+                         for c in constants]
+        ctx, _ = build_context(world, constants,
+                               random.Random(seed * 1000003 + i),
+                               symbols=symbols, enums=enums)
         primary = c["routing"]["primary"]
         exp = expected_tools([n for n in c["frontier_tool_calls"] if n])
         rows.append({
@@ -116,13 +136,16 @@ def build_rows(candidates: list, seed: int) -> list:
             "content_bearing": c["routing"]["content_bearing"],
             "teachability": c["teachability_guess"],
             "tags": ["real", c["agent"], primary] + (["unmapped"] if primary != "none" and not exp else []),
+            "symbols": symbols,
+            "spec_version": "0.4.0",
         })
     return rows
 
 
 def cmd_build(args) -> None:
     cands = [json.loads(l) for l in open(CANDIDATES, encoding="utf-8")]
-    rows = build_rows(cands, args.seed)
+    rows = build_rows(cands, args.seed, symbols=args.symbols,
+                      enums=args.enums, kinds=args.kinds)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         for r in rows:

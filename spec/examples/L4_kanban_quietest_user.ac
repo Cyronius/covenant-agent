@@ -1,0 +1,12 @@
+# L4_kanban_quietest_user  (level 4, world kanban)
+# request: Message whoever has the fewest unfinished cards on the board.
+# $0: STR = 'done' — the completed status
+# $1: BOOL = False — false
+# $2: STR = 'You have the fewest unfinished cards.' — message text
+
+CALL @list_users -> r0
+CALL @list_cards -> r1
+FILTER r1 NOT @card.status EQ $0 AND @card.archived EQ $1 -> r2
+LEAST r2 @card.assignee r0 -> r3
+CALL @send_message r3 $2
+STOP
