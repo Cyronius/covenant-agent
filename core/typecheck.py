@@ -15,7 +15,7 @@ from dataclasses import dataclass, field as dc_field
 from typing import Dict, List, Optional
 
 from . import diagnostics as dg
-from .ir import (ABORT_REF_KINDS, EMPTY, Abort, Format, Call, Clause, Const, Count, Filter, First, Foreach, Get, If,
+from .ir import (ABORT_REF_KINDS, CONST_LETTERS, EMPTY, Abort, Format, Call, Clause, Const, Count, Filter, First, Foreach, Get, If,
                  IntLit, Let, MapF, Most, Now, Null, Parallel, Pause, Pred, Program,
                  Reg, RegField, Return, Select, SetF, Sort, Stop, TaskContext,
                  Try, Type, format_type)
@@ -365,7 +365,7 @@ class _Checker:
                 self.diags.append(dg.unknown_tool(instr.line, ref))
             elif kind == "F" and ref not in self.ctx.fields:
                 self.diags.append(dg.unknown_field(instr.line, "ABORT", ref))
-            elif kind == "C" and ref not in self.ctx.constants:
+            elif kind in CONST_LETTERS and ref not in self.ctx.constants:
                 self.diags.append(dg.unbound(instr.line, ref))
 
     def _check_call(self, call: Call, env: dict, defer_bind: bool = False):

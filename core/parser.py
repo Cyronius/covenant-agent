@@ -21,8 +21,8 @@ _REG_RE = re.compile(r"^r(\d{1,2})$")
 _REGFIELD_RE = re.compile(r"^r(\d{1,2})\.(F\d+)$")
 _TOOL_RE = re.compile(r"^T\d+$")
 _FIELD_RE = re.compile(r"^F\d+$")
-_CONST_RE = re.compile(r"^C\d+$")
-_SYM_RE = re.compile(r"^[TFC]\d+$")   # ABORT referents: any symbol kind
+_CONST_RE = re.compile(r"^[CSNBDI]\d+$")   # spec 0.4.0 §1 typed letters (+ 0.3.x C)
+_SYM_RE = re.compile(r"^[TFCSNBDI]\d+$")   # ABORT referents: any symbol kind
 _INT_RE = re.compile(r"^\d+$")
 
 BLOCK_HEADS = ("FOREACH", "IF", "ELSE", "PARALLEL", "TRY")
@@ -239,7 +239,7 @@ def _parse_instr(toks: List[str], line: int):
         refs = rest[1:]
         if len(refs) > ABORT_MAX_REFS or any(not _SYM_RE.match(r) for r in refs):
             raise _ParseFail(dg.parse_error(
-                line, f"ABORT referents: up to {ABORT_MAX_REFS} T/F/C symbols"))
+                line, f"ABORT referents: up to {ABORT_MAX_REFS} symbols"))
         return Abort(rest[0], refs=list(refs), line=line)
     raise _ParseFail(dg.parse_error(line, f"unknown instruction {op!r}"))
 

@@ -7,16 +7,17 @@ export PIP_BREAK_SYSTEM_PACKAGES=1
 cd /workspace
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
 python -c "import torch;x=torch.randn(512,512,device='cuda');print('cuda ok',(x@x).sum().item())"
-nvcc --version | tail -1 || echo "no nvcc"
 df -h /workspace | tail -1
 pip install -q huggingface_hub pytest
 mkdir -p models
 ( hf download unsloth/Qwen3.8-27B-GGUF Qwen3.8-27B-UD-IQ3_S.gguf --local-dir /workspace/models > dl.log 2>&1; echo "download exit $?" >> dl.log ) &
 apt-get update -qq > /dev/null && apt-get install -y -qq nodejs > /dev/null && node --version
-CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=native" pip install --no-cache-dir llama-cpp-python==0.3.35 > build.log 2>&1 || {
-  echo "source build failed, trying prebuilt cu124 wheel"; tail -20 build.log
-  pip install --no-cache-dir llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu124 > build2.log 2>&1
-}
+# Always a source build (prebuilt cu124 wheels SIGILL on some hosts and lack
+# sm_120); nvcc is at /usr/local/cuda/bin, off PATH in the torch image.
+export PATH=/usr/local/cuda/bin:$PATH CUDACXX=/usr/local/cuda/bin/nvcc
+GPU=$(nvidia-smi --query-gpu=name --format=csv,noheader)
+ARCH=86; echo "$GPU" | grep -q "4090" && ARCH=89; echo "$GPU" | grep -q "5090" && ARCH=120
+CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=$ARCH" pip install --no-cache-dir llama-cpp-python==0.3.35 > build.log 2>&1
 python -c "import llama_cpp; print('llama_cpp', llama_cpp.__version__)"
 wait
 ls -l models/

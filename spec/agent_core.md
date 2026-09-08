@@ -26,7 +26,7 @@ job is tool orchestration, not programming.
 | `r0` … `r15` | Registers. Fixed set of 16. Never generated variable names. |
 | `T0`, `T1`, … | Tool symbols. Assigned **per request** by the input serializer. Tool names are never tokenized permanently; the tool's meaning is carried by its description and schema in the input context. |
 | `F0`, `F1`, … | Field symbols. Assigned per request to `(entity, field)` pairs. Tool parameters reference field symbols where the parameter corresponds to an entity field, and fresh `F` symbols otherwise. |
-| `C0`, `C1`, … | Constant symbols. Values are held by the runtime binding supplied with the task input (extracted from the request by the serializer; exact in synthetic data). |
+| `S0`, `N0`, `B0`, `D0`, `I0`, … | Constant symbols (0.4.0). The letter is the base type — `S` STR, `N` INT, `B` BOOL, `D` TIME, `I` ID (the entity is in the declaration) — numbered per letter in declaration order. Values are held by the runtime binding supplied with the task input (extracted from the request by the serializer; exact in synthetic data). An `S` declaration carries a **kind**: `name` (a lookup key), `text` (content passed along), or `enum <entity>.<field>` (one of that field's declared values; the serializer emits every enum value of every entity the visible tools touch, whether or not the request spells it). Kinds are declaration metadata, not types: the typechecker ignores them; the per-task grammar and the corpus use them. `C0`, `C1`, … is the 0.3.x form, still parsed. |
 | `NOW` | The current time, bound by the runtime. Type `TIME`. |
 | `NULL` | The null value. |
 
@@ -204,6 +204,11 @@ environment. Without the reactive flag the error ends the task.
 - A `FOREACH` loop variable is an ordinary register.
 
 ## 6. Tools and schemas
+
+A tool line in the model-facing input shows each parameter as its slot
+letter with the parameter's field symbol: `T5 (I:user=F11 S=F0) -> - [SEND]`
+takes a user id then a string (0.4.0). Under 0.3.x symbols the same line
+reads `T5 (F11:ID:user F0:STR)`.
 
 Each tool in the task input declares:
 

@@ -77,5 +77,5 @@ reg       ::= "r1" [0-5] | "r" [0-9]
 # the remaining 178 scored 97.2%. See results/S2.md §S3.
 tool      ::= "T" num
 field     ::= "F" num
-const     ::= "C" num
+const     ::= ("C" | "S" | "N" | "B" | "D" | "I") num
 num       ::= [0-9] [0-9]? [0-9]?

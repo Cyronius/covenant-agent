@@ -76,13 +76,26 @@ def _nums(syms: Iterable[str]) -> List[int]:
     return [int(s[1:]) for s in syms]
 
 
+def const_expr(consts: Iterable[str]) -> str:
+    """A GBNF expression over constant symbols, one digit trie per letter:
+    `"C" (...)` for a 0.3.x table, `"S" (...) | "I" (...)` for 0.4.0
+    typed letters (spec §1). An empty table keeps the base file's open C."""
+    by_letter: Dict[str, List[int]] = {}
+    for s in consts:
+        by_letter.setdefault(s[0], []).append(int(s[1:]))
+    if not by_letter:
+        return '"C" (%s)' % _OPEN_NUM
+    return " | ".join('"%s" (%s)' % (L, digit_trie_expr(ns))
+                      for L, ns in sorted(by_letter.items()))
+
+
 def symbol_rules(tools: Iterable[str], fields: Iterable[str],
                  consts: Iterable[str]) -> Dict[str, str]:
     """{rule name -> right-hand side} for the three symbol rules."""
     return {
         "tool": '"T" (%s)' % digit_trie_expr(_nums(tools)),
         "field": '"F" (%s)' % digit_trie_expr(_nums(fields)),
-        "const": '"C" (%s)' % digit_trie_expr(_nums(consts)),
+        "const": const_expr(consts),
     }
 
 
@@ -118,19 +131,26 @@ def without_stdlib(grammar: str) -> str:
 
 
 def grammar_for_task(task: dict, base: Optional[str] = None,
-                     typed: bool = False, stdlib: bool = True) -> str:
+                     typed: bool = False, stdlib: bool = True,
+                     kinds: bool = False) -> str:
     """`task` as the suites store it: task['context'] holds the symbol table.
     `typed` adds the per-tool typed-slot CALL rules (PLAN.md §5 C4);
-    `stdlib=False` removes the 0.4.0 instructions (MOST/LEAST/EMPTY)."""
+    `stdlib=False` removes the 0.4.0 instructions (MOST/LEAST/EMPTY);
+    `kinds` (spec 0.4.0 §2.2, implies typed) makes FILTER clauses, SET and
+    CALL slots kind-aware: an enum field admits only its enum constants and
+    a plain STR slot admits no enum constant."""
     ctx = task["context"]
     out = grammar_for_symbols(
         [t["sym"] for t in ctx.get("tools", [])],
         [f["sym"] for f in ctx.get("fields", [])],
         [c["sym"] for c in ctx.get("constants", [])],
         base=base)
-    if typed:
-        call_rhs, extra = typed_call_rules(task)
+    if typed or kinds:
+        call_rhs, extra = typed_call_rules(task, kinds=kinds)
         out = _replace_rules(out, {"call": call_rhs}) + "\n" + extra
+    if kinds:
+        clause_rhs, set_rhs, extra = kind_field_rules(task)
+        out = _replace_rules(out, {"clause": clause_rhs, "set": set_rhs}) + "\n" + extra
     if not stdlib:
         out = without_stdlib(out)
     return out
@@ -146,7 +166,7 @@ def symbol_signature(task: dict) -> tuple:
     ctx = task["context"]
     return (tuple(sorted(_nums(t["sym"] for t in ctx.get("tools", [])))),
             tuple(sorted(_nums(f["sym"] for f in ctx.get("fields", [])))),
-            tuple(sorted(_nums(c["sym"] for c in ctx.get("constants", [])))))
+            tuple(sorted(c["sym"] for c in ctx.get("constants", []))))
 
 
 # -- verification -------------------------------------------------------
@@ -266,36 +286,71 @@ def _type_id(tstr: str) -> str:
     return tstr.replace(":", "-").replace(" ", "-").replace("_", "-")
 
 
-def typed_call_rules(task: dict) -> tuple:
+def _enum_fields(ctx: dict) -> Dict[str, List[str]]:
+    """{field sym -> [enum constant syms]} from the constants' kinds
+    (`enum:<entity>.<field>`, spec 0.4.0 §2.2)."""
+    by_ef = {(f.get("entity"), f["name"]): f["sym"] for f in ctx.get("fields", [])}
+    out: Dict[str, List[str]] = {}
+    for c in ctx.get("constants", []):
+        k = c.get("kind", "")
+        if k.startswith("enum:") and "." in k:
+            entity, fname = k[5:].split(".", 1)
+            fsym = by_ef.get((entity, fname))
+            if fsym:
+                out.setdefault(fsym, []).append(c["sym"])
+    return out
+
+
+def _operand_alts(want, fields, consts, fsym: Optional[str], enum_fields,
+                  kinds: bool, op_rules: Dict[str, str], tag: str) -> str:
+    """Operand alternatives for a slot of type `want`; with `kinds` the slot
+    `fsym` narrows the constants: an enum field admits only its own enum
+    constants, a plain STR slot admits none of them."""
+    alts = ["reg"]
+    fsyms = [int(s[1:]) for s, t in fields if _compatible(want, t)]
+    if fsyms:
+        op_rules[f"cf-{tag}"] = f'"F" ({digit_trie_expr(fsyms)})'
+        alts.append(f'reg "." cf-{tag}')
+    csyms = [s for s, t in consts if _compatible(want, t)]
+    if kinds and want[0] == "STR":
+        enum_syms = set(sum(enum_fields.values(), []))
+        if fsym in enum_fields:
+            csyms = [s for s in csyms if s in enum_fields[fsym]]
+        else:
+            csyms = [s for s in csyms if s not in enum_syms]
+    if csyms:
+        op_rules[f"cc-{tag}"] = const_expr(csyms)
+        alts.append(f"cc-{tag}")
+    alts.append('"NULL"')
+    if want[0] == "TIME":
+        alts.append('"NOW"')
+    if want[0] in _NUMERIC:
+        alts.append("num")
+    return " | ".join(alts)
+
+
+def typed_call_rules(task: dict, kinds: bool = False) -> tuple:
     """(rhs for `call`, extra GBNF rules). One `callTn` per tool; one
-    `op_<type>` operand class per distinct parameter type."""
+    `op-<type>` operand class per distinct parameter type — or, with
+    `kinds`, per parameter slot whose field is an enum."""
     ctx = task["context"]
     consts = [(c["sym"], parse_type(c["type"])) for c in ctx.get("constants", [])]
     fields = [(f["sym"], parse_type(f["type"])) for f in ctx.get("fields", [])]
+    enum_fields = _enum_fields(ctx) if kinds else {}
     op_rules: Dict[str, str] = {}
     lines: List[str] = []
 
-    def op_class(tstr: str) -> str:
+    def op_class(tstr: str, psym: Optional[str]) -> str:
+        want = parse_type(tstr)
         tid = _type_id(tstr)
-        name = f"op-{tid}"
+        if kinds and want[0] == "STR" and psym in enum_fields:
+            name = f"op-{tid}-{psym}"
+        else:
+            name = f"op-{tid}"
         if name in op_rules:
             return name
-        want = parse_type(tstr)
-        alts = ["reg"]
-        fsyms = [int(s[1:]) for s, t in fields if _compatible(want, t)]
-        if fsyms:
-            op_rules[f"cf-{tid}"] = f'"F" ({digit_trie_expr(fsyms)})'
-            alts.append(f'reg "." cf-{tid}')
-        csyms = [int(s[1:]) for s, t in consts if _compatible(want, t)]
-        if csyms:
-            op_rules[f"cc-{tid}"] = f'"C" ({digit_trie_expr(csyms)})'
-            alts.append(f"cc-{tid}")
-        alts.append('"NULL"')
-        if want[0] == "TIME":
-            alts.append('"NOW"')
-        if want[0] in _NUMERIC:
-            alts.append("num")
-        op_rules[name] = " | ".join(alts)
+        op_rules[name] = _operand_alts(want, fields, consts, psym, enum_fields,
+                                       kinds, op_rules, name[3:])
         return name
 
     call_alts = []
@@ -305,11 +360,11 @@ def typed_call_rules(task: dict) -> tuple:
         opt = [p for p in params if not p.get("required", True)]
         body = f'"CALL {t["sym"]}"'
         for p in req:
-            body += f' " " {op_class(p["type"])}'
+            body += f' " " {op_class(p["type"], p.get("sym"))}'
         # optional params are positional and trailing: nested optionals
         tail = ""
         for p in reversed(opt):
-            tail = f' (" " {op_class(p["type"])}{tail})?'
+            tail = f' (" " {op_class(p["type"], p.get("sym"))}{tail})?'
         body += tail + " (arrow)?"
         rname = f"call{t['sym']}"
         lines.append(f"{rname} ::= {body}")
@@ -319,14 +374,41 @@ def typed_call_rules(task: dict) -> tuple:
     return " | ".join(call_alts) if call_alts else '"CALL " tool (arrow)?', "\n".join(lines)
 
 
-def typed_signature(task: dict) -> tuple:
-    """Cache key for typed grammars: symbol table plus every type."""
+def kind_field_rules(task: dict) -> tuple:
+    """(rhs for `clause`, rhs for `set`, extra rules): one FILTER clause and
+    one SET form per field, each admitting only the operands its kind
+    allows (spec 0.4.0 §2.2). Non-STR fields keep type-compatible operands."""
     ctx = task["context"]
-    return (tuple((t["sym"], tuple((p["type"], p.get("required", True))
+    consts = [(c["sym"], parse_type(c["type"])) for c in ctx.get("constants", [])]
+    fields = [(f["sym"], parse_type(f["type"])) for f in ctx.get("fields", [])]
+    enum_fields = _enum_fields(ctx)
+    op_rules: Dict[str, str] = {}
+    clause_alts, set_alts = [], []
+    for fsym, ftype in fields:
+        tag = f"f{fsym[1:]}"
+        rhs = _operand_alts(ftype, fields, consts, fsym, enum_fields, True,
+                            op_rules, tag)
+        op_rules[f"opf-{tag}"] = rhs
+        clause_alts.append(f'"{fsym} " cmp " " opf-{tag}')
+        set_alts.append(f'"{fsym} " opf-{tag}')
+    lines = [f"{n} ::= {r}" for n, r in op_rules.items()]
+    clause = '("NOT ")? (%s)' % " | ".join(clause_alts) if clause_alts else \
+        '("NOT ")? field " " cmp " " operand'
+    setr = '"SET " reg " " (%s) arrow' % " | ".join(set_alts) if set_alts else \
+        '"SET " reg " " field " " operand arrow'
+    return clause, setr, "\n".join(lines)
+
+
+def typed_signature(task: dict) -> tuple:
+    """Cache key for typed grammars: symbol table plus every type and kind."""
+    ctx = task["context"]
+    return (tuple((t["sym"], tuple((p["type"], p.get("required", True), p.get("sym"))
                                    for p in t["params"]))
                   for t in ctx.get("tools", [])),
-            tuple(sorted((f["sym"], f["type"]) for f in ctx.get("fields", []))),
-            tuple(sorted((c["sym"], c["type"]) for c in ctx.get("constants", []))))
+            tuple(sorted((f["sym"], f["type"], f.get("entity"), f["name"])
+                         for f in ctx.get("fields", []))),
+            tuple(sorted((c["sym"], c["type"], c.get("kind", ""))
+                         for c in ctx.get("constants", []))))
 
 
 _GBNF_NAME = re.compile(r"^[a-zA-Z0-9-]+$")

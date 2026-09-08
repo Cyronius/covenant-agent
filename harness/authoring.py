@@ -7,8 +7,9 @@ symbols (fresh T/F/C assignment) before parsing:
   @card.due              -> the F symbol of (entity card, field due)
   @send_message.text     -> the F symbol of tool send_message's unlinked
                             param `text`
-  $2                     -> C2 (constants are positional in the task's
-                            constants list, so $k is just Ck)
+  $2                     -> the symbol of the task's third constant: C2
+                            under 0.3.x symbols, S1 / I0 / ... under the
+                            0.4.0 typed letters (ConstDecl.index)
 
 Only symbol-form programs ever reach the model or the corpus; the authoring
 form exists so humans and templates don't hand-track random assignments.
@@ -56,6 +57,13 @@ def resolve(text: str, ctx: TaskContext) -> str:
             return param_fields[(head, tail)]
         raise ResolveError(f"unknown field @{head}.{tail}")
 
+    by_index = {c.index: c.sym for c in ctx.constants.values()
+                if c.index is not None}
+
+    def const_sub(m: re.Match) -> str:
+        i = int(m.group(1))
+        return by_index.get(i, f"C{i}")
+
     out = _NAME_RE.sub(name_sub, text)
-    out = _CONST_RE.sub(lambda m: f"C{int(m.group(1))}", out)
+    out = _CONST_RE.sub(const_sub, out)
     return out

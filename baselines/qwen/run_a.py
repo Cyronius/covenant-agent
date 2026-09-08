@@ -69,9 +69,11 @@ class GrammarCache:
     §S3). `none` is the unconstrained arm.
     """
 
-    def __init__(self, mode: str, base_path: Path, stdlib: bool = True):
+    def __init__(self, mode: str, base_path: Path, stdlib: bool = True,
+                 kinds: bool = False):
         self.mode = mode
         self.stdlib = stdlib
+        self.kinds = kinds
         self.base = base_path.read_text() if mode != "none" else None
         self._cache: dict = {}
         self._static = None
@@ -90,13 +92,14 @@ class GrammarCache:
                 self._static = LlamaGrammar.from_string(self.base,
                                                         verbose=False)
             return self._static
-        typed = self.mode == "typed"
+        typed = self.mode == "typed" or self.kinds
         key = (task_grammar.typed_signature(task) if typed
                else task_grammar.symbol_signature(task))
         if key not in self._cache:
             self._cache[key] = LlamaGrammar.from_string(
                 task_grammar.grammar_for_task(task, self.base, typed=typed,
-                                              stdlib=self.stdlib),
+                                              stdlib=self.stdlib,
+                                              kinds=self.kinds),
                 verbose=False)
         return self._cache[key]
 
@@ -150,6 +153,42 @@ FOREACH r1 -> r2
 STOP
 
 Output ONLY the program, nothing else."""
+
+# spec 0.4.0 §2.1 typed constant letters (`--symbols typed`): the prompt's
+# legend and worked example use the letters the serializer now emits.
+_TYPED_SUBS = (
+    ("CALL Tn args -> r        call tool Tn (args: registers, rX.Fn, Cn, NOW)",
+     "CALL Tn args -> r        call tool Tn (args: registers, rX.Fn, constants, NOW)"),
+    ("FORMAT Ct args -> r      fill template constant Ct (slots {0} {1} ...) with values -> STR",
+     "FORMAT St args -> r      fill template constant St (slots {0} {1} ...) with values -> STR"),
+    ("                         NOT_FOUND Cn (nothing matches Cn) | NEEDS_INFO Fn (no value",
+     "                         NOT_FOUND Sn (nothing matches Sn) | NEEDS_INFO Fn (no value"),
+    ("                         for Fn) | AMBIGUOUS a b (cannot choose between) | UNSUPPORTED [Cn]",
+     "                         for Fn) | AMBIGUOUS a b (cannot choose between) | UNSUPPORTED [Sn]"),
+    ("Rules: registers r0-r15 in order of first use. Use ONLY the T/F/C symbols\n"
+     "listed for the task; every literal value must be a C symbol.",
+     "Rules: registers r0-r15 in order of first use. Use ONLY the symbols listed\n"
+     "for the task; every literal value must be a constant symbol, whose letter is\n"
+     "its type: S text, N number, B bool, D time, I id (I's entity is in its line).\n"
+     "A tool line shows each slot's letter: T1 (I:card=F2 S=F5) takes a card id\n"
+     "then a string. An S constant's kind says what it is for: name (a lookup\n"
+     "key), text (content to pass along), enum x.y (a value of field y)."),
+    ("FILTER r pred -> r       keep list elements matching pred, e.g. F3 EQ C0 AND NOT F5 LT NOW",
+     "FILTER r pred -> r       keep list elements matching pred, e.g. F3 EQ S0 AND NOT F5 LT NOW"),
+    ("T1 (F2:ID:card) -> - [DELETE] :: Delete a card.",
+     "T1 (I:card=F2) -> - [DELETE] :: Delete a card."),
+    ("CONSTANTS:\nC0 BOOL :: true", "CONSTANTS:\nB0 BOOL :: true"),
+    ("FILTER r0 F1 LT NOW AND NOT F3 EQ C0 -> r1",
+     "FILTER r0 F1 LT NOW AND NOT F3 EQ B0 -> r1"),
+)
+
+
+def typed_system(system: str) -> str:
+    for old, new in _TYPED_SUBS:
+        assert old in system, old[:40]
+        system = system.replace(old, new, 1)
+    return system
+
 
 # spec 0.4.0 step-0b control (`--no-stdlib`): the 0.3.x prompt, without the
 # MOST/LEAST and EMPTY lines, paired with the grammar that cannot decode them.
@@ -398,6 +437,17 @@ def main():
     ap.add_argument("--reactive-prompt", action="store_true",
                     help="append the observe-then-decide paragraph to the "
                          "SYSTEM prompt (when to PAUSE, what comes back)")
+    ap.add_argument("--symbols", choices=["classic", "typed"], default="classic",
+                    help="spec 0.4.0 §2.1: re-render stored tasks with typed "
+                         "constant letters (S N B D I) and slot letters on "
+                         "tool lines; the prompt's legend follows")
+    ap.add_argument("--enums", action="store_true",
+                    help="spec 0.4.0 §2.3: add the schema's enum values as "
+                         "constants (kind enum) for the touched entities")
+    ap.add_argument("--kinds", action="store_true",
+                    help="spec 0.4.0 §2.2: string kinds on constants "
+                         "(name/text/enum) and a kind-aware grammar: an enum "
+                         "field admits only its own values")
     ap.add_argument("--no-stdlib", action="store_true",
                     help="spec 0.4.0 step-0b control: the 0.3.x prompt and "
                          "grammar, without MOST/LEAST/EMPTY")
@@ -427,18 +477,28 @@ def main():
 
     from llama_cpp import Llama
     grammars = GrammarCache("none" if args.no_grammar else args.grammar_mode,
-                            Path(args.grammar), stdlib=not args.no_stdlib)
+                            Path(args.grammar), stdlib=not args.no_stdlib,
+                            kinds=args.kinds)
     llm = Llama(model_path=args.model, n_ctx=args.ctx,
                 n_threads=args.threads, verbose=False,
                 n_gpu_layers=args.gpu_layers,
                 lora_path=args.lora, lora_scale=args.lora_scale)
-    system = (system_without_stdlib(SYSTEM) if args.no_stdlib else SYSTEM) + (
+    system = typed_system(SYSTEM) if args.symbols == "typed" else SYSTEM
+    system = (system_without_stdlib(system) if args.no_stdlib else system) + (
         REACTIVE if args.reactive_prompt else "")
     max_segments = args.max_segments or (5 if args.react else 3)
 
     tasks = load_tasks(Path(args.tasks))
     if args.n:
         tasks = tasks[:args.n]
+    if args.symbols == "typed" or args.enums or args.kinds:
+        # spec 0.4.0 surface on a stored 0.3.x suite: same tasks, same
+        # scoring, re-rendered symbol table (harness/retype.py)
+        from harness.retype import retype_task
+        from runtime.worlds import get_world
+        tasks = [retype_task(t, get_world(t["world"]), symbols=args.symbols,
+                             enums=args.enums, kinds=args.kinds)
+                 for t in tasks]
     shots = load_shots(ROOT / args.shots_from, args.shots,
                        {t["id"] for t in tasks})
 
@@ -473,7 +533,10 @@ def main():
                 "+K3prompt" if args.reactive_prompt else "") + (
                 "+K3react" if args.react else "") + (
                 f"+think{args.think}" if args.think else "") + (
-                "-stdlib" if args.no_stdlib else "")
+                "-stdlib" if args.no_stdlib else "") + (
+                "+letters" if args.symbols == "typed" else "") + (
+                "+enums" if args.enums else "") + (
+                "+kinds" if args.kinds else "")
             row["repair_rounds"] = sum(repairs)
             row["model"] = Path(args.model).name
             row["template"] = args.template

@@ -20,6 +20,17 @@ ERROR_CODES = (
 )
 NUM_REGISTERS = 16
 
+# spec 0.4.0 §1: constant symbols carry their base type in the letter.
+# `C` is the 0.3.x form (still parsed; the S3 corpus and every stored suite
+# use it); `S N B D I` are what the 0.4.0 serializer emits.
+CONST_LETTERS = "CSNBDI"
+
+
+def letter_for_type(t: "Type") -> str:
+    """The typed constant letter for a base type (spec 0.4.0 §1)."""
+    return {"STR": "S", "INT": "N", "FLOAT": "N", "BOOL": "B", "TIME": "D",
+            "ID": "I"}.get(t[0], "S")
+
 
 # ---------------------------------------------------------------- types
 # A type is a tuple: ('INT',) ('STR',) ('BOOL',) ('TIME',) ('STATUS',)
@@ -275,8 +286,9 @@ class Pause(Instr):
 # the harness check the abort and a UI act on it.
 ABORT_REASONS = ("NOT_FOUND", "AMBIGUOUS", "UNSUPPORTED", "NEEDS_INFO")
 # symbol kinds each reason may name (spec §4)
-ABORT_REF_KINDS = {"NOT_FOUND": "C", "NEEDS_INFO": "F", "AMBIGUOUS": "TFC",
-                   "UNSUPPORTED": "C"}
+ABORT_REF_KINDS = {"NOT_FOUND": CONST_LETTERS, "NEEDS_INFO": "F",
+                   "AMBIGUOUS": "TF" + CONST_LETTERS,
+                   "UNSUPPORTED": CONST_LETTERS}
 ABORT_MAX_REFS = 2
 
 
@@ -322,10 +334,17 @@ class FieldDecl:
 
 @dataclass
 class ConstDecl:
-    sym: str          # 'C3'
+    sym: str          # 'C3' (0.3.x) or 'S0' / 'N0' / 'B0' / 'D0' / 'I0' (0.4.0)
     type: Type
     value: object
     desc: str = ""
+    # spec 0.4.0 §2.2 string kind: "name" | "text" | "enum:<entity>.<field>"
+    # | "" (unknown). Declaration metadata, not a type: the typechecker
+    # ignores it, the per-task grammar and the corpus use it.
+    kind: str = ""
+    # position in the task's constants list (authoring `$n`); None for the
+    # enum constants the serializer adds from the schema
+    index: Optional[int] = None
 
 
 @dataclass
@@ -361,7 +380,9 @@ class TaskContext:
             ],
             "constants": [
                 {"sym": c.sym, "type": format_type(c.type), "value": c.value,
-                 "desc": c.desc}
+                 "desc": c.desc,
+                 **({"kind": c.kind} if c.kind else {}),
+                 **({"index": c.index} if c.index is not None else {})}
                 for c in self.constants.values()
             ],
             "initial_registers": {
@@ -390,10 +411,13 @@ class TaskContext:
                 sym=f["sym"], entity=f.get("entity"), name=f["name"],
                 type=parse_type(f["type"]), desc=f.get("desc", ""))
         constants = {}
-        for c in d.get("constants", []):
-            constants[c["sym"]] = ConstDecl(
-                sym=c["sym"], type=parse_type(c["type"]), value=c["value"],
-                desc=c.get("desc", ""))
+        for i, c in enumerate(d.get("constants", [])):
+            sym = c["sym"]
+            # 0.3.x rows carry no index: C<n> is positional by construction
+            index = c.get("index", int(sym[1:]) if sym[0] == "C" else None)
+            constants[sym] = ConstDecl(
+                sym=sym, type=parse_type(c["type"]), value=c["value"],
+                desc=c.get("desc", ""), kind=c.get("kind", ""), index=index)
         init = {r: parse_type(t)
                 for r, t in d.get("initial_registers", {}).items()}
         return TaskContext(tools=tools, fields=fields, constants=constants,
