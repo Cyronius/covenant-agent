@@ -11,6 +11,9 @@ from typing import List, Optional, Union
 EFFECTS = ("READ", "WRITE", "DELETE", "SEND", "PAY", "EXTERNAL")
 DESTRUCTIVE_EFFECTS = ("DELETE", "SEND", "PAY")
 CMPS = ("EQ", "LT", "GT", "CONTAINS")
+# unary condition form (spec 0.4.0 §3): `[NOT] EMPTY r` — true for an empty
+# list or NULL. Stored as a Clause with cmp EMPTY and right None.
+EMPTY = "EMPTY"
 ERROR_CODES = (
     "NOT_FOUND", "PERMISSION_DENIED", "RATE_LIMITED", "INVALID_ARGUMENT",
     "PARTIAL_DATA", "INDEX_OUT_OF_RANGE",
@@ -108,6 +111,8 @@ class Clause:
 
     def __str__(self) -> str:
         neg = "NOT " if self.neg else ""
+        if self.cmp == EMPTY:
+            return f"{neg}EMPTY {self.left}"
         return f"{neg}{self.left} {self.cmp} {self.right}"
 
 
@@ -188,6 +193,18 @@ class MapF(Instr):
 class Count(Instr):
     src: Reg
     dst: Reg
+
+
+@dataclass
+class Most(Instr):
+    """spec 0.4.0 §4 MOST / LEAST: the value of `field` shared by the most
+    (fewest) elements of `src`; `cands`, when given, is the candidate list
+    whose ids are counted (zeros included) — what keeps LEAST honest."""
+    src: Reg
+    field: str
+    cands: Optional[Reg]
+    dst: Reg
+    least: bool = False
 
 
 @dataclass

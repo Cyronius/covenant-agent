@@ -1,6 +1,6 @@
 # Agent Core IR — Specification (F1)
 
-**Version:** 0.3.1 (0.3.1, 2026-09-08: runtime errors as a segment boundary, §4/§9; 0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
+**Version:** 0.4.0 (0.4.0, 2026-09-08: `MOST`/`LEAST`, `EMPTY`, normalized STR comparison, §2/§3/§4/§12; typed constant letters and constant kinds, §1/§6 — landing in the same series; 0.3.1, 2026-09-08: runtime errors as a segment boundary, §4/§9; 0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
 **Status:** Foundation draft. Every change to this document must land in the same
 commit as the matching changes to `core/` (parser, typechecker, effects, compiler),
 `data/gen/`, and `spec/examples/`, with round-trip tests passing.
@@ -37,6 +37,9 @@ INT  STR  BOOL  TIME  ID(entity)  OBJ(entity)  LIST(elem)  STATUS  NULL
 ```
 
 - `TIME` is an integer Unix timestamp (seconds). Comparisons use `LT`/`GT`.
+- `STR` comparison (`EQ`, `CONTAINS`) is **case-folded and trimmed** (0.4.0):
+  "cyrus" equals "Cyrus". Ids and enum values are canonical and unaffected.
+  The model never chooses this, so it cannot get it wrong.
 - `ID(e)` is an opaque identifier of an entity `e`.
 - `OBJ(e)` is a record whose fields are declared by the world schema for `e`.
 - `LIST(t)` is a homogeneous list.
@@ -55,7 +58,7 @@ line        = instr NL [ body ] ;
 body        = INDENT block DEDENT ;              (* only after block heads *)
 
 instr       = let | get | set | call | format | filter | map | count | sort
-            | select | first | foreach | if | else | parallel | try
+            | most | select | first | foreach | if | else | parallel | try
             | return | stop | pause | abort ;
 
 let         = "LET" operand "->" reg ;
@@ -68,6 +71,7 @@ map         = "MAP" reg field "->" reg ;
 count       = "COUNT" reg "->" reg ;
 sort        = "SORT" reg field dir "->" reg ;
 dir         = "ASC" | "DESC" ;
+most        = ( "MOST" | "LEAST" ) reg field [ reg ] "->" reg ;
 select      = "SELECT" reg operand "->" reg ;
 first       = "FIRST" reg "->" reg ;
 foreach     = "FOREACH" reg "->" reg ;           (* block head *)
@@ -91,7 +95,7 @@ const       = "C" int ;
 pred        = clause { ("AND" | "OR") clause } ;   (* AND binds tighter than OR *)
 clause      = [ "NOT" ] field cmp operand ;
 cond        = ccl { ("AND" | "OR") ccl } ;
-ccl         = [ "NOT" ] operand cmp operand ;
+ccl         = [ "NOT" ] ( operand cmp operand | "EMPTY" reg ) ;
 cmp         = "EQ" | "LT" | "GT" | "CONTAINS" ;
 int         = digit { digit } ;
 ```
@@ -118,10 +122,11 @@ Notes:
 | `MAP r0 F3 -> r1` | Project field `F3` over `LIST(OBJ(e))` → `LIST(field type)`. |
 | `COUNT r0 -> r1` | Length of a list → `INT`. |
 | `SORT r0 F3 ASC -> r1` | Stable sort of `LIST(OBJ(e))` by field. `ASC`/`DESC`. |
+| `MOST r0 F3 [r2] -> r1` / `LEAST` | `r0 : LIST(OBJ(e))`, `F3` a field of `e`. `r1` = the value of `F3` shared by the most (fewest) elements of `r0`; type of `F3`; ties to the first key seen; `NULL` when there are no keys. With the optional candidate list `r2 : LIST(OBJ(e'))` — legal only when `F3 : ID(e')` — the keys are the candidates' ids in candidate order, **zeros included**, and elements keyed elsewhere are ignored. That is what makes `LEAST` answer "the user with the fewest overdue cards" when the answer has none. Without it `LEAST` is least-among-present. Added in 0.4.0 as the named form of the 14-line count-per-key loop a capable model would not find (results/R4.md). |
 | `SELECT r0 i -> r1` | `i`-th element (0-based, `INT` operand). Out of range → runtime error `INDEX_OUT_OF_RANGE`. |
 | `FIRST r0 -> r1` | First element. Empty list → `NULL` bound to `r1`. |
 | `FOREACH r0 -> r1` | For each element of `r0` (in order), bind it to `r1` and run the body. `r1` remains bound to the last element after the loop (or is untouched when the list is empty — reading it after an possibly-empty loop is a typecheck warning, not an error). |
-| `IF c` / `ELSE` | Standard branch. `ELSE` must immediately follow the `IF` body at the same indentation. |
+| `IF c` / `ELSE` | Standard branch. `ELSE` must immediately follow the `IF` body at the same indentation. A clause is `x cmp y` or the unary `EMPTY r` (true for an empty list or `NULL`; `r` must hold a `LIST`), so "did the lookup match anything" needs no numeric constant. |
 | `PARALLEL` | Body must be only `CALL` lines. Calls are issued concurrently; all results are bound when the block ends. No result register may be read inside the block. |
 | `TRY [RETRY n] -> r` | Run body. On a tool error inside, abort the body, and (if `RETRY n` and attempts remain) re-run it from the top, up to `n` additional attempts. `r` gets `OK` or the last error code (`STATUS`). Execution continues after the block. |
 | `RETURN x` | Terminate program, final value `x`. |
@@ -326,6 +331,23 @@ Static effect set: `{READ, WRITE, SEND}` — covered by the declaration; the
 `SEND` calls execute only when the run carries an approval token.
 
 ## 12. Change control
+
+### Admitting a named composite (the "standard library")
+
+Every instruction is the name of one `rt.*` function, and each name costs
+a grammar production, a spec row, a typecheck rule, a place in the small
+model's vocabulary and corpus rows to teach it. A composite gets a name
+only when all four hold:
+
+1. a request class in the corpus needs it;
+2. the composite is four or more lines in the IR;
+3. a capable model fails to find the composite (measured, with reasoning
+   on — results/R4.md is the template);
+4. it types with the existing types.
+
+`MOST`/`LEAST` and `EMPTY` (0.4.0) pass all four. String operations and
+date arithmetic fail (1) by design: the model never emits text or computes
+cutoffs, and that is a safety property, not a gap.
 
 Candidate missing primitives discovered during R1 are **listed for review** in
 `results/R1.md`, never added directly. Any grammar change bumps the version at

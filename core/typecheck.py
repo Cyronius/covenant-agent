@@ -15,8 +15,8 @@ from dataclasses import dataclass, field as dc_field
 from typing import Dict, List, Optional
 
 from . import diagnostics as dg
-from .ir import (ABORT_REF_KINDS, Abort, Format, Call, Clause, Const, Count, Filter, First, Foreach, Get, If,
-                 IntLit, Let, MapF, Now, Null, Parallel, Pause, Pred, Program,
+from .ir import (ABORT_REF_KINDS, EMPTY, Abort, Format, Call, Clause, Const, Count, Filter, First, Foreach, Get, If,
+                 IntLit, Let, MapF, Most, Now, Null, Parallel, Pause, Pred, Program,
                  Reg, RegField, Return, Select, SetF, Sort, Stop, TaskContext,
                  Try, Type, format_type)
 
@@ -136,6 +136,11 @@ class _Checker:
 
     def _check_cond(self, cond: Pred, env: dict, line: int):
         for cl in cond.clauses:
+            if cl.cmp == EMPTY:
+                lt = self._operand_type(cl.left, env, line)
+                if lt is not None and lt[0] not in ("LIST", "NULL"):
+                    self.diags.append(dg.type_error(line, "LIST", format_type(lt)))
+                continue
             lt = self._operand_type(cl.left, env, line)
             rt = self._operand_type(cl.right, env, line)
             self._check_cmp(cl.cmp, lt, rt, line)
@@ -227,6 +232,25 @@ class _Checker:
             elif t[0] != "LIST":
                 self.diags.append(dg.type_error(ln, "LIST", format_type(t)))
             env[instr.dst.n] = ("INT",)
+            return False
+        if isinstance(instr, Most):
+            entity = self._list_elem_entity(instr.src, env, ln)
+            f = self._field_decl(instr.field, entity, ln, str(instr.src)) if entity else None
+            if f:
+                env[instr.dst.n] = f.type
+            if instr.cands is not None:
+                ct = env.get(instr.cands.n)
+                if ct is None:
+                    self.diags.append(dg.unbound(ln, str(instr.cands)))
+                elif f:
+                    # the candidate list must be the entity the counted
+                    # field points at: LIST OBJ:user for an ID:user field
+                    if f.type[0] != "ID":
+                        self.diags.append(dg.type_error(
+                            ln, "ID:<entity>", format_type(f.type)))
+                    elif ct != ("LIST", ("OBJ", f.type[1])):
+                        self.diags.append(dg.type_error(
+                            ln, f"LIST OBJ:{f.type[1]}", format_type(ct)))
             return False
         if isinstance(instr, Sort):
             entity = self._list_elem_entity(instr.src, env, ln)

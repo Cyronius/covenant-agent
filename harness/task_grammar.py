@@ -108,10 +108,20 @@ def grammar_for_symbols(tools: Iterable[str], fields: Iterable[str],
                           symbol_rules(tools, fields, consts))
 
 
+def without_stdlib(grammar: str) -> str:
+    """The 0.3.x surface: no MOST/LEAST, no EMPTY. The control arm of the
+    spec 0.4.0 step-0b A/B (`run_a.py --no-stdlib`)."""
+    out = grammar.replace(" | mostin", "")
+    out = out.replace('(operand " " cmp " " operand | "EMPTY " reg)',
+                      'operand " " cmp " " operand')
+    return out
+
+
 def grammar_for_task(task: dict, base: Optional[str] = None,
-                     typed: bool = False) -> str:
+                     typed: bool = False, stdlib: bool = True) -> str:
     """`task` as the suites store it: task['context'] holds the symbol table.
-    `typed` adds the per-tool typed-slot CALL rules (PLAN.md §5 C4)."""
+    `typed` adds the per-tool typed-slot CALL rules (PLAN.md §5 C4);
+    `stdlib=False` removes the 0.4.0 instructions (MOST/LEAST/EMPTY)."""
     ctx = task["context"]
     out = grammar_for_symbols(
         [t["sym"] for t in ctx.get("tools", [])],
@@ -121,6 +131,8 @@ def grammar_for_task(task: dict, base: Optional[str] = None,
     if typed:
         call_rhs, extra = typed_call_rules(task)
         out = _replace_rules(out, {"call": call_rhs}) + "\n" + extra
+    if not stdlib:
+        out = without_stdlib(out)
     return out
 
 

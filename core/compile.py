@@ -10,8 +10,8 @@ rt.select, rt.first, rt.isToolError.
 """
 from __future__ import annotations
 
-from .ir import (Abort, Format, Call, Const, Count, Filter, First, Foreach, Get, If, IntLit,
-                 Let, MapF, Now, Null, Parallel, Pause, Pred, Program, Reg,
+from .ir import (EMPTY, Abort, Format, Call, Const, Count, Filter, First, Foreach, Get, If, IntLit,
+                 Let, MapF, Most, Now, Null, Parallel, Pause, Pred, Program, Reg,
                  RegField, Return, Select, SetF, Sort, Stop, TaskContext, Try)
 
 
@@ -24,10 +24,11 @@ def _collect_regs(body: list, regs: set):
         for cl in p.clauses:
             if not isinstance(cl.left, str):
                 op_regs(cl.left)
-            op_regs(cl.right)
+            if cl.right is not None:
+                op_regs(cl.right)
 
     for instr in body:
-        for attr in ("dst", "src", "var"):
+        for attr in ("dst", "src", "var", "cands"):
             v = getattr(instr, attr, None)
             if isinstance(v, Reg):
                 regs.add(v.n)
@@ -95,7 +96,10 @@ class _Emitter:
                 left = f'rt.fld({elem}, "{cl.left}")'
             else:
                 left = self.operand(cl.left)
-            e = f'rt.cmp("{cl.cmp}", {left}, {self.operand(cl.right)})'
+            if cl.cmp == EMPTY:
+                e = f"rt.empty({left})"
+            else:
+                e = f'rt.cmp("{cl.cmp}", {left}, {self.operand(cl.right)})'
             if cl.neg:
                 e = f"!{e}"
             if i > 0:
@@ -144,6 +148,10 @@ class _Emitter:
             self.out(depth, f"{self._assign(instr.dst)}rt.count(r{instr.src.n});")
         elif isinstance(instr, Sort):
             self.out(depth, f'{self._assign(instr.dst)}rt.sortBy(r{instr.src.n}, "{instr.field}", "{instr.dir}");')
+        elif isinstance(instr, Most):
+            cands = f"r{instr.cands.n}" if instr.cands is not None else "null"
+            sign = -1 if instr.least else 1
+            self.out(depth, f'{self._assign(instr.dst)}rt.extremeBy(r{instr.src.n}, "{instr.field}", {cands}, {sign});')
         elif isinstance(instr, Select):
             self.out(depth, f"{self._assign(instr.dst)}rt.select(r{instr.src.n}, {self.operand(instr.idx)});")
         elif isinstance(instr, First):

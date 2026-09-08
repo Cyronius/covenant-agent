@@ -10,10 +10,10 @@ import re
 from typing import List, Optional, Tuple
 
 from . import diagnostics as dg
-from .ir import (ABORT_MAX_REFS, ABORT_REASONS, CMPS, EFFECTS, NUM_REGISTERS, Abort, Call,
+from .ir import (ABORT_MAX_REFS, ABORT_REASONS, CMPS, EFFECTS, EMPTY, NUM_REGISTERS, Abort, Call,
                  Clause, Const, Count,
                  Filter, First, Foreach, Format, Get, If, IntLit, Let, MapF,
-                 Now, Null,
+                 Most, Now, Null,
                  Parallel, Pause, Pred, Program, Reg, RegField, Return, Select,
                  SetF, Sort, Stop, Try)
 
@@ -85,6 +85,19 @@ def _parse_pred(toks: List[str], line: int, field_left: bool) -> Pred:
             i += 1
         if i >= len(toks):
             raise _ParseFail(dg.parse_error(line, "expected comparison clause"))
+        if not field_left and toks[i] == EMPTY:
+            # unary: [NOT] EMPTY rN
+            if i + 1 >= len(toks):
+                raise _ParseFail(dg.parse_error(line, "EMPTY takes a register"))
+            clauses.append(Clause(neg, _reg(toks[i + 1], line), EMPTY, None))
+            i += 2
+            if i == len(toks):
+                return Pred(tuple(clauses), tuple(ops))
+            if toks[i] not in ("AND", "OR"):
+                raise _ParseFail(dg.parse_error(line, f"expected AND/OR, got {toks[i]!r}"))
+            ops.append(toks[i])
+            i += 1
+            continue
         left = _field(toks[i], line) if field_left else _operand(toks[i], line)
         i += 1
         if i >= len(toks) or toks[i] not in CMPS:
@@ -157,6 +170,13 @@ def _parse_instr(toks: List[str], line: int):
         if len(rest) != 1:
             raise _ParseFail(dg.parse_error(line, "COUNT takes rN"))
         return Count(_reg(rest[0], line), dst, line=line)
+    if op in ("MOST", "LEAST"):
+        rest, dst = _arrow_dst(rest, line)
+        if len(rest) not in (2, 3):
+            raise _ParseFail(dg.parse_error(line, f"{op} takes rN Fk [rM]"))
+        cands = _reg(rest[2], line) if len(rest) == 3 else None
+        return Most(_reg(rest[0], line), _field(rest[1], line), cands, dst,
+                    least=(op == "LEAST"), line=line)
     if op == "SORT":
         rest, dst = _arrow_dst(rest, line)
         if len(rest) != 3 or rest[2] not in ("ASC", "DESC"):

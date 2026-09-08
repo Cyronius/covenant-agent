@@ -321,16 +321,59 @@ function main(input) {
       budget();
       a = narrowId(a);
       b = narrowId(b);
+      // spec 0.4.0 §4: STR comparison is case-folded and trimmed. The
+      // model never chooses this, so it cannot get it wrong; "cyrus"
+      // finds "Cyrus" and the NOT_FOUND path stops depending on the
+      // user's shift key. Ids and enum values are canonical already.
+      const norm = (v) => (typeof v === "string" ? v.trim().toLowerCase() : v);
       switch (op) {
-        case "EQ": return a === b;
+        case "EQ":
+          if (typeof a === "string" && typeof b === "string") return norm(a) === norm(b);
+          return a === b;
         case "LT": return a < b;
         case "GT": return a > b;
         case "CONTAINS":
-          if (typeof a === "string") return a.includes(String(b));
+          if (typeof a === "string") return norm(a).includes(norm(String(b)));
           if (Array.isArray(a)) return a.map(narrowId).includes(b);
           return false;
         default: throw new Error(`bad cmp ${op}`);
       }
+    },
+    // spec 0.4.0 §4 EMPTY: an empty list or NULL
+    empty(v) {
+      budget();
+      return v === null || v === undefined || (Array.isArray(v) && v.length === 0);
+    },
+    // spec 0.4.0 §4 MOST / LEAST (sign +1 / -1): the value of `sym` shared
+    // by the most / fewest elements of `list`. With `cands`, the keys are
+    // the candidates' ids (in candidate order, zeros included) and elements
+    // keyed elsewhere are ignored; without, keys are the values present in
+    // element order. Ties go to the first key seen. NULL when no keys.
+    extremeBy(list, sym, cands, sign) {
+      budget();
+      const f = fieldsBySym.get(sym);
+      if (!f) throw new Error(`unknown field ${sym}`);
+      const counts = new Map();
+      if (Array.isArray(cands)) {
+        for (const c of cands) counts.set(narrowId(c), 0);
+      }
+      for (const x of list) {
+        const k = narrowId(x[f.name] === undefined ? null : x[f.name]);
+        if (Array.isArray(cands)) {
+          if (counts.has(k)) counts.set(k, counts.get(k) + 1);
+        } else {
+          counts.set(k, (counts.get(k) || 0) + 1);
+        }
+      }
+      let best = null;
+      let bestN = null;
+      for (const [k, n] of counts) {
+        if (bestN === null || (sign > 0 ? n > bestN : n < bestN)) {
+          best = k;
+          bestN = n;
+        }
+      }
+      return best;
     },
     mapF(list, sym) {
       budget();

@@ -69,8 +69,9 @@ class GrammarCache:
     §S3). `none` is the unconstrained arm.
     """
 
-    def __init__(self, mode: str, base_path: Path):
+    def __init__(self, mode: str, base_path: Path, stdlib: bool = True):
         self.mode = mode
+        self.stdlib = stdlib
         self.base = base_path.read_text() if mode != "none" else None
         self._cache: dict = {}
         self._static = None
@@ -94,7 +95,8 @@ class GrammarCache:
                else task_grammar.symbol_signature(task))
         if key not in self._cache:
             self._cache[key] = LlamaGrammar.from_string(
-                task_grammar.grammar_for_task(task, self.base, typed=typed),
+                task_grammar.grammar_for_task(task, self.base, typed=typed,
+                                              stdlib=self.stdlib),
                 verbose=False)
         return self._cache[key]
 
@@ -105,11 +107,14 @@ CALL Tn args -> r        call tool Tn (args: registers, rX.Fn, Cn, NOW)
 FILTER r pred -> r       keep list elements matching pred, e.g. F3 EQ C0 AND NOT F5 LT NOW
 SORT r Fn ASC|DESC -> r  sort list by field
 SELECT r i -> r          i-th element (0-based); FIRST r -> r; COUNT r -> r; MAP r Fn -> r
+MOST r Fn [rc] -> r      the Fn value shared by the most elements of r (LEAST: fewest);
+                         rc, optional: the list of candidates whose ids are counted, zeros included
 GET r.Fn -> r            extract field
 FORMAT Ct args -> r      fill template constant Ct (slots {0} {1} ...) with values -> STR
 LET x -> r               bind value
 FOREACH r -> rElem       loop over list, body indented below
-IF cond / ELSE           branch, bodies indented; cond compares operands, e.g. r0 EQ C1
+IF cond / ELSE           branch, bodies indented; cond compares operands, e.g. r0 EQ C1,
+                         or tests a list: IF EMPTY r1 / IF NOT EMPTY r1
 PARALLEL                 body: CALL lines only, run concurrently
 TRY [RETRY n] -> r       run body, catch tool errors; r gets OK or error code
 STOP | RETURN x | PAUSE  end program (PAUSE = report back; a continuation follows later)
@@ -145,6 +150,23 @@ FOREACH r1 -> r2
 STOP
 
 Output ONLY the program, nothing else."""
+
+# spec 0.4.0 step-0b control (`--no-stdlib`): the 0.3.x prompt, without the
+# MOST/LEAST and EMPTY lines, paired with the grammar that cannot decode them.
+_STDLIB_LINES = ("MOST r Fn [rc] -> r", "                         rc, optional",
+                 "                         or tests a list: IF EMPTY")
+
+
+def system_without_stdlib(system: str) -> str:
+    out = []
+    for line in system.split("\n"):
+        if any(line.startswith(p) for p in _STDLIB_LINES):
+            continue
+        if line.startswith("IF cond / ELSE"):
+            line = line.rstrip(",")
+        out.append(line)
+    return "\n".join(out)
+
 
 # reactive-execution.md §2: observe-then-decide. Appended to SYSTEM under
 # --reactive-prompt; both arms of a reactive comparison carry it, so the
@@ -376,6 +398,9 @@ def main():
     ap.add_argument("--reactive-prompt", action="store_true",
                     help="append the observe-then-decide paragraph to the "
                          "SYSTEM prompt (when to PAUSE, what comes back)")
+    ap.add_argument("--no-stdlib", action="store_true",
+                    help="spec 0.4.0 step-0b control: the 0.3.x prompt and "
+                         "grammar, without MOST/LEAST/EMPTY")
     ap.add_argument("--think", type=int, default=0, metavar="N",
                     help="ladder rung 1: up to N tokens of free reasoning "
                          "in the model's <think> block before the "
@@ -402,12 +427,13 @@ def main():
 
     from llama_cpp import Llama
     grammars = GrammarCache("none" if args.no_grammar else args.grammar_mode,
-                            Path(args.grammar))
+                            Path(args.grammar), stdlib=not args.no_stdlib)
     llm = Llama(model_path=args.model, n_ctx=args.ctx,
                 n_threads=args.threads, verbose=False,
                 n_gpu_layers=args.gpu_layers,
                 lora_path=args.lora, lora_scale=args.lora_scale)
-    system = SYSTEM + (REACTIVE if args.reactive_prompt else "")
+    system = (system_without_stdlib(SYSTEM) if args.no_stdlib else SYSTEM) + (
+        REACTIVE if args.reactive_prompt else "")
     max_segments = args.max_segments or (5 if args.react else 3)
 
     tasks = load_tasks(Path(args.tasks))
@@ -446,7 +472,8 @@ def main():
                 f"+K2repair{args.repair}" if args.repair else "") + (
                 "+K3prompt" if args.reactive_prompt else "") + (
                 "+K3react" if args.react else "") + (
-                f"+think{args.think}" if args.think else "")
+                f"+think{args.think}" if args.think else "") + (
+                "-stdlib" if args.no_stdlib else "")
             row["repair_rounds"] = sum(repairs)
             row["model"] = Path(args.model).name
             row["template"] = args.template

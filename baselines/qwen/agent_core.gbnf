@@ -33,7 +33,7 @@ sym       ::= tool | field | const
 indent    ::= "  " | "    " | "      " | "        "
 nl        ::= "\n"
 
-instr     ::= let | get | set | call | formatin | filterin | mapin | countin | sortin | selectin | firstin | foreachin | ifin | "ELSE" | "PARALLEL" | tryin
+instr     ::= let | get | set | call | formatin | filterin | mapin | countin | sortin | mostin | selectin | firstin | foreachin | ifin | "ELSE" | "PARALLEL" | tryin
 
 let       ::= "LET " operand arrow
 get       ::= "GET " reg "." field arrow
@@ -44,6 +44,8 @@ filterin  ::= "FILTER " reg " " pred arrow
 mapin     ::= "MAP " reg " " field arrow
 countin   ::= "COUNT " reg arrow
 sortin    ::= "SORT " reg " " field " " ("ASC" | "DESC") arrow
+# spec 0.4.0 §4: MOST / LEAST with an optional candidate list
+mostin    ::= ("MOST " | "LEAST ") reg " " field (" " reg)? arrow
 selectin  ::= "SELECT " reg " " operand arrow
 firstin   ::= "FIRST " reg arrow
 foreachin ::= "FOREACH " reg arrow
@@ -55,7 +57,7 @@ arrow     ::= " -> " reg
 pred      ::= clause ((" AND " | " OR ") clause)*
 clause    ::= ("NOT ")? field " " cmp " " operand
 cond      ::= ccl ((" AND " | " OR ") ccl)*
-ccl       ::= ("NOT ")? operand " " cmp " " operand
+ccl       ::= ("NOT ")? (operand " " cmp " " operand | "EMPTY " reg)
 cmp       ::= "EQ" | "LT" | "GT" | "CONTAINS"
 
 operand   ::= regfield | reg | const | "NOW" | "NULL" | num
