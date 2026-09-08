@@ -1,0 +1,21 @@
+done 0shot _smoke8b_known: "compile_ok_rate":0.0,"goal_success_rate":0.0,"parse_ok_rate":0.42857142857142855,"gen_ms_p50":3672.189889010042,
+done 0shot _smoke8b_demo: "compile_ok_rate":0.0,"goal_success_rate":0.0,"parse_ok_rate":0.7,"gen_ms_p50":948.0715245008469,
+done 0shot _smoke8b_crowded: "compile_ok_rate":0.0,"goal_success_rate":0.0,"parse_ok_rate":0.375,"gen_ms_p50":4728.017800021917,
+done 4shot _smoke8b_known: "compile_ok_rate":0.0,"goal_success_rate":0.0,"parse_ok_rate":0.0,"gen_ms_p50":3956.020090961829,
+done 4shot _smoke8b_demo: "compile_ok_rate":0.0,"goal_success_rate":0.0,"parse_ok_rate":0.0,"gen_ms_p50":4990.169505501399,
+done 4shot _smoke8b_crowded: "compile_ok_rate":0.0,"goal_success_rate":0.0,"parse_ok_rate":0.0,"gen_ms_p50":5410.794968513073,
+done think _smoke8b_known: "compile_ok_rate":0.0,"goal_success_rate":0.0,"parse_ok_rate":0.14285714285714285,"gen_ms_p50":5551.815059967339,
+done think _smoke8b_demo: "compile_ok_rate":0.0,"goal_success_rate":0.0,"parse_ok_rate":0.2,"gen_ms_p50":5485.156482522143,
+done think _smoke8b_crowded: "compile_ok_rate":0.0,"goal_success_rate":0.0,"parse_ok_rate":0.5,"gen_ms_p50":5890.631846996257,
+=== smoke_minicpm5 minicpm5-1b-q4 done ===
+done 0shot _smoke8b_known: "compile_ok_rate":0.14285714285714285,"goal_success_rate":0.14285714285714285,"parse_ok_rate":0.2857142857142857,"gen_ms_p50":3910.655400948599,
+done 0shot _smoke8b_demo: "compile_ok_rate":0.3,"goal_success_rate":0.2,"parse_ok_rate":0.6,"gen_ms_p50":1695.13175348402,
+done 0shot _smoke8b_crowded: "compile_ok_rate":0.125,"goal_success_rate":0.0,"parse_ok_rate":0.75,"gen_ms_p50":2307.2238445165567,
+done 4shot _smoke8b_known: "compile_ok_rate":0.0,"goal_success_rate":0.0,"parse_ok_rate":0.5714285714285714,"gen_ms_p50":2041.6466839960776,
+done 4shot _smoke8b_demo: "compile_ok_rate":0.2,"goal_success_rate":0.2,"parse_ok_rate":0.9,"gen_ms_p50":1604.3273589748424,
+done 4shot _smoke8b_crowded: "compile_ok_rate":0.25,"goal_success_rate":0.125,"parse_ok_rate":1.0,"gen_ms_p50":1884.3982469988987,
+done think _smoke8b_known: "compile_ok_rate":0.2857142857142857,"goal_success_rate":0.14285714285714285,"parse_ok_rate":0.42857142857142855,"gen_ms_p50":4732.369598990772,
+done think _smoke8b_demo: "compile_ok_rate":0.5,"goal_success_rate":0.4,"parse_ok_rate":0.8,"gen_ms_p50":2630.5763109994587,
+done think _smoke8b_crowded: "compile_ok_rate":0.125,"goal_success_rate":0.125,"parse_ok_rate":0.625,"gen_ms_p50":4709.536189504433,
+=== smoke_minicpm5 minicpm5-2b-q4 done ===
+=== smoke_both done ===

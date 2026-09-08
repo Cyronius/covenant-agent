@@ -1,0 +1,45 @@
+{
+  "model": "MiniCPM5-2B-Q4_K_M.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar-task",
+  "n": 8,
+  "compile_ok_rate": 0.25,
+  "goal_success_rate": 0.125,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "1": {
+      "n": 3,
+      "compile": 0,
+      "goal": 0
+    },
+    "4": {
+      "n": 1,
+      "compile": 1,
+      "goal": 0
+    },
+    "6": {
+      "n": 1,
+      "compile": 0,
+      "goal": 0
+    },
+    "9": {
+      "n": 1,
+      "compile": 0,
+      "goal": 0
+    },
+    "10": {
+      "n": 2,
+      "compile": 1,
+      "goal": 1
+    }
+  },
+  "gen_ms_p50": 1884.3982469988987,
+  "gen_ms_p95": 2349.201812990941,
+  "tokens_out_p50": 45.5,
+  "pauses_mean": 0.0,
+  "pauses_p95": 0,
+  "error_turns_total": 0,
+  "tasks_with_pause": 0,
+  "tasks_with_error_turn": 0
+}
