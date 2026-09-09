@@ -1,0 +1,32 @@
+llama_kv_cache: the V embeddings have different sizes across layers and FA is not enabled - padding V cache to 512
+20/234 goal=12 compile=18 (4.1s/task)
+40/234 goal=20 compile=35 (4.3s/task)
+60/234 goal=32 compile=51 (4.5s/task)
+80/234 goal=46 compile=70 (4.6s/task)
+100/234 goal=57 compile=88 (4.6s/task)
+120/234 goal=67 compile=104 (4.7s/task)
+140/234 goal=78 compile=117 (4.7s/task)
+160/234 goal=91 compile=134 (4.7s/task)
+180/234 goal=97 compile=143 (4.7s/task)
+200/234 goal=107 compile=160 (4.7s/task)
+220/234 goal=120 compile=176 (4.7s/task)
+{
+  "model": "lfm2.5-350m-s3-q8.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar",
+  "n": 234,
+  "compile_ok_rate": 0.8034188034188035,
+  "goal_success_rate": 0.5470085470085471,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 234,
+      "compile": 188,
+      "goal": 128
+    }
+  },
+  "gen_ms_p50": 4671.839849999742,
+  "gen_ms_p95": 5218.936900000699,
+  "tokens_out_p50": 12.0
+}

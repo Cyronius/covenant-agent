@@ -1,0 +1,6 @@
+done e_demo_requests:   "goal": 0     },     "13": {       "n": 5,       "compile": 5,       "goal": 0     }   },   "gen_ms_p50": 6698.549599997932,   "gen_ms_p95": 12440.617400003248,   "tokens_out_p50": 13 } 
+done e_ood_english: "goal": 8     },     "10": {       "n": 9,       "compile": 9,       "goal": 9     }   },   "gen_ms_p50": 6830.880549998255,   "gen_ms_p95": 12041.825899999822,   "tokens_out_p50": 46.0 } 
+done e_crowded: l": 7     },     "10": {       "n": 14,       "compile": 13,       "goal": 12     }   },   "gen_ms_p50": 17558.312599998317,   "gen_ms_p95": 23827.346100006253,   "tokens_out_p50": 50.0 } 
+done e_foreign: al": 16     },     "10": {       "n": 24,       "compile": 24,       "goal": 23     }   },   "gen_ms_p50": 4610.1711000010255,   "gen_ms_p95": 8318.45209999301,   "tokens_out_p50": 47.0 } 
+done r1_tasks: al": 48     },     "10": {       "n": 48,       "compile": 48,       "goal": 47     }   },   "gen_ms_p50": 4635.170349982218,   "gen_ms_p95": 6811.329700023634,   "tokens_out_p50": 47.0 } 
+=== eval_esuites done ===

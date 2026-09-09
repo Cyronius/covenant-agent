@@ -1,0 +1,30 @@
+     30000 data/s4_plain.jsonl
+     26000 data/s4_crowded.jsonl
+     56000 data/s4_tasks.jsonl
+    112000 total
+wrote 56000 seg0 + 2792 continuation examples (0 continuation skips) -> data/sft_s4_gen.jsonl
+pool 1310 -> eligible 1037 -> verified 900 -> data\real_train_tasks_s4.jsonl
+  kept by routing: {'generative': 107, 'knowledge': 150, 'none': 242, 'read': 85, 'write': 316}
+  abstains: 242
+  dropped   259  not strict-clean
+  dropped   118  no type-valid binding
+  dropped    18  no mapped tool
+  dropped    14  request text also in eval
+  dropped     1  target did not score
+wrote 900 seg0 + 0 continuation examples (0 continuation skips) -> data/sft_real_train_s4.jsonl
+62841 rows -> data\sft_s4.jsonl
+   58792 (93.6%)  data/sft_s4_gen.jsonl  [58792 rows, x1]
+    1349 ( 2.1%)  data/open_pairs/b3_draw.jsonl  [1349 rows, x1]
+    2700 ( 4.3%)  data/sft_real_train_s4.jsonl  [900 rows, x3]
+level mix: [(0, 2808), (1, 2808), (2, 2808), (3, 2808), (4, 2808), (5, 2800), (6, 2800), (7, 2800), (8, 2792), (9, 2792), (10, 2792), (11, 2792), (12, 3192), (13, 3192), (14, 3192), (15, 3192), (16, 3192), (17, 3192), (18, 3240)]
+crowded: 26000 | abort: 5984 | worlds: 104
+argmax/argmin: 1101 923
+MOST: 1101 | LEAST: 923 | EMPTY: 4141 | old count-loop: 0
+ABORT targets: 4513 of 62841
+tokens/row (all 62841): p50 2126 p95 5617 max 6946
+TRAIN_CAP=7168
+keep-set: 22429 -> 22516 (+87) -> data/s4_used_token_ids.json
+
+Upload to the pod: data/sft_s4.jsonl data/s4_used_token_ids.json data/s4_train_cap.txt
+  plus baselines/qwen/{train_b.py,prune_vocab.py,convert_pruned.py} results/logs/train_s4.sh
+=== gen_s4 (typed) done ===

@@ -1,0 +1,40 @@
+{
+  "model": "qwen36-27b-a2.8b-mtp-iq3exp-q4head.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar-task",
+  "n": 8,
+  "compile_ok_rate": 0.0,
+  "goal_success_rate": 0.0,
+  "parse_ok_rate": 0.875,
+  "by_level": {
+    "1": {
+      "n": 3,
+      "compile": 0,
+      "goal": 0
+    },
+    "4": {
+      "n": 1,
+      "compile": 0,
+      "goal": 0
+    },
+    "6": {
+      "n": 1,
+      "compile": 0,
+      "goal": 0
+    },
+    "9": {
+      "n": 1,
+      "compile": 0,
+      "goal": 0
+    },
+    "10": {
+      "n": 2,
+      "compile": 0,
+      "goal": 0
+    }
+  },
+  "gen_ms_p50": 98543.3751999999,
+  "gen_ms_p95": 119305.2588999999,
+  "tokens_out_p50": 153.5
+}

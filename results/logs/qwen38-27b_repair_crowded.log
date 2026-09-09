@@ -1,0 +1,25 @@
+{
+  "model": "Qwen3.8-27B-UD-IQ3_S.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar-task+K2repair2",
+  "n": 3,
+  "compile_ok_rate": 0.3333333333333333,
+  "goal_success_rate": 0.3333333333333333,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "1": {
+      "n": 1,
+      "compile": 1,
+      "goal": 1
+    },
+    "10": {
+      "n": 2,
+      "compile": 0,
+      "goal": 0
+    }
+  },
+  "gen_ms_p50": 2990049.1420000037,
+  "gen_ms_p95": 3630309.413199997,
+  "tokens_out_p50": 110
+}

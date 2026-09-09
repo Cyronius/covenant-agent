@@ -1,0 +1,96 @@
+llama_kv_cache: the V embeddings have different sizes across layers and FA is not enabled - padding V cache to 512
+20/500 goal=19 compile=19 (3.5s/task)
+40/500 goal=36 compile=37 (3.3s/task)
+60/500 goal=55 compile=56 (3.3s/task)
+80/500 goal=74 compile=76 (3.1s/task)
+100/500 goal=94 compile=96 (3.1s/task)
+120/500 goal=112 compile=115 (3.0s/task)
+140/500 goal=130 compile=134 (3.0s/task)
+160/500 goal=149 compile=154 (3.0s/task)
+180/500 goal=169 compile=174 (3.0s/task)
+200/500 goal=189 compile=194 (3.0s/task)
+220/500 goal=204 compile=211 (2.9s/task)
+240/500 goal=222 compile=230 (2.9s/task)
+260/500 goal=240 compile=250 (2.9s/task)
+280/500 goal=259 compile=269 (2.9s/task)
+300/500 goal=278 compile=288 (2.9s/task)
+320/500 goal=296 compile=307 (2.9s/task)
+340/500 goal=315 compile=327 (2.9s/task)
+360/500 goal=334 compile=347 (2.9s/task)
+380/500 goal=354 compile=367 (2.9s/task)
+400/500 goal=373 compile=387 (2.9s/task)
+420/500 goal=393 compile=407 (2.8s/task)
+440/500 goal=411 compile=427 (2.8s/task)
+460/500 goal=429 compile=447 (2.8s/task)
+480/500 goal=449 compile=467 (2.8s/task)
+500/500 goal=469 compile=487 (2.8s/task)
+{
+  "model": "lfm2.5-350m-s3-q8.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar",
+  "n": 500,
+  "compile_ok_rate": 0.974,
+  "goal_success_rate": 0.938,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 24,
+      "compile": 24,
+      "goal": 24
+    },
+    "1": {
+      "n": 24,
+      "compile": 23,
+      "goal": 23
+    },
+    "2": {
+      "n": 58,
+      "compile": 56,
+      "goal": 53
+    },
+    "3": {
+      "n": 58,
+      "compile": 56,
+      "goal": 51
+    },
+    "4": {
+      "n": 58,
+      "compile": 58,
+      "goal": 57
+    },
+    "5": {
+      "n": 58,
+      "compile": 57,
+      "goal": 57
+    },
+    "6": {
+      "n": 58,
+      "compile": 54,
+      "goal": 53
+    },
+    "7": {
+      "n": 57,
+      "compile": 56,
+      "goal": 56
+    },
+    "8": {
+      "n": 57,
+      "compile": 57,
+      "goal": 57
+    },
+    "9": {
+      "n": 24,
+      "compile": 22,
+      "goal": 15
+    },
+    "10": {
+      "n": 24,
+      "compile": 24,
+      "goal": 23
+    }
+  },
+  "gen_ms_p50": 2613.6735499994757,
+  "gen_ms_p95": 4439.308900000469,
+  "tokens_out_p50": 54.0
+}

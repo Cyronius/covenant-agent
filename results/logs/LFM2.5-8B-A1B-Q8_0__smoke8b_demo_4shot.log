@@ -1,0 +1,46 @@
+llama_kv_cache: the V embeddings have different sizes across layers and FA is not enabled - padding V cache to 512
+{
+  "model": "LFM2.5-8B-A1B-Q8_0.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar-task",
+  "n": 10,
+  "compile_ok_rate": 0.0,
+  "goal_success_rate": 0.0,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 2,
+      "compile": 0,
+      "goal": 0
+    },
+    "1": {
+      "n": 2,
+      "compile": 0,
+      "goal": 0
+    },
+    "3": {
+      "n": 1,
+      "compile": 0,
+      "goal": 0
+    },
+    "11": {
+      "n": 1,
+      "compile": 0,
+      "goal": 0
+    },
+    "12": {
+      "n": 2,
+      "compile": 0,
+      "goal": 0
+    },
+    "13": {
+      "n": 2,
+      "compile": 0,
+      "goal": 0
+    }
+  },
+  "gen_ms_p50": 28658.976800000346,
+  "gen_ms_p95": 31213.63779999956,
+  "tokens_out_p50": 55.0
+}

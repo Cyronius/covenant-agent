@@ -1,0 +1,95 @@
+20/500 goal=20 compile=20 (6.4s/task)
+40/500 goal=39 compile=40 (5.5s/task)
+60/500 goal=59 compile=60 (5.5s/task)
+80/500 goal=78 compile=80 (5.3s/task)
+100/500 goal=98 compile=100 (5.2s/task)
+120/500 goal=116 compile=120 (5.2s/task)
+140/500 goal=136 compile=140 (5.2s/task)
+160/500 goal=155 compile=160 (5.2s/task)
+180/500 goal=175 compile=180 (5.2s/task)
+200/500 goal=195 compile=200 (5.2s/task)
+220/500 goal=215 compile=220 (5.2s/task)
+240/500 goal=234 compile=240 (5.1s/task)
+260/500 goal=252 compile=260 (5.1s/task)
+280/500 goal=271 compile=280 (5.1s/task)
+300/500 goal=291 compile=300 (5.1s/task)
+320/500 goal=311 compile=320 (5.1s/task)
+340/500 goal=329 compile=340 (5.1s/task)
+360/500 goal=349 compile=360 (5.1s/task)
+380/500 goal=368 compile=380 (5.1s/task)
+400/500 goal=388 compile=400 (5.1s/task)
+420/500 goal=407 compile=420 (5.0s/task)
+440/500 goal=425 compile=440 (5.0s/task)
+460/500 goal=445 compile=460 (5.0s/task)
+480/500 goal=465 compile=480 (5.0s/task)
+500/500 goal=484 compile=500 (5.0s/task)
+{
+  "model": "qwen3.5-0.8b-s2r-pruned-q8.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar",
+  "n": 500,
+  "compile_ok_rate": 1.0,
+  "goal_success_rate": 0.968,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 24,
+      "compile": 24,
+      "goal": 24
+    },
+    "1": {
+      "n": 24,
+      "compile": 24,
+      "goal": 24
+    },
+    "2": {
+      "n": 58,
+      "compile": 58,
+      "goal": 57
+    },
+    "3": {
+      "n": 58,
+      "compile": 58,
+      "goal": 54
+    },
+    "4": {
+      "n": 58,
+      "compile": 58,
+      "goal": 57
+    },
+    "5": {
+      "n": 58,
+      "compile": 58,
+      "goal": 58
+    },
+    "6": {
+      "n": 58,
+      "compile": 58,
+      "goal": 57
+    },
+    "7": {
+      "n": 57,
+      "compile": 57,
+      "goal": 57
+    },
+    "8": {
+      "n": 57,
+      "compile": 57,
+      "goal": 57
+    },
+    "9": {
+      "n": 24,
+      "compile": 24,
+      "goal": 16
+    },
+    "10": {
+      "n": 24,
+      "compile": 24,
+      "goal": 23
+    }
+  },
+  "gen_ms_p50": 4610.1711000010255,
+  "gen_ms_p95": 8318.45209999301,
+  "tokens_out_p50": 47.0
+}

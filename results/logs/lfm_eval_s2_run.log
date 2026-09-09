@@ -1,0 +1,246 @@
+0/234 goal=91 compile=134 (4.7s/task)
+180/234 goal=97 compile=143 (4.7s/task)
+200/234 goal=107 compile=160 (4.7s/task)
+220/234 goal=120 compile=176 (4.7s/task)
+{
+  "model": "lfm2.5-350m-s3-q8.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar",
+  "n": 234,
+  "compile_ok_rate": 0.8034188034188035,
+  "goal_success_rate": 0.5470085470085471,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 234,
+      "compile": 188,
+      "goal": 128
+    }
+  },
+  "gen_ms_p50": 4671.839849999742,
+  "gen_ms_p95": 5218.936900000699,
+  "tokens_out_p50": 12.0
+}
+{
+ "n": 234,
+ "unmapped": 1,
+ "compile_ok": [
+  0.8034188034188035,
+  234
+ ],
+ "route_match": [
+  0.38125,
+  160
+ ],
+ "route_write_match": [
+  0.45,
+  160
+ ],
+ "correct_abstain": [
+  0.7606837606837606,
+  234
+ ],
+ "content_routed": [
+  0.06862745098039216,
+  102
+ ],
+ "unnecessary_destructive_total": 1
+}
+  write      n= 94 compile=0.81 route_write=0.41 abstain=0.85
+  none       n= 73 compile=0.81 route_write=nan abstain=0.49
+  generative n= 30 compile=0.67 route_write=0.33 abstain=1.00
+  read       n= 19 compile=0.79 route_write=0.50 abstain=0.79
+  knowledge  n= 18 compile=1.00 route_write=0.78 abstain=0.94
+,
+      "compile": 7,
+      "goal": 5
+    },
+    "1": {
+      "n": 15,
+      "compile": 10,
+      "goal": 10
+    },
+    "2": {
+      "n": 5,
+      "compile": 0,
+      "goal": 0
+    },
+    "3": {
+      "n": 10,
+      "compile": 10,
+      "goal": 5
+    },
+    "11": {
+      "n": 5,
+      "compile": 0,
+      "goal": 0
+    },
+    "12": {
+      "n": 5,
+      "compile": 0,
+      "goal": 0
+    },
+    "13": {
+      "n": 5,
+      "compile": 5,
+      "goal": 0
+    }
+  },
+  "gen_ms_p50": 2169.1107000006014,
+  "gen_ms_p95": 4369.538700000703,
+  "tokens_out_p50": 22
+}
+ "compile": 19,
+      "goal": 18
+    },
+    "5": {
+      "n": 20,
+      "compile": 18,
+      "goal": 18
+    },
+    "6": {
+      "n": 24,
+      "compile": 18,
+      "goal": 17
+    },
+    "7": {
+      "n": 21,
+      "compile": 20,
+      "goal": 18
+    },
+    "8": {
+      "n": 23,
+      "compile": 22,
+      "goal": 21
+    },
+    "9": {
+      "n": 9,
+      "compile": 7,
+      "goal": 4
+    },
+    "10": {
+      "n": 9,
+      "compile": 9,
+      "goal": 8
+    }
+  },
+  "gen_ms_p50": 2521.514200000638,
+  "gen_ms_p95": 4164.230399999724,
+  "tokens_out_p50": 53.0
+}
+pile": 27,
+      "goal": 25
+    },
+    "5": {
+      "n": 35,
+      "compile": 31,
+      "goal": 31
+    },
+    "6": {
+      "n": 35,
+      "compile": 24,
+      "goal": 24
+    },
+    "7": {
+      "n": 35,
+      "compile": 25,
+      "goal": 24
+    },
+    "8": {
+      "n": 34,
+      "compile": 32,
+      "goal": 30
+    },
+    "9": {
+      "n": 14,
+      "compile": 7,
+      "goal": 5
+    },
+    "10": {
+      "n": 14,
+      "compile": 12,
+      "goal": 12
+    }
+  },
+  "gen_ms_p50": 6969.179800000347,
+  "gen_ms_p95": 10446.291700000074,
+  "tokens_out_p50": 53.0
+}
+le": 58,
+      "goal": 57
+    },
+    "5": {
+      "n": 58,
+      "compile": 57,
+      "goal": 57
+    },
+    "6": {
+      "n": 58,
+      "compile": 54,
+      "goal": 53
+    },
+    "7": {
+      "n": 57,
+      "compile": 56,
+      "goal": 56
+    },
+    "8": {
+      "n": 57,
+      "compile": 57,
+      "goal": 57
+    },
+    "9": {
+      "n": 24,
+      "compile": 22,
+      "goal": 15
+    },
+    "10": {
+      "n": 24,
+      "compile": 24,
+      "goal": 23
+    }
+  },
+  "gen_ms_p50": 2613.6735499994757,
+  "gen_ms_p95": 4439.308900000469,
+  "tokens_out_p50": 54.0
+}
+
+      "goal": 108
+    },
+    "5": {
+      "n": 115,
+      "compile": 115,
+      "goal": 115
+    },
+    "6": {
+      "n": 115,
+      "compile": 87,
+      "goal": 79
+    },
+    "7": {
+      "n": 115,
+      "compile": 113,
+      "goal": 110
+    },
+    "8": {
+      "n": 115,
+      "compile": 114,
+      "goal": 106
+    },
+    "9": {
+      "n": 48,
+      "compile": 47,
+      "goal": 47
+    },
+    "10": {
+      "n": 48,
+      "compile": 47,
+      "goal": 46
+    }
+  },
+  "gen_ms_p50": 2546.45999999957,
+  "gen_ms_p95": 4314.446000000316,
+  "tokens_out_p50": 54.0
+}
+=== eval_s2 done ===

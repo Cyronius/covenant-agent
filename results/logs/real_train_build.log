@@ -1,0 +1,8 @@
+pool 1310 -> eligible 1037 -> verified 900 -> data\real_train_tasks.jsonl
+  kept by routing: {'generative': 107, 'knowledge': 150, 'none': 242, 'read': 85, 'write': 316}
+  abstains: 242
+  dropped   259  not strict-clean
+  dropped   118  no type-valid binding
+  dropped    18  no mapped tool
+  dropped    14  request text also in eval
+  dropped     1  target did not score

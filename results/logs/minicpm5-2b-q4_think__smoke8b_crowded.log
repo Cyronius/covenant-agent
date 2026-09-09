@@ -4,7 +4,7 @@
   "lora_scale": null,
   "condition": "A-grammar-task+think512",
   "n": 8,
-  "compile_ok_rate": 0.125,
+  "compile_ok_rate": 0.25,
   "goal_success_rate": 0.125,
   "parse_ok_rate": 0.625,
   "by_level": {
@@ -25,7 +25,7 @@
     },
     "9": {
       "n": 1,
-      "compile": 0,
+      "compile": 1,
       "goal": 0
     },
     "10": {
@@ -34,9 +34,9 @@
       "goal": 1
     }
   },
-  "gen_ms_p50": 4709.536189504433,
-  "gen_ms_p95": 9427.85381799331,
-  "tokens_out_p50": 572.5,
+  "gen_ms_p50": 100654.71064999292,
+  "gen_ms_p95": 126064.94700000621,
+  "tokens_out_p50": 561.5,
   "pauses_mean": 0.0,
   "pauses_p95": 0,
   "error_turns_total": 0,

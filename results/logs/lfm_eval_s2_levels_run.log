@@ -1,0 +1,8 @@
+registered 143 generated domains
+200/240 (resamples: 4, noops dropped: 0)
+wrote 240 tasks -> data\holdout\e_s2_levels.jsonl (resamples: 6, noops dropped: 0)
+n=240
+  should abstain  60  aborted  60
+  should act     180  goal    180  false-abstains 0
+  reasons: {'UNSUPPORTED': 12, 'NOT_FOUND': 30, 'AMBIGUOUS': 14, 'NEEDS_INFO': 4}
+=== eval_s2_levels done ===

@@ -1,0 +1,10 @@
+done 0shot _smoke8b_known: "compile_ok_rate":0.14285714285714285,"goal_success_rate":0.0,"parse_ok_rate":0.2857142857142857,"gen_ms_p50":13021.115600015037,
+done 0shot _smoke8b_demo: "compile_ok_rate":0.2,"goal_success_rate":0.2,"parse_ok_rate":0.6,"gen_ms_p50":14336.389849995612,
+done 0shot _smoke8b_crowded: "compile_ok_rate":0.0,"goal_success_rate":0.0,"parse_ok_rate":0.5,"gen_ms_p50":52606.16095001751,
+done 4shot _smoke8b_known: "compile_ok_rate":0.2857142857142857,"goal_success_rate":0.14285714285714285,"parse_ok_rate":0.7142857142857143,"gen_ms_p50":12638.211600016803,
+done 4shot _smoke8b_demo: "compile_ok_rate":0.2,"goal_success_rate":0.2,"parse_ok_rate":0.9,"gen_ms_p50":12993.43645000772,
+done 4shot _smoke8b_crowded: "compile_ok_rate":0.125,"goal_success_rate":0.125,"parse_ok_rate":1.0,"gen_ms_p50":72343.80570000212,
+done think _smoke8b_known: "compile_ok_rate":0.14285714285714285,"goal_success_rate":0.14285714285714285,"parse_ok_rate":0.14285714285714285,"gen_ms_p50":45161.82919999119,
+done think _smoke8b_demo: "compile_ok_rate":0.4,"goal_success_rate":0.3,"parse_ok_rate":1.0,"gen_ms_p50":35879.390749993036,
+done think _smoke8b_crowded: "compile_ok_rate":0.25,"goal_success_rate":0.125,"parse_ok_rate":0.625,"gen_ms_p50":100654.71064999292,
+results/logs/smoke_minicpm5.sh: line 29: _smoke8b_known: command not found

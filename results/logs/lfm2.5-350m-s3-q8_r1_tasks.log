@@ -1,0 +1,121 @@
+llama_kv_cache: the V embeddings have different sizes across layers and FA is not enabled - padding V cache to 512
+20/1000 goal=20 compile=20 (2.5s/task)
+40/1000 goal=38 compile=38 (2.7s/task)
+60/1000 goal=58 compile=58 (2.6s/task)
+80/1000 goal=76 compile=77 (2.7s/task)
+100/1000 goal=96 compile=97 (2.7s/task)
+120/1000 goal=115 compile=116 (2.7s/task)
+140/1000 goal=134 compile=136 (2.7s/task)
+160/1000 goal=152 compile=154 (2.7s/task)
+180/1000 goal=170 compile=174 (2.7s/task)
+200/1000 goal=189 compile=193 (2.7s/task)
+220/1000 goal=206 compile=213 (2.8s/task)
+240/1000 goal=226 compile=233 (2.8s/task)
+260/1000 goal=246 compile=253 (2.8s/task)
+280/1000 goal=266 compile=273 (2.7s/task)
+300/1000 goal=285 compile=293 (2.7s/task)
+320/1000 goal=301 compile=310 (2.7s/task)
+340/1000 goal=319 compile=328 (2.7s/task)
+360/1000 goal=339 compile=348 (2.7s/task)
+380/1000 goal=357 compile=366 (2.7s/task)
+400/1000 goal=376 compile=386 (2.7s/task)
+420/1000 goal=393 compile=405 (2.7s/task)
+440/1000 goal=412 compile=425 (2.7s/task)
+460/1000 goal=431 compile=444 (2.7s/task)
+480/1000 goal=449 compile=462 (2.7s/task)
+500/1000 goal=467 compile=482 (2.7s/task)
+520/1000 goal=485 compile=501 (2.7s/task)
+540/1000 goal=505 compile=521 (2.7s/task)
+560/1000 goal=524 compile=540 (2.7s/task)
+580/1000 goal=541 compile=560 (2.7s/task)
+600/1000 goal=559 compile=580 (2.7s/task)
+620/1000 goal=575 compile=598 (2.7s/task)
+640/1000 goal=594 compile=617 (2.7s/task)
+660/1000 goal=611 compile=634 (2.7s/task)
+680/1000 goal=628 compile=652 (2.7s/task)
+700/1000 goal=647 compile=671 (2.7s/task)
+720/1000 goal=666 compile=691 (2.7s/task)
+740/1000 goal=683 compile=708 (2.7s/task)
+760/1000 goal=701 compile=726 (2.7s/task)
+780/1000 goal=721 compile=746 (2.7s/task)
+800/1000 goal=741 compile=766 (2.7s/task)
+820/1000 goal=759 compile=786 (2.8s/task)
+840/1000 goal=778 compile=806 (2.8s/task)
+860/1000 goal=797 compile=826 (2.7s/task)
+880/1000 goal=815 compile=845 (2.7s/task)
+900/1000 goal=832 compile=863 (2.7s/task)
+920/1000 goal=851 compile=883 (2.7s/task)
+940/1000 goal=871 compile=903 (2.7s/task)
+960/1000 goal=888 compile=922 (2.7s/task)
+980/1000 goal=907 compile=942 (2.7s/task)
+1000/1000 goal=926 compile=962 (2.7s/task)
+{
+  "model": "lfm2.5-350m-s3-q8.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar",
+  "n": 1000,
+  "compile_ok_rate": 0.962,
+  "goal_success_rate": 0.926,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 48,
+      "compile": 48,
+      "goal": 48
+    },
+    "1": {
+      "n": 48,
+      "compile": 48,
+      "goal": 48
+    },
+    "2": {
+      "n": 116,
+      "compile": 115,
+      "goal": 112
+    },
+    "3": {
+      "n": 116,
+      "compile": 113,
+      "goal": 107
+    },
+    "4": {
+      "n": 116,
+      "compile": 115,
+      "goal": 108
+    },
+    "5": {
+      "n": 115,
+      "compile": 115,
+      "goal": 115
+    },
+    "6": {
+      "n": 115,
+      "compile": 87,
+      "goal": 79
+    },
+    "7": {
+      "n": 115,
+      "compile": 113,
+      "goal": 110
+    },
+    "8": {
+      "n": 115,
+      "compile": 114,
+      "goal": 106
+    },
+    "9": {
+      "n": 48,
+      "compile": 47,
+      "goal": 47
+    },
+    "10": {
+      "n": 48,
+      "compile": 47,
+      "goal": 46
+    }
+  },
+  "gen_ms_p50": 2546.45999999957,
+  "gen_ms_p95": 4314.446000000316,
+  "tokens_out_p50": 54.0
+}

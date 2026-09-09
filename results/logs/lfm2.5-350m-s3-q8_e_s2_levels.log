@@ -1,0 +1,68 @@
+llama_kv_cache: the V embeddings have different sizes across layers and FA is not enabled - padding V cache to 512
+20/240 goal=20 compile=20 (2.5s/task)
+40/240 goal=40 compile=40 (2.6s/task)
+60/240 goal=60 compile=60 (2.6s/task)
+80/240 goal=80 compile=80 (2.6s/task)
+100/240 goal=100 compile=100 (2.6s/task)
+120/240 goal=120 compile=120 (2.6s/task)
+140/240 goal=140 compile=140 (2.6s/task)
+160/240 goal=160 compile=160 (2.6s/task)
+180/240 goal=180 compile=180 (2.6s/task)
+200/240 goal=200 compile=200 (2.6s/task)
+220/240 goal=220 compile=220 (2.6s/task)
+240/240 goal=240 compile=240 (2.6s/task)
+{
+  "model": "lfm2.5-350m-s3-q8.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar",
+  "n": 240,
+  "compile_ok_rate": 1.0,
+  "goal_success_rate": 1.0,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "11": {
+      "n": 30,
+      "compile": 30,
+      "goal": 30
+    },
+    "12": {
+      "n": 30,
+      "compile": 30,
+      "goal": 30
+    },
+    "13": {
+      "n": 30,
+      "compile": 30,
+      "goal": 30
+    },
+    "14": {
+      "n": 30,
+      "compile": 30,
+      "goal": 30
+    },
+    "15": {
+      "n": 30,
+      "compile": 30,
+      "goal": 30
+    },
+    "16": {
+      "n": 30,
+      "compile": 30,
+      "goal": 30
+    },
+    "17": {
+      "n": 30,
+      "compile": 30,
+      "goal": 30
+    },
+    "18": {
+      "n": 30,
+      "compile": 30,
+      "goal": 30
+    }
+  },
+  "gen_ms_p50": 2466.1049000005733,
+  "gen_ms_p95": 3259.1458999995666,
+  "tokens_out_p50": 18.0
+}

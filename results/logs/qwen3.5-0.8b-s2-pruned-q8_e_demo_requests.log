@@ -1,0 +1,51 @@
+20/65 goal=7 compile=7 (9.4s/task)
+40/65 goal=27 compile=27 (7.3s/task)
+60/65 goal=27 compile=32 (7.7s/task)
+{
+  "model": "qwen3.5-0.8b-s2-pruned-q8.gguf",
+  "condition": "A-grammar",
+  "n": 65,
+  "compile_ok_rate": 0.49230769230769234,
+  "goal_success_rate": 0.4153846153846154,
+  "parse_ok_rate": 0.8,
+  "by_level": {
+    "0": {
+      "n": 20,
+      "compile": 7,
+      "goal": 7
+    },
+    "1": {
+      "n": 15,
+      "compile": 10,
+      "goal": 10
+    },
+    "2": {
+      "n": 5,
+      "compile": 0,
+      "goal": 0
+    },
+    "3": {
+      "n": 10,
+      "compile": 10,
+      "goal": 10
+    },
+    "11": {
+      "n": 5,
+      "compile": 0,
+      "goal": 0
+    },
+    "12": {
+      "n": 5,
+      "compile": 0,
+      "goal": 0
+    },
+    "13": {
+      "n": 5,
+      "compile": 5,
+      "goal": 0
+    }
+  },
+  "gen_ms_p50": 5667.752699999255,
+  "gen_ms_p95": 14065.940100001171,
+  "tokens_out_p50": 39
+}

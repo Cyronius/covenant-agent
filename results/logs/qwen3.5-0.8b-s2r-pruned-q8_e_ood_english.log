@@ -1,0 +1,80 @@
+20/200 goal=18 compile=20 (43.2s/task)
+40/200 goal=37 compile=39 (25.0s/task)
+60/200 goal=56 compile=59 (19.3s/task)
+80/200 goal=75 compile=79 (16.3s/task)
+100/200 goal=95 compile=99 (14.6s/task)
+120/200 goal=115 compile=119 (13.4s/task)
+140/200 goal=133 compile=139 (12.6s/task)
+160/200 goal=151 compile=157 (11.9s/task)
+180/200 goal=171 compile=177 (11.5s/task)
+200/200 goal=190 compile=197 (11.0s/task)
+{
+  "model": "qwen3.5-0.8b-s2r-pruned-q8.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar",
+  "n": 200,
+  "compile_ok_rate": 0.985,
+  "goal_success_rate": 0.95,
+  "parse_ok_rate": 0.995,
+  "by_level": {
+    "0": {
+      "n": 11,
+      "compile": 11,
+      "goal": 10
+    },
+    "1": {
+      "n": 12,
+      "compile": 12,
+      "goal": 11
+    },
+    "2": {
+      "n": 30,
+      "compile": 30,
+      "goal": 30
+    },
+    "3": {
+      "n": 20,
+      "compile": 20,
+      "goal": 17
+    },
+    "4": {
+      "n": 21,
+      "compile": 20,
+      "goal": 20
+    },
+    "5": {
+      "n": 20,
+      "compile": 20,
+      "goal": 20
+    },
+    "6": {
+      "n": 24,
+      "compile": 24,
+      "goal": 23
+    },
+    "7": {
+      "n": 21,
+      "compile": 20,
+      "goal": 20
+    },
+    "8": {
+      "n": 23,
+      "compile": 22,
+      "goal": 22
+    },
+    "9": {
+      "n": 9,
+      "compile": 9,
+      "goal": 8
+    },
+    "10": {
+      "n": 9,
+      "compile": 9,
+      "goal": 9
+    }
+  },
+  "gen_ms_p50": 6830.880549998255,
+  "gen_ms_p95": 12041.825899999822,
+  "tokens_out_p50": 46.0
+}
