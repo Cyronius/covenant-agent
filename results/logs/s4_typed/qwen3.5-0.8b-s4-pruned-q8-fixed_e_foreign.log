@@ -1,0 +1,100 @@
+20/500 goal=17 compile=17 (0.6s/task)
+40/500 goal=32 compile=34 (0.6s/task)
+60/500 goal=48 compile=50 (0.6s/task)
+80/500 goal=66 compile=69 (0.6s/task)
+100/500 goal=83 compile=86 (0.6s/task)
+120/500 goal=98 compile=103 (0.6s/task)
+140/500 goal=116 compile=121 (0.6s/task)
+160/500 goal=132 compile=138 (0.6s/task)
+180/500 goal=145 compile=152 (0.6s/task)
+200/500 goal=165 compile=172 (0.6s/task)
+220/500 goal=184 compile=191 (0.6s/task)
+240/500 goal=201 compile=209 (0.6s/task)
+260/500 goal=218 compile=226 (0.6s/task)
+280/500 goal=234 compile=243 (0.6s/task)
+300/500 goal=251 compile=261 (0.6s/task)
+320/500 goal=270 compile=280 (0.6s/task)
+340/500 goal=285 compile=298 (0.6s/task)
+360/500 goal=301 compile=317 (0.6s/task)
+380/500 goal=319 compile=336 (0.6s/task)
+400/500 goal=335 compile=352 (0.6s/task)
+420/500 goal=348 compile=366 (0.6s/task)
+440/500 goal=365 compile=385 (0.6s/task)
+460/500 goal=381 compile=402 (0.6s/task)
+480/500 goal=400 compile=421 (0.6s/task)
+500/500 goal=419 compile=440 (0.6s/task)
+{
+  "model": "qwen3.5-0.8b-s4-pruned-q8-fixed.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar-task",
+  "n": 500,
+  "compile_ok_rate": 0.88,
+  "goal_success_rate": 0.838,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 24,
+      "compile": 24,
+      "goal": 24
+    },
+    "1": {
+      "n": 24,
+      "compile": 24,
+      "goal": 24
+    },
+    "2": {
+      "n": 58,
+      "compile": 57,
+      "goal": 57
+    },
+    "3": {
+      "n": 58,
+      "compile": 54,
+      "goal": 47
+    },
+    "4": {
+      "n": 58,
+      "compile": 58,
+      "goal": 52
+    },
+    "5": {
+      "n": 58,
+      "compile": 4,
+      "goal": 4
+    },
+    "6": {
+      "n": 58,
+      "compile": 58,
+      "goal": 57
+    },
+    "7": {
+      "n": 57,
+      "compile": 56,
+      "goal": 56
+    },
+    "8": {
+      "n": 57,
+      "compile": 57,
+      "goal": 57
+    },
+    "9": {
+      "n": 24,
+      "compile": 24,
+      "goal": 17
+    },
+    "10": {
+      "n": 24,
+      "compile": 24,
+      "goal": 24
+    }
+  },
+  "gen_ms_p50": 516.8398483656347,
+  "gen_ms_p95": 747.9231897741556,
+  "tokens_out_p50": 45.0,
+  "pauses_mean": 0.048,
+  "pauses_p95": 0,
+  "error_turns_total": 0,
+  "tasks_with_pause": 24,
+  "tasks_with_error_turn": 0
+}

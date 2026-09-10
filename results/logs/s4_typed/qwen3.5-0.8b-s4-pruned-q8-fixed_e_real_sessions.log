@@ -1,0 +1,36 @@
+20/234 goal=12 compile=18 (0.4s/task)
+40/234 goal=22 compile=37 (0.4s/task)
+60/234 goal=34 compile=56 (0.4s/task)
+80/234 goal=47 compile=74 (0.4s/task)
+100/234 goal=59 compile=92 (0.4s/task)
+120/234 goal=71 compile=111 (0.4s/task)
+140/234 goal=87 compile=131 (0.4s/task)
+160/234 goal=102 compile=149 (0.4s/task)
+180/234 goal=115 compile=167 (0.4s/task)
+200/234 goal=128 compile=185 (0.4s/task)
+220/234 goal=141 compile=204 (0.4s/task)
+{
+  "model": "qwen3.5-0.8b-s4-pruned-q8-fixed.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar-task",
+  "n": 234,
+  "compile_ok_rate": 0.9316239316239316,
+  "goal_success_rate": 0.6282051282051282,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "0": {
+      "n": 234,
+      "compile": 218,
+      "goal": 147
+    }
+  },
+  "gen_ms_p50": 226.17508401162922,
+  "gen_ms_p95": 387.25914899259806,
+  "tokens_out_p50": 11.0,
+  "pauses_mean": 0.0,
+  "pauses_p95": 0,
+  "error_turns_total": 0,
+  "tasks_with_pause": 0,
+  "tasks_with_error_turn": 0
+}

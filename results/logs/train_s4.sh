@@ -29,9 +29,12 @@
 # Upload to the pod's working dir:
 #   data/sft_s4.jsonl  data/s4_used_token_ids.json  data/s4_train_cap.txt
 #   (and/or the s4c triple for the control arm)
-#   baselines/qwen/train_b.py  baselines/qwen/prune_vocab.py  baselines/qwen/convert_pruned.py
+#   baselines/qwen/{train_b.py,prune_vocab.py,convert_pruned.py,fix_gguf_layer_arrays.py}
 # Download back BEFORE deleting the pod: lora_*_top.tar.gz, the pruned
-# tokenizer.json, both GGUFs.
+# tokenizer.json, both GGUFs. Verify a GGUF actually loads
+# (`python -c "from llama_cpp import Llama; Llama(model_path='...', n_ctx=256)"`)
+# before deleting the pod — R6.md found train_s3.sh's own metadata patch
+# left a latent array-length bug that only a current llama.cpp catches.
 set -e
 ARM="${1:-typed}"
 BASE="${2:-qwen08b}"
@@ -119,6 +122,14 @@ if [ "$BASE" = "qwen08b" ]; then
   for f in $OUTS; do
     python -m gguf.scripts.gguf_set_metadata "$f" qwen35.block_count 24 --force
     python -m gguf.scripts.gguf_set_metadata "$f" qwen35.nextn_predict_layers 0 --force
+    # the block_count patch above doesn't touch qwen35.attention.recurrent_layers,
+    # which stays 25 entries; a current llama.cpp validates that against
+    # block_count and refuses to load (see baselines/qwen/fix_gguf_layer_arrays.py
+    # -- S1-S3's GGUFs predate this field and never hit it, so this is new
+    # with S4, not a regression in the older checkpoints)
+    mv "$f" "${f%.gguf}-unfixed.gguf"
+    python fix_gguf_layer_arrays.py "${f%.gguf}-unfixed.gguf" "$f"
+    rm "${f%.gguf}-unfixed.gguf"
   done
 fi
 echo "=== train_s4 ($ARM, $BASE) done: lora_${RUN}/ $OUTS ==="
