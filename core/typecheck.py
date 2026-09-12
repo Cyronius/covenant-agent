@@ -15,7 +15,7 @@ from dataclasses import dataclass, field as dc_field
 from typing import Dict, List, Optional
 
 from . import diagnostics as dg
-from .ir import (ABORT_REF_KINDS, CONST_LETTERS, EMPTY, Abort, Format, Call, Clause, Const, Count, Filter, First, Foreach, Get, If,
+from .ir import (ABORT_REF_KINDS, CONST_LETTERS, EMPTY, Abort, Format, Call, Clause, Const, Count, ElemField, Filter, First, Foreach, Get, If,
                  IntLit, Let, MapF, Most, Now, Null, Parallel, Pause, Pred, Program,
                  Reg, RegField, Return, Select, SetF, Sort, Stop, TaskContext,
                  Try, Type, format_type)
@@ -131,7 +131,12 @@ class _Checker:
                            env: dict, line: int):
         for cl in pred.clauses:
             f = self._field_decl(cl.left, entity, line, str(reg))
-            rt = self._operand_type(cl.right, env, line)
+            if isinstance(cl.right, ElemField):
+                # the other field resolves against the same element
+                rf = self._field_decl(cl.right.sym, entity, line, str(reg))
+                rt = rf.type if rf else None
+            else:
+                rt = self._operand_type(cl.right, env, line)
             self._check_cmp(cl.cmp, f.type if f else None, rt, line)
 
     def _check_cond(self, cond: Pred, env: dict, line: int):
@@ -378,6 +383,14 @@ class _Checker:
             if i >= len(call.args):
                 if p.required:
                     self.diags.append(dg.missing_arg(ln, tool.sym, p.sym))
+                continue
+            if isinstance(call.args[i], Null) and p.required:
+                # an explicit NULL is the absence of a value, so a required
+                # slot filled with one is still a missing argument (§6). Only
+                # the literal counts - a register keeps flowing whatever it
+                # holds, whether it is NULL-typed from a result-less tool or
+                # null at runtime from FIRST on an empty list.
+                self.diags.append(dg.missing_arg(ln, tool.sym, p.sym))
                 continue
             at = self._operand_type(call.args[i], env, ln)
             if at is not None and not self._compatible(p.type, at):

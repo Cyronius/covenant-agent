@@ -454,6 +454,14 @@ def validate_theme(theme: dict) -> None:
 
 def register_theme(theme: dict) -> str:
     name = theme["domain"]
+    existing = worlds_registry.WORLDS.get(name)
+    if existing is not None and existing.get("post_hook"):
+        # a CRUD theme cannot stand in for a world whose rules live in an
+        # engine, and shadowing one is silent: the corpus keeps saying
+        # world=X while X now means something else entirely
+        raise ValueError(
+            f"theme domain {name!r} would shadow the engine world of the "
+            f"same name - rename one of them")
     worlds_registry.WORLDS[name] = build_world(theme)
     PROFILES[name] = build_profile(theme)
     worldgen.GENERATORS[name] = make_state_gen(theme)

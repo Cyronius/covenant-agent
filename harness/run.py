@@ -46,10 +46,18 @@ Planner = Callable[[str, TaskContext, int, Dict], Optional[str]]
 
 
 def run_sandbox(payload: dict) -> dict:
-    proc = subprocess.run(
-        ["node", str(SANDBOX)], input=json.dumps(payload).encode(),
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        timeout=150 if payload.get("external_url") else 30)
+    try:
+        proc = subprocess.run(
+            ["node", str(SANDBOX)], input=json.dumps(payload).encode(),
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            timeout=150 if payload.get("external_url") else 30)
+    except subprocess.TimeoutExpired:
+        # the vm has its own watchdog, so this is the spawn being starved,
+        # not a program looping. Report it as a row rather than taking an
+        # 18k-row self-check down with it.
+        return {"status": "error",
+                "error": {"code": "SANDBOX_TIMEOUT",
+                          "message": "node did not answer in time"}}
     out = proc.stdout.decode().strip()
     if not out:
         return {"status": "error",
@@ -226,7 +234,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tasks", required=True)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--domains", default=None, metavar="DIR",
+                    help="register generated domain themes first; a corpus "
+                        "built with --domains cannot be replayed without it")
     args = ap.parse_args()
+    if args.domains:
+        from data.gen.domains import register_domains
+        register_domains(args.domains)
     tasks = load_tasks(Path(args.tasks))
     rows = run_reference_suite(
         tasks, Path(args.out) if args.out else None)

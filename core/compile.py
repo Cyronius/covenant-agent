@@ -10,7 +10,7 @@ rt.select, rt.first, rt.isToolError.
 """
 from __future__ import annotations
 
-from .ir import (EMPTY, Abort, Format, Call, Const, Count, Filter, First, Foreach, Get, If, IntLit,
+from .ir import (EMPTY, Abort, Format, Call, Const, Count, ElemField, Filter, First, Foreach, Get, If, IntLit,
                  Let, MapF, Most, Now, Null, Parallel, Pause, Pred, Program, Reg,
                  RegField, Return, Select, SetF, Sort, Stop, TaskContext, Try)
 
@@ -99,7 +99,11 @@ class _Emitter:
             if cl.cmp == EMPTY:
                 e = f"rt.empty({left})"
             else:
-                e = f'rt.cmp("{cl.cmp}", {left}, {self.operand(cl.right)})'
+                if isinstance(cl.right, ElemField):
+                    right = f'rt.fld({elem}, "{cl.right.sym}")'
+                else:
+                    right = self.operand(cl.right)
+                e = f'rt.cmp("{cl.cmp}", {left}, {right})'
             if cl.neg:
                 e = f"!{e}"
             if i > 0:

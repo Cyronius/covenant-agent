@@ -11,7 +11,7 @@ from typing import List, Optional, Tuple
 
 from . import diagnostics as dg
 from .ir import (ABORT_MAX_REFS, ABORT_REASONS, CMPS, EFFECTS, EMPTY, NUM_REGISTERS, Abort, Call,
-                 Clause, Const, Count,
+                 Clause, Const, Count, ElemField,
                  Filter, First, Foreach, Format, Get, If, IntLit, Let, MapF,
                  Most, Now, Null,
                  Parallel, Pause, Pred, Program, Reg, RegField, Return, Select,
@@ -107,7 +107,12 @@ def _parse_pred(toks: List[str], line: int, field_left: bool) -> Pred:
         i += 1
         if i >= len(toks):
             raise _ParseFail(dg.parse_error(line, "expected right operand"))
-        right = _operand(toks[i], line)
+        # a FILTER clause may compare against a second field of the same
+        # element (spec 0.5.0). A bare F<n> is never an operand, so no clash.
+        if field_left and _FIELD_RE.match(toks[i]):
+            right = ElemField(toks[i])
+        else:
+            right = _operand(toks[i], line)
         i += 1
         clauses.append(Clause(neg, left, cmp, right))
         if i == len(toks):

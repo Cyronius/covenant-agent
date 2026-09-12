@@ -1,0 +1,14 @@
+warehouse_robot: 20/20 episodes, 209 turns
+elevator: 20/20 episodes, 350 turns
+cards: 20/20 episodes, 509 turns
+app_settings: 20/20 episodes, 593 turns
+app_checkout: 20/20 episodes, 693 turns
+app_ticket: 20/20 episodes, 769 turns
+wrote 769 turns -> data\famc_shards\episodes_7.jsonl
+  17 turns dropped (the sandbox refused the oracle's program), e.g. ['warehouse_robot#20267910t10', 'warehouse_robot#20267910t11', 'warehouse_robot#20267910t12']
+  warehouse_robot: 14/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  elevator: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  cards: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  app_settings: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  app_checkout: 19/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  app_ticket: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)

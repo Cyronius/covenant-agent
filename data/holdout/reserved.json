@@ -1,9 +1,12 @@
 {
- "comment": "Reserved at generation time; never enters training data (F4/R5).",
+ "comment": "Reserved at generation time; never enters training data (F4/R5, and .claude/plans/archive/task-families.md for the decision families). Each family reserves an instance of its own: the dungeon and the house for family A, the coursebuilder app for family C, the scheduling probe for family G.",
  "worlds": [
   "projects",
   "coursebuilder",
-  "rpg"
+  "rpg",
+  "house",
+  "app_coursebuilder",
+  "scheduling"
  ],
  "tools": {
   "kanban": [

@@ -1,0 +1,26 @@
+  t10 hp=10 (6, 3) ok            move(east), move(east), move(north)
+  t11 hp=10 (8, 2) ok            move(east)
+  -> won in 12 turns (key=True door=True)
+oracle_e_rpg.jsonl: 3 episodes, model=oracle condition=oracle
+  won            3/3 (100%)
+  died           0/3
+  turns to win   p50 12
+  funnel         key 3/3  door 3/3  exit 3/3
+  calls          78 (0 invalid)
+  turns          36 (0 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 0   gen_ms p50 0
+  finish_reason  {'oracle': 36}
+  t 5 hp=10 (1, 4) error         -
+  t 5 hp=10 (1, 4) error         -
+  t 5 hp=10 (1, 4) error         -
+  t 5 hp=10 (1, 4) static_error  -
+  t 5 hp=10 (1, 4) error         -
+  t 5 hp=10 (1, 4) static_error  -
+  t 5 hp=10 (1, 4) static_error  -
+  t 5 hp=10 (1, 4) error         -
+  t 5 hp=10 (1, 4) static_error  -
+  t 5 hp=10 (1, 4) error         -
+  t 5 hp=10 (1, 4) error         -
+  t 5 hp=10 (1, 4) error         -
+  t 5 hp=10 (1, 4) error         -
+  t 5 hp=10 (1, 4) static_error  -

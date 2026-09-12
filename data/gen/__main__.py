@@ -43,7 +43,8 @@ if _DOMAIN_SPLIT.exists():
 
 def gen_one(level: int, seed: int, holdout: bool, teacher: str,
             crowd: tuple | None = None, symbols: str = "classic",
-            enums: bool = False, kinds: bool = False) -> dict:
+            enums: bool = False, kinds: bool = False,
+            decoys: tuple | None = None, decoy_nonsense: float = 0.15) -> dict:
     rng = random.Random(seed)
     if holdout:
         pool = [w for w in RESERVED["worlds"] if w in programs.PROFILES]
@@ -54,6 +55,18 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
         world_name = rng.choice(world_names)
         holdout_tools = set(RESERVED["tools"].get(world_name, []))
     world = get_world(world_name)
+    decoy_names: list = []
+    if decoys:
+        # family B: siblings of every mutating tool, same signature, only
+        # the description telling them apart
+        # (.claude/plans/archive/task-families.md)
+        from harness.decoys import decoy_world
+        # its own RNG, so a --decoys run draws the *same* world, state and
+        # program as the run without it: the pair is a clean A/B and the gap
+        # between the two scores is the number the family is after
+        world, decoy_names = decoy_world(world, random.Random(seed ^ 0xDEC0),
+                                         per_tool=decoys,
+                                         nonsense=decoy_nonsense)
     if crowd:
         from harness.crowding import crowd_world
         pool = (RESERVED["worlds"] if holdout
@@ -108,11 +121,15 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
             "style": style, "frame": sample.frame,
         },
         prebuilt=(ctx, sandbox_ctx))
-    if crowd:
-        # crowded contexts contain foreign tools the native world cannot
+    if crowd or decoy_names:
+        # crowded and decoyed contexts contain tools the native world cannot
         # rebuild a sandbox for — store the payload with the task
         task["sandbox"] = sandbox_ctx
-        task["tags"] = sorted(set(task["tags"]) | {"crowded"})
+        task["tags"] = sorted(set(task["tags"])
+                              | ({"crowded"} if crowd else set())
+                              | ({"decoyed"} if decoy_names else set()))
+    if decoy_names:
+        task["provenance"]["decoys"] = decoy_names
 
     # training-pair extras
     task["input_text"] = serialize_context(request, ctx)
@@ -190,11 +207,23 @@ def main():
     ap.add_argument("--crowd", default=None, metavar="MIN:MAX",
                     help="add MIN..MAX distractor tools from other domains "
                          "to each task's context (E-crowded)")
+    ap.add_argument("--decoys", default=None, metavar="MIN:MAX",
+                    help="family B: give every mutating tool MIN..MAX "
+                         "siblings with the same signature and a "
+                         "neighbouring description, so only the description "
+                         "says which one the request means")
+    ap.add_argument("--decoy-nonsense", type=float, default=0.15,
+                    help="share of decoys named foo17 / operation_93, so the "
+                         "name cannot carry the choice at all")
     args = ap.parse_args()
     crowd = None
     if args.crowd:
         lo, hi = args.crowd.split(":")
         crowd = (int(lo), int(hi))
+    decoys = None
+    if args.decoys:
+        lo, hi = args.decoys.split(":")
+        decoys = (int(lo), int(hi))
     if args.domains:
         from data.gen.domains import register_domains
         registered = register_domains(args.domains)
@@ -220,7 +249,9 @@ def main():
                     candidate = gen_one(level, seed_cursor, args.holdout,
                                         args.teacher, crowd=crowd,
                                         symbols=args.symbols,
-                                        enums=args.enums, kinds=args.kinds)
+                                        enums=args.enums, kinds=args.kinds,
+                                        decoys=decoys,
+                                        decoy_nonsense=args.decoy_nonsense)
                 except (programs.SampleError, ReferenceError):
                     failures += 1
                     continue

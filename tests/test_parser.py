@@ -123,3 +123,16 @@ def test_format_needs_template_and_arrow():
     assert prog is None and codes == ["PARSE_ERROR"]
     prog, codes = _diag_codes("FORMAT C1 r0\n")
     assert prog is None and codes == ["PARSE_ERROR"]
+
+
+def test_filter_clause_takes_a_field_on_the_right():
+    # spec 0.5.0: a FILTER clause may compare two fields of the element;
+    # an IF condition may not name a bare field
+    prog, diags = parse("FILTER r0 F1 LT F2 AND F3 EQ C0 -> r1\nSTOP\n")
+    assert diags == []
+    cl = prog.body[0].pred.clauses
+    assert cl[0].right == ir.ElemField("F2")
+    assert isinstance(cl[1].right, ir.Const)
+    assert str(cl[0]) == "F1 LT F2"
+    _, codes = _diag_codes("IF r0.F1 LT F2\n  STOP\nSTOP\n")
+    assert codes == ["PARSE_ERROR"]

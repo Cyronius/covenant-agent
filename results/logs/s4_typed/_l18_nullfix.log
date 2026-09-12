@@ -1,0 +1,26 @@
+20/30 goal=12 compile=12 (14.4s/task)
+{
+  "model": "qwen3.5-0.8b-s4-pruned-q8-fixed.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar-task+letters+enums+kinds",
+  "n": 30,
+  "compile_ok_rate": 0.5666666666666667,
+  "goal_success_rate": 0.5666666666666667,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "18": {
+      "n": 30,
+      "compile": 17,
+      "goal": 17
+    }
+  },
+  "gen_ms_p50": 13919.284500007052,
+  "gen_ms_p95": 19668.91199996462,
+  "tokens_out_p50": 14.0,
+  "pauses_mean": 0.0,
+  "pauses_p95": 0,
+  "error_turns_total": 0,
+  "tasks_with_pause": 0,
+  "tasks_with_error_turn": 0
+}

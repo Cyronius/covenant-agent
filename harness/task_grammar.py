@@ -127,6 +127,8 @@ def without_stdlib(grammar: str) -> str:
     out = grammar.replace(" | mostin", "")
     out = out.replace('(operand " " cmp " " operand | "EMPTY " reg)',
                       'operand " " cmp " " operand')
+    # and the 0.5.0 field-on-the-right clause form
+    out = out.replace('cmp " " (operand | field)', 'cmp " " operand')
     return out
 
 
@@ -302,10 +304,16 @@ def _enum_fields(ctx: dict) -> Dict[str, List[str]]:
 
 
 def _operand_alts(want, fields, consts, fsym: Optional[str], enum_fields,
-                  kinds: bool, op_rules: Dict[str, str], tag: str) -> str:
+                  kinds: bool, op_rules: Dict[str, str], tag: str,
+                  allow_null: bool = True) -> str:
     """Operand alternatives for a slot of type `want`; with `kinds` the slot
     `fsym` narrows the constants: an enum field admits only its own enum
-    constants, a plain STR slot admits none of them."""
+    constants, a plain STR slot admits none of them.
+
+    `allow_null=False` drops NULL, for a required call slot: with it in,
+    a tool whose type has no constant in view had NULL as its only legal
+    operand, and the model took it (results/RPG.md). Comparisons keep NULL,
+    where testing a field against it is the point."""
     alts = ["reg"]
     fsyms = [int(s[1:]) for s, t in fields if _compatible(want, t)]
     if fsyms:
@@ -321,7 +329,8 @@ def _operand_alts(want, fields, consts, fsym: Optional[str], enum_fields,
     if csyms:
         op_rules[f"cc-{tag}"] = const_expr(csyms)
         alts.append(f"cc-{tag}")
-    alts.append('"NULL"')
+    if allow_null:
+        alts.append('"NULL"')
     if want[0] == "TIME":
         alts.append('"NOW"')
     if want[0] in _NUMERIC:
@@ -340,17 +349,20 @@ def typed_call_rules(task: dict, kinds: bool = False) -> tuple:
     op_rules: Dict[str, str] = {}
     lines: List[str] = []
 
-    def op_class(tstr: str, psym: Optional[str]) -> str:
+    def op_class(tstr: str, psym: Optional[str], required: bool = True) -> str:
         want = parse_type(tstr)
         tid = _type_id(tstr)
         if kinds and want[0] == "STR" and psym in enum_fields:
             name = f"op-{tid}-{psym}"
         else:
             name = f"op-{tid}"
+        if not required:
+            name += "-opt"      # the same type, plus NULL
         if name in op_rules:
             return name
         op_rules[name] = _operand_alts(want, fields, consts, psym, enum_fields,
-                                       kinds, op_rules, name[3:])
+                                       kinds, op_rules, name[3:],
+                                       allow_null=not required)
         return name
 
     call_alts = []
@@ -364,7 +376,8 @@ def typed_call_rules(task: dict, kinds: bool = False) -> tuple:
         # optional params are positional and trailing: nested optionals
         tail = ""
         for p in reversed(opt):
-            tail = f' (" " {op_class(p["type"], p.get("sym"))}{tail})?'
+            tail = (f' (" " {op_class(p["type"], p.get("sym"), False)}'
+                    f'{tail})?')
         body += tail + " (arrow)?"
         rname = f"call{t['sym']}"
         lines.append(f"{rname} ::= {body}")
@@ -381,6 +394,7 @@ def kind_field_rules(task: dict) -> tuple:
     ctx = task["context"]
     consts = [(c["sym"], parse_type(c["type"])) for c in ctx.get("constants", [])]
     fields = [(f["sym"], parse_type(f["type"])) for f in ctx.get("fields", [])]
+    entity_of = {f["sym"]: f.get("entity") for f in ctx.get("fields", [])}
     enum_fields = _enum_fields(ctx)
     op_rules: Dict[str, str] = {}
     clause_alts, set_alts = [], []
@@ -389,11 +403,21 @@ def kind_field_rules(task: dict) -> tuple:
         rhs = _operand_alts(ftype, fields, consts, fsym, enum_fields, True,
                             op_rules, tag)
         op_rules[f"opf-{tag}"] = rhs
-        clause_alts.append(f'"{fsym} " cmp " " opf-{tag}')
+        # the clause's right side may also be another field of the same
+        # entity (spec 0.5.0 §3); type-compatible siblings only
+        siblings = [int(s[1:]) for s, t in fields
+                    if s != fsym and entity_of.get(s) is not None
+                    and entity_of.get(s) == entity_of.get(fsym)
+                    and _compatible(ftype, t)]
+        if siblings:
+            op_rules[f"sf-{tag}"] = f'"F" ({digit_trie_expr(siblings)})'
+            rhs = f"{rhs} | sf-{tag}"
+        clause_alts.append(f'"{fsym} " cmp " " ({rhs})' if siblings else
+                           f'"{fsym} " cmp " " opf-{tag}')
         set_alts.append(f'"{fsym} " opf-{tag}')
     lines = [f"{n} ::= {r}" for n, r in op_rules.items()]
     clause = '("NOT ")? (%s)' % " | ".join(clause_alts) if clause_alts else \
-        '("NOT ")? field " " cmp " " operand'
+        '("NOT ")? field " " cmp " " (operand | field)'
     setr = '"SET " reg " " (%s) arrow' % " | ".join(set_alts) if set_alts else \
         '"SET " reg " " field " " operand arrow'
     return clause, setr, "\n".join(lines)

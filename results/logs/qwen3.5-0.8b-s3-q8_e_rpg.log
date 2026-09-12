@@ -1,0 +1,140 @@
+episode 1/6 (seed 0)
+  t 0 hp=10 (1, 7) error         move(north), move(south), move(east), move(west) X
+  t 1 hp=10 (2, 7) error         move(north), move(south), move(east), move(west) X
+  t 2 hp=10 (3, 7) error         move(north), move(south), move(east), move(west) X
+  t 3 hp=10 (4, 7) error         move(north), move(south), move(east), move(west) X
+  t 4 hp=10 (5, 7) error         move(north), move(south), move(east), move(west) X
+  t 5 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 6 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 7 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 8 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 9 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t10 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t11 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t12 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t13 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t14 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t15 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t16 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t17 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t18 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t19 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  -> playing in 20 turns (key=False door=False)
+episode 2/6 (seed 1)
+  t 0 hp=10 (1, 7) error         move(north), move(south), move(east), move(west) X
+  t 1 hp=10 (2, 7) error         move(north), move(south), move(east), move(west) X
+  t 2 hp=10 (3, 7) error         move(north), move(south), move(east), move(west) X
+  t 3 hp=10 (4, 7) error         move(north), move(south), move(east), move(west) X
+  t 4 hp=10 (5, 7) error         move(north), move(south), move(east), move(west) X
+  t 5 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 6 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 7 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 8 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 9 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t10 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t11 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t12 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t13 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t14 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t15 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t16 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t17 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t18 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t19 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  -> playing in 20 turns (key=False door=False)
+episode 3/6 (seed 2)
+  t 0 hp=10 (1, 7) error         move(north), move(south), move(east), move(west) X
+  t 1 hp=10 (2, 7) error         move(north), move(south), move(east), move(west) X
+  t 2 hp=10 (3, 7) static_error  -
+  t 3 hp=10 (3, 7) error         move(north), move(south), move(east), move(west) X
+  t 4 hp=10 (4, 7) error         move(north), move(south), move(east), move(west) X
+  t 5 hp=10 (5, 7) error         move(north), move(south), move(east), move(west) X
+  t 6 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 7 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 8 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 9 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t10 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t11 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t12 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t13 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t14 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t15 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t16 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t17 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t18 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t19 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  -> playing in 20 turns (key=False door=False)
+episode 4/6 (seed 3)
+  t 0 hp=10 (1, 7) error         move(north), move(south), move(east), move(west) X
+  t 1 hp=10 (2, 7) error         move(north), move(south), move(east), move(west) X
+  t 2 hp=10 (3, 7) static_error  -
+  t 3 hp=10 (3, 7) error         move(north), move(south), move(east), move(west) X
+  t 4 hp=10 (4, 7) error         move(north), move(south), move(east), move(west) X
+  t 5 hp=10 (5, 7) error         move(north), move(south), move(east), move(west) X
+  t 6 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 7 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 8 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 9 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t10 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t11 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t12 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t13 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t14 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t15 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t16 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t17 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t18 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t19 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  -> playing in 20 turns (key=False door=False)
+episode 5/6 (seed 4)
+  t 0 hp=10 (1, 7) error         move(north), move(south), move(east), move(west) X
+  t 1 hp=10 (2, 7) error         move(north), move(south), move(east), move(west) X
+  t 2 hp=10 (3, 7) error         move(north), move(south), move(east), move(west) X
+  t 3 hp=10 (4, 7) error         move(north), move(south), move(east), move(west) X
+  t 4 hp=10 (5, 7) error         move(north), move(south), move(east), move(west) X
+  t 5 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 6 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 7 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 8 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 9 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t10 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t11 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t12 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t13 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t14 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t15 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t16 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t17 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t18 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t19 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  -> playing in 20 turns (key=False door=False)
+episode 6/6 (seed 5)
+  t 0 hp=10 (1, 7) static_error  -
+  t 1 hp=10 (1, 7) error         move(north), move(south), move(east), move(west) X
+  t 2 hp=10 (2, 7) static_error  -
+  t 3 hp=10 (2, 7) error         move(north), move(south), move(east), move(west) X
+  t 4 hp=10 (3, 7) error         move(north), move(south), move(east), move(west) X
+  t 5 hp=10 (4, 7) error         move(north), move(south), move(east), move(west) X
+  t 6 hp=10 (5, 7) error         move(north), move(south), move(east), move(west) X
+  t 7 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 8 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t 9 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t10 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t11 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t12 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t13 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t14 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t15 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t16 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t17 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t18 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t19 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  -> playing in 20 turns (key=False door=False)
+qwen3.5-0.8b-s3-q8_e_rpg.jsonl: 6 episodes, model=qwen3.5-0.8b-s3-q8.gguf condition=grammar-task/qwen
+  won            0/6 (0%)
+  died           0/6
+  funnel         key 0/6  door 0/6  exit 0/6
+  calls          378 (116 invalid)
+  turns          120 (4 did not compile, 0 abstained, 30 hit the action budget)
+  tokens_out p50 26   gen_ms p50 4112
+  finish_reason  {'stop': 120}

@@ -55,7 +55,7 @@ tryin     ::= "TRY " ("RETRY " num " ")? "-> " reg
 arrow     ::= " -> " reg
 
 pred      ::= clause ((" AND " | " OR ") clause)*
-clause    ::= ("NOT ")? field " " cmp " " operand
+clause    ::= ("NOT ")? field " " cmp " " (operand | field)
 cond      ::= ccl ((" AND " | " OR ") ccl)*
 ccl       ::= ("NOT ")? (operand " " cmp " " operand | "EMPTY " reg)
 cmp       ::= "EQ" | "LT" | "GT" | "CONTAINS"

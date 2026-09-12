@@ -1,0 +1,9 @@
+registered 143 generated domains
+200/1500 (resamples: 2, noops dropped: 28)
+400/1500 (resamples: 4, noops dropped: 70)
+600/1500 (resamples: 11, noops dropped: 94)
+800/1500 (resamples: 16, noops dropped: 114)
+1000/1500 (resamples: 22, noops dropped: 134)
+1200/1500 (resamples: 25, noops dropped: 161)
+1400/1500 (resamples: 27, noops dropped: 190)
+wrote 1500 tasks -> data\famc_shards\decoy_2.jsonl (resamples: 29, noops dropped: 198)

@@ -1,0 +1,9 @@
+s3_perturn_house.jsonl: 3 episodes, world=house model=qwen3.5-0.8b-s3-q8.gguf condition=grammar-task/qwen
+  won            0/3 (0%)
+  died           0/3
+  funnel         lamp_lit 0/3  way_open 0/3  arrived 0/3
+  per-turn       tool 33/60 (55%)   tool+arg 0/60 (0%)
+  calls          36 (36 invalid)
+  turns          60 (24 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 13   gen_ms p50 6681
+  finish_reason  {'stop': 60}

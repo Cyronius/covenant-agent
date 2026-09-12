@@ -1,0 +1,49 @@
+  turns          72 (0 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 0   gen_ms p50 0
+  finish_reason  {'oracle': 72}
+=== qwen3.5-0.8b-s4-q8-fixed --symbols typed --enums --kinds ===
+  t 6 hp=10 (1, 3) error         move(north) X
+  t 7 hp=8 (1, 3) static_error  -
+  t 8 hp=6 (1, 3) error         move(north) X
+  t 9 hp=4 (1, 3) static_error  -
+  t10 hp=2 (1, 3) error         move(north) X
+  -> dead in 11 turns (key=False door=False)
+qwen3.5-0.8b-s4-q8-fixed_e_rpg.jsonl: 6 episodes, model=qwen3.5-0.8b-s4-q8-fixed.gguf condition=grammar-task/qwen+letters+enums+kinds
+  won            0/6 (0%)
+  died           6/6
+  funnel         key 0/6  door 0/6  exit 0/6
+  calls          66 (35 invalid)
+  turns          74 (33 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 24   gen_ms p50 3943
+  finish_reason  {'stop': 74}
+=== qwen3.5-0.8b-s3-q8 classic ===
+  t15 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t16 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t17 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t18 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  t19 hp=10 (6, 7) error         move(north), move(south), move(east) X
+  -> playing in 20 turns (key=False door=False)
+qwen3.5-0.8b-s3-q8_e_rpg.jsonl: 6 episodes, model=qwen3.5-0.8b-s3-q8.gguf condition=grammar-task/qwen
+  won            0/6 (0%)
+  died           0/6
+  funnel         key 0/6  door 0/6  exit 0/6
+  calls          378 (116 invalid)
+  turns          120 (4 did not compile, 0 abstained, 30 hit the action budget)
+  tokens_out p50 26   gen_ms p50 4112
+  finish_reason  {'stop': 120}
+=== qwen3.5-0.8b-s2r-q8 classic ===
+  t15 hp=10 (7, 6) error         move(north) X
+  t16 hp=8 (7, 6) error         move(north) X
+  t17 hp=6 (7, 6) error         move(north) X
+  t18 hp=4 (7, 6) error         move(north) X
+  t19 hp=2 (7, 6) error         move(north) X
+  -> dead in 20 turns (key=False door=False)
+qwen3.5-0.8b-s2r-q8_e_rpg.jsonl: 6 episodes, model=qwen3.5-0.8b-s2r-q8.gguf condition=grammar-task/qwen
+  won            0/6 (0%)
+  died           1/6
+  funnel         key 0/6  door 0/6  exit 0/6
+  calls          74 (27 invalid)
+  turns          120 (88 did not compile, 0 abstained, 14 hit the action budget)
+  tokens_out p50 32   gen_ms p50 4302
+  finish_reason  {'stop': 120}
+=== rpg_gpu done ===

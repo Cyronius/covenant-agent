@@ -1,0 +1,9 @@
+s3_perturn_rpg.jsonl: 3 episodes, world=rpg model=qwen3.5-0.8b-s3-q8.gguf condition=grammar-task/qwen
+  won            0/3 (0%)
+  died           0/3
+  funnel         key 0/3  door 0/3  exit 0/3
+  per-turn       tool 59/60 (98%)   tool+arg 59/60 (98%)
+  calls          192 (59 invalid)
+  turns          60 (1 did not compile, 0 abstained, 15 hit the action budget)
+  tokens_out p50 25   gen_ms p50 8696
+  finish_reason  {'stop': 60}

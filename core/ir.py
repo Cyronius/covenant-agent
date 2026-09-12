@@ -110,15 +110,26 @@ class IntLit:
 Operand = Union[Reg, RegField, Const, Now, Null, IntLit]
 
 
+@dataclass(frozen=True)
+class ElemField:
+    """spec 0.5.0 §3: a second field of the FILTER element, on the right of
+    a clause. Not a general operand - it only means something inside a
+    FILTER, where the element has no register to name."""
+    sym: str  # 'F9'
+
+    def __str__(self) -> str:
+        return self.sym
+
+
 # ---------------------------------------------------------------- predicates
 @dataclass(frozen=True)
 class Clause:
-    """One comparison. In FILTER predicates `left` is a field symbol (str);
-    in IF conditions it is an Operand."""
+    """One comparison. In FILTER predicates `left` is a field symbol (str)
+    and `right` may be an ElemField; in IF conditions both are Operands."""
     neg: bool
     left: Union[str, Operand]
     cmp: str
-    right: Operand
+    right: Union[Operand, ElemField]
 
     def __str__(self) -> str:
         neg = "NOT " if self.neg else ""

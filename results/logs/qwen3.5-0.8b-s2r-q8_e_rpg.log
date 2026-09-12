@@ -1,0 +1,140 @@
+episode 1/6 (seed 0)
+  t 0 hp=10 (1, 7) static_error  -
+  t 1 hp=10 (1, 7) static_error  -
+  t 2 hp=10 (1, 7) static_error  -
+  t 3 hp=10 (1, 7) static_error  -
+  t 4 hp=10 (1, 7) static_error  -
+  t 5 hp=10 (1, 7) static_error  -
+  t 6 hp=10 (1, 7) static_error  -
+  t 7 hp=10 (1, 7) static_error  -
+  t 8 hp=10 (1, 7) static_error  -
+  t 9 hp=10 (1, 7) error         move(west) X
+  t10 hp=10 (1, 7) static_error  -
+  t11 hp=10 (1, 7) static_error  -
+  t12 hp=10 (1, 7) static_error  -
+  t13 hp=10 (1, 7) static_error  -
+  t14 hp=10 (1, 7) static_error  -
+  t15 hp=10 (1, 7) static_error  -
+  t16 hp=10 (1, 7) static_error  -
+  t17 hp=10 (1, 7) static_error  -
+  t18 hp=10 (1, 7) static_error  -
+  t19 hp=10 (1, 7) static_error  -
+  -> playing in 20 turns (key=False door=False)
+episode 2/6 (seed 1)
+  t 0 hp=10 (1, 7) static_error  -
+  t 1 hp=10 (1, 7) static_error  -
+  t 2 hp=10 (1, 7) error         move(west) X
+  t 3 hp=10 (1, 7) ok            move(north)
+  t 4 hp=10 (1, 6) static_error  -
+  t 5 hp=10 (1, 6) static_error  -
+  t 6 hp=10 (1, 6) error         move(west) X
+  t 7 hp=10 (1, 6) error         move(west) X
+  t 8 hp=10 (1, 6) static_error  -
+  t 9 hp=10 (1, 6) static_error  -
+  t10 hp=10 (1, 6) static_error  -
+  t11 hp=10 (1, 6) error         move(north), move(south), move(east), move(west) X
+  t12 hp=10 (2, 6) static_error  -
+  t13 hp=10 (2, 6) error         move(north), move(south), move(east), move(west) X
+  t14 hp=10 (3, 6) static_error  -
+  t15 hp=10 (3, 6) error         move(north), move(south), move(east), move(west) X
+  t16 hp=10 (4, 6) static_error  -
+  t17 hp=10 (4, 6) static_error  -
+  t18 hp=10 (4, 6) static_error  -
+  t19 hp=10 (4, 6) static_error  -
+  -> playing in 20 turns (key=False door=False)
+episode 3/6 (seed 2)
+  t 0 hp=10 (1, 7) ok            move(north)
+  t 1 hp=10 (1, 6) error         move(north), move(south), move(east), move(west) X
+  t 2 hp=10 (2, 6) error         move(north), move(south), move(east), move(west) X
+  t 3 hp=10 (3, 6) error         move(north), move(south), move(east), move(west) X
+  t 4 hp=10 (4, 6) static_error  -
+  t 5 hp=10 (4, 6) static_error  -
+  t 6 hp=10 (4, 6) static_error  -
+  t 7 hp=10 (4, 6) static_error  -
+  t 8 hp=10 (4, 6) static_error  -
+  t 9 hp=10 (4, 6) static_error  -
+  t10 hp=10 (4, 6) static_error  -
+  t11 hp=10 (4, 6) static_error  -
+  t12 hp=10 (4, 6) static_error  -
+  t13 hp=10 (4, 6) static_error  -
+  t14 hp=10 (4, 6) static_error  -
+  t15 hp=10 (4, 6) static_error  -
+  t16 hp=10 (4, 6) static_error  -
+  t17 hp=10 (4, 6) static_error  -
+  t18 hp=10 (4, 6) static_error  -
+  t19 hp=10 (4, 6) static_error  -
+  -> playing in 20 turns (key=False door=False)
+episode 4/6 (seed 3)
+  t 0 hp=10 (1, 7) ok            move(north)
+  t 1 hp=10 (1, 6) ok            move(north)
+  t 2 hp=10 (1, 5) static_error  -
+  t 3 hp=10 (1, 5) error         move(west) X
+  t 4 hp=10 (1, 5) static_error  -
+  t 5 hp=10 (1, 5) static_error  -
+  t 6 hp=10 (1, 5) static_error  -
+  t 7 hp=10 (1, 5) static_error  -
+  t 8 hp=10 (1, 5) static_error  -
+  t 9 hp=10 (1, 5) error         move(west) X
+  t10 hp=10 (1, 5) static_error  -
+  t11 hp=10 (1, 5) static_error  -
+  t12 hp=10 (1, 5) static_error  -
+  t13 hp=10 (1, 5) static_error  -
+  t14 hp=10 (1, 5) error         move(west) X
+  t15 hp=10 (1, 5) static_error  -
+  t16 hp=10 (1, 5) static_error  -
+  t17 hp=10 (1, 5) static_error  -
+  t18 hp=10 (1, 5) static_error  -
+  t19 hp=10 (1, 5) error         move(north), move(south), move(east), move(west) X
+  -> playing in 20 turns (key=False door=False)
+episode 5/6 (seed 4)
+  t 0 hp=10 (1, 7) static_error  -
+  t 1 hp=10 (1, 7) static_error  -
+  t 2 hp=10 (1, 7) static_error  -
+  t 3 hp=10 (1, 7) static_error  -
+  t 4 hp=10 (1, 7) error         move(north), move(south), move(east), move(west) X
+  t 5 hp=10 (2, 7) static_error  -
+  t 6 hp=10 (2, 7) static_error  -
+  t 7 hp=10 (2, 7) static_error  -
+  t 8 hp=10 (2, 7) static_error  -
+  t 9 hp=10 (2, 7) static_error  -
+  t10 hp=10 (2, 7) static_error  -
+  t11 hp=10 (2, 7) static_error  -
+  t12 hp=10 (2, 7) static_error  -
+  t13 hp=10 (2, 7) static_error  -
+  t14 hp=10 (2, 7) static_error  -
+  t15 hp=10 (2, 7) static_error  -
+  t16 hp=10 (2, 7) static_error  -
+  t17 hp=10 (2, 7) static_error  -
+  t18 hp=10 (2, 7) static_error  -
+  t19 hp=10 (2, 7) static_error  -
+  -> playing in 20 turns (key=False door=False)
+episode 6/6 (seed 5)
+  t 0 hp=10 (1, 7) ok            move(north)
+  t 1 hp=10 (1, 6) error         move(north), move(south), move(east), move(west) X
+  t 2 hp=10 (2, 6) static_error  -
+  t 3 hp=10 (2, 6) static_error  -
+  t 4 hp=10 (2, 6) static_error  -
+  t 5 hp=10 (2, 6) error         move(north), move(south), move(east), move(west) X
+  t 6 hp=10 (3, 6) error         move(north), move(south), move(east), move(west) X
+  t 7 hp=10 (4, 6) static_error  -
+  t 8 hp=10 (4, 6) static_error  -
+  t 9 hp=10 (4, 6) static_error  -
+  t10 hp=10 (4, 6) static_error  -
+  t11 hp=10 (4, 6) error         move(north), move(south), move(east), move(west) X
+  t12 hp=10 (5, 6) error         move(north), move(south), move(east), move(west) X
+  t13 hp=10 (6, 6) error         move(north), move(south), move(east), move(west) X
+  t14 hp=10 (7, 6) error         move(north) X
+  t15 hp=10 (7, 6) error         move(north) X
+  t16 hp=8 (7, 6) error         move(north) X
+  t17 hp=6 (7, 6) error         move(north) X
+  t18 hp=4 (7, 6) error         move(north) X
+  t19 hp=2 (7, 6) error         move(north) X
+  -> dead in 20 turns (key=False door=False)
+qwen3.5-0.8b-s2r-q8_e_rpg.jsonl: 6 episodes, model=qwen3.5-0.8b-s2r-q8.gguf condition=grammar-task/qwen
+  won            0/6 (0%)
+  died           1/6
+  funnel         key 0/6  door 0/6  exit 0/6
+  calls          74 (27 invalid)
+  turns          120 (88 did not compile, 0 abstained, 14 hit the action budget)
+  tokens_out p50 32   gen_ms p50 4302
+  finish_reason  {'stop': 120}

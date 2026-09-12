@@ -36,7 +36,8 @@ const WATCHDOG_MS = 5000;
 // Rule modules loadable by the `engine` op / post_hook. A hardcoded list, not
 // the world registry: harness/run.py honors a task's own `sandbox` payload,
 // impl descriptors included, so the whitelist is what actually guards this.
-const ENGINES = new Set(["rpg"]);
+const ENGINES = new Set(["rpg", "warehouse", "elevator", "cards", "house",
+                         "page"]);
 
 function loadEngine(name) {
   if (!ENGINES.has(name)) {
@@ -212,6 +213,18 @@ function main(input) {
         const entry = {};
         (impl.param_map || []).forEach((key, i) => { entry[key] = params[i]; });
         state.payments.push(entry);
+        return null;
+      }
+      case "noop": {
+        // Decoy tools (harness/decoys.py): they take the reference tool's
+        // signature and a neighbouring description, and they change nothing.
+        // A model that picks one on description alone therefore fails the
+        // task's state check rather than quietly corrupting the world.
+        if (impl.entity !== undefined && impl.id_param !== undefined) {
+          const rec = findRecord(impl.entity, params[impl.id_param]);
+          if (!rec) throw new ToolError("NOT_FOUND", `${impl.entity} not found`);
+          return clone(rec);
+        }
         return null;
       }
       case "engine": {

@@ -1,0 +1,3 @@
+registered 143 domains
+wrote 40 rows (4 resamples) -> data\smokefamc_shards\recovery_1.jsonl
+  by code: {'recovery_not_found': 14, 'recovery_permission_denied': 13, 'recovery_rate_limited': 13}

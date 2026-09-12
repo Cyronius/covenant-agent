@@ -122,6 +122,118 @@ neither. Both are anchored to the one worked example they are shown, which
 is the obvious next lever to test: the `SYSTEM` prompt's only demonstration
 is a kanban list-filter-loop, and every world since has been the same shape.
 
+## Re-run 2026-09-10: S3 and S4, and nobody plays yet
+
+Six episodes (seeds 0-5), same map, 20-turn cap, 3 actions a turn, grammar
+on, greedy. Each checkpoint on the surface it was trained on: S4 with
+`--symbols typed --enums --kinds`, S2R and S3 classic. Unpruned GGUFs, as
+below. Generated through LM Studio's bundled Vulkan `llama-server` against
+this box's AMD iGPU (`results/logs/rpg_gpu.sh`) - the in-process CPU path
+takes ~23 s a turn, this takes ~3 s, and the two return the same programs
+token for token (checked on the S4 arm's first three turns).
+
+| | oracle | S4 typed | S3 | S2R |
+|---|---|---|---|---|
+| won | 6/6 | 0/6 | 0/6 | 0/6 |
+| died | 0/6 | **6/6** | 0/6 | 1/6 |
+| reached the key | 6/6 | 0/6 | 0/6 | 0/6 |
+| turns played | 72 | 74 | 120 | 120 |
+| turns that compiled | 72/72 | 41/74 | **116/120** | 32/120 |
+| calls (failed) | 156 (0) | 66 (35) | 378 (116) | 74 (27) |
+| calls with a NULL arg | 0 | **25** | 0 | 0 |
+| tools ever executed | move, attack, pick_up, interact | move, interact, use_item | move | move |
+| CALLs per turn (mode) | - | 3 | 4 | 5 |
+
+**Nothing reaches the key.** Three checkpoints, three failure modes, one
+outcome: the funnel's first gate is still shut, and only the scripted player
+ever opens a door. Whatever the corpus taught between S2R and S4, it did not
+teach sequential decisions in this world.
+
+**The failure moved, twice.** S2R could not compile: 88 of its 120 turns died
+in the typechecker. S3 compiles almost everything (116 of 120) and still gets
+nowhere, because every one of its 378 calls is `move` and it emits four or
+five of them a turn - north, south, east and west, back where it started.
+That is the constant-enumeration template of the original run, reproduced on
+a newer checkpoint with a cleaner typechecker record. S4 typed writes a
+shorter template: three calls, one per constant *letter* on offer, 65 of its
+74 turns. The letters reorganised the habit instead of breaking it.
+
+**S4 is the first checkpoint to call anything but `move`** - `interact` 23
+times and `use_item` twice. That is the typed slots doing what they were
+designed to do, steering the tool choice by argument type. It bought
+nothing: every one of those 25 calls passed NULL and failed, while all 41
+`move` calls carried a real direction. Not one non-`move` call in the run
+had an argument, which is the next paragraph.
+
+**S4 dies in every episode, and that is not a worse planner.** S3 spends each
+turn moving in all four directions, so it never leaves the safe corner and
+never dies; S4 spends its one real action moving consistently in one
+direction, travels, and meets the goblins. Both are lost. Only one of them
+is lost somewhere dangerous.
+
+### The NULL hole: a legal call that can never work
+
+25 of S4's 66 calls passed NULL for a required argument, and all of them
+failed at runtime. This is not the model inventing syntax. `interact` takes
+one `ID:door`; on a turn with no door in sight, no door constant exists, no
+register is bound, and the typed operand class for that slot reduces to
+
+```
+op-ID-door ::= reg | reg "." cf-ID-door | "NULL"
+```
+
+so NULL is the only operand the grammar can emit there. The typechecker
+agrees: `core/typecheck.py:44` treats NULL as compatible with every type, on
+both surfaces, so `CALL <interact> NULL` compiles clean and fails in the
+sandbox as `NOT_FOUND`. Verified directly, classic and typed alike.
+
+The same shape is already on the record elsewhere: `results/R6.md` §0.2's
+L18 misses in the abstain control are `CALL T11 I0 NULL` - a note id the
+model could only have got by listing and filtering first. A tool whose
+required slot has no admissible operand should be unreachable, not reachable
+with a placeholder.
+
+**Fixed the same day** (`.claude/plans/null-required-slot.md`): a literal
+NULL in a required slot is now `MISSING_ARG` in the typechecker, and typed
+required slots are built without NULL in the grammar. Optional slots keep
+it, and so do comparisons and `SET`, where testing against null is the
+point. Where the corpus teaches the right form the fix pays: L18 goes 16/30
+to 17/30 with all 14 NULL programs gone and nothing broken (`R6.md` §0.4).
+
+On this suite it changes where the turn dies and nothing else. Re-run, same
+six seeds:
+
+| S4 typed, 6 episodes | before | after |
+|---|---|---|
+| won / reached the key | 0/6, 0/6 | 0/6, 0/6 |
+| died | 6/6 | 0/6 |
+| turns that compiled | 41/74 | 13/120 |
+| calls (failed) | 66 (35) | 16 (11) |
+| required-slot NULL calls | 25 | **0** |
+
+The NULLs are gone - the 11 that remain are `use_item`'s optional target
+slot, which is legal. In their place the model writes an unbound register
+field (`CALL T r0.F5`), so 107 of 120 turns now fail in the typechecker,
+`UNBOUND r0` 77 times. It stops dying only because it barely moves: 5 `move`
+calls against 41. E-rpg runs with no repair round, so here the fix trades
+silent waste for visible waste. That is the right trade and it is not a
+planner improvement: this suite's problem was never NULL, it is the one
+template.
+
+### What this does not settle
+
+The untuned arms (`Qwen3.5-0.8B`, `Qwen3.5-2B`, both on their own chat
+template) are still unrun - the HTTP path here builds only the hand-rolled
+qwen markup, and mixing templates through it would measure the wrapper. They
+remain the arm that separates "the tuning taught this template" from "a
+0.8B base is equally lost", and `results/logs/eval_rpg.sh` still scripts
+them for the in-process path.
+
+Also unchanged from the original run: the FIELDS block is mostly noise here,
+the `SYSTEM` prompt's only worked example is still a kanban list-filter-loop,
+and no arm has ever used `IF`, `FOREACH`, `TRY` or `PARALLEL` - S4 included.
+The one worked example remains the obvious lever nobody has pulled.
+
 ## What was held fixed
 
 Nothing was tuned to make this easier or harder:
@@ -147,25 +259,15 @@ Two properties of the setup worth naming, neither adjusted for this run:
 
 ## Not yet run
 
-The comparison arms are scripted in `results/logs/eval_rpg.sh` (oracle, both
-tuned checkpoints, the untuned 0.8B and the untuned 2B, same seeds and cap)
-but were not executed: three other evaluations were occupying this machine's
-CPU, and adding a multi-hour sweep would have slowed them and made the
-latency column meaningless. Run it when the box is free:
+The untuned arms (`Qwen3.5-0.8B` and `Qwen3.5-2B` on their own chat
+template) are still outstanding - see the re-run section above. A frontier
+planner would separate the picture further; it was left out because only a
+third-party API key was present on this machine and sending the prompts
+there was not part of what was agreed.
 
-```
-bash results/logs/eval_rpg.sh 3 20
-```
-
-The arm that matters most is the untuned 0.8B on its own chat template: it
-separates "the tuning taught this template" from "the base model is equally
-lost". A frontier planner would separate it further; it was left out because
-only a third-party API key was present on this machine and sending the
-prompts there was not part of what was agreed.
-
-Latency is not reported as a headline for the same reason: the 29.5 s median
-generation time in the run above was measured against three concurrent
-llama.cpp evaluations and says nothing useful.
+Latency is not a headline in either run. The original 29.5 s median was
+measured against three concurrent llama.cpp evaluations; the re-run's ~4 s
+mean is an iGPU number and says nothing about a deployment target.
 
 ## Reproducing
 
@@ -178,7 +280,22 @@ python -m harness.rpg_suite --report results/logs/<tag>_e_rpg.jsonl
 
 # any non-Qwen GGUF: --template chat applies the model's own chat template
 python -m harness.rpg_suite --model <some.gguf> --template chat --episodes 3
+
+# a checkpoint trained on the spec 0.4.0 surface has to be scored on it
+python -m harness.rpg_suite --model .../qwen3.5-0.8b-s4-q8-fixed.gguf \
+    --symbols typed --enums --kinds --episodes 6
+
+# GPU on this box: LM Studio's bundled Vulkan server, ~3 s a turn (~23 s in
+# process, which has no CUDA card and a CPU-only llama-cpp-python)
+llama-server.exe -m <gguf> -c 4096 -ngl 99 --port 8078
+python -m harness.rpg_suite --server http://127.0.0.1:8078 --model <gguf> ...
+bash results/logs/rpg_gpu.sh 6 20          # oracle + S4 + S3 + S2R
+python results/logs/rpg_breakdown.py results/logs/*_e_rpg.jsonl
 ```
+
+The S4 GGUFs both needed `baselines/qwen/fix_gguf_layer_arrays.py` before
+they would load at all (`results/R6.md` §3); the unpruned one was fixed on
+2026-09-10 for this run and is `qwen3.5-0.8b-s4-q8-fixed.gguf`.
 
 Each row carries the git SHA, model, template, grammar condition, seed and
 action cap, plus a per-turn log with the observation, the raw program, the

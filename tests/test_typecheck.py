@@ -168,3 +168,47 @@ def test_format_slot_count_and_result_type():
     assert codes == ["TYPE_ERROR"]  # template must be STR
     codes, _ = _codes("CALL @get_card $0 -> r0\nFORMAT $2 r0.@card.title r0 -> r1\nSTOP\n", ctx)
     assert codes == ["TYPE_ERROR"]  # OBJ operand not renderable
+
+
+def test_null_required_arg():
+    """An explicit NULL where the schema wants a value is a missing argument,
+    not a value of every type (results/RPG.md: the grammar offered NULL as
+    the only operand for a slot with no matching constant, and 25 of 66 RPG
+    calls were NULL calls that could only fail in the sandbox)."""
+    codes, _ = _codes("CALL @archive_card NULL -> r0\nSTOP\n")
+    assert codes == ["MISSING_ARG"]
+
+
+def test_null_optional_arg_is_fine():
+    world = get_world("rpg")
+    ctx = build_context(world, [{"type": "ID:item", "value": "item_1",
+                                 "desc": "a potion"}], random.Random(3))[0]
+    codes, res = _codes("CALL @use_item $0 NULL\nSTOP\n", ctx)
+    assert codes == [] and res.compile_ok
+
+
+def test_filter_field_on_the_right_resolves_against_the_element():
+    # spec 0.5.0: both fields of a FILTER clause belong to the element's entity
+    codes, res = _codes(
+        "CALL @list_cards -> r0\n"
+        "FILTER r0 @card.due LT @card.due AND @card.title EQ @card.status -> r1\n"
+        "COUNT r1 -> r2\n"
+        "STOP\n")
+    assert codes == [] and res.compile_ok
+    assert 'rt.fld(_x, "' in res.js and res.js.count("rt.fld(_x") == 4
+
+
+def test_filter_field_on_the_right_wrong_entity():
+    codes, _ = _codes(
+        "CALL @list_cards -> r0\n"
+        "FILTER r0 @card.due LT @user.email -> r1\n"
+        "STOP\n")
+    assert codes == ["UNKNOWN_FIELD"]
+
+
+def test_filter_field_on_the_right_type_error():
+    codes, _ = _codes(
+        "CALL @list_cards -> r0\n"
+        "FILTER r0 @card.due LT @card.title -> r1\n"  # TIME vs STR
+        "STOP\n")
+    assert codes == ["TYPE_ERROR"]

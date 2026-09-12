@@ -1,6 +1,6 @@
 # Agent Core IR — Specification (F1)
 
-**Version:** 0.4.0 (0.4.0, 2026-09-08: `MOST`/`LEAST`, `EMPTY`, normalized STR comparison, §2/§3/§4/§12; typed constant letters and constant kinds, §1/§6 — landing in the same series; 0.3.1, 2026-09-08: runtime errors as a segment boundary, §4/§9; 0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
+**Version:** 0.5.0 (0.5.0, 2026-09-11: a `FILTER` clause may compare against a second field of the element, §3/§4/§12; 0.4.0, 2026-09-08: `MOST`/`LEAST`, `EMPTY`, normalized STR comparison, §2/§3/§4/§12; typed constant letters and constant kinds, §1/§6 — landing in the same series; 0.3.1, 2026-09-08: runtime errors as a segment boundary, §4/§9; 0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
 **Status:** Foundation draft. Every change to this document must land in the same
 commit as the matching changes to `core/` (parser, typechecker, effects, compiler),
 `data/gen/`, and `spec/examples/`, with round-trip tests passing.
@@ -28,7 +28,7 @@ job is tool orchestration, not programming.
 | `F0`, `F1`, … | Field symbols. Assigned per request to `(entity, field)` pairs. Tool parameters reference field symbols where the parameter corresponds to an entity field, and fresh `F` symbols otherwise. |
 | `S0`, `N0`, `B0`, `D0`, `I0`, … | Constant symbols (0.4.0). The letter is the base type — `S` STR, `N` INT, `B` BOOL, `D` TIME, `I` ID (the entity is in the declaration) — numbered per letter in declaration order. Values are held by the runtime binding supplied with the task input (extracted from the request by the serializer; exact in synthetic data). An `S` declaration carries a **kind**: `name` (a lookup key), `text` (content passed along), or `enum <entity>.<field>` (one of that field's declared values; the serializer emits every enum value of every entity the visible tools touch, whether or not the request spells it). Kinds are declaration metadata, not types: the typechecker ignores them; the per-task grammar and the corpus use them. `C0`, `C1`, … is the 0.3.x form, still parsed. |
 | `NOW` | The current time, bound by the runtime. Type `TIME`. |
-| `NULL` | The null value. |
+| `NULL` | The null value. Legal as an operand in a comparison, a `SET`, and an optional `CALL` slot; in a required `CALL` slot it is `MISSING_ARG` (§6). |
 
 ## 2. Types
 
@@ -93,7 +93,7 @@ field       = "F" int ;
 const       = "C" int ;
 
 pred        = clause { ("AND" | "OR") clause } ;   (* AND binds tighter than OR *)
-clause      = [ "NOT" ] field cmp operand ;
+clause      = [ "NOT" ] field cmp ( operand | field ) ;   (* right-hand field: same element, 0.5.0 *)
 cond        = ccl { ("AND" | "OR") ccl } ;
 ccl         = [ "NOT" ] ( operand cmp operand | "EMPTY" reg ) ;
 cmp         = "EQ" | "LT" | "GT" | "CONTAINS" ;
@@ -118,7 +118,7 @@ Notes:
 | `SET r0 F3 x -> r1` | `r1` = copy of `r0` with field `F3` set to `x`. Pure; persistence only happens through tools. |
 | `CALL T2 a b -> r` | Invoke tool `T2` with positional args matching the tool schema's parameter order. Result bound to `r` if present, else discarded. Errors: see §8. |
 | `FORMAT C3 a b -> r1` | `C3` must be a `STR` constant whose value contains slots `{0}`, `{1}`, … — exactly one per operand. `r1` = the template with each slot replaced by the rendered operand (`STR` as is, `INT` as digits, `TIME` as an ISO date, `ID` as the id). Operands must be `STR`, `INT`, `TIME` or `ID(e)`. This is the only way a program produces new text, and it emits none: the template is a constant supplied by the serializer, the values are data. |
-| `FILTER r0 p -> r1` | `r0 : LIST(OBJ(e))`; keep elements satisfying predicate `p`, whose field symbols resolve against `e`. |
+| `FILTER r0 p -> r1` | `r0 : LIST(OBJ(e))`; keep elements satisfying predicate `p`, whose field symbols resolve against `e` — on either side of a clause. `FILTER r0 F1 LT F2 -> r1` keeps the elements whose own `F1` is below their own `F2` ("over budget", "understaffed", "past its own deadline"), so the set is a value that `COUNT`, `SORT`, `FIRST` and `RETURN` can take. Before 0.5.0 that comparison was legal only in an `IF` inside a `FOREACH`, which can act on each element but never bind the set. |
 | `MAP r0 F3 -> r1` | Project field `F3` over `LIST(OBJ(e))` → `LIST(field type)`. |
 | `COUNT r0 -> r1` | Length of a list → `INT`. |
 | `SORT r0 F3 ASC -> r1` | Stable sort of `LIST(OBJ(e))` by field. `ASC`/`DESC`. |
@@ -224,7 +224,11 @@ Each tool in the task input declares:
 
 - `effects` ⊆ `{READ, WRITE, DELETE, SEND, PAY, EXTERNAL}`.
 - Positional `CALL` arguments map to `params` in order. Missing required
-  parameter → `MISSING_ARG`; wrong type → `TYPE_ERROR`.
+  parameter → `MISSING_ARG`; wrong type → `TYPE_ERROR`. An explicit `NULL`
+  in a required slot is the absence of a value, so it is also
+  `MISSING_ARG`; `NULL` belongs in an optional slot. Only the literal
+  counts — a register that holds null still flows, which is what `MOST`
+  with no keys and a result-less tool produce.
 - `ID:e` accepts an `ID(e)` value or an `OBJ(e)` (auto-narrowed to its id by
   the compiler); this keeps programs short (`CALL T9 r2 …` where `r2` is the
   loop element).
@@ -353,6 +357,23 @@ only when all four hold:
 `MOST`/`LEAST` and `EMPTY` (0.4.0) pass all four. String operations and
 date arithmetic fail (1) by design: the model never emits text or computes
 cutoffs, and that is a safety property, not a gap.
+
+The same four tests apply, by analogy, to widening an existing production.
+The 0.5.0 `FILTER` clause (a field on the right) is the one case so far: it
+names no new instruction and no new type (4); the `FOREACH`/`IF` form it
+replaces is not longer but *incapable* — it cannot bind the set, so nothing
+downstream can count, sort or return it (2, stronger than asked); the
+request class ("which are understaffed", "how many are over budget") is
+unserved in the corpus because it was inexpressible (1); and test 3 is
+vacuous rather than measured — there was no long form for a capable model to
+find or miss, which `harness/schedule_probe.py` shows by construction. What
+a model run *can* still say is whether the form gets used once taught, and
+that is the S5 corpus's question (`results/FAMILIES.md` §4).
+The other half of that gap — membership of a field in another list, which an
+`IF` says with `CONTAINS` and a `FILTER` cannot say at all — stays a listed
+candidate (`.claude/plans/ir-filter-predicate.md` §3b), because admitting it
+either mirrors `CONTAINS` or removes its list arm, and that is a separate
+decision.
 
 Candidate missing primitives discovered during R1 are **listed for review** in
 `results/R1.md`, never added directly. Any grammar change bumps the version at

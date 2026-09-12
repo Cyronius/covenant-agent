@@ -1,0 +1,30 @@
+{
+ "n": 234,
+ "unmapped": 1,
+ "compile_ok": [
+  1.0,
+  234
+ ],
+ "route_match": [
+  0.3875,
+  160
+ ],
+ "route_write_match": [
+  0.5375,
+  160
+ ],
+ "correct_abstain": [
+  0.7606837606837606,
+  234
+ ],
+ "content_routed": [
+  0.09803921568627451,
+  102
+ ],
+ "unnecessary_destructive_total": 0
+}
+  write      n= 94 compile=1.00 route_write=0.52 abstain=0.81
+  none       n= 73 compile=1.00 route_write=nan abstain=0.63
+  generative n= 30 compile=1.00 route_write=0.47 abstain=0.90
+  read       n= 19 compile=1.00 route_write=0.56 abstain=0.74
+  knowledge  n= 18 compile=1.00 route_write=0.72 abstain=0.83

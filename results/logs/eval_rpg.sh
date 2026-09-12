@@ -14,6 +14,10 @@
 #  - our tuned checkpoints use the hand-rolled ChatML markup they were trained
 #    on (--template qwen); anything else gets its own chat template
 #    (--template chat), which is the only fair way to prompt it.
+#  - S4 was trained on the spec 0.4.0 surface, so its arm passes
+#    --symbols typed --enums --kinds. Every arm has to be run on the surface
+#    its checkpoint was trained on: scoring a typed model on classic prompts
+#    makes it look broadly broken (results/R6.md §0).
 set -u
 cd "$(dirname "$0")/../.."
 
@@ -22,12 +26,13 @@ TURNS=${2:-20}
 THREADS=${THREADS:-6}
 M=baselines/qwen/models
 
-run () {  # run <gguf> <template>
+run () {  # run <gguf> <template> [surface flags...]
   local model="$1" template="$2"
+  shift 2
   local tag
   tag=$(basename "$model" .gguf)
-  echo "=== $tag ($template) ==="
-  python -m harness.rpg_suite --model "$model" --template "$template" \
+  echo "=== $tag ($template ${*:-classic}) ==="
+  python -m harness.rpg_suite --model "$model" --template "$template" "$@" \
     --episodes "$EPISODES" --max-turns "$TURNS" --threads "$THREADS" \
     --out "results/logs/${tag}_e_rpg.jsonl" \
     2>&1 | tee "results/logs/${tag}_e_rpg.log"
@@ -38,8 +43,10 @@ python -m harness.rpg_suite --planner oracle --episodes "$EPISODES" \
   --max-turns "$TURNS" --out results/logs/oracle_e_rpg.jsonl \
   2>&1 | tee results/logs/oracle_e_rpg.log
 
-run "$M/qwen3.5-0.8b-s2r-q8.gguf" qwen    # newest tuned planner
-run "$M/qwen3.5-0.8b-s2-q8.gguf"  qwen    # previous tuned planner
+run "$M/qwen3.5-0.8b-s4-q8-fixed.gguf" qwen --symbols typed --enums --kinds
+run "$M/qwen3.5-0.8b-s3-q8.gguf"  qwen    # last classic-surface planner
+run "$M/qwen3.5-0.8b-s2r-q8.gguf" qwen
+run "$M/qwen3.5-0.8b-s2-q8.gguf"  qwen
 run "$M/Qwen3.5-0.8B-Q8_0.gguf"   chat    # same size, untuned
 run "$M/Qwen3.5-2B-Q8_0.gguf"     chat    # bigger, untuned
 

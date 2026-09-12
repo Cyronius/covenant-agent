@@ -1,0 +1,40 @@
+arm: typed | model: qwen3.5-0.8b-s4-pruned-q8-fixed.gguf | surface flags: '--symbols typed --enums --kinds'
+done e_real_sessions: le_ok_rate": 1.0,   "goal_success_rate": 0.6666666666666666,   "parse_ok_rate": 1.0,   "by_level": {     "0": {       "n": 234,       "compile": 234,       "goal": 156     }   },   "gen_ms_p50": 196.89527864102274,   "gen_ms_p95": 312.92707193642855,   "tokens_out_p50": 11.0,   "pauses_mean": 0.0,   "pauses_p95": 0,   "error_turns_total": 0,   "tasks_with_pause": 0,   "tasks_with_error_turn": 0 } 
+{
+ "n": 234,
+ "unmapped": 1,
+ "compile_ok": [
+  1.0,
+  234
+ ],
+ "route_match": [
+  0.3875,
+  160
+ ],
+ "route_write_match": [
+  0.5375,
+  160
+ ],
+ "correct_abstain": [
+  0.7606837606837606,
+  234
+ ],
+ "content_routed": [
+  0.09803921568627451,
+  102
+ ],
+ "unnecessary_destructive_total": 0
+}
+  write      n= 94 compile=1.00 route_write=0.52 abstain=0.81
+  none       n= 73 compile=1.00 route_write=nan abstain=0.63
+  generative n= 30 compile=1.00 route_write=0.47 abstain=0.90
+  read       n= 19 compile=1.00 route_write=0.56 abstain=0.74
+  knowledge  n= 18 compile=1.00 route_write=0.72 abstain=0.83
+done e_demo_requests:   "compile": 4,       "goal": 0     },     "12": {       "n": 5,       "compile": 3,       "goal": 0     },     "13": {       "n": 5,       "compile": 5,       "goal": 0     }   },   "gen_ms_p50": 131.85165403410792,   "gen_ms_p95": 332.04763918183744,   "tokens_out_p50": 13,   "pauses_mean": 0.0,   "pauses_p95": 0,   "error_turns_total": 0,   "tasks_with_pause": 0,   "tasks_with_error_turn": 0 } 
+done e_ood_english: compile": 22,       "goal": 19     },     "9": {       "n": 9,       "compile": 9,       "goal": 6     },     "10": {       "n": 9,       "compile": 9,       "goal": 9     }   },   "gen_ms_p50": 324.923487030901,   "gen_ms_p95": 470.54545604623854,   "tokens_out_p50": 45.0,   "pauses_mean": 0.045,   "pauses_p95": 0,   "error_turns_total": 0,   "tasks_with_pause": 9,   "tasks_with_error_turn": 0 } 
+done e_crowded: goal": 32     },     "9": {       "n": 14,       "compile": 14,       "goal": 12     },     "10": {       "n": 14,       "compile": 14,       "goal": 14     }   },   "gen_ms_p50": 581.7916344385594,   "gen_ms_p95": 825.0855379737914,   "tokens_out_p50": 49.0,   "pauses_mean": 0.04666666666666667,   "pauses_p95": 0,   "error_turns_total": 0,   "tasks_with_pause": 14,   "tasks_with_error_turn": 0 } 
+done e_crowded_v2: e": 27,       "goal": 26     },     "9": {       "n": 27,       "compile": 27,       "goal": 23     },     "10": {       "n": 27,       "compile": 27,       "goal": 26     }   },   "gen_ms_p50": 596.6699830023572,   "gen_ms_p95": 878.9004350546747,   "tokens_out_p50": 48.0,   "pauses_mean": 0.09,   "pauses_p95": 1,   "error_turns_total": 0,   "tasks_with_pause": 27,   "tasks_with_error_turn": 0 } 
+done e_foreign: ": 57,       "goal": 57     },     "9": {       "n": 24,       "compile": 24,       "goal": 17     },     "10": {       "n": 24,       "compile": 24,       "goal": 23     }   },   "gen_ms_p50": 334.9633408943191,   "gen_ms_p95": 477.6113268453628,   "tokens_out_p50": 45.0,   "pauses_mean": 0.048,   "pauses_p95": 0,   "error_turns_total": 0,   "tasks_with_pause": 24,   "tasks_with_error_turn": 0 } 
+done r1_tasks: 115,       "goal": 107     },     "9": {       "n": 48,       "compile": 48,       "goal": 48     },     "10": {       "n": 48,       "compile": 47,       "goal": 46     }   },   "gen_ms_p50": 341.9163669459522,   "gen_ms_p95": 487.47405293397605,   "tokens_out_p50": 46.0,   "pauses_mean": 0.047,   "pauses_p95": 0,   "error_turns_total": 0,   "tasks_with_pause": 47,   "tasks_with_error_turn": 0 } 
+done e_s2_levels: le": 30,       "goal": 30     },     "17": {       "n": 30,       "compile": 30,       "goal": 30     },     "18": {       "n": 30,       "compile": 30,       "goal": 16     }   },   "gen_ms_p50": 154.33625550940633,   "gen_ms_p95": 337.556661805138,   "tokens_out_p50": 14.0,   "pauses_mean": 0.0,   "pauses_p95": 0,   "error_turns_total": 0,   "tasks_with_pause": 0,   "tasks_with_error_turn": 0 } 
+=== eval_s4 done ===

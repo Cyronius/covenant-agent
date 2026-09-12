@@ -1,0 +1,4 @@
+registered 143 domains
+200/500 pairs (5 resamples)
+400/500 pairs (10 resamples)
+wrote 1500 rows (500 draws, 13 resamples) -> data\fam_shards\askact_1.jsonl

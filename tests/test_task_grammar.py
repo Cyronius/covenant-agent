@@ -127,3 +127,66 @@ def test_every_reference_program_symbol_is_decodable():
                     top = str(max(int(n) for n in declared[kind]) + 1)
                     assert not accepts(exprs[kind], top)
     assert checked > 1000
+
+
+# -- NULL in call slots (results/RPG.md) ---------------------------------
+
+def _typed_rpg_grammar():
+    import random
+
+    from harness.context import build_context
+    from runtime.worlds import get_world
+    ctx = build_context(get_world("rpg"),
+                        [{"type": "ID:item", "value": "item_1",
+                          "desc": "a potion"}], random.Random(3))[0]
+    tools = {t.name: t.sym for t in ctx.tools.values()}
+    return grammar_for_task({"context": ctx.to_json()}, load_base(),
+                            typed=True), tools
+
+
+def test_typed_required_slot_admits_no_null():
+    """`use_item` takes a required item and an optional target. NULL belongs
+    only in the optional slot: offering it in the required one made NULL the
+    single legal operand for a tool whose constant was not in view."""
+    gbnf, tools = _typed_rpg_grammar()
+    rule = _rule(gbnf, "call%s" % tools["use_item"])
+    ops = re.findall(r"op-[A-Za-z0-9-]+", rule)
+    assert len(ops) == 2, rule
+    assert '"NULL"' not in _rule(gbnf, ops[0])
+    assert '"NULL"' in _rule(gbnf, ops[1])
+
+
+def test_typed_sole_required_slot_admits_no_null():
+    gbnf, tools = _typed_rpg_grammar()
+    rule = _rule(gbnf, "call%s" % tools["interact"])
+    ops = re.findall(r"op-[A-Za-z0-9-]+", rule)
+    assert len(ops) == 1, rule
+    # no door is in view, so this slot has no constant at all -- it must
+    # still not fall back to NULL
+    assert '"NULL"' not in _rule(gbnf, ops[0])
+
+
+# -- a field on the right of a FILTER clause (spec 0.5.0) ------------------
+
+def test_kind_clause_admits_type_compatible_sibling_fields():
+    """Under a kinds grammar each field's clause may end in a sibling field
+    of the same entity and a compatible type; nothing else is spellable
+    there, or the change is invisible to a constrained decode."""
+    import random
+
+    from harness.context import build_context
+    from runtime.worlds import get_world
+    ctx = build_context(get_world("scheduling"), [], random.Random(3))[0]
+    syms = {(f.entity, f.name): f.sym for f in ctx.fields.values()
+            if f.entity}
+    gbnf = grammar_for_task({"context": ctx.to_json()}, load_base(),
+                            kinds=True)
+    covered, needs = syms[("shift", "covered")], syms[("shift", "needs")]
+    seats = syms[("room", "seats")]
+    sib = _expr(_rule(gbnf, "sf-f%s" % covered[1:]))
+    assert accepts(sib, needs[1:])
+    assert not accepts(sib, seats[1:])  # another entity
+    assert not accepts(sib, covered[1:])
+    assert "sf-f%s" % covered[1:] in _rule(gbnf, "clause")
+    # the base grammar carries the open form
+    assert '(operand | field)' in _rule(load_base(), "clause")

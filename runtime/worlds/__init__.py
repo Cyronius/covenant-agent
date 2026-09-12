@@ -22,11 +22,22 @@ it is the E-real-sessions eval world (harness/real_suite.py). `rpg` is held
 out too — a non-CRUD grid world used as a cross-domain decision probe
 (.claude/plans/rpg-demo-app.md); its rules live in runtime/engines/rpg.js
 and reach the sandbox through the `engine` impl op.
+
+`warehouse`, `elevator`, `cards`, `house` and `pages` are the rest of that
+decision family (.claude/plans/archive/task-families.md): same engine/post_hook
+shape, deliberately different renderings and topologies. `house` and the
+coursebuilder-shaped page app are held out with the dungeon; the others
+carry the family in training. harness/decision.py is the registry that
+pairs each with its oracle.
 """
-from . import coursebuilder, crm, kanban, projects, rpg
+from . import (cards, coursebuilder, crm, elevator, house, kanban, pages,
+               projects, rpg, scheduling, warehouse)
 
 WORLDS = {w["name"]: w for w in (kanban.WORLD, crm.WORLD, projects.WORLD,
-                                 coursebuilder.WORLD, rpg.WORLD)}
+                                 coursebuilder.WORLD, rpg.WORLD,
+                                 warehouse.WORLD, elevator.WORLD,
+                                 cards.WORLD, house.WORLD,
+                                 scheduling.WORLD, *pages.WORLDS)}
 
 
 def get_world(name: str) -> dict:

@@ -1,0 +1,10 @@
+registered 143 domains
+200/1500 (14 resamples)
+400/1500 (34 resamples)
+600/1500 (56 resamples)
+800/1500 (75 resamples)
+1000/1500 (90 resamples)
+1200/1500 (109 resamples)
+1400/1500 (131 resamples)
+wrote 1500 rows (141 resamples) -> data\famc_shards\recovery_1.jsonl
+  by code: {'recovery_not_found': 500, 'recovery_permission_denied': 500, 'recovery_rate_limited': 500}
