@@ -9,13 +9,13 @@ assume, this hand-writes the canonical asks against
 -> compile -> sandbox path, so R1's question - does the IR fit - is answered
 by a run rather than by argument. Nothing here generates corpus.
 
-The answer is narrower than "there is a missing primitive", and it took
-writing the FOREACH forms out to see it: every one of these asks can be
-*performed*. What the last one cannot do is produce the matching set as a
-value. Spec 0.5.0 let a FILTER clause compare two fields of the element,
-which is what "which shifts need cover" needed; "in that list" still has no
-FILTER form, so that work happens inside a loop that acts on each element
-and cannot be sorted, counted, or returned.
+The answer was narrower than "there is a missing primitive", and it took
+writing the FOREACH forms out to see it: every one of these asks could be
+*performed*, and two of them could not produce the matching set as a value.
+Spec 0.5.0 let a FILTER clause compare two fields of the element ("which
+shifts need cover") and 0.6.0 gave it IN, membership with the list on the
+right ("free in both calendars"), so all three now bind the set that SORT,
+COUNT, FIRST and RETURN need.
 """
 from __future__ import annotations
 
@@ -39,11 +39,10 @@ CONSTANTS = [
     {"type": "BOOL", "value": True, "desc": "true"},
     {"type": "INT", "value": 8, "desc": "the headcount, 8"},
     {"type": "ID:slot", "value": "slot_person_1_3",
-     "desc": "the hour both are free"},
+     "desc": "the hour to book the room for"},
 ]
 
 FITS = "fits"
-ACTION_ONLY = "runs, but only as an action - the set is never a value"
 
 PROBES = [
     {
@@ -83,20 +82,21 @@ FILTER r0 @slot.free EQ $2 -> r1
 MAP r1 @slot.start -> r2
 CALL @list_slots $0 -> r3
 FILTER r3 @slot.free EQ $2 -> r4
-FOREACH r4 -> r5
-  IF r2 CONTAINS r5.@slot.start
-    CALL @take_slot r5.@slot.id -> r6
+FILTER r4 @slot.start IN r2 -> r5
+SORT r5 @slot.start ASC -> r6
+FIRST r6 -> r7
+CALL @take_slot r7.@slot.id -> r8
 STOP
 """,
-        "verdict": ACTION_ONLY,
+        "verdict": FITS,
         "why": "MAP projects the other calendar to a list of times and "
-               "CONTAINS does membership with the list on the left, which an "
-               "IF admits. A FILTER clause cannot: its left is always the "
-               "element's field, so the list would have to go on the right "
-               "and no comparator puts it there. The intersection is walked, "
-               "never bound - so `the earliest` is out of reach and this "
-               "takes every mutually free hour instead of one.",
-        "want": "takes 2 slots where the ask names 1",
+               "spec 0.6.0's IN takes that list on the right of a FILTER "
+               "clause, so the intersection is a register and not a loop "
+               "body. Until then the only membership form was CONTAINS in "
+               "an IF, which can act on each mutually free hour and never "
+               "sort them, so `the earliest` was out of reach and the "
+               "program took every one.",
+        "want": "takes 1 slot, the earliest hour free in both calendars",
     },
 ]
 
@@ -130,17 +130,14 @@ def main() -> None:
         print(f"             {probe['why']}\n")
         fits += probe["verdict"] == FITS
     print(f"{fits}/{len(PROBES)} of the canonical asks fit the IR as it "
-          f"stands. The other {len(PROBES) - fits} run, and do the wrong "
-          f"thing.")
+          f"stands.")
     print()
-    print("What remains of the gap: an IF's condition is `operand cmp")
-    print("operand`, so `IF r2 CONTAINS r5.F1` tests membership in a list.")
-    print("A FILTER clause puts the element's field on the left, and no")
-    print("comparator puts a list on the right, so the intersection of two")
-    print("lists can be walked and never bound - which is what SORT, COUNT,")
-    print("FIRST and RETURN all need. The other half, comparing two fields")
-    print("of the element, landed in spec 0.5.0. The membership half is a")
-    print("listed candidate: .claude/plans/ir-filter-predicate.md section 3b.")
+    print("Both halves of the gap this probe found are now in the spec: a")
+    print("FILTER clause may compare two fields of the element (0.5.0) and")
+    print("may test a field for membership in a list with IN (0.6.0), which")
+    print("also replaced CONTAINS's list arm - CONTAINS is substring again.")
+    print("What is not measured here is adoption: whether a trained model")
+    print("reaches for either form. That is the S5 corpus's question.")
 
 
 if __name__ == "__main__":

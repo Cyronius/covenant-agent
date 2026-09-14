@@ -1,0 +1,22 @@
+{
+  "containerDiskInGb": 30,
+  "costPerHr": 0.74,
+  "desiredStatus": "RUNNING",
+  "env": [
+    "PUBLIC_KEY=ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDg4nt9+tKmWHbtqAYekC67n1SoeYZuNAxLOUxPoPGq2zoxP9C9mw/Z9NPBFqtZZMMzKXeTIuT7r6NjLq/LbEsA2w+71mvxzqVOTCCxhhEUbQR94cNqLTwyKPL0zkdCeOj6sfS51ZBhrJBZr8bCN4vhpa+V3RZ4FDnHBu8RNVNrdW98xiTDIu/HZmXZX/jF+0GdGKRV0IVaIBiZCYLnS1Rz6SLKqAZAY1xwBltEbkrYf5NLZZkNBzXikw5pQYpS4GZRKOR/KpIh0dTjg+PIUqLgh058Xm2z6bfL3q8hB1G544/ounguCxhUCieHwpGhg3y7aGy3giNvIZTXSUsFMiqX runpodctl-ssh-key\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA5A7A5P8H2RhRN3qDKdZVb+DfNEElhTKusfeDhq1gbR runpod-heal-pipeline\nssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDcoe7Elrf4cgYcqDfks2MMXFzhsnhtw2Ski0X6DFMFDg936hP9oWbKOTQ05E3mNSHtq9x1uWfBkwGYrGT5LlewuP3QgOxHoK7a6gNAo09TM4/t3D9EgWDEg+17x9Ze+C1y3Vr1C9G+NpJyZOd+30r1Ai8EUuehMmrQcENeAew7wjFLvmnBfDfxTsijASo0sUyoJlF9+/zq6Nbh3fTH+Am/IQpBVRc/a46FnumaL9L7BHJiFwV7CaRWEZYIiAfWTlDQKsnFffOtcF3fVF3yv30/h3Z08GKvVbamRSH+lQNMznp1URKaYwdsJyh0nDkgK2oZIH1iafbzQf6aVIFqZRwp runpodctl-ssh-key\nssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCj0ZEowjoqTV2qrU9Cc33tH7XRW/tago03PJRHcMWt7bs5eUVed75v1RQmGdwWJTnZk387Ck83Mwx6OKjB8Wbi9IwHUnLPbQjYXOJeFrSXwUn7QOLzPd3FTpH3Rd8U+LiMIrmetJPjwSt/6UNL8vCyvN2U8drMNovUuqjN0tDuHaC62JGdkDqJa/Ze57HKejpckFD1kvYRzKJoeV3c827SksMAIhXGp6pKV//33CfCvDOAg87cQetW5+S+oe3/oUkrlTRvdmCxQeo1mHvXOd+NhtsnCw/dFfvHBkOdwbrIfSEuMZKgMiLTIoGlpgrjnYF48tSGZ70G0dVGL/Aif4T runpodctl-ssh-key\nssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDYFDYqvY0/M3GEInl9M7QfuF8lEjSGXwtBTuE0NSrrSNVcUJSb484Rp4/MpKrGYUSUZQPwSornOO4BLeIzO3QdaXNHLTXRY0Vi4dDmSfrqGP7Qw9ZLWwA2S/kM0R/JibOSaFa9kC0ZV8A92G5yE0u0V3XvWMe2o+G/XmwpzTOIdKlXCAf85zMj8poD31BxVhJ9KIYacdvZgKFZWffrnI8b/th/RDHQ6ciZf+Z8oWJ/OhdBlP9KZptViFmskJbvENwQ4lGazNqbdcTP1k/d1/pqKmcprtul6FGLGOsc4pEhCkOXErtW8mi43YGFlcXLjEdxM6xxy+CzwzuWwS24Qgcl runpodctl-ssh-key\nssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCo4MZj9GSQ/PgDpRpI4wrjKPNXqWttGrXgjVX9DQwLfN10jCa5RBdbjfXNk35zEFdFlFSzC22VlQkoq7aUZHqIAKZ1M7tb9A8XoiCMPYk+hsQeTV/O6eRoxYzqhFnzthPV1Ae9Lg8cyQYK27f3bzxcP9EFiGIiQz8MKKukBOPBWTGjMzy8/dAwmEDf8SfStz3YwLHLBQ0DriC8fbk8vaMB3iA3oWfQcERVyi4qPfv/4mFHo9QGCcAu6BEHTURlouI0hpTLp2Q3yaQxhCiTE/Rl5VcrXcegVBYZbIKsNg6sFI75XcKjWEOoGMtJ+jXvfILz53VjFob//W805z+eEXeV runpodctl-ssh-key\nssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCrDENSOoicwrt4OzON5wJi3RN+7dN5l9QIqj86Z4Ci7p1M4BK+2hWwZPKhLGFRFeuRJoNMICZoI2s1vGxsuBW1PrnO3X/B86D/ZuDMKuflx2wdX02/r46DHyJYMPXPsBVPQHWUtOPwjioNQmWmR0f4w0dgOeeNlxEZs0lGNKzYB6o91Nvf98Z7+5e8NfeOzbEJ+l42iDvEFH8OluU2n0vmZ1QAOZ6k9hJod2JW8irvesPYbPqqdBV3IxKq5dZ9+rp1lDVxMvvBrelsu2QezSvvIu5ixl61yjOI3QsP1ON4eXQjyp+ASKdQcm8ZqiP2k8FLeOsvXLCjPHACvcW0p7tF runpodctl-ssh-key\nssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDxNxp7p/ytkQsBf3OajuF2p7ldgu2sJTMVGCZADetbbYcs3JCH/4r4FU00N30ARKXQNAAMNCY1mUsUG6j4dYhMifrugk1DR2o7KHWcN7IKQD6sfjHqR0niS9wN7GGHt+vHKzJ8ycOSv5YRn3A3vwhVcLe4aBEZ8KWzKZZJURoZU6cK4USqDfona9EORcoDDyuM3MulgEMsZjixlcsGvf24wgpq1MA9gzUJN1fiyqu9YAprIZxJ9d4vsnaEahzuW9c2USkoMTf7Kx1hF8iEsZ3SJqdKzw0oVq9GMssQW5mH2gAF5R4AHGhx2kj/Zfi5HyqEGKlJkISX8kVsiayLK067 runpodctl-ssh-key"
+  ],
+  "gpuCount": 1,
+  "id": "qcltq0fx3as6kq",
+  "imageName": "runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404",
+  "lastStatusChange": "Rented by User: Sun Sep 13 2026 00:27:53 GMT+0000 (Coordinated Universal Time)",
+  "machine": {
+    "gpuDisplayName": "RTX 4090",
+    "location": "RO"
+  },
+  "memoryInGb": 61,
+  "name": "s5-train",
+  "ports": "22/tcp",
+  "vcpuCount": 16,
+  "volumeInGb": 60,
+  "volumeMountPath": "/workspace"
+}

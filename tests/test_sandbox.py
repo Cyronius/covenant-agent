@@ -240,3 +240,44 @@ def test_create_skips_null_slots_and_omitted_optionals():
     assert out["status"] == "ok"
     rec = out["state"]["entities"]["element"][0]
     assert rec["type"] == "paragraph" and rec["heading"] == "Untitled" and "null" not in rec
+
+
+def test_in_binds_the_intersection_as_a_value():
+    # spec 0.6.0: membership with the list on the right, inside a FILTER
+    world, ctx, sctx, res = _build(
+        "kanban", [{"type": "STR", "value": "TODO", "desc": "todo"},
+                   {"type": "BOOL", "value": True, "desc": "true"}],
+        "CALL @list_cards -> r0\n"
+        "FILTER r0 @card.urgent EQ $1 -> r1\n"
+        "MAP r1 @card.status -> r2\n"
+        "FILTER r0 @card.status IN r2 -> r3\n"
+        "COUNT r3 -> r4\n"
+        "RETURN r4\n")
+    out = run_sandbox(_payload(world, sctx, res))
+    # the urgent cards are todo and doing; four cards share those statuses
+    assert out["status"] == "ok" and out["return_value"] == 4
+
+
+def test_in_case_folds_strings_like_eq():
+    world, ctx, sctx, res = _build(
+        "kanban", [{"type": "STR", "value": "TODO", "desc": "todo"}],
+        "CALL @list_cards -> r0\n"
+        "MAP r0 @card.status -> r1\n"
+        "IF $0 IN r1\n"
+        "  RETURN $0\n"
+        "STOP\n")
+    out = run_sandbox(_payload(world, sctx, res))
+    assert out["status"] == "ok" and out["return_value"] == "TODO"
+
+
+def test_in_matches_records_by_id():
+    world, ctx, sctx, res = _build(
+        "kanban", [{"type": "STR", "value": "Bob", "desc": "Bob"}],
+        "CALL @list_users -> r0\n"
+        "FILTER r0 @user.name EQ $0 -> r1\n"
+        "CALL @list_cards -> r2\n"
+        "FILTER r2 @card.assignee IN r1 -> r3\n"
+        "COUNT r3 -> r4\n"
+        "RETURN r4\n")
+    out = run_sandbox(_payload(world, sctx, res))
+    assert out["status"] == "ok" and out["return_value"] == 2

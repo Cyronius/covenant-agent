@@ -86,6 +86,13 @@ export default function Message({
             Approval required
           </div>
           <p className="gate-text">{message.text}</p>
+          {message.items && message.items.length > 0 && (
+            <ul className="gate-list">
+              {message.items.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          )}
           <div className="gate-actions">
             <button
               className="gate-btn gate-approve"

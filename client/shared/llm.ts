@@ -25,7 +25,7 @@ export interface Planner {
   loadMs: number;
   generate(
     promptText: string,
-    options?: { maxTokens?: number; stop?: string[] }
+    options?: { maxTokens?: number; stop?: string[]; grammar?: string }
   ): Promise<{ text: string; tokensOut: number; genMs: number }>;
   /** Frees the loaded model/WASM runtime. Call before creating a new
    * Planner against the same model (e.g. a CPU-only toggle reload) —
@@ -98,11 +98,14 @@ export async function createPlanner({
     async unload() {
       await wllama.exit();
     },
-    async generate(promptText, { maxTokens = 250, stop = [] } = {}) {
+    // `grammar` overrides the one fetched at load: the server sends a
+    // grammar built for this request's symbol table, whose CALL slots admit
+    // only type-compatible constants. The load-time file is the fallback.
+    async generate(promptText, { maxTokens = 250, stop = [], grammar } = {}) {
       const genStart = performance.now();
       const res = await wllama.createCompletion({
         prompt: promptText,
-        grammar: grammarText,
+        grammar: grammar ?? grammarText,
         temperature: 0,
         max_tokens: maxTokens,
         stop,

@@ -92,6 +92,11 @@ export interface RpgPromptResponse {
   context: TaskContextJson;
   world: 'rpg';
   now: number;
+  /** GBNF for this turn's symbol table - typed CALL slots, so an argument of
+   * the wrong type cannot be decoded. */
+  grammar: string;
+  /** SYSTEM text matching the surface the context was serialized in. */
+  system: string;
   /** the same state, with `memory` advanced by this observation — thread
    *  this copy forward, not the one you sent */
   state: RpgState;

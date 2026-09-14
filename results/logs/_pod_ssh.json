@@ -1,0 +1,14 @@
+{
+  "id": "qcltq0fx3as6kq",
+  "ip": "213.173.108.85",
+  "name": "s5-train",
+  "port": 17403,
+  "ssh_command": "ssh -i C:\\Users\\josha\\.runpod\\ssh\\runpodctl-ssh-key root@213.173.108.85 -p 17403",
+  "ssh_key": {
+    "path": "C:\\Users\\josha\\.runpod\\ssh\\runpodctl-ssh-key",
+    "exists": true,
+    "source": "runpodctl doctor",
+    "fingerprint": "SHA256:Qvr8/26Ak7EPVkeWJH+8vmNeXuxu0XGW8uEaoq0KZxM",
+    "in_account": true
+  }
+}

@@ -1,6 +1,6 @@
 # Agent Core IR — Specification (F1)
 
-**Version:** 0.5.0 (0.5.0, 2026-09-11: a `FILTER` clause may compare against a second field of the element, §3/§4/§12; 0.4.0, 2026-09-08: `MOST`/`LEAST`, `EMPTY`, normalized STR comparison, §2/§3/§4/§12; typed constant letters and constant kinds, §1/§6 — landing in the same series; 0.3.1, 2026-09-08: runtime errors as a segment boundary, §4/§9; 0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
+**Version:** 0.6.0 (0.6.0, 2026-09-12: `IN` - membership with the list on the right, legal in a `FILTER` clause; `CONTAINS` is substring only, §2/§3/§4/§12; 0.5.0, 2026-09-11: a `FILTER` clause may compare against a second field of the element, §3/§4/§12; 0.4.0, 2026-09-08: `MOST`/`LEAST`, `EMPTY`, normalized STR comparison, §2/§3/§4/§12; typed constant letters and constant kinds, §1/§6 — landing in the same series; 0.3.1, 2026-09-08: runtime errors as a segment boundary, §4/§9; 0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
 **Status:** Foundation draft. Every change to this document must land in the same
 commit as the matching changes to `core/` (parser, typechecker, effects, compiler),
 `data/gen/`, and `spec/examples/`, with round-trip tests passing.
@@ -37,7 +37,7 @@ INT  STR  BOOL  TIME  ID(entity)  OBJ(entity)  LIST(elem)  STATUS  NULL
 ```
 
 - `TIME` is an integer Unix timestamp (seconds). Comparisons use `LT`/`GT`.
-- `STR` comparison (`EQ`, `CONTAINS`) is **case-folded and trimmed** (0.4.0):
+- `STR` comparison (`EQ`, `CONTAINS`, `IN`) is **case-folded and trimmed** (0.4.0):
   "cyrus" equals "Cyrus". Ids and enum values are canonical and unaffected.
   The model never chooses this, so it cannot get it wrong.
 - `ID(e)` is an opaque identifier of an entity `e`.
@@ -96,7 +96,7 @@ pred        = clause { ("AND" | "OR") clause } ;   (* AND binds tighter than OR 
 clause      = [ "NOT" ] field cmp ( operand | field ) ;   (* right-hand field: same element, 0.5.0 *)
 cond        = ccl { ("AND" | "OR") ccl } ;
 ccl         = [ "NOT" ] ( operand cmp operand | "EMPTY" reg ) ;
-cmp         = "EQ" | "LT" | "GT" | "CONTAINS" ;
+cmp         = "EQ" | "LT" | "GT" | "CONTAINS" | "IN" ;   (* IN: right is a LIST, 0.6.0 *)
 int         = digit { digit } ;
 ```
 
@@ -118,7 +118,7 @@ Notes:
 | `SET r0 F3 x -> r1` | `r1` = copy of `r0` with field `F3` set to `x`. Pure; persistence only happens through tools. |
 | `CALL T2 a b -> r` | Invoke tool `T2` with positional args matching the tool schema's parameter order. Result bound to `r` if present, else discarded. Errors: see §8. |
 | `FORMAT C3 a b -> r1` | `C3` must be a `STR` constant whose value contains slots `{0}`, `{1}`, … — exactly one per operand. `r1` = the template with each slot replaced by the rendered operand (`STR` as is, `INT` as digits, `TIME` as an ISO date, `ID` as the id). Operands must be `STR`, `INT`, `TIME` or `ID(e)`. This is the only way a program produces new text, and it emits none: the template is a constant supplied by the serializer, the values are data. |
-| `FILTER r0 p -> r1` | `r0 : LIST(OBJ(e))`; keep elements satisfying predicate `p`, whose field symbols resolve against `e` — on either side of a clause. `FILTER r0 F1 LT F2 -> r1` keeps the elements whose own `F1` is below their own `F2` ("over budget", "understaffed", "past its own deadline"), so the set is a value that `COUNT`, `SORT`, `FIRST` and `RETURN` can take. Before 0.5.0 that comparison was legal only in an `IF` inside a `FOREACH`, which can act on each element but never bind the set. |
+| `FILTER r0 p -> r1` | `r0 : LIST(OBJ(e))`; keep elements satisfying predicate `p`, whose field symbols resolve against `e` — on either side of a clause. `FILTER r0 F1 LT F2 -> r1` keeps the elements whose own `F1` is below their own `F2` ("over budget", "understaffed", "past its own deadline"), so the set is a value that `COUNT`, `SORT`, `FIRST` and `RETURN` can take. Before 0.5.0 that comparison was legal only in an `IF` inside a `FOREACH`, which can act on each element but never bind the set. `FILTER r0 F1 IN r2 -> r3` (0.6.0) keeps the elements whose `F1` appears in the list `r2`, so an intersection is a value too. |
 | `MAP r0 F3 -> r1` | Project field `F3` over `LIST(OBJ(e))` → `LIST(field type)`. |
 | `COUNT r0 -> r1` | Length of a list → `INT`. |
 | `SORT r0 F3 ASC -> r1` | Stable sort of `LIST(OBJ(e))` by field. `ASC`/`DESC`. |
@@ -126,6 +126,7 @@ Notes:
 | `SELECT r0 i -> r1` | `i`-th element (0-based, `INT` operand). Out of range → runtime error `INDEX_OUT_OF_RANGE`. |
 | `FIRST r0 -> r1` | First element. Empty list → `NULL` bound to `r1`. |
 | `FOREACH r0 -> r1` | For each element of `r0` (in order), bind it to `r1` and run the body. `r1` remains bound to the last element after the loop (or is untouched when the list is empty — reading it after an possibly-empty loop is a typecheck warning, not an error). |
+| `x IN r` | Membership: `r` must hold a `LIST` whose element type is compatible with `x`, records narrowing to their ids as they do under `EQ`. The only membership form since 0.6.0 — `CONTAINS` is substring on `STR` and nothing else. `IN` reads the same in an `IF` condition and in a `FILTER` clause, where it is the only way to put a list on the right. |
 | `IF c` / `ELSE` | Standard branch. `ELSE` must immediately follow the `IF` body at the same indentation. A clause is `x cmp y` or the unary `EMPTY r` (true for an empty list or `NULL`; `r` must hold a `LIST`), so "did the lookup match anything" needs no numeric constant. |
 | `PARALLEL` | Body must be only `CALL` lines. Calls are issued concurrently; all results are bound when the block ends. No result register may be read inside the block. |
 | `TRY [RETRY n] -> r` | Run body. On a tool error inside, abort the body, and (if `RETRY n` and attempts remain) re-run it from the top, up to `n` additional attempts. `r` gets `OK` or the last error code (`STATUS`). Execution continues after the block. |
@@ -369,11 +370,17 @@ vacuous rather than measured — there was no long form for a capable model to
 find or miss, which `harness/schedule_probe.py` shows by construction. What
 a model run *can* still say is whether the form gets used once taught, and
 that is the S5 corpus's question (`results/FAMILIES.md` §4).
-The other half of that gap — membership of a field in another list, which an
-`IF` says with `CONTAINS` and a `FILTER` cannot say at all — stays a listed
-candidate (`.claude/plans/ir-filter-predicate.md` §3b), because admitting it
-either mirrors `CONTAINS` or removes its list arm, and that is a separate
-decision.
+The other half of that gap — membership of a field in another list — is
+0.6.0's `IN`, and it reads against the four tests the same way: no new type
+or instruction (4), a `FOREACH`/`IF` workaround that cannot bind the
+intersection so nothing can sort or count it (2), a request class that was
+unserved because it was unsayable (1), and test 3 vacuous for the same
+reason 0.5.0's was. Admitting `IN` alongside `CONTAINS`'s list arm would have
+left two spellings of one job, so the list arm went: `CONTAINS` is substring
+on `STR` and nothing else. Nothing depended on it: no entity field in any world
+is `LIST`-typed — 141 theme worlds built through `data.gen.domains` plus the
+14 registered ones, every field `STR`, `BOOL`, `TIME` or `ID` — and
+`CONTAINS` appears in 0 of 56,000 S4c references.
 
 Candidate missing primitives discovered during R1 are **listed for review** in
 `results/R1.md`, never added directly. Any grammar change bumps the version at

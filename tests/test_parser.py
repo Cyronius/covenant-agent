@@ -136,3 +136,10 @@ def test_filter_clause_takes_a_field_on_the_right():
     assert str(cl[0]) == "F1 LT F2"
     _, codes = _diag_codes("IF r0.F1 LT F2\n  STOP\nSTOP\n")
     assert codes == ["PARSE_ERROR"]
+
+
+def test_in_parses_with_a_register_on_the_right():
+    prog, diags = parse("FILTER r0 F1 IN r2 -> r1\nSTOP\n")
+    assert diags == []
+    cl = prog.body[0].pred.clauses[0]
+    assert (cl.left, cl.cmp, str(cl.right)) == ("F1", "IN", "r2")

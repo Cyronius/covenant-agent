@@ -10,7 +10,12 @@ conversation, type anything.
 the full `core/` parse/typecheck/effects/compile pipeline, sandboxed
 execution (`runtime/sandbox.js`), and the approval gate — it's the real
 runtime effect gate genuinely blocking an unapproved DELETE/SEND/PAY call,
-not a UI simulation of one.
+not a UI simulation of one. Two things the host settles before or around the
+model, because it can and the model can't: the people a request names are
+resolved against the board first
+(`.claude/plans/host-preflight-and-bulk-gate.md`), and anything destructive
+or bigger than a couple of writes is previewed in full and waits for a click
+(`.claude/plans/preview-run-approval-gate.md`).
 
 **What's fake:** the board (`src/data/board.ts`) — invented cards and
 people, not a real team's data. `send_message` and friends are already
@@ -51,7 +56,9 @@ card 3 to done"*, *"message Priya about her overdue card"*). Each request:
    current board (`server/dev_server.py`'s
    `handle_kanban_prompt`, using `harness.context.build_context()` — the
    same function the offline curriculum generator uses, not a
-   reimplementation).
+   reimplementation). The response also carries `preflight`: if the request
+   addresses somebody who isn't on the board, the chat answers from that
+   and step 2 never happens.
 2. Real grammar-constrained generation (`src/lib/llm.ts`).
 3. `POST /validate` — real parse/typecheck/effects/compile
    (`core.pipeline.build`) and real sandboxed execution
@@ -59,7 +66,10 @@ card 3 to done"*, *"message Priya about her overdue card"*). Each request:
    DELETE/SEND/PAY call, the real effect gate (`runtime/sandbox.js`)
    returns `EFFECT_BLOCKED` — the UI renders that as an approval gate, and
    only resends the *same* generated program with the approval flag flipped
-   once a real click grants it.
+   once a real click grants it. That first run is a **preview**: it runs to
+   the end against a throwaway copy of the board, so the gate lists
+   everything the program would do — all seven deletions, not the first one —
+   and the click authorizes exactly that list.
 
 Tool-call detail lines and the closing summary are derived from the real
 `calls` log and a before/after board diff (`src/lib/describe.ts`,
@@ -98,6 +108,16 @@ regression: `"Set card 3 to done."` picked the wrong card, consistently,
 against both the tuned 0.8B model and the larger 2B checkpoint — a much
 harder disambiguation problem than either was tuned to solve. Filtering
 constants down to what the request plausibly means fixed it.
+
+The same trim does **not** work for people, which is why `preflight` exists.
+Measured three ways on 2026-09-14: trimming the `ID:user` constants to the
+ones the request names does stop the wrong write (*"assign all issues to
+cyrus"* goes from four cards assigned to Bob to zero writes), but it breaks
+creation, since `create_card` requires an assignee and no user constant is
+left to fill the slot; supplying a default identity gets the writes back and
+points them all at the wrong person again. Every variant leaves the model
+writing something to someone. So the check moved out of the constant table
+and in front of the model entirely.
 
 ### The one real constraint
 

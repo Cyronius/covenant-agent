@@ -224,3 +224,52 @@ def test_generation_still_covers_every_level():
                 continue
         else:
             raise AssertionError(f"level {level} produced nothing")
+
+
+# ------------------------------------------- reading a field off the winner
+def test_argmax_question_refetches_the_winner():
+    """R6 §0.2: 2,016 of 2,024 MOST rows pass the winner's id straight to a
+    tool, so the model never learns that a *field* of the winner needs the
+    record back. The question form does exactly that."""
+    p = _program(_sample("argmax_which", 1000))
+    lines = p.splitlines()
+    most = next(i for i, l in enumerate(lines) if l.startswith("MOST "))
+    assert lines[most + 1].startswith("FILTER ") and " EQ r" in lines[most + 1]
+    assert lines[most + 2].startswith("FIRST ")
+    assert lines[most + 3].startswith("GET ")
+    assert lines[-1].startswith("RETURN ")
+
+
+# ------------------------------------------------ an abort with no referent
+def test_some_not_found_aborts_have_nothing_to_check_with():
+    """The L11 exam's 30 tasks name a record whose name reached no constant,
+    so the only faithful program is a bare abort. The corpus allocated the
+    name almost every time (2,597 checked against 195 bare) and the model
+    learned to reach for a referent it does not have."""
+    bare = seen = 0
+    for seed in range(3000, 3080):
+        try:
+            t = gen_main.gen_one(11, seed, False, "template")
+        except Exception:
+            continue
+        seen += 1
+        if _program(t).strip() == "ABORT NOT_FOUND":
+            bare += 1
+            assert not any(c.get("kind") == "name"
+                           for c in t["context"]["constants"])
+    assert seen >= 40 and bare / seen > 0.25, f"{bare}/{seen} bare"
+
+
+# ------------------------------------------------------ IN (spec 0.6.0) L19
+def test_parents_with_a_matching_child_bind_the_set_with_in():
+    t = _sample("parents_with", 5000, level=19)
+    p = _program(t)
+    assert "MAP " in p and " IN r" in p
+    # one pass over the parents, so a parent with three matching children is
+    # messaged once - which the FOREACH-over-children form got wrong
+    assert p.count("FOREACH") == 1
+
+
+def test_parents_without_uses_a_negated_clause():
+    p = _program(_sample("parents_without", 5000, level=19))
+    assert "NOT " in p and " IN r" in p

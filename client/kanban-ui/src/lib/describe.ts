@@ -31,12 +31,15 @@ export function describeCall(
     return entry.error ? `blocked — ${entry.error.code}` : 'failed';
   }
   switch (entry.name) {
+    // Counted on the board as it was when the call ran, not the one the
+    // program left behind: a turn that deletes seven cards used to report
+    // the read that found them as "6 cards on the board".
     case 'list_cards': {
-      const n = after.entities.card.filter((c) => !c.archived).length;
+      const n = before.entities.card.filter((c) => !c.archived).length;
       return `${n} card${n === 1 ? '' : 's'} on the board`;
     }
     case 'list_users':
-      return `${after.entities.user.length} team members`;
+      return `${before.entities.user.length} team members`;
     default:
       return entry.args.map((a) => describeArg(a, before, after)).join(' · ') || '—';
   }

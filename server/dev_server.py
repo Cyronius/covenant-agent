@@ -29,6 +29,7 @@ See server/README.md for the request/response contracts.
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import mimetypes
 import re
@@ -45,6 +46,8 @@ sys.path.insert(0, str(ROOT))
 
 from core.ir import TaskContext, parse_type  # noqa: E402
 from core.pipeline import build  # noqa: E402
+from baselines.qwen.run_a import SYSTEM, typed_system  # noqa: E402
+from harness import task_grammar  # noqa: E402
 from harness.context import build_context, sandbox_from_context, serialize_context  # noqa: E402
 from harness.run import run_sandbox  # noqa: E402
 from runtime.worlds import get_world, rpg  # noqa: E402
@@ -54,7 +57,9 @@ RPG_DIST = ROOT / "client" / "rpg-ui" / "dist"
 MODELS_DIR = ROOT / "baselines" / "qwen" / "models"
 GRAMMAR_FILE = ROOT / "baselines" / "qwen" / "agent_core.gbnf"
 TASKS_FILE = ROOT / "data" / "curriculum_tasks.jsonl"
-DEFAULT_PLAN_MODEL = MODELS_DIR / "qwen3.5-0.8b-s2-pruned-q8.gguf"
+# Unpruned on purpose: the same planner serves the dungeon, and the pruned
+# vocabulary never saw map glyphs or words like "goblin" (results/RPG.md).
+DEFAULT_PLAN_MODEL = MODELS_DIR / "qwen3.5-0.8b-s5-q8.gguf"
 # Our own tuned checkpoints were SFT'd against the hand-rolled ChatML markup
 # in baselines/qwen/run_a.py; any other GGUF gets its own chat template
 # applied by llama-cpp-python instead (see ServerPlanner.generate_chat).
@@ -64,6 +69,10 @@ TUNED_PREFIXES = ("qwen3.5-0.8b-s", "qwen3.5-2b-cond", "qwen3.5-0.8b-cond")
 # plan s2-consolidated-program §A8), while the base 0.8B writes a proper
 # short message. Falls back to the planner weights if this file is absent.
 DEFAULT_WRITER_MODEL = MODELS_DIR / "Qwen3.5-0.8B-Q8_0.gguf"
+# How many records a freely-typed request may change before a person has to
+# look at the list first. Two is "a couple"; the fourth silent assignment is
+# what prompted this.
+BULK_WRITE_LIMIT = 2
 
 
 class ServerPlanner:
@@ -79,6 +88,9 @@ class ServerPlanner:
         self._llm = None
         self._writer = None
         self._grammar = None
+        # compiled per-request grammars, keyed by text: a board's symbol
+        # table only changes when the board does, and from_string is not free
+        self._grammar_cache: dict = {}
         self._lock = threading.Lock()
 
     @property
@@ -117,12 +129,32 @@ class ServerPlanner:
             self.model_path = target
         return self.status()
 
-    def generate(self, prompt: str, max_tokens: int, stop: list) -> dict:
+    def grammar_for(self, text: str | None):
+        """Compile a caller-supplied grammar, cached. None means the static
+        fallback file, which admits any symbol in any slot - the demo used to
+        run that way and the model spelled ill-typed calls with it."""
+        if not text:
+            self._ensure()
+            return self._grammar
+        hit = self._grammar_cache.get(text)
+        if hit is None:
+            from llama_cpp import LlamaGrammar
+            hit = LlamaGrammar.from_string(text, verbose=False)
+            if len(self._grammar_cache) >= 8:
+                # a new board means a new symbol table means a new grammar;
+                # keep the recent ones, not every board ever typed against
+                self._grammar_cache.pop(next(iter(self._grammar_cache)))
+            self._grammar_cache[text] = hit
+        return hit
+
+    def generate(self, prompt: str, max_tokens: int, stop: list,
+                 grammar_text: str | None = None) -> dict:
         with self._lock:
             self._ensure()
+            grammar = self.grammar_for(grammar_text)
             t0 = time.perf_counter()
             res = self._llm.create_completion(
-                prompt, grammar=self._grammar, temperature=0.0,
+                prompt, grammar=grammar, temperature=0.0,
                 max_tokens=max_tokens, stop=stop or ["<|im_end|>"])
             gen_ms = (time.perf_counter() - t0) * 1000
         choice = res["choices"][0]
@@ -663,6 +695,104 @@ def constants_from_board(request: str, state: dict, now: int | None = None) -> l
     return constants
 
 
+# --- pre-flight identity resolution (plan host-preflight-and-bulk-gate §A) --
+# Resolving the people a request names is a lookup against the board, and the
+# host can't get it wrong. The model can, and did: "assign all issues to
+# cyrus" assigned four cards to Bob. Trimming the user constants the way
+# relevant_cards() trims card constants stops that write but breaks
+# create_card (whose assignee slot then has nothing to fill it), so the check
+# runs here instead, before anything is generated.
+_NAME_TOKEN = r"[A-Za-z][A-Za-z'’.\-]*"
+# Only constructions that actually take a person. Notably not a bare "for X":
+# "add a card for recompiling fortran" names nobody.
+_PERSON_RES = [
+    re.compile(r"\b(?:assign|reassign|give|hand)\w*\b[^.]*?\bto\s+(%s)" % _NAME_TOKEN, re.I),
+    re.compile(r"\b(?:owned|assigned|handled)\s+(?:to|by)\s+(%s)" % _NAME_TOKEN, re.I),
+    re.compile(r"\b(?:message|notify|remind|ping|email|tell|dm)\s+(%s)" % _NAME_TOKEN, re.I),
+    re.compile(r"\b(?:send|write)\b[^.]*?\bto\s+(%s)" % _NAME_TOKEN, re.I),
+    re.compile(r"\bmake\s+(%s)\s+the\s+(?:owner|assignee)" % _NAME_TOKEN, re.I),
+    re.compile(r"\b(%s)['’]s\b" % _NAME_TOKEN),
+]
+# Words these patterns can capture that are never a person.
+_NOT_A_PERSON = {
+    "me", "myself", "i", "you", "him", "her", "his", "hers", "them", "they",
+    "their", "us", "we", "it", "its", "this", "that", "these", "those",
+    "someone", "anyone", "everyone", "everybody", "nobody", "all", "each",
+    "both", "the", "a", "an", "any", "no", "one", "another",
+    "todo", "doing", "done", "column", "board", "backlog", "card", "cards",
+    "issue", "issues", "ticket", "tickets", "task", "tasks", "item", "items",
+    "everything", "anything", "nothing", "owner", "assignee", "team",
+    "today", "tomorrow", "yesterday", "week", "month", "list", "top",
+    "bottom", "next", "new", "same", "other", "overdue", "urgent",
+    # contraction stems the possessive pattern would otherwise read as a
+    # name — "let's archive the done cards" must not answer "nobody called let"
+    "let", "what", "who", "whom", "whose", "which", "where", "when", "why",
+    "how", "there", "here", "whoever", "whomever", "somebody", "anybody",
+    "everybody", "he", "she", "person", "people", "sprint", "project",
+}
+
+
+def named_people(request: str) -> list:
+    """Lowercased name tokens the request addresses as people, in order."""
+    out = []
+    for pat in _PERSON_RES:
+        for m in pat.finditer(request):
+            tok = m.group(1).strip(".'’-").lower()
+            if len(tok) < 2 or not tok.isalpha() or tok in _NOT_A_PERSON:
+                continue
+            if tok not in out:
+                out.append(tok)
+    return out
+
+
+def _person_keys(user: dict) -> set:
+    """Every spelling of one user a request might use."""
+    name = str(user.get("name", ""))
+    keys = {name.lower(), *name.lower().split()}
+    email = str(user.get("email", ""))
+    if "@" in email:
+        keys.add(email.split("@", 1)[0].lower())
+    return {k for k in keys if k}
+
+
+def _roster(names: list) -> str:
+    if len(names) == 1:
+        return names[0]
+    return ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def preflight_people(request: str, state: dict) -> dict | None:
+    """The first person a request names that the board can't resolve, as an
+    answer the UI can give without calling the model. None when every name
+    resolves (or the request names nobody)."""
+    users = state.get("entities", {}).get("user", [])
+    if not users:
+        return None
+    keys = [(u, _person_keys(u)) for u in users]
+    roster = [str(u.get("name", u.get("id"))) for u in users]
+    for token in named_people(request):
+        matched = [u for u, k in keys if token in k]
+        if len(matched) == 1:
+            continue
+        if len(matched) > 1:
+            names = [str(u.get("name", u.get("id"))) for u in matched]
+            return {"status": "ambiguous_person", "name": token,
+                    "candidates": names, "people": roster,
+                    "message": f'"{token}" could be {_roster(names)} '
+                               f"— which one did you mean?"}
+        close = difflib.get_close_matches(
+            token, [k for _, ks in keys for k in ks], n=1, cutoff=0.8)
+        suggestion = None
+        if close:
+            suggestion = next(str(u.get("name")) for u, ks in keys if close[0] in ks)
+        message = (f"There's nobody called \"{token}\" on this board"
+                   + (f" — did you mean {suggestion}?" if suggestion
+                      else f". It has {_roster(roster)}."))
+        return {"status": "unknown_person", "name": token,
+                "suggestion": suggestion, "people": roster, "message": message}
+    return None
+
+
 def list_models() -> dict:
     """GET /models — the checkpoints on this machine, and how each one wants
     to be prompted. `template: "qwen"` means the client builds the prompt
@@ -709,7 +839,9 @@ def handle_plan(req: dict) -> dict:
         return {"error": {"code": "BAD_REQUEST",
                           "message": "plan needs 'prompt' or 'user'"}}
     stop = req.get("stop") or ["<|im_end|>"]
-    return PLANNER.generate(prompt, max_tokens, list(stop))
+    grammar = req.get("grammar")
+    return PLANNER.generate(prompt, max_tokens, list(stop),
+                            grammar if isinstance(grammar, str) else None)
 
 
 def handle_write(req: dict) -> dict:
@@ -723,6 +855,29 @@ def handle_write(req: dict) -> dict:
     brief = str(params[0]) if params else ""
     data = params[1] if len(params) > 1 and isinstance(params[1], list) else []
     return PLANNER.write(brief, data)
+
+
+def typed_prompt_fields(world: dict, constants: list, request: str) -> dict:
+    """The prompt, context, grammar and SYSTEM for one request, on the
+    surface the tuned checkpoints were trained on (spec 0.4.0 typed letters,
+    enum constants) with a grammar rebuilt for this symbol table.
+
+    The demo used to serve classic symbols against the static fallback
+    grammar. `results/R6.md` §0 measured the surface mismatch alone at 7-14
+    points, and the open grammar let the model spell calls whose arguments
+    could not typecheck - see .claude/plans/demo-typed-surface.md.
+    """
+    ctx, sandbox = build_context(world, constants, symbols="typed", enums=True)
+    task = {"context": ctx.to_json()}
+    return {
+        "input_text": serialize_context(request, ctx),
+        "context": task["context"],
+        "grammar": task_grammar.grammar_for_task(
+            task, task_grammar.load_base(), typed=True, kinds=True),
+        "system": typed_system(SYSTEM),
+        "_ctx": ctx,
+        "_sandbox": sandbox,
+    }
 
 
 def handle_kanban_prompt(req: dict) -> dict:
@@ -739,13 +894,19 @@ def handle_kanban_prompt(req: dict) -> dict:
         return {"error": {"code": "BAD_REQUEST",
                            "message": "kanban_prompt needs 'request' and 'state'"}}
     world = get_world("kanban")
-    ctx, _sandbox = build_context(
-        world, constants_from_board(request, state, world["now"]))
+    fields = typed_prompt_fields(
+        world, constants_from_board(request, state, world["now"]), request)
     return {
-        "input_text": serialize_context(request, ctx),
-        "context": ctx.to_json(),
+        "input_text": fields["input_text"],
+        "context": fields["context"],
+        "grammar": fields["grammar"],
+        "system": fields["system"],
         "world": "kanban",
         "now": world["now"],
+        # Set when the request names somebody the board doesn't have: the
+        # client answers from this and never generates. The prompt is still
+        # built and returned so it stays inspectable.
+        "preflight": preflight_people(request, state),
     }
 
 
@@ -774,10 +935,12 @@ def handle_rpg_prompt(req: dict) -> dict:
     world = get_world("rpg")
     obs = rpg.observe(state)
     state = dict(state, memory=obs.memory)
-    ctx, _sandbox = build_context(world, obs.constants)
+    fields = typed_prompt_fields(world, obs.constants, obs.request)
     return {
-        "input_text": serialize_context(obs.request, ctx),
-        "context": ctx.to_json(),
+        "input_text": fields["input_text"],
+        "context": fields["context"],
+        "grammar": fields["grammar"],
+        "system": fields["system"],
         "world": "rpg",
         "now": world["now"],
         "state": state,
@@ -816,6 +979,8 @@ def handle_validate(req: dict) -> dict:
         default_state = task["state"]
         default_approval = task.get("approval", False)
         error_injection = task.get("error_injection", [])
+        preview = False  # the fixed tasks are scored, not demoed
+        bulk_write_limit = None
     elif inline_context is not None and inline_world:
         ctx = TaskContext.from_json(inline_context)
         world_name = inline_world
@@ -823,6 +988,10 @@ def handle_validate(req: dict) -> dict:
         default_state = None  # freeform requests always carry their own state
         default_approval = False  # no stored default; must come from "approval" below
         error_injection = []
+        # Kanban only: in the dungeon every tool is a WRITE (moving is one),
+        # so counting them would gate an ordinary turn.
+        preview = inline_world == "kanban"
+        bulk_write_limit = BULK_WRITE_LIMIT if preview else None
     else:
         return {"status": "server_error",
                 "error": {"code": "BAD_REQUEST",
@@ -870,6 +1039,12 @@ def handle_validate(req: dict) -> dict:
         "approval": default_approval if incoming_approval is None else bool(incoming_approval),
         "error_injection": error_injection,
         "initial_registers": registers,
+        # Freeform requests only: run to the end unapproved and report
+        # everything needing a click at once, instead of halting at the first
+        # destructive call and approving the rest sight-unseen (plan
+        # preview-run-approval-gate). Off for the scored tasks.
+        "preview": preview,
+        "bulk_write_limit": bulk_write_limit,
     }
     if SELF_URL and PLANNER.available:
         payload["external_url"] = SELF_URL + "/write"  # EXTERNAL tools call back here

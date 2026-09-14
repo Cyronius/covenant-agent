@@ -58,7 +58,7 @@ pred      ::= clause ((" AND " | " OR ") clause)*
 clause    ::= ("NOT ")? field " " cmp " " (operand | field)
 cond      ::= ccl ((" AND " | " OR ") ccl)*
 ccl       ::= ("NOT ")? (operand " " cmp " " operand | "EMPTY " reg)
-cmp       ::= "EQ" | "LT" | "GT" | "CONTAINS"
+cmp       ::= "EQ" | "LT" | "GT" | "CONTAINS" | "IN"
 
 operand   ::= regfield | reg | const | "NOW" | "NULL" | num
 regfield  ::= reg "." field

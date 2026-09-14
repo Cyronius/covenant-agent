@@ -80,11 +80,15 @@ export function buildPrompt(
 export function buildFullPrompt(
   taskInputText: string,
   registers: Registers,
-  prior: string[] | null | undefined
+  prior: string[] | null | undefined,
+  // The server sends the SYSTEM text matching the symbol surface it
+  // serialized the context in (typed letters since spec 0.4.0). Mirroring
+  // that decision here a second time is how the two drift apart.
+  system: string = SYSTEM
 ): string {
   const user = buildPrompt(taskInputText, registers, prior);
   return (
-    `<|im_start|>system\n${SYSTEM}<|im_end|>\n` +
+    `<|im_start|>system\n${system}<|im_end|>\n` +
     `<|im_start|>user\n${user}<|im_end|>\n` +
     `<|im_start|>assistant\n<think>\n\n</think>\n\n`
   );

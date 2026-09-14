@@ -3,8 +3,8 @@
 Plan: `.claude/plans/archive/task-families.md`. Corpus: `results/logs/gen_families.sh`.
 Exams: `results/logs/eval_families.sh`. Nothing here has been retrained on
 yet; this documents what was built, what it was checked against, and the
-two results that came back before any training: the per-turn baseline in §3
-and the scheduling probe in §4. Both of those corrected something I had
+results that came back before any training: the decoy gap in §2, the
+per-turn baselines in §3 and the scheduling probe in §4. Both of those corrected something I had
 written down wrong first, which is noted where it happened.
 
 ## 1. The finding this rests on
@@ -86,6 +86,29 @@ The decoy RNG is seeded separately from the draw, so `--decoys` produces the
 from 18 tools to 42. That is what makes "E-known minus E-known-with-decoys"
 a number rather than two unrelated scores.
 
+### The number, 2026-09-12: 9.25 points, and the model never notices
+
+S4 typed on both halves of the pair, 400 tasks each, same seed and same
+programs (`results/logs/famB_{plain,decoy}_s4.*`):
+
+| | goal | compiles |
+|---|---|---|
+| e_known_plain | **97.75%** | 99.5% |
+| e_known_decoy | **88.5%** | 99.0% |
+
+39 tasks lost, 2 gained. **37 of the 39 compiled and executed cleanly** -
+the model called a sibling that does nothing and reported success. Compile
+rate barely moves, so this is not a syntax or symbol-table effect: given
+two tools with the same signature and a neighbouring description, the model
+picks by something other than the description about one time in eleven, and
+nothing downstream catches it. The losses sit at L12 (9), L8 (6), L15 (5),
+L9 and L4 (4 each) - the levels whose action is a send or an update, which
+is where the sibling banks are densest.
+
+That is the one-bit answer family B was built for, and it says the family
+earns its 6,000 rows.
+
+
 ## 3. A metric that scores decisions, not episodes — and the first thing it said
 
 `0/6` cannot separate "cannot decide" from "cannot plan". `harness/rpg_suite.py`
@@ -129,8 +152,31 @@ right argument never, 24 of 60 turns not compiling at all, and every single
 call that ran illegal. Grid or no grid, a room graph named in prose is
 further outside what it knows than the dungeon is.
 
-Two baselines for a retrain to beat, then, and they are different problems:
-stop over-acting on the dungeon, and bind an argument at all on the house.
+### The row S5 has to beat: S4 typed, 2026-09-12
+
+The same probe on the checkpoint the retrain starts from, each world on the
+surface that checkpoint was trained on (`results/logs/perturn.sh`, 3
+episodes, 120 turns a world, the Vulkan server):
+
+| | first tool | first tool+arg | whole turn | turns that did not compile |
+|---|---|---|---|---|
+| dungeon (rpg) | **1%** | 1% | 0% | 109/120 |
+| house | 49% | 0% | 0% | 61/120 |
+| coursebuilder app | 93% | 46% | **12%** | 0/120 |
+
+S3's 98% on the dungeon is not a bar S4 fell under by being worse at
+deciding - S4 mostly does not produce a legal turn there. It writes
+`CALL T2 S0 -> r0` then `CALL T3 r0.F5 -> r1`, reading a field off something
+that has none (`UNKNOWN_FIELD r0 F5`), which is the same unbound-register
+habit `results/RPG.md` found after the NULL fix closed the easy way out.
+
+The app is the first non-zero whole-turn score any checkpoint has scored on
+any of these worlds: 14 of 120 turns exactly right, every turn compiling.
+It is also the world closest to the corpus's own shape - named tools over a
+form, no spatial state - which is the point family C was built to make.
+Three baselines, then, and they are three different problems: produce a
+legal turn at all on the dungeon, bind an argument on the house, and stop
+over-acting on the app.
 
 Reading the oracle against itself gives 100% on all three numbers for every
 world, which is the check that they measure agreement and not something else
@@ -151,7 +197,8 @@ what showed it: both of the then-failing asks could be *performed*, and
 what neither could do was produce the matching set as a value. The gap was
 one thing — `FILTER`'s clause was `field cmp operand` while an `IF`'s
 condition is `operand cmp operand`, and nothing in the spec said why the
-predicate was the weaker of the two. Half of that closed on 2026-09-11.
+predicate was the weaker of the two. Half closed on 2026-09-11, the rest on
+2026-09-12; all three asks now fit.
 
 - *"Book the cheapest free room that seats eight"* — **fits**. One list and
   a predicate that fits `FILTER`'s clause form, so `FILTER` + `SORT` +
@@ -164,13 +211,14 @@ predicate was the weaker of the two. Half of that closed on 2026-09-11.
   The change is spec §3 (`clause` takes a field on the right), §4's
   `FILTER` row and §12; ~40 lines across parser, typecheck, compile and the
   two grammars; no new instruction, no new type, nothing in the sandbox.
-- *"Take the earliest hour free in both calendars"* — **still action only**.
-  `MAP` projects the other calendar to a list of times and `CONTAINS` does
-  membership with the list on the left, which an `IF` admits. A `FILTER`
-  clause cannot: its left is always the element's field, so the list would
-  have to go on the right and no comparator puts it there. The intersection
-  gets walked, never bound, so "the earliest" is unreachable and the program
-  takes both mutually free hours.
+- *"Take the earliest hour free in both calendars"* — **fits, since
+  0.6.0**. `MAP` projects the other calendar to a list of times and `IN`
+  takes that list on the right of a `FILTER` clause, so the intersection is
+  a register: `FILTER r4 F_start IN r2 -> r5`, then `SORT` + `FIRST` + the
+  call. Before that the only membership form was `CONTAINS` with the list on
+  the left, which an `IF` admits and a `FILTER` clause cannot, so the
+  intersection got walked and never bound — "the earliest" was unreachable
+  and the program took both mutually free hours.
 
 **On §12's tests.** The widening names no composite, so the four tests
 apply by analogy. Tests 1, 2 and 4 hold (the class was unserved because it
@@ -182,17 +230,33 @@ The model question that *is* open is adoption — whether a model taught the
 form emits it for "which are understaffed" — and that is answered by S5's
 corpus and eval, not by a pre-change measurement.
 
-**What stays open** is the membership half, `.claude/plans/ir-filter-
-predicate.md` §3b: an `IN` comparator with the list on the right. It is
-held back on purpose — `IN` and `CONTAINS` would be mirror images, which is
-family B's confusion by construction, and the clean fix (drop `CONTAINS`'s
-list arm; no entity field in any of the 148 worlds is `LIST`-typed and
-`CONTAINS` appears in 0 of 56,000 S4c references) removes something from a
-shipped spec. Owner's call, and separate from this one.
+**The membership half landed as `IN`** (spec 0.6.0, plan §3b), and with it
+the overlap question §5 of the plan raised: `IN` and `CONTAINS` doing the
+same job with the operands swapped is family B's confusion by construction,
+so `CONTAINS`'s list arm went rather than gaining a mirror. `CONTAINS` is
+substring on `STR` again. Nothing depended on the arm — no entity field in
+any world is `LIST`-typed (141 theme worlds built through
+`data.gen.domains`, plus the 14 registered ones) and `CONTAINS` appears in
+0 of 56,000 S4c references, 0 of 56,000 S4 and 0 of the family corpus. `python -m harness.schedule_probe` now prints 3/3.
 
-Neither form has corpus rows yet. An IR form with no rows teaching it is a
-form the model never emits (`MOST` only landed because R4 shipped recipes
-with it), so a "compare two fields" recipe rides the S5 retrain in §6.
+**`IN` has corpus rows; the field comparison cannot.** An IR form with no
+rows teaching it is a form the model never emits (`MOST` only landed because
+R4 shipped recipes with it), so L19 of the S5 corpus is membership: every
+parent that has, or has no, child matching a predicate, as a set. `MAP` the
+matching children to their parent ids, one `FILTER ... IN` over the parent
+list, then act. The `FOREACH`-over-children form it replaces acts once per
+child, so a parent with three matching children gets messaged three times.
+
+The field comparison has no recipe, and the reason is the worlds, not the
+generator. Every theme entity `data.gen.domains` builds is `STR`, `BOOL`,
+`TIME` or `ID` - **no theme world has a single `INT` or `FLOAT` field** - and
+the two times a child carries are one event time and one creation time, so
+"departed before it was planned" is not a request anyone makes. 77 entities
+have two `TIME` fields and no pair among them is comparable in English.
+Teaching `FILTER r0 F1 LT F2` needs a second comparable field on the child,
+a due/actual pair or a numeric capacity/used pair, which is a theme-surface
+change touching all 141 worlds and every level's clause sampling. Not folded
+into S5 silently: owner's call.
 
 ## 5. What the corpus looks like
 
@@ -257,16 +321,23 @@ through six sampled draws per world and asserts every one finishes.
 
 The plan's order still holds, with G removed from it:
 
-1. **Family B alone, on the current checkpoint.** `e_known_plain` against
-   `e_known_decoy` is a one-bit answer — does description-reading survive
-   siblings at all — and it needs no retrain. If the gap is small, family A
-   can be smaller than built.
+1. ~~**Family B alone, on the current checkpoint.**~~ Done: 9.25 points,
+   §2. Description-reading does not survive siblings, and the failure is
+   silent, so the family stays the size it was built.
 2. **The per-turn baseline on S4.** S3's is in §3; S4's is the row the
    retrain actually has to beat, and it is one `eval_families.sh` away.
-3. **One S5 retrain** with the family corpus mixed into S4's, scored on the
+3. ~~**One S5 retrain**~~ Done 2026-09-13: `results/S5.md`. The decoy gap
+   closed (9.25 -> 0), the abstain control went 83.75 -> 99.2, E-known
+   cleared its bar at 97.2, `IN` is adopted 30/30 - and family E did not
+   transfer at all on two of its three error codes, which is the finding
+   that matters. The original wording follows.
+
+   One S5 retrain with the family corpus mixed into S4's, scored on the
    six suites in R6 §0.1 (must not regress), the dungeon, the house, the
    coursebuilder app, and the decoy gap. Each family has its own exam, so a
    regression is attributable — which is what the classic-control problem in
-   R6 §0 cost us last time.
-4. **The `FILTER` predicate gap** from §4 — proposal already written,
-   `.claude/plans/ir-filter-predicate.md`, awaiting review.
+   R6 §0 cost us last time. The corpus is `results/logs/gen_s5.sh`: S4's
+   mix plus the families, the two R6 §0.2 recipe fixes, and L19.
+4. **Whether theme entities get a second comparable field** - without one
+   the 0.5.0 field-vs-field clause has no corpus rows and no way to get
+   any (section 4). `IN` needed no such change and is in S5 as L19.

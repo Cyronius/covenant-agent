@@ -462,7 +462,10 @@ def _sample_extreme(world, profile, state, now, rng, alloc, holdout, least):
     else:
         raise SampleError("no unique count winner")
 
-    use_outer = least or needs_obj
+    # a question about the winner needs a field of it, not its id - the gap
+    # R6 §0.2 found, where 2,016 of 2,024 MOST rows pass the id straight on
+    ask = rng.random() < 0.4
+    use_outer = least or needs_obj or ask
     lines = []
     if use_outer:
         lines.append(f"CALL @{pair['outer_list']} -> r0")
@@ -474,22 +477,27 @@ def _sample_extreme(world, profile, state, now, rng, alloc, holdout, least):
     op = "LEAST" if least else "MOST"
     cands = " r0" if least else ""
     lines.append(f"{op} {filt_reg} @{i}.{link}{cands} -> {ext_reg}")
-    if needs_obj:
-        # the notify reads a field off the winning record, so turn the id
-        # back into the record
+    if needs_obj or ask:
+        # the answer is a field of the winning record and MOST hands back an
+        # id, so the record has to come back
         lines += [f"FILTER r0 @{o}.id EQ {ext_reg} -> r4", "FIRST r4 -> r5"]
         target = "r5"
     else:
         target = ext_reg
-    notify = build_action(pair["notify"], i, {"<outer>": target}, state, rng,
-                          alloc, outer_entity=o)
-    lines += [action_line(notify, None), "STOP"]
-    frame = {"recipe": "argmin_count" if least else "argmax_count",
-             "outer_noun": pair["outer_noun"],
+    frame = {"outer_noun": pair["outer_noun"],
              "inner_noun": inner_prof["noun"],
              "clauses": [{"phrase": c["phrase"], "neg": False}
-                         for c in inner_clauses],
-             "action": notify}
+                         for c in inner_clauses]}
+    if ask:
+        lines += [f"GET r5.@{o}.{pair.get('outer_name', 'name')} -> r6",
+                  "RETURN r6"]
+        frame["recipe"] = "argmin_which" if least else "argmax_which"
+    else:
+        notify = build_action(pair["notify"], i, {"<outer>": target}, state,
+                              rng, alloc, outer_entity=o)
+        lines += [action_line(notify, None), "STOP"]
+        frame["recipe"] = "argmin_count" if least else "argmax_count"
+        frame["action"] = notify
     seg = "\n".join(lines) + "\n"
     return GenSample(frame, [seg], alloc.items, tags=["adv:quantifier"])
 
@@ -810,7 +818,11 @@ def sample_abort(world, profile, state, now, rng, alloc, holdout):
         ids = [int(r["id"].split("_")[-1]) for r in _records(state, entity)
                if r["id"].split("_")[-1].isdigit()]
         display = prof["ref_word"].format(n=(max(ids) if ids else 0) + rng.randint(7, 40))
-    if nf and prof.get("list_tool"):
+    # the serializer does not always extract the name; when it has not, there
+    # is no constant to filter on and no referent to name, so the only
+    # faithful program is the bare abort (results/R6.md §0.2 L11)
+    unextracted = rng.random() < 0.4
+    if nf and prof.get("list_tool") and not unextracted:
         nref = alloc.get("STR", display,
                          f"the {prof['noun'][0]} named, verbatim: {display}",
                          kind="name")

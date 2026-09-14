@@ -1,0 +1,34 @@
+=== R6 suites
+bash: eval_s4.sh: No such file or directory
+=== family exams
+e_known_plain_typed: "compile_ok_rate":1.0, "goal_success_rate":0.995, 
+e_known_decoy_typed: "compile_ok_rate":1.0, "goal_success_rate":0.995, 
+e_askact_typed: "compile_ok_rate":1.0, "goal_success_rate":0.9966666666666667, 
+e_recovery_typed: "compile_ok_rate":1.0, "goal_success_rate":0.32666666666666666, 
+e_new_forms_typed: "compile_ok_rate":1.0, "goal_success_rate":1.0, 
+=== per-turn, three episode worlds
+  won            0/3 (0%)
+  died           0/3
+  funnel         key 0/3  door 0/3  exit 0/3
+  per-turn       first tool 117/120 (98%)   first tool+arg 3/120 (2%)   whole turn 0/120 (0%)
+  calls          135 (111 invalid)
+  turns          120 (3 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 13   gen_ms p50 119
+  finish_reason  {'stop': 120}
+  won            0/3 (0%)
+  died           0/3
+  funnel         lamp_lit 0/3  way_open 3/3  arrived 0/3
+  per-turn       first tool 33/120 (28%)   first tool+arg 15/120 (12%)   whole turn 8/120 (7%)
+  calls          119 (87 invalid)
+  turns          120 (11 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 7   gen_ms p50 84
+  finish_reason  {'stop': 120}
+  won            0/3 (0%)
+  died           0/3
+  funnel         any_value_set 0/3  values_set 0/3  saved 0/3
+  per-turn       first tool 59/120 (49%)   first tool+arg 59/120 (49%)   whole turn 59/120 (49%)
+  calls          120 (7 invalid)
+  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 7   gen_ms p50 86
+  finish_reason  {'stop': 120}
+=== eval_s5_pod done ===

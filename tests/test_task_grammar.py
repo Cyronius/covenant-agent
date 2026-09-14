@@ -190,3 +190,25 @@ def test_kind_clause_admits_type_compatible_sibling_fields():
     assert "sf-f%s" % covered[1:] in _rule(gbnf, "clause")
     # the base grammar carries the open form
     assert '(operand | field)' in _rule(load_base(), "clause")
+
+
+# -- membership (spec 0.6.0) ----------------------------------------------
+
+def test_in_is_spellable_under_a_kinds_grammar():
+    """`FILTER r0 F1 IN r2` has to survive a constrained decode, or the
+    comparator is invisible to every scored run. Each per-field clause
+    already admits a register on the right, so only `cmp` had to widen."""
+    import random
+
+    from harness.context import build_context
+    from runtime.worlds import get_world
+    ctx = build_context(get_world("scheduling"), [], random.Random(3))[0]
+    task = {"context": ctx.to_json()}
+    gbnf = grammar_for_task(task, load_base(), kinds=True)
+    assert '"IN"' in _rule(gbnf, "cmp")
+    start = next(f.sym for f in ctx.fields.values()
+                 if f.entity == "slot" and f.name == "start")
+    assert _rule(gbnf, "opf-f%s" % start[1:]).split(" | ")[0] == "reg"
+    # the 0.3.x control arm predates it
+    assert '"IN"' not in _rule(grammar_for_task(task, load_base(),
+                                                stdlib=False), "cmp")

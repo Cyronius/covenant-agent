@@ -123,6 +123,17 @@ CASES = [
     ("duplicate the release notes issue and make cyrus the owner", 11,
      "cause:abstain (no such user)",
      ["ABORT NOT_FOUND"], None, "aborted"),
+    # --- 2026-09-14 owner-reported -----------------------------------------
+    ("let's delete the oldest issue", 3,
+     "cause:model-semantics (invented a status filter; SORT/FIRST are in the "
+     "grammar and the legend)",
+     # what it actually produced: FILTER status EQ todo + FOREACH delete,
+     # which deleted seven cards on the 14-card demo board
+     ["CALL @list_cards -> r0\n"
+      "SORT r0 @card.created ASC -> r1\n"
+      "FIRST r1 -> r2\n"
+      "CALL @delete_card r2.@card.id\n"
+      "STOP"], None),
 ]
 
 

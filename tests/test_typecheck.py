@@ -212,3 +212,66 @@ def test_filter_field_on_the_right_type_error():
         "FILTER r0 @card.due LT @card.title -> r1\n"  # TIME vs STR
         "STOP\n")
     assert codes == ["TYPE_ERROR"]
+
+
+def test_filter_membership_in_a_list():
+    # spec 0.6.0: IN puts the list on the right, so the intersection binds
+    codes, res = _codes(
+        "CALL @list_cards -> r0\n"
+        "FILTER r0 @card.status EQ $1 -> r1\n"
+        "MAP r1 @card.status -> r2\n"
+        "FILTER r0 @card.status IN r2 -> r3\n"
+        "COUNT r3 -> r4\n"
+        "STOP\n")
+    assert codes == [] and res.compile_ok
+    assert 'rt.cmp("IN"' in res.js
+
+
+def test_in_wants_a_list_on_the_right():
+    codes, _ = _codes(
+        "CALL @list_cards -> r0\n"
+        "FILTER r0 @card.status IN $1 -> r1\n"
+        "STOP\n")
+    assert codes == ["TYPE_ERROR"]
+
+
+def test_in_element_type_must_match_the_left():
+    codes, _ = _codes(
+        "CALL @list_cards -> r0\n"
+        "MAP r0 @card.title -> r1\n"          # LIST STR
+        "FILTER r0 @card.due IN r1 -> r2\n"   # TIME in LIST STR
+        "STOP\n")
+    assert codes == ["TYPE_ERROR"]
+
+
+def test_contains_no_longer_does_membership():
+    # 0.6.0 dropped CONTAINS's list arm; IN is the only membership form
+    codes, _ = _codes(
+        "CALL @list_cards -> r0\n"
+        "MAP r0 @card.status -> r1\n"
+        "IF r1 CONTAINS $1\n"
+        "  STOP\n"
+        "STOP\n")
+    assert codes == ["TYPE_ERROR"]
+
+
+def test_in_reads_a_condition_too():
+    codes, res = _codes(
+        "CALL @list_cards -> r0\n"
+        "MAP r0 @card.status -> r1\n"
+        "IF $1 IN r1\n"
+        "  STOP\n"
+        "STOP\n")
+    assert codes == [] and res.compile_ok
+
+
+def test_in_narrows_objects_to_their_ids_like_eq():
+    # `EQ` already accepts ID against OBJ of the same entity, and the sandbox
+    # narrows both; a list of records on the right reads the same way
+    codes, res = _codes(
+        "CALL @list_users -> r0\n"
+        "CALL @list_cards -> r1\n"
+        "FILTER r1 @card.assignee IN r0 -> r2\n"
+        "COUNT r2 -> r3\n"
+        "STOP\n")
+    assert codes == [] and res.compile_ok

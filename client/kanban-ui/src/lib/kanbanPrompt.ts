@@ -42,11 +42,31 @@ export interface KanbanContext {
   initial_registers?: Record<string, string>;
 }
 
+/** A name the request addressed that the board can't resolve. The server
+ * settles this before the model runs (dev_server.py's preflight_people), so
+ * "assign all issues to cyrus" is answered instead of guessed at. */
+export interface KanbanPreflight {
+  status: 'unknown_person' | 'ambiguous_person' | string;
+  name: string;
+  message: string;
+  people: string[];
+  suggestion?: string | null;
+  candidates?: string[];
+}
+
 export interface KanbanPromptResponse {
   input_text: string;
   context: KanbanContext;
   world: string;
   now: number;
+  /** GBNF built for this request's symbol table: each CALL slot admits only
+   * type-compatible constants, so a wrong-typed argument cannot be decoded. */
+  grammar: string;
+  /** SYSTEM text matching the surface the context was serialized in. */
+  system: string;
+  /** Non-null when the request names somebody who isn't on the board —
+   * answer from it and don't generate. */
+  preflight: KanbanPreflight | null;
 }
 
 export async function fetchKanbanPrompt(

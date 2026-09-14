@@ -28,7 +28,8 @@ It does these things:
    is that world's analogue of `/kanban_prompt`: instead of a typed request,
    the request text *is* the rendered observation (`runtime/worlds/rpg.py`'s
    `observe`), and the constants are the things currently in view. It
-   returns `{input_text, context, world: "rpg", now, state, observation}` —
+   returns `{input_text, context, grammar, system, world: "rpg", now, state,
+   observation}` (`grammar`/`system` as for `/kanban_prompt` above) —
    feed `input_text` to `buildFullPrompt()`, send `context`/`world`/`now` to
    `/validate`, and thread the **returned** `state` forward (its `memory`
    has been advanced by the act of observing). `observation` carries the
@@ -52,10 +53,30 @@ It does these things:
    functions the offline curriculum generator uses) instead of looking up
    a fixed task — every card/user on the supplied board becomes a
    referenceable constant. Returns
-   `{"input_text": "...", "context": {...}, "world": "kanban", "now": <int>}`;
-   feed `input_text` to `buildFullPrompt()` for generation, and send
-   `context`/`world`/`now` straight through to `/validate` in place of
-   `task_id`.
+   `{"input_text", "context", "world": "kanban", "now", "grammar", "system", "preflight"}`;
+   feed `input_text` and `system` to `buildFullPrompt()`, pass `grammar` to
+   `generate()`, and send `context`/`world`/`now` straight through to
+   `/validate` in place of `task_id`.
+
+   **`grammar` and `system` are not optional extras.** The context is
+   serialized in the typed surface (spec 0.4.0 letters: `S0`, `I0`, `D0`)
+   because that is what every checkpoint since S3 trained on, and `grammar`
+   is built for *this* symbol table, so each `CALL` slot admits only
+   type-compatible constants. Using the static `/agent_core.gbnf` with this
+   prompt puts the model back where the demo used to be: it can spell
+   `CALL T3 <user id> <title> <date>`, which typechecks as three errors and
+   runs nothing. `POST /plan` takes the same `grammar` string and caches the
+   compiled form. See `.claude/plans/demo-typed-surface.md`.
+
+   **`preflight`** is non-null when the request addresses somebody the board
+   doesn't have (`{"status": "unknown_person" | "ambiguous_person", "name",
+   "message", "people", "suggestion"?, "candidates"?}`). A client should
+   answer with `message` and not generate: resolving named people is a board
+   lookup the host can't get wrong, and a model asked to assign to a person
+   who doesn't exist picks one who does — "assign all issues to cyrus" put
+   four cards on Bob. The prompt is still built and returned, so nothing
+   about the surface changes. See
+   `.claude/plans/host-preflight-and-bulk-gate.md`.
 
 ## Run
 
@@ -111,6 +132,21 @@ Content-Type is set by extension: `.wasm` → `application/wasm`, `.js`/
 ```
 
 - `approval`: the runtime effect gate (`runtime/sandbox.js`) blocks any `DELETE`/`SEND`/`PAY` call unless the run carries an approval token — see `spec/agent_core.md` §7. That token is normally the task's own stored `approval` field, but a client can override it per request: send `false` to deliberately run unapproved (the real gate then returns `"status": "effect_blocked"` for the first destructive call, not a client-side simulation of one), then re-send the same `text`/`state` with `true` once a person has actually approved it.
+- **Preview runs.** On the inline-context path for the `kanban` world, the
+  server sets the sandbox's `preview` flag and `bulk_write_limit`
+  (`BULK_WRITE_LIMIT`, 2). An unapproved preview run does **not** halt at the
+  first destructive call: it runs to the end against the state clone it
+  already works on, and if it made any `DELETE`/`SEND`/`PAY` call — or more
+  writes than the limit — the result is `"status": "effect_blocked"` with
+  `error: {code: "DESTRUCTIVE" | "BULK_WRITE", effect, count, calls: [{tool, name, args, effect}]}`.
+  `calls` is everything the program would do, exact because it completed;
+  re-send with `approval: true` to apply it. This exists because the halting
+  gate previewed one call and handed back a token good for all of them: one
+  click on `delete_card #2` deleted seven cards (2026-09-14). Not set for
+  `task_id` runs or for the RPG (where every tool is a `WRITE` and moving
+  three squares is an ordinary turn), and `harness/run.py` builds its own
+  payload — so spec §7's halt-at-the-first-call is still what every scored
+  run gets.
 - `state`: the client threads this forward turn to turn, mirroring how
   `run_task()` threads `state` through segments. Send `null` (or omit) on
   the very first segment to use the task's stored initial state; on every
@@ -130,7 +166,7 @@ Content-Type is set by extension: `.wasm` → `application/wasm`, `.js`/
   "calls": [ ... ],            // tool call log for this segment
   "return_value": null,        // sandbox return value, if any
   "pause_envs": null,          // only non-null when status == "paused" — see below
-  "error": null                // sandbox error object ({code, message}), only set on status == "error"
+  "error": null                // sandbox error object ({code, message}), also the blocked call on "effect_blocked"
 }
 ```
 

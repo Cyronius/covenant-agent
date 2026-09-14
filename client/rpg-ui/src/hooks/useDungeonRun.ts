@@ -188,8 +188,12 @@ export function useDungeonRun() {
       setWindow(kp.observation.window);
       setNearby(kp.observation.nearby);
 
-      const prompt = buildFullPrompt(kp.input_text, null, []);
-      const gen = await planner.generate(prompt, { maxTokens: 250, stop: STOP });
+      const prompt = buildFullPrompt(kp.input_text, null, [], kp.system);
+      const gen = await planner.generate(prompt, {
+        maxTokens: 250,
+        stop: STOP,
+        grammar: kp.grammar,
+      });
 
       const run = (text: string) =>
         validate<RpgState>({

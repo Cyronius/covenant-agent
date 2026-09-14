@@ -10,7 +10,9 @@ from typing import List, Optional, Union
 
 EFFECTS = ("READ", "WRITE", "DELETE", "SEND", "PAY", "EXTERNAL")
 DESTRUCTIVE_EFFECTS = ("DELETE", "SEND", "PAY")
-CMPS = ("EQ", "LT", "GT", "CONTAINS")
+CMPS = ("EQ", "LT", "GT", "CONTAINS", "IN")
+# spec 0.6.0 §3: IN is membership with the list on the right, so a FILTER
+# clause can say it; CONTAINS went back to meaning substring only.
 # unary condition form (spec 0.4.0 §3): `[NOT] EMPTY r` — true for an empty
 # list or NULL. Stored as a Clause with cmp EMPTY and right None.
 EMPTY = "EMPTY"

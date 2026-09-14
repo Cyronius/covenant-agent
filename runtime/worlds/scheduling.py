@@ -82,7 +82,7 @@ def new_state() -> dict:
         "entities": {
             "person": [{"id": "person_1", "name": "Ada Brooks"},
                        {"id": "person_2", "name": "Femi Adler"}],
-            # the first hour free in both is index 3
+            # hours 2 and 5 are free in both calendars
             "slot": _slots("person_1", base, ".x..x.")
                     + _slots("person_2", base, "xx.x.."),
             "room": [

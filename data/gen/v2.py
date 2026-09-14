@@ -18,6 +18,7 @@ Recipes:
   16 abort_v2          ABORT AMBIGUOUS | NEEDS_INFO | UNSUPPORTED
   17 search            search_docs -> RETURN | -> send
   18 note_edit         add note | list notes -> FILTER title -> update/delete
+  19 parents_with      MAP child ids -> FILTER parent.id [NOT] IN -> act
 """
 from __future__ import annotations
 
@@ -31,7 +32,7 @@ from .programs import (GenSample, SampleError, _named_record, _records,
 V2_RECIPES = {"format_reminder", "create", "report", "content_send",
               "content_image", "abort_ambiguous", "abort_needs_info",
               "abort_unsupported", "search", "note_add", "note_edit",
-              "note_delete"}
+              "note_delete", "parents_with", "parents_without"}
 
 # Domain-neutral text pools. Kept short and plain so nothing here reads as
 # a real person or company.
@@ -318,6 +319,65 @@ def sample_note(world, profile, state, now, rng, alloc, holdout):
     return GenSample(frame, [seg], alloc.items, tags=["note", "two_id"])
 
 
+# ------------------------------------------------- L19 membership (0.6.0)
+def sample_parents_with(world, profile, state, now, rng, alloc, holdout):
+    """Every parent that has (or has no) child matching a predicate - spec
+    0.6.0 `IN`, which is what binds the set.
+
+    Without `IN` this is a FOREACH over the matching children, which acts
+    once per child: a parent with three matching children is messaged three
+    times, and "how many" or "which" cannot be asked at all. MAP projects
+    the matching children to their parent ids and one FILTER over the parent
+    list turns that into the set.
+    """
+    pairs = profile.get("pairs")
+    if not pairs:
+        raise SampleError("no parent/child pair")
+    pair = rng.choice(pairs)
+    o, i, link = pair["outer"], pair["inner"], pair["link_field"]
+    inner_prof = profile["entities"][i]
+    if not inner_prof.get("list_tool") or not _records(state, o):
+        raise SampleError("no list tool")
+    negate = rng.random() < 0.35
+    for _ in range(6):
+        trial = alloc.clone()
+        clauses = _sample_clauses(inner_prof, i, state, now, rng, trial, 1,
+                                  False)
+        if any(c["sem"]["field"] == link for c in clauses):
+            # a clause on the link field asks about one parent, not a set
+            continue
+        hits = matches(state, i, clauses)
+        if not hits:
+            continue
+        parents = {r[link] for r in hits}
+        rest = [r for r in _records(state, o) if r["id"] not in parents]
+        if negate and not rest:
+            continue
+        alloc.adopt(trial)
+        break
+    else:
+        raise SampleError("no matching records")
+
+    neg = "NOT " if negate else ""
+    lines = [f"CALL @{inner_prof['list_tool']} -> r0",
+             f"FILTER r0 {clause_expr(clauses)} -> r1",
+             f"MAP r1 @{i}.{link} -> r2",
+             f"CALL @{pair['outer_list']} -> r3",
+             f"FILTER r3 {neg}@{o}.id IN r2 -> r4",
+             "FOREACH r4 -> r5"]
+    notify = build_action(pair["notify"], i, {"<outer>": "r5"}, state, rng,
+                          alloc, outer_entity=o)
+    lines += ["  " + action_line(notify, None), "STOP"]
+    frame = {"recipe": "parents_without" if negate else "parents_with",
+             "outer_noun": pair["outer_noun"],
+             "inner_noun": inner_prof["noun"],
+             "clauses": [{"phrase": c["phrase"], "neg": False}
+                         for c in clauses],
+             "action": notify}
+    seg = "\n".join(lines) + "\n"
+    return GenSample(frame, [seg], alloc.items, tags=["membership"])
+
+
 RECIPES_V2 = {
     12: [("format_reminder", lambda *a: sample_format(*a))],
     13: [("create", lambda *a: sample_create(*a))],
@@ -326,6 +386,7 @@ RECIPES_V2 = {
     16: [("abort_v2", lambda *a: sample_abort_v2(*a))],
     17: [("search", lambda *a: sample_search(*a))],
     18: [("note", lambda *a: sample_note(*a))],
+    19: [("parents_with", lambda *a: sample_parents_with(*a))],
 }
 
 
@@ -392,6 +453,21 @@ def render_v2(frame: dict, rng: random.Random, np_fn, obj_fn, wrap, every) -> st
                                f"find out {q}, then send it to {frame['send_to']}"])
         return rng.choice([f"{q}?", f"{q[0].upper() + q[1:]}?", f"can you tell me {q}?",
                            f"look up {q}"])
+    if r in ("parents_with", "parents_without"):
+        np = np_fn(frame["inner_noun"], frame["clauses"], rng)
+        verb = frame["action"]["verb"]
+        if r == "parents_with":
+            who = rng.choice([
+                f"every {frame['outer_noun'][0]} that has a {np_fn(frame['inner_noun'], frame['clauses'], rng, plural=False)}",
+                f"the {frame['outer_noun'][1]} with at least one {np_fn(frame['inner_noun'], frame['clauses'], rng, plural=False)}",
+                f"each {frame['outer_noun'][0]} with any {np}",
+            ])
+        else:
+            who = rng.choice([
+                f"every {frame['outer_noun'][0]} with no {np}",
+                f"the {frame['outer_noun'][1]} that have no {np}",
+            ])
+        return f"{verb} {who}"
     if r == "note_add":
         obj = obj_fn(frame, rng)
         return rng.choice([

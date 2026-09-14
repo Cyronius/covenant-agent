@@ -1,0 +1,31 @@
+=== rpg (qwen3.5-0.8b-s4-q8-fixed, typed) ===
+qwen3.5-0.8b-s4-q8-fixed_perturn_rpg.jsonl: 3 episodes, world=rpg model=qwen3.5-0.8b-s4-q8-fixed.gguf condition=grammar-task/qwen+letters+enums+kinds
+  won            0/3 (0%)
+  died           0/3
+  funnel         key 0/3  door 0/3  exit 0/3
+  per-turn       first tool 1/120 (1%)   first tool+arg 1/120 (1%)   whole turn 0/120 (0%)
+  calls          12 (11 invalid)
+  turns          120 (109 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 29   gen_ms p50 1542
+  finish_reason  {'stop': 120}
+=== house (qwen3.5-0.8b-s4-q8-fixed, typed) ===
+qwen3.5-0.8b-s4-q8-fixed_perturn_house.jsonl: 3 episodes, world=house model=qwen3.5-0.8b-s4-q8-fixed.gguf condition=grammar-task/qwen+letters+enums+kinds
+  won            0/3 (0%)
+  died           0/3
+  funnel         lamp_lit 0/3  way_open 0/3  arrived 0/3
+  per-turn       first tool 59/120 (49%)   first tool+arg 0/120 (0%)   whole turn 0/120 (0%)
+  calls          59 (59 invalid)
+  turns          120 (61 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 15   gen_ms p50 909
+  finish_reason  {'stop': 120}
+=== app_coursebuilder (qwen3.5-0.8b-s4-q8-fixed, typed) ===
+qwen3.5-0.8b-s4-q8-fixed_perturn_app_coursebuilder.jsonl: 3 episodes, world=app_coursebuilder model=qwen3.5-0.8b-s4-q8-fixed.gguf condition=grammar-task/qwen+letters+enums+kinds
+  won            0/3 (0%)
+  died           0/3
+  funnel         any_value_set 1/3  values_set 0/3  saved 0/3
+  per-turn       first tool 112/120 (93%)   first tool+arg 55/120 (46%)   whole turn 14/120 (12%)
+  calls          220 (106 invalid)
+  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 28   gen_ms p50 1405
+  finish_reason  {'stop': 120}
+=== perturn done ===

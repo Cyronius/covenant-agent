@@ -1,0 +1,33 @@
+20/60 goal=20 compile=20 (0.5s/task)
+40/60 goal=40 compile=40 (0.4s/task)
+60/60 goal=60 compile=60 (0.4s/task)
+{
+  "model": "qwen3.5-0.8b-s5-pruned-q8.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar-task+letters+enums+kinds",
+  "n": 60,
+  "compile_ok_rate": 1.0,
+  "goal_success_rate": 1.0,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "4": {
+      "n": 30,
+      "compile": 30,
+      "goal": 30
+    },
+    "19": {
+      "n": 30,
+      "compile": 30,
+      "goal": 30
+    }
+  },
+  "gen_ms_p50": 395.7642996683717,
+  "gen_ms_p95": 422.999182716012,
+  "tokens_out_p50": 67.0,
+  "pauses_mean": 0.0,
+  "pauses_p95": 0,
+  "error_turns_total": 0,
+  "tasks_with_pause": 0,
+  "tasks_with_error_turn": 0
+}

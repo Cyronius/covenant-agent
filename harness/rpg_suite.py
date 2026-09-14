@@ -76,7 +76,8 @@ def oracle_planner(max_actions: int, world: str = "rpg") -> Planner:
 
 def gguf_planner(model: str, ctx: int, grammar_path: Optional[str],
                  max_tokens: int, template: str, threads: Optional[int],
-                 symbols: str = "classic", kinds: bool = False) -> Planner:
+                 symbols: str = "classic", kinds: bool = False,
+                 gpu_layers: int = 0) -> Planner:
     from llama_cpp import Llama, LlamaGrammar
 
     from baselines.qwen.run_a import SYSTEM, generate, typed_system
@@ -86,7 +87,8 @@ def gguf_planner(model: str, ctx: int, grammar_path: Optional[str],
     typed = symbols == "typed" or kinds
     system = typed_system(SYSTEM) if symbols == "typed" else SYSTEM
     cache: dict = {}
-    llm = Llama(model_path=model, n_ctx=ctx, n_threads=threads, verbose=False)
+    llm = Llama(model_path=model, n_ctx=ctx, n_threads=threads,
+                n_gpu_layers=gpu_layers, verbose=False)
 
     def plan(input_text, turn_idx, state, task_ctx):
         grammar = None
@@ -480,6 +482,9 @@ def main() -> None:
     ap.add_argument("--kinds", action="store_true")
     ap.add_argument("--ctx", type=int, default=4096)
     ap.add_argument("--threads", type=int, default=None)
+    ap.add_argument("--gpu-layers", type=int, default=0,
+                    help="in-process offload; -1 is all layers. The "
+                         "--server path ignores it.")
     ap.add_argument("--max-tokens", type=int, default=250)
     ap.add_argument("--episodes", type=int, default=5)
     ap.add_argument("--seed", type=int, default=0,
@@ -518,7 +523,8 @@ def main() -> None:
                 args.model, args.ctx,
                 None if args.no_grammar else args.grammar,
                 args.max_tokens, args.template, args.threads,
-                symbols=args.symbols, kinds=args.kinds)
+                symbols=args.symbols, kinds=args.kinds,
+                gpu_layers=args.gpu_layers)
         model_name = Path(args.model).name
         condition = ("grammar-task" if not args.no_grammar
                      else "unconstrained") + f"/{args.template}"

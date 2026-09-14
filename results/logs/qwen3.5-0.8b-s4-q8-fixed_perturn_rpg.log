@@ -1,0 +1,9 @@
+qwen3.5-0.8b-s4-q8-fixed_perturn_rpg.jsonl: 3 episodes, world=rpg model=qwen3.5-0.8b-s4-q8-fixed.gguf condition=grammar-task/qwen+letters+enums+kinds
+  won            0/3 (0%)
+  died           0/3
+  funnel         key 0/3  door 0/3  exit 0/3
+  per-turn       first tool 1/120 (1%)   first tool+arg 1/120 (1%)   whole turn 0/120 (0%)
+  calls          12 (11 invalid)
+  turns          120 (109 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 29   gen_ms p50 1542
+  finish_reason  {'stop': 120}

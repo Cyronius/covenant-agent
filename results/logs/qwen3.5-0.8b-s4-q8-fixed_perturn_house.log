@@ -1,0 +1,9 @@
+qwen3.5-0.8b-s4-q8-fixed_perturn_house.jsonl: 3 episodes, world=house model=qwen3.5-0.8b-s4-q8-fixed.gguf condition=grammar-task/qwen+letters+enums+kinds
+  won            0/3 (0%)
+  died           0/3
+  funnel         lamp_lit 0/3  way_open 0/3  arrived 0/3
+  per-turn       first tool 59/120 (49%)   first tool+arg 0/120 (0%)   whole turn 0/120 (0%)
+  calls          59 (59 invalid)
+  turns          120 (61 did not compile, 0 abstained, 0 hit the action budget)
+  tokens_out p50 15   gen_ms p50 909
+  finish_reason  {'stop': 120}

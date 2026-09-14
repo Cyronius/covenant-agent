@@ -21,8 +21,10 @@
 #      one is what keeps the family from being half abstentions
 #   E  the continuation the error code you were just shown calls for
 #
-# Family G is not here on purpose: `python -m harness.schedule_probe` shows
-# it is blocked on the IR, not on data.
+# Family G is not here on purpose: `python -m harness.schedule_probe` showed
+# it was blocked on the IR, not on data. Both halves of that gap are in the
+# spec now (0.5.0, 0.6.0), and the membership half is taught as L19 of the
+# main corpus rather than as a family of its own.
 #
 # Held out throughout: the dungeon, the house, the coursebuilder app and the
 # scheduling probe (data/holdout/reserved.json). The exams at the bottom are

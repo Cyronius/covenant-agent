@@ -95,8 +95,19 @@ export interface ValidateResponse<TState = unknown> {
   return_value: unknown;
   pause_envs: Record<string, string>[] | null;
   /** On effect_blocked, `args` are the blocked call's actual (narrowed) params —
-   * e.g. the drafted message text — so the approval gate can preview them. */
-  error: { code: string; message?: string; tool?: string; effect?: string; args?: unknown[] } | null;
+   * e.g. the drafted message text — so the approval gate can preview them.
+   * Code `BULK_WRITE` is the other shape: the whole unapproved run finished
+   * and wrote to more records than the run's `bulk_write_limit`, so `calls`
+   * carries every write it would make and there is no single `tool`. */
+  error: {
+    code: string;
+    message?: string;
+    tool?: string;
+    effect?: string;
+    args?: unknown[];
+    count?: number;
+    calls?: { tool: string; name: string; args: unknown[] }[];
+  } | null;
   /** ABORT reason (spec §4) when status === 'aborted'. */
   reason?: 'NOT_FOUND' | 'AMBIGUOUS' | 'UNSUPPORTED' | 'NEEDS_INFO' | string | null;
   /** ABORT referents (spec §4 0.3.0): the T/F/C symbols the reason is about,

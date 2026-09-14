@@ -129,6 +129,8 @@ def without_stdlib(grammar: str) -> str:
                       'operand " " cmp " " operand')
     # and the 0.5.0 field-on-the-right clause form
     out = out.replace('cmp " " (operand | field)', 'cmp " " operand')
+    # and 0.6.0's IN
+    out = out.replace('"GT" | "CONTAINS" | "IN"', '"GT" | "CONTAINS"')
     return out
 
 

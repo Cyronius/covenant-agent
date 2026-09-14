@@ -1,0 +1,40 @@
+20/300 goal=20 compile=20 (0.2s/task)
+40/300 goal=40 compile=40 (0.2s/task)
+60/300 goal=60 compile=60 (0.2s/task)
+80/300 goal=80 compile=80 (0.2s/task)
+100/300 goal=100 compile=100 (0.2s/task)
+120/300 goal=120 compile=120 (0.2s/task)
+140/300 goal=140 compile=140 (0.2s/task)
+160/300 goal=160 compile=160 (0.2s/task)
+180/300 goal=180 compile=180 (0.2s/task)
+200/300 goal=199 compile=200 (0.2s/task)
+220/300 goal=219 compile=220 (0.2s/task)
+240/300 goal=239 compile=240 (0.2s/task)
+260/300 goal=259 compile=260 (0.2s/task)
+280/300 goal=279 compile=280 (0.2s/task)
+300/300 goal=299 compile=300 (0.2s/task)
+{
+  "model": "qwen3.5-0.8b-s5-pruned-q8.gguf",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-grammar-task+letters+enums+kinds",
+  "n": 300,
+  "compile_ok_rate": 1.0,
+  "goal_success_rate": 0.9966666666666667,
+  "parse_ok_rate": 1.0,
+  "by_level": {
+    "21": {
+      "n": 300,
+      "compile": 300,
+      "goal": 299
+    }
+  },
+  "gen_ms_p50": 126.00899301469326,
+  "gen_ms_p95": 289.85124453902245,
+  "tokens_out_p50": 13.0,
+  "pauses_mean": 0.0,
+  "pauses_p95": 0,
+  "error_turns_total": 0,
+  "tasks_with_pause": 0,
+  "tasks_with_error_turn": 0
+}

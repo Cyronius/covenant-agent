@@ -44,12 +44,14 @@ export async function createServerPlanner(model?: string): Promise<Planner> {
     async unload() {
       /* nothing held client-side */
     },
-    async generate(promptText, { maxTokens = 250, stop = [] } = {}) {
+    async generate(promptText, { maxTokens = 250, stop = [], grammar } = {}) {
       const genStart = performance.now();
       const res = await fetch('/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptText, max_tokens: maxTokens, stop }),
+        // `grammar` is this request's own, built from its symbol table; the
+        // server caches the compiled form and falls back to the static file
+        body: JSON.stringify({ prompt: promptText, max_tokens: maxTokens, stop, grammar }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok || !body || body.error) {

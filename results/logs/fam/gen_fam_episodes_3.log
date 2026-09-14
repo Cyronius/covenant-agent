@@ -1,13 +1,13 @@
-warehouse_robot: 20/20 episodes, 222 turns
-elevator: 20/20 episodes, 388 turns
-cards: 20/20 episodes, 559 turns
-app_settings: 20/20 episodes, 645 turns
-app_checkout: 20/20 episodes, 766 turns
-app_ticket: 20/20 episodes, 825 turns
-wrote 825 turns -> data\fam_shards\episodes_3.jsonl
+warehouse_robot: 20/20 episodes, 216 turns
+elevator: 20/20 episodes, 371 turns
+cards: 20/20 episodes, 530 turns
+app_settings: 20/20 episodes, 620 turns
+app_checkout: 20/20 episodes, 701 turns
+app_ticket: 20/20 episodes, 773 turns
+wrote 773 turns -> data\fam_shards\episodes_3.jsonl
   warehouse_robot: 11/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   elevator: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   cards: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_settings: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
-  app_checkout: 18/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  app_checkout: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_ticket: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)

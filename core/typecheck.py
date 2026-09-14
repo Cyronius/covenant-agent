@@ -100,16 +100,23 @@ class _Checker:
                         line, "INT|TIME", format_type(t)))
             return
         if cmp == "CONTAINS":
+            # substring, and nothing else - membership is IN (spec 0.6.0)
             if lt[0] == "STR":
                 if rt[0] not in ("STR", "NULL"):
                     self.diags.append(dg.type_error(line, "STR", format_type(rt)))
-            elif lt[0] == "LIST":
-                if not self._compatible(lt[1], rt):
-                    self.diags.append(dg.type_error(
-                        line, format_type(lt[1]), format_type(rt)))
             elif lt[0] != "NULL":
+                self.diags.append(dg.type_error(line, "STR", format_type(lt)))
+            return
+        if cmp == "IN":
+            if rt[0] == "NULL" or lt[0] == "NULL":
+                return
+            if rt[0] != "LIST":
                 self.diags.append(dg.type_error(
-                    line, "STR|LIST", format_type(lt)))
+                    line, "LIST", format_type(rt)))
+            elif not (self._compatible(rt[1], lt)
+                      or self._compatible(lt, rt[1])):
+                self.diags.append(dg.type_error(
+                    line, format_type(rt[1]), format_type(lt)))
             return
         # EQ
         if not (self._compatible(lt, rt) or self._compatible(rt, lt)):

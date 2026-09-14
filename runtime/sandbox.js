@@ -26,6 +26,15 @@
  *
  * Effect gate: any DELETE/SEND/PAY call without `approval` halts the run
  * with EFFECT_BLOCKED (not catchable by TRY).
+ *
+ * Preview runs (opt-in, `preview`): halting at the first destructive call
+ * previews one call but hands back a token good for the whole program - one
+ * click on "delete_card #2" deleted seven cards (2026-09-14). With `preview`
+ * an unapproved run doesn't halt: it runs to the end against the state clone
+ * it already works on (which the caller discards and re-sends once a person
+ * clicks), and the result becomes effect_blocked carrying every call that
+ * needed the approval - DESTRUCTIVE if any DELETE/SEND/PAY is among them,
+ * else BULK_WRITE when the writes exceed `bulk_write_limit`.
  */
 
 const vm = require("node:vm");
@@ -85,6 +94,7 @@ function main(input) {
   const constants = input.constants || {};
   const now = input.now || 0;
   const approval = !!input.approval;
+  const preview = !!input.preview;
   const maxOps = input.max_ops || 100000;
   const injections = (input.error_injection || []).map((e) => ({
     tool: e.tool || null, name: e.name || null, code: e.code,
@@ -282,7 +292,7 @@ function main(input) {
         params.push(v);
       }
       for (const eff of tool.effects || []) {
-        if (DESTRUCTIVE.has(eff) && !approval) {
+        if (DESTRUCTIVE.has(eff) && !approval && !preview) {
           // not logged: the reference (approved) run has no such entry and
           // unnecessary_destructive diffs the two logs
           throw new EffectBlocked(sym, eff, clone(params));
@@ -346,9 +356,13 @@ function main(input) {
         case "LT": return a < b;
         case "GT": return a > b;
         case "CONTAINS":
+          // substring only since 0.6.0; membership is IN
           if (typeof a === "string") return norm(a).includes(norm(String(b)));
-          if (Array.isArray(a)) return a.map(narrowId).includes(b);
           return false;
+        case "IN":
+          if (!Array.isArray(b)) return false;
+          return b.map(narrowId).some((x) => (typeof x === "string" &&
+            typeof a === "string" ? norm(x) === norm(a) : x === a));
         default: throw new Error(`bad cmp ${op}`);
       }
     },
@@ -454,7 +468,8 @@ function main(input) {
 
   // Runs after the program ends (normally or on a tool error), before the
   // result is written: the world's per-turn phase, e.g. the RPG's enemies.
-  // Never on effect_blocked — nothing executed there.
+  // Never on effect_blocked — nothing executed there, and a preview run's
+  // state is thrown away.
   const runPostHook = (status) => {
     const hook = input.post_hook;
     if (!hook || status === "effect_blocked") return null;
@@ -473,7 +488,50 @@ function main(input) {
     }
   };
 
+  // Everything the run changed, in order, with the effect that changed it.
+  // DESTRUCTIVE wins over WRITE on a tool that carries both.
+  const consequences = () => {
+    const out = [];
+    for (const c of calls) {
+      if (!c.ok) continue;
+      const effects = toolsBySym.get(c.tool)?.effects || [];
+      const effect = effects.find((e) => DESTRUCTIVE.has(e))
+        || (effects.includes("WRITE") ? "WRITE" : null);
+      if (effect) out.push({ tool: c.tool, name: c.name, args: c.args, effect });
+    }
+    return out;
+  };
+
+  // What an unapproved run needs a person to look at: any destructive call,
+  // or more writes than the caller's bulk limit. Both report the whole list,
+  // which is exact because the program ran to the end.
+  const gate = () => {
+    const changes = consequences();
+    const destructive = changes.filter((c) => c.effect !== "WRITE");
+    if (destructive.length) {
+      return { code: "DESTRUCTIVE", effect: destructive[0].effect };
+    }
+    const limit = input.bulk_write_limit;
+    if (typeof limit === "number" && changes.length > limit) {
+      return { code: "BULK_WRITE", effect: "WRITE" };
+    }
+    return null;
+  };
+
   const finish = (result) => {
+    if (preview && !approval &&
+        (result.status === "ok" || result.status === "paused")) {
+      const blocked = gate();
+      if (blocked) {
+        const changes = consequences();
+        result = {
+          status: "effect_blocked",
+          error: { ...blocked, tool: null, count: changes.length,
+                   calls: changes },
+          state, calls, ops,
+        };
+      }
+    }
     const hookError = runPostHook(result.status);
     if (hookError) result.post_hook_error = hookError;
     process.stdout.write(JSON.stringify(result) + "\n");

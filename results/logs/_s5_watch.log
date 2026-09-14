@@ -1,0 +1,25 @@
+  dropped    14  request text also in eval
+  dropped     1  target did not score
+wrote 900 seg0 + 0 continuation examples (0 continuation skips) -> data/sft_real_train_s5.jsonl
+81465 rows -> data\sft_s5.jsonl
+   58672 (72.0%)  data/sft_s5_gen.jsonl  [58672 rows, x1]
+    1349 ( 1.7%)  data/open_pairs/b3_draw.jsonl  [1349 rows, x1]
+    2700 ( 3.3%)  data/sft_real_train_s5.jsonl  [900 rows, x3]
+   18744 (23.0%)  data/sft_fam.jsonl  [18744 rows, x1]
+level mix: [(0, 2672), (1, 2672), (2, 2672), (3, 2672), (4, 2672), (5, 2672), (6, 2672), (7, 2672), (8, 2672), (9, 2672), (10, 2672), (11, 2664), (12, 3032), (13, 3032), (14, 3032), (15, 3032), (16, 3032), (17, 3032), (18, 3088), (19, 2664)]
+crowded: 26000 | abort: 5696 | worlds: 104
+argmax: 614 | argmax questions: 415 | argmin: 530 | argmin questions: 375
+membership: 1840 with, 824 without
+MOST: 1029 | re-fetch after it: 421 | IN: 2664 | EMPTY: 2968
+ABORT NOT_FOUND: 1168 bare, 1496 with a referent
+ABORT targets: 7865 of 81465
+tokens/row (all 81465): p50 1999 p95 5536 max 6982
+TRAIN_CAP=7168
+keep-set: 22516 -> 22804 (+288) -> data/s5_used_token_ids.json
+
+Upload to the pod: data/sft_s5.jsonl data/s5_used_token_ids.json data/s5_train_cap.txt
+  plus baselines/qwen/{train_b.py,prune_vocab.py,convert_pruned.py} results/logs/train_s4.sh
+Train:  CORPUS_TAG=s5 bash train_s4.sh typed
+Score:  bash eval_s4.sh typed <gguf>   (the six R6 §0.1 suites)
+        bash results/logs/eval_families.sh <gguf> typed   (each family's exam)
+=== gen_s5 (typed) done ===

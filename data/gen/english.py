@@ -124,6 +124,17 @@ def render(frame: dict, rng: random.Random):
         winner = f"the {frame['outer_noun'][0]} with {sup} {np}"
         core = f"{frame['action']['verb']} {winner}"
         return _wrap(core, style, rng), style
+    if r in ("argmax_which", "argmin_which"):
+        np = _np(frame["inner_noun"], frame["clauses"], rng)
+        sup = rng.choice(["the most", "the highest number of"]) \
+            if r == "argmax_which" else \
+            rng.choice(["the fewest", "the lowest number of"])
+        core, end = rng.choice([
+            (f"which {frame['outer_noun'][0]} has {sup} {np}", "?"),
+            (f"who has {sup} {np}", "?"),
+            (f"tell me which {frame['outer_noun'][0]} has {sup} {np}", "."),
+        ])
+        return core[0].upper() + core[1:] + ("" if style == "terse" else end), style
     if r == "extreme_sort":
         core = frame["action"]["verb"].format(obj=frame["np"])
         return _wrap(core, style, rng), style

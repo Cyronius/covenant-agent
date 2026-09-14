@@ -36,7 +36,7 @@ export type ChatMessage =
   | { kind: 'user'; id: string; text: string }
   | { kind: 'program'; id: string; text: string }
   | { kind: 'tool-call'; id: string; effect: Effect; name: string; detail: string }
-  | { kind: 'gate'; id: string; text: string; state: 'pending' | 'approved' | 'cancelled' }
+  | { kind: 'gate'; id: string; text: string; items?: string[]; state: 'pending' | 'approved' | 'cancelled' }
   | { kind: 'agent-text'; id: string; text: string }
   | { kind: 'stats'; id: string; tokens: number; ms: number }
   | { kind: 'note'; id: string; text: string };
@@ -92,6 +92,16 @@ const EFFECT_COPY: Record<string, string> = {
   SEND: 'This will send a real message.',
   PAY: 'This will move money.',
 };
+
+/** Headline for the approval gate's list. A turn that only sends messages
+ *  hasn't changed the board, so don't say it has. */
+function countChanges(changes: { name: string }[]): string {
+  const n = changes.length;
+  const s = n === 1 ? '' : 's';
+  return changes.every((c) => TOOL_EFFECTS[c.name] === 'SEND')
+    ? `${n} message${s}`
+    : `${n} change${s} to the board`;
+}
 
 function summarize(calls: CallLogEntry[], returnValue: unknown): string {
   const counts: Record<string, number> = {};
@@ -268,6 +278,15 @@ export function useAgentRun() {
       try {
         const kp = await fetchKanbanPrompt(trimmed, boardRef.current);
 
+        // The request names somebody who isn't here. The server resolved
+        // that against the board before anything was generated, so answer
+        // and stop — a model asked to assign to a person who doesn't exist
+        // picks one who does (2026-09-13: four cards to the wrong Bob).
+        if (kp.preflight) {
+          append({ kind: 'agent-text', id: mkId(), text: kp.preflight.message });
+          return;
+        }
+
         let registers: Registers = null;
         let pauseTypes: Record<string, string> | null = null;
         const prior: string[] = [];
@@ -277,8 +296,12 @@ export function useAgentRun() {
         let approvalGranted = false;
 
         for (let segIdx = 0; segIdx < MAX_SEGMENTS; segIdx++) {
-          const prompt = buildFullPrompt(kp.input_text, registers, prior);
-          const gen = await planner.generate(prompt, { maxTokens: 250, stop: STOP });
+          const prompt = buildFullPrompt(kp.input_text, registers, prior, kp.system);
+          const gen = await planner.generate(prompt, {
+            maxTokens: 250,
+            stop: STOP,
+            grammar: kp.grammar,
+          });
           prior.push(gen.text);
           totalTokens += gen.tokensOut;
           totalGenMs += gen.genMs;
@@ -308,12 +331,24 @@ export function useAgentRun() {
               : sym
                 ? describeCallSite(gen.text, sym, kp.context)
                 : [];
+            const changes = resp.error?.calls ?? [];
             const lead = (resp.error?.effect && EFFECT_COPY[resp.error.effect]) || 'This needs approval.';
             const gateId = mkId();
             append({
               kind: 'gate',
               id: gateId,
-              text: `${lead} ${tool?.name ?? 'this action'}(${args.join(', ')})`,
+              // The whole program ran unapproved against a throwaway copy of
+              // the board, so this list is everything it would do — not the
+              // first call of however many (which is what one click used to
+              // authorize: "delete_card #2" deleted seven cards).
+              text: changes.length
+                ? `${countChanges(changes)}. ${lead}`
+                : `${lead} ${tool?.name ?? 'this action'}(${args.join(', ')})`,
+              items: changes.length
+                ? changes.map(
+                    (c) => `${c.name} — ${c.args.map((a) => describeArg(a, board, board)).join(' · ')}`
+                  )
+                : undefined,
               state: 'pending',
             });
             const approved = await new Promise<boolean>((resolve) => {

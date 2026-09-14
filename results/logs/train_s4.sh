@@ -49,6 +49,9 @@ case "$BASE" in
   minicpm1b) MODEL=openbmb/MiniCPM5-1B;    SUF="_m1b"; GGUF=minicpm5-1b ;;
   *) echo "unknown base $BASE"; exit 2 ;;
 esac
+# a later corpus in the same surface trains with this script unchanged:
+#   CORPUS_TAG=s5 bash train_s4.sh typed
+TAG="${CORPUS_TAG:-$TAG}"
 RUN="${TAG}${SUF}"
 export PIP_BREAK_SYSTEM_PACKAGES=1
 python -c "import torch,torchvision;print('torch=='+torch.__version__);print('torchvision=='+torchvision.__version__)" > pipc.txt

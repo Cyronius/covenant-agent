@@ -244,11 +244,10 @@ RETURN r1
     assert [s["id"] for s in out["return_value"]] == ["shift_2"]
 
 
-def test_a_filter_clause_still_cannot_test_membership_in_a_list():
-    """The half of the gap that stays: an IF condition puts the list on the
-    left of CONTAINS; a FILTER clause's left is always the element's field
-    and no comparator takes a list on the right. Listed, not added
-    (.claude/plans/ir-filter-predicate.md section 3b)."""
+def test_a_filter_clause_tests_membership_with_in():
+    """The other half of the gap, closed in spec 0.6.0: IN puts the list on
+    the right, so the intersection of two calendars is a register that SORT
+    and FIRST can take. CONTAINS lost its list arm in the same change."""
     from core.pipeline import build
     from harness.authoring import resolve
     from harness.context import build_context
@@ -261,15 +260,17 @@ FILTER r0 @slot.free EQ $2 -> r1
 MAP r1 @slot.start -> r2
 CALL @list_slots $0 -> r3
 """
+    as_a_value = head + """FILTER r3 @slot.start IN r2 -> r4
+RETURN r4
+"""
+    assert build(resolve(as_a_value, ctx), ctx).compile_ok
+
     in_a_loop = head + """FOREACH r3 -> r4
   IF r2 CONTAINS r4.@slot.start
     CALL @take_slot r4.@slot.id -> r5
 STOP
 """
-    assert build(resolve(in_a_loop, ctx), ctx).compile_ok
-
-    as_a_value = head + "FILTER r3 @slot.start CONTAINS r2 -> r4\nRETURN r4\n"
-    res = build(resolve(as_a_value, ctx), ctx)
+    res = build(resolve(in_a_loop, ctx), ctx)
     assert not res.compile_ok
     assert [d.code for d in res.diagnostics] == ["TYPE_ERROR"]
 
@@ -297,9 +298,9 @@ def test_the_room_ask_does_fit_and_books_the_cheapest_one():
     assert {r["name"] for r in booked} == {"Mill", "Quay"}
 
 
-def test_the_intersection_ask_takes_every_match_not_the_earliest():
-    """Why the plan calls family G an IR question: the program the IR allows
-    is not the program the request asked for."""
+def test_the_intersection_ask_takes_the_earliest_hour():
+    """Family G's IR question, answered: the program the IR allows is now
+    the program the request asked for."""
     from core.pipeline import build
     from harness.authoring import resolve
     from harness.context import build_context
@@ -317,7 +318,8 @@ def test_the_intersection_ask_takes_every_match_not_the_earliest():
                        "now": scheduling.WORLD["now"], "approval": True,
                        "error_injection": [], "initial_registers": {}})
     taken = [c for c in out["calls"] if c["name"] == "take_slot"]
-    assert len(taken) > 1, "the ask says earliest; the IR can only say every"
+    # hours 2 and 5 are free in both calendars; the ask names the earliest
+    assert [c["args"][0] for c in taken] == ["slot_person_1_2"]
 
 
 def test_reserved_worlds_stay_out_of_every_generator():

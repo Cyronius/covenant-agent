@@ -282,6 +282,11 @@ body {
   text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem;
 }
 .gate-text { font-family: 'Piazzolla', serif; font-size: 1rem; line-height: 1.45; color: var(--ink); margin: 0 0 0.9rem; }
+.gate-list {
+  list-style: none; margin: -0.5rem 0 0.9rem; padding: 0 0 0 0.75rem;
+  border-left: 2px solid var(--rule); font-size: 0.82rem; color: var(--ink-soft);
+}
+.gate-list li { padding: 0.15rem 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gate-actions { display: flex; gap: 0.6rem; }
 .gate-btn {
   font-family: 'Commissioner', sans-serif; font-weight: 600; font-size: 0.85rem; padding: 0.5rem 1.05rem;
