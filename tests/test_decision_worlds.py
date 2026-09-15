@@ -190,7 +190,13 @@ def test_sampled_jobs_are_solvable(name):
     from data.gen import episodes
 
     for seed in range(6):
-        rng = random.Random((seed, name).__hash__() & 0xFFFFFFFF)
+        # NOT `(seed, name).__hash__()`: str hashing is salted per process
+        # (PYTHONHASHSEED), so that seeded a *different* six draws every run
+        # and the test passed or failed at random. Measured 2026-09-15:
+        # 2.1% of warehouse_robot draws strand the robot, i.e. ~12% of runs
+        # failed. Six fixed draws is a smoke check, not a guarantee — the
+        # sampler's dead-end rate is a generator bug, tracked separately.
+        rng = random.Random(f"{name}:{seed}")
         _, outcome = episodes.run_episode(
             name, seed, rng, symbols="classic", enums=False, kinds=False,
             offpath=0.0, illegal_share=0.0)

@@ -204,7 +204,8 @@ def run_task(task: dict, planner: Planner,
         sandbox_tools=sandbox_ctx["tools"],
         n_instructions=n_instructions or None, pauses=pauses,
         latency=lat, diagnostics=diagnostics, abort_reason=abort_reason,
-        abort_refs=abort_refs, segments=segments, error_turns=error_turns)
+        abort_refs=abort_refs, segments=segments, error_turns=error_turns,
+        return_value=(sres.get("return_value") if sres else None))
     return row
 
 

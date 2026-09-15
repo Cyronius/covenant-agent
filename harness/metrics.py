@@ -44,6 +44,25 @@ def states_equal(a: dict, b: dict) -> bool:
     return normalize_state(a) == normalize_state(b)
 
 
+# metrics_row's `return_value` default: "the runner supplied nothing", which
+# is different from a program that really did return null.
+_UNSET = object()
+
+
+def _normalize_return(v):
+    """Returned values compare by content: mappings key-order-insensitively,
+    sequences in order — a SORT's ordering is part of the answer."""
+    if isinstance(v, dict):
+        return {k: _normalize_return(v[k]) for k in sorted(v)}
+    if isinstance(v, list):
+        return [_normalize_return(x) for x in v]
+    return v
+
+
+def _returns_equal(a, b) -> bool:
+    return _normalize_return(a) == _normalize_return(b)
+
+
 def destructive_call_keys(call_log: List[dict], sandbox_tools: List[dict]
                           ) -> List[str]:
     destructive = {t["name"] for t in sandbox_tools
@@ -75,11 +94,22 @@ def metrics_row(task: dict, *, parse_ok: bool, compile_ok: bool,
                 abort_reason: Optional[str] = None,
                 abort_refs: Optional[List[str]] = None,
                 segments: Optional[int] = None,
-                error_turns: int = 0) -> dict:
+                error_turns: int = 0,
+                return_value: object = _UNSET) -> dict:
     expected_status = task.get("expected_status", "ok")
     ref = task.get("reference", {})
     goal = (status == expected_status and final_state is not None
             and states_equal(final_state, task["expected_state"]))
+    # A read-only request leaves the state alone, so `goal` above cannot fail
+    # for it: "list all the cards" scores a pass whatever list it returns, and
+    # a whole read-only world (crm, the Database Analyst demo) is unfalsifiable
+    # under it. The reference's return_value has been stored all along
+    # (harness/taskbuild.py) and never compared; this column compares it.
+    # Reported alongside goal_success rather than folded into it, so every
+    # number in results/*.md still means what it meant when it was written.
+    return_match = None
+    if return_value is not _UNSET and ref.get("return_value") is not None:
+        return_match = _returns_equal(return_value, ref["return_value"])
     if expected_status == "aborted" and ref.get("abort_reason"):
         # an abstain is only correct for the right reason (spec §4)
         goal = goal and abort_reason == ref["abort_reason"]
@@ -96,6 +126,9 @@ def metrics_row(task: dict, *, parse_ok: bool, compile_ok: bool,
         "level": task["level"],
         "world": task["world"],
         "goal_success": goal,
+        # None when the task has no stored return value or the runner did not
+        # supply one; True/False only where there is something to compare.
+        "return_match": return_match,
         "parse_ok": parse_ok,
         "compile_ok": compile_ok,
         "tool_valid": tool_valid,

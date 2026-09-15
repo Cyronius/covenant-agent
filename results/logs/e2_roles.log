@@ -1,0 +1,61 @@
+llama_init_from_model: model default pooling_type is [-1], but [0] was specified
+8 tasks, prompt chars 4639-4700
+loaded base+adapter in 1.1s
+warm-up (page faults in the mmap) 10.7s
+  rep0 C1: planner prefill p50 5,187 ms (7 calls)
+  rep0 C2: planner prefill p50 5,222 ms (7 calls)
+  rep0 C3: planner prefill p50 5,225 ms (7 calls)
+  rep0 C0: planner prefill p50 5,166 ms (7 calls)
+  rep1 C1: planner prefill p50 5,203 ms (7 calls)
+  rep1 C2: planner prefill p50 5,234 ms (7 calls)
+  rep1 C3: planner prefill p50 5,394 ms (7 calls)
+  rep1 C0: planner prefill p50 6,073 ms (7 calls)
+spot-check program: 'CALL T6 -> r0\nFILTER r0 F12 EQ C0 -> r1\nFOREACH r1 -> r2\n  CALL T10 r2\nSTOP'
+adapter-off == dedicated base instance: True
+{
+  "n_tasks": 8,
+  "ctx": 4096,
+  "adapter_off_identical": true,
+  "stats": {
+    "switches": 58,
+    "switch_ms_total": 258.36,
+    "role": "write",
+    "adapter": "C:\\code\\covenant-agent\\baselines\\qwen\\models\\lora_s2_f16.gguf"
+  },
+  "C1": {
+    "p50_ms": 5197.7,
+    "delta_vs_C1_ms": 0.0,
+    "per_rep_p50_ms": [
+      5187.1,
+      5202.6
+    ],
+    "n": 14
+  },
+  "C2": {
+    "p50_ms": 5228.0,
+    "delta_vs_C1_ms": 30.3,
+    "per_rep_p50_ms": [
+      5222.2,
+      5233.8
+    ],
+    "n": 14
+  },
+  "C3": {
+    "p50_ms": 5321.4,
+    "delta_vs_C1_ms": 123.7,
+    "per_rep_p50_ms": [
+      5224.8,
+      5394.0
+    ],
+    "n": 14
+  },
+  "C0": {
+    "p50_ms": 5183.2,
+    "delta_vs_C1_ms": -14.5,
+    "per_rep_p50_ms": [
+      5166.4,
+      6072.7
+    ],
+    "n": 14
+  }
+}

@@ -1,5 +1,5 @@
-// Where generation runs, and on which checkpoint. Shared by every demo app
-// (client/kanban-ui, client/rpg-ui) so the two behave identically.
+// Where generation runs, and on which checkpoint. Shared by every world in
+// client/app (kanban, rpg, db) so they all behave identically.
 //
 // Three modes, one preference. `Planner.backend` was already
 // 'wasm' | 'webgpu' | 'server' (./llm.ts); what the apps had was a two-way

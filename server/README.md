@@ -1,18 +1,20 @@
 # server — dev server
 
-Dev-only local server behind both demo apps (`client/kanban-ui`,
-`client/rpg-ui`) and the browser-inference stand-in
+Dev-only local server behind the merged demo app (`client/app` — kanban,
+rpg, db) and the browser-inference stand-in
 (`.claude/plans/browser-inference-standin.md`). Pure Python stdlib —
 `http.server.ThreadingHTTPServer`, no Flask/FastAPI, no new dependencies.
 
 It does these things:
 
-1. **Static file server** for the built apps — `client/kanban-ui/dist` at
-   `/`, `client/rpg-ui/dist` at `/rpg/` — (index.html,
-   `src/*.js`, `vendor/wllama/*.wasm`, `fixtures/*.json`, ...), plus the
-   large GGUF model file served in place from `baselines/qwen/models/`
-   (never copied — it's ~0.8–2GB and gitignored) with `Range:` request
-   support, and the grammar file at `baselines/qwen/agent_core.gbnf`.
+1. **Static file server** for the built app — `client/app/dist`
+   (index.html, `assets/*.js`, `vendor/wllama/*.wasm`, ...), with an SPA
+   fallback to `index.html` for any unmatched GET so `react-router`'s
+   client-side routes (`/kanban`, `/rpg`, `/db`) work on a hard refresh —
+   plus the large GGUF model file served in place from
+   `baselines/qwen/models/` (never copied — it's ~0.8–2GB and gitignored)
+   with `Range:` request support, and the grammar file at
+   `baselines/qwen/agent_core.gbnf`.
 2. **`POST /validate`** — runs generated Agent Core program text through
    the existing Python pipeline (`core.pipeline.build`) and sandbox
    (`harness.run.run_sandbox`), the same path `harness/run.py`'s
@@ -22,7 +24,7 @@ It does these things:
    in `data/curriculum_tasks.jsonl`) or an inline `context`/`world`/`now`
    (as returned by `/kanban_prompt` below) — see the `/validate` section.
 3. **`POST /rpg_new` and `POST /rpg_prompt`** — the grid-RPG demo
-   (`client/rpg-ui`, plan `.claude/plans/rpg-demo-app.md`). `/rpg_new
+   (`client/app/src/worlds/rpg`, plan `.claude/plans/rpg-demo-app.md`). `/rpg_new
    {scenario?}` deals a fresh dungeon and returns `{state}`; the server owns
    the map so the client never carries a second copy. `/rpg_prompt {state}`
    is that world's analogue of `/kanban_prompt`: instead of a typed request,
@@ -46,7 +48,7 @@ It does these things:
    switches checkpoint; one planner is loaded at a time and the previous is
    dropped, since a 2B Q8 is ~2.5 GB.
 
-5. **`POST /kanban_prompt`** — for `client/kanban-ui`'s free-typed chat:
+5. **`POST /kanban_prompt`** — for `client/app/src/worlds/kanban`'s free-typed chat:
    given `{"request": "<anything>", "state": <a kanban board>}`, builds a
    fresh `TOOLS`/`FIELDS`/`CONSTANTS` context for the `kanban` world with
    `harness.context.build_context()`/`serialize_context()` (the same
@@ -78,6 +80,20 @@ It does these things:
    about the surface changes. See
    `.claude/plans/host-preflight-and-bulk-gate.md`.
 
+6. **`POST /db_new` and `POST /db_prompt`** — the Database Analyst demo
+   (`client/app/src/worlds/db`). Unlike kanban's board, the crm world
+   (`runtime/worlds/crm.py`) already has a `default_state`, so `/db_new {}`
+   just returns `{state: <a copy of it>}` — no client-authored fake data to
+   keep in sync. `/db_prompt {request, state}` is `/kanban_prompt`'s
+   analogue against the `crm` world: `{input_text, context, grammar,
+   system, world: "crm", now}`. No `preflight` — nothing in this world
+   assigns to a named person the way `assign_card` does.
+
+7. **`GET /apps`** — `{"apps": [{slug, path, title, blurb}, ...]}`, the
+   registry `client/app/src/pages/Home.tsx`'s landing page renders. Add a
+   world here (and to the static router's nothing-to-do-since-`react-router`-
+   owns-it fallback) when a fourth demo lands.
+
 ## Run
 
 ```
@@ -98,9 +114,11 @@ crashing the server.
 
 ## Static routes
 
-- `GET /` → `client/kanban-ui/index.html`
-- `GET /<any path>` → `client/kanban-ui/<any path>` (404 if missing; directory
-  traversal outside `client/kanban-ui/` is rejected with 403)
+- `GET /` and every path under it → `client/app/dist/<path>`, falling back
+  to `client/app/dist/index.html` when the path isn't a real built file —
+  `react-router` owns `/kanban`, `/rpg`, `/db` client-side, so a refresh on
+  any of them needs this fallback to work (directory traversal outside
+  `client/app/dist/` is rejected with 403)
 - `GET /models/<filename>` → `baselines/qwen/models/<filename>`, served in
   place with full `Range:` support (`206 Partial Content` +
   `Content-Range`/`Accept-Ranges`, or a normal `200` whole-file response for

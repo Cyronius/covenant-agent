@@ -1,15 +1,16 @@
-"""Local backend for the kanban-ui demo (client/kanban-ui) and the eval
-harness's browser-parity checks. Pure Python stdlib.
+"""Local backend for the merged demo SPA (client/app — kanban, rpg, db) and
+the eval harness's browser-parity checks. Pure Python stdlib.
 
 Jobs:
   1. Serves the GGUF model files straight out of baselines/qwen/models/
      (Range requests, never copied), the grammar at
-     baselines/qwen/agent_core.gbnf, and — when it exists — the built
-     kanban-ui app from client/kanban-ui/dist (SPA fallback to index.html).
-     In development Vite serves the app itself and proxies to this server
-     (client/kanban-ui/vite.config.ts).
-  2. POST /kanban_prompt: builds a real TOOLS/FIELDS/CONSTANTS context for a
-     free-typed request against the client's board (handle_kanban_prompt).
+     baselines/qwen/agent_core.gbnf, and — when it exists — the built app
+     from client/app/dist (SPA fallback to index.html; react-router owns
+     /kanban, /rpg, /db client-side). In development Vite serves the app
+     itself and proxies to this server (client/app/vite.config.ts).
+  2. POST /kanban_prompt / /db_prompt: builds a real TOOLS/FIELDS/CONSTANTS
+     context for a free-typed request against the client's board
+     (handle_kanban_prompt / handle_db_prompt).
   3. POST /plan (+ GET /plan/status): server-side inference — the same GGUF
      and grammar the browser path uses, run through llama-cpp-python on
      this machine's CPU (plan s2-consolidated-program §A7). --model picks
@@ -52,8 +53,20 @@ from harness.context import build_context, sandbox_from_context, serialize_conte
 from harness.run import run_sandbox  # noqa: E402
 from runtime.worlds import get_world, rpg  # noqa: E402
 
-APP_DIST = ROOT / "client" / "kanban-ui" / "dist"
-RPG_DIST = ROOT / "client" / "rpg-ui" / "dist"
+APP_DIST = ROOT / "client" / "app" / "dist"
+# The demo registry: what GET /apps reports and what the landing page
+# (client/app/src/pages/Home.tsx) renders from it. One merged SPA build
+# (client/app/) now serves every route — no per-app dist dir to pick
+# between, unlike the kanban-ui/rpg-ui split this replaced (plan
+# example-host-and-new-worlds.md §3).
+APPS = [
+    {"slug": "kanban", "path": "/kanban", "title": "Kanban Board",
+     "blurb": "Free-typed requests against a fake team board."},
+    {"slug": "rpg", "path": "/rpg", "title": "Dungeon Agent",
+     "blurb": "A grid world, played turn by turn."},
+    {"slug": "db", "path": "/db", "title": "Database Analyst",
+     "blurb": "Ask questions of a fake CRM — customers, tickets, invoices."},
+]
 MODELS_DIR = ROOT / "baselines" / "qwen" / "models"
 GRAMMAR_FILE = ROOT / "baselines" / "qwen" / "agent_core.gbnf"
 TASKS_FILE = ROOT / "data" / "curriculum_tasks.jsonl"
@@ -298,14 +311,13 @@ class DevHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _resolve_static_path(self, url_path: str) -> Path | None:
-        """Map a URL path to a file under a built app, guarding traversal.
-        `/rpg/...` serves client/rpg-ui/dist, everything else the kanban app.
-        Unknown paths fall back to that app's index.html (SPA)."""
+        """Map a URL path to a file under the merged app build, guarding
+        traversal. One dist dir now (client/app/dist) — react-router owns
+        `/kanban`, `/rpg`, `/db`, etc. client-side, so any path that isn't a
+        real built asset (a route like `/rpg`, or a refresh on one) falls
+        back to index.html and the router takes it from there."""
         rel = url_path.lstrip("/")
         root = APP_DIST
-        if rel == "rpg" or rel.startswith("rpg/"):
-            root = RPG_DIST
-            rel = rel[4:]
         if rel == "" or rel == "/":
             rel = "index.html"
         candidate = (root / rel).resolve()
@@ -415,6 +427,10 @@ class DevHandler(BaseHTTPRequestHandler):
                 self._send_json(200, list_models())
                 return
 
+            if path == "/apps":
+                self._send_json(200, {"apps": APPS})
+                return
+
             static_path = self._resolve_static_path(path)
             if static_path is None:
                 self._send_text(403, "Forbidden\n")
@@ -447,7 +463,7 @@ class DevHandler(BaseHTTPRequestHandler):
                 target = MODELS_DIR / filename
             elif path == "/agent_core.gbnf":
                 target = GRAMMAR_FILE
-            elif path in ("/plan/status", "/models"):
+            elif path in ("/plan/status", "/models", "/apps"):
                 status_only(200)
                 return
             else:
@@ -469,7 +485,7 @@ class DevHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         path = self.path.split("?", 1)[0]
         if path not in ("/validate", "/kanban_prompt", "/plan", "/write",
-                        "/rpg_new", "/rpg_prompt"):
+                        "/rpg_new", "/rpg_prompt", "/db_new", "/db_prompt"):
             self._send_text(404, "Not found\n")
             return
         try:
@@ -480,6 +496,8 @@ class DevHandler(BaseHTTPRequestHandler):
                         "/kanban_prompt": handle_kanban_prompt,
                         "/rpg_new": handle_rpg_new,
                         "/rpg_prompt": handle_rpg_prompt,
+                        "/db_new": handle_db_new,
+                        "/db_prompt": handle_db_prompt,
                         "/validate": handle_validate}
             resp = handlers[path](req)
             self._send_json(200, resp)
@@ -496,7 +514,7 @@ class DevHandler(BaseHTTPRequestHandler):
     def end_headers(self) -> None:
         # Required for wllama's multi-threaded WASM path (SharedArrayBuffer):
         # without these, isSupportMultiThread() is false and generation
-        # silently falls back to a single thread. See client/kanban-ui/src/lib/llm.md
+        # silently falls back to a single thread. See client/shared/llm.md's
         # "Multi-threading" note. Applied to every response; harmless
         # elsewhere since this is a same-origin, single-page dev server.
         self.send_header("Cross-Origin-Opener-Policy", "same-origin")
@@ -510,7 +528,7 @@ class DevHandler(BaseHTTPRequestHandler):
 # text on the fly. For the three fixed curriculum tasks that's fine (the
 # task itself supplies the exact message); for free-typed kanban_prompt
 # requests there's no such pre-written text, so we offer this small fixed
-# bank instead. Real limitation, not hidden: client/kanban-ui/README.md and
+# bank instead. Real limitation, not hidden: client/app/README.md and
 # the UI say so.
 GENERIC_MESSAGES = [
     "This needs your attention.",
@@ -652,6 +670,75 @@ def literals_from_request(request: str, now: int) -> list:
         out.append({"type": "TIME", "value": now + _DEFAULT_DUE_DAYS * 86400,
                     "desc": "one week from now (default due date)"})
     return out
+
+
+# --- Database Analyst (client/app's src/worlds/db) -------------------------
+# Same trimming discipline as relevant_cards()/constants_from_board below,
+# applied to the crm world: dump every customer/ticket/invoice as a
+# constant on every request and disambiguation gets harder than the model
+# was tuned for (measured on kanban's cards, not re-measured here, but the
+# mechanism — more same-typed ID constants competing for one slot — is the
+# same one that regressed "Set card 3 to done."). relevant_cards() itself
+# stays kanban-specific (it reads `title`); this is small enough not to
+# share machinery for one call site.
+_CRM_NUM_RE = re.compile(r"#?\b(?:customer|ticket|invoice)\s*#?(\d+)\b|(?<!\w)#(\d+)\b")
+_CRM_PRIORITIES = (1, 2, 3)
+
+
+def relevant_crm_records(request: str, entities: dict) -> dict:
+    """{entity: [records]} trimmed to what the request plausibly names — by
+    number ("ticket 2", "#2") or a shared word with the record's own name
+    field (customers only; tickets/invoices don't have one)."""
+    numbers = {n for pair in _CRM_NUM_RE.findall(request.lower()) for n in pair if n}
+    req_words = set(_WORD_RE.findall(request.lower()))
+    out = {}
+    for entity in ("customer", "ticket", "invoice"):
+        matched = []
+        for rec in entities.get(entity, []):
+            num = rec["id"].rsplit("_", 1)[-1]
+            if num in numbers:
+                matched.append(rec)
+                continue
+            name = rec.get("name")
+            if name:
+                name_words = {w for w in _WORD_RE.findall(name.lower()) if len(w) > 3} - _STOPWORDS
+                if name_words & req_words:
+                    matched.append(rec)
+        out[entity] = matched
+    return out
+
+
+def constants_from_crm(request: str, state: dict, now: int | None = None) -> list:
+    """CONSTANTS for the crm world: staff are always offered (a handful,
+    cheap, and every ticket/customer needs one nameable to be useful at
+    all); customers/tickets/invoices are trimmed by relevant_crm_records();
+    plan/status enums and a small priority bank cover the tools that take
+    them (set_priority's INT param has no source without one — no tool
+    here composes free text, so unlike kanban there's no GENERIC_MESSAGES
+    equivalent to add yet; send_email/charge_customer stay unreachable
+    until a request class actually needs them, same restraint kanban
+    applied before adding its own bank)."""
+    entities = state.get("entities", {})
+    constants = []
+    matched = relevant_crm_records(request, entities)
+    for entity, id_type in (("customer", "ID:customer"), ("ticket", "ID:ticket"),
+                            ("invoice", "ID:invoice")):
+        for rec in matched[entity]:
+            num = rec["id"].rsplit("_", 1)[-1]
+            label = f"{entity} {num}" if num.isdigit() else rec["id"]
+            desc = f'{label} — {rec["name"]}' if rec.get("name") else label
+            constants.append({"type": id_type, "value": rec["id"], "desc": desc})
+    for user in entities.get("user", []):
+        constants.append({"type": "ID:user", "value": user["id"], "desc": user["name"]})
+    constants.append({"type": "BOOL", "value": True, "desc": "true"})
+    constants.append({"type": "BOOL", "value": False, "desc": "false"})
+    world = get_world("crm")
+    for (entity, field), values in world.get("enums", {}).items():
+        for v in values:
+            constants.append({"type": "STR", "value": v, "desc": f"{entity}.{field} = {v}"})
+    for p in _CRM_PRIORITIES:
+        constants.append({"type": "INT", "value": p, "desc": f"priority {p}"})
+    return constants
 
 
 def constants_from_board(request: str, state: dict, now: int | None = None) -> list:
@@ -887,7 +974,7 @@ def handle_kanban_prompt(req: dict) -> dict:
     uses (harness/context.py), instead of looking up a fixed task_id. This
     is what lets a person type an arbitrary kanban request and still get a
     real, grammar-matched TOOLS/FIELDS/CONSTANTS prompt for it. See
-    client/kanban-ui/README.md."""
+    client/app/README.md."""
     request = req.get("request", "")
     state = req.get("state")
     if not request or not isinstance(state, dict):
@@ -907,6 +994,79 @@ def handle_kanban_prompt(req: dict) -> dict:
         # client answers from this and never generates. The prompt is still
         # built and returned so it stays inspectable.
         "preflight": preflight_people(request, state),
+    }
+
+
+def handle_db_new(req: dict) -> dict:
+    """POST /db_new -> {state}. Unlike kanban's board (client-authored,
+    src/worlds/kanban/data/board.ts, because runtime/worlds/kanban.py has
+    no default_state), crm.py already owns one — so the Database Analyst
+    demo needs no TypeScript mirror of the fake data at all; the client
+    just holds whatever this returns and threads it forward, the same way
+    /rpg_new hands the client a dungeon it didn't build."""
+    import copy
+    return {"state": copy.deepcopy(get_world("crm")["default_state"])}
+
+
+def analyst_world() -> dict:
+    """The crm world with only its READ tools. The Analyst demo's own header
+    says "Ask a question" and its blurb says "Ask questions of a fake CRM",
+    but it was handing the planner `delete_ticket`, `charge_customer`,
+    `send_invoice` and `send_email` on every question — so "show me the open
+    tickets" could, and once did, close them instead. Matching the tool table
+    to what the demo claims to be is worth 8 points on its own
+    (e_db_requests reads: 35% -> 43%, 2026-09-15)."""
+    world = get_world("crm")
+    return dict(world, tools=[t for t in world["tools"]
+                              if t["effects"] == ["READ"]])
+
+
+def analyst_grammar(grammar: str) -> str:
+    """Narrow a built grammar to what an analyst question can legally be.
+
+    Two rules, both measured on `data/holdout/e_db_requests.jsonl`:
+
+    `termline`: a question must be ANSWERED. Without this the planner can
+    fetch a list and end on STOP, throwing the answer away — "list the staff"
+    scored 1/5 that way and goes to 5/5 once RETURN is the only ending.
+
+    `pred`: one conjunct, no AND. This one is a *prior*, not a law: the
+    corpus pads every FILTER (97.2% of rows that call a list tool then
+    filter), so a one-predicate question comes back as two, and the second
+    clause is invented — `delinquent EQ true AND delinquent EQ false` returns
+    empty whatever the data. Capping conjuncts is worth another 7 points
+    (48% -> 55%), and costs any question that genuinely needs two: "show me
+    the overdue invoices" (due LT NOW AND NOT paid) cannot be written at all
+    under it. Eleven of the twelve reference programs need 0 or 1, so the
+    trade is currently worth it — revisit when the corpus stops padding.
+    """
+    grammar = re.sub(r"^termline\s*::=.*$",
+                     "termline  ::= (ret | abort) nl?", grammar, flags=re.M)
+    return re.sub(r"^pred\s*::=.*$", "pred      ::= clause", grammar, flags=re.M)
+
+
+def handle_db_prompt(req: dict) -> dict:
+    """POST /db_prompt — the Database Analyst's analogue of
+    /kanban_prompt, against the crm world. See client/app/src/worlds/db/README.md.
+
+    Unlike the kanban and rpg prompts this one is deliberately narrowed: the
+    Analyst reads, so it gets the read tools and a grammar that can only end
+    in an answer (analyst_world/analyst_grammar)."""
+    request = req.get("request", "")
+    state = req.get("state")
+    if not request or not isinstance(state, dict):
+        return {"error": {"code": "BAD_REQUEST",
+                           "message": "db_prompt needs 'request' and 'state'"}}
+    world = analyst_world()
+    fields = typed_prompt_fields(
+        world, constants_from_crm(request, state, world["now"]), request)
+    return {
+        "input_text": fields["input_text"],
+        "context": fields["context"],
+        "grammar": analyst_grammar(fields["grammar"]),
+        "system": fields["system"],
+        "world": "crm",
+        "now": world["now"],
     }
 
 
@@ -960,7 +1120,7 @@ def handle_validate(req: dict) -> dict:
     incoming_registers = req.get("registers")
     pause_types = req.get("pause_types")  # echoed back from a prior response's pause_envs
     incoming_approval = req.get("approval")  # optional per-request override of the default approval token
-    # Freeform mode (client/kanban-ui's typed chat): a client that already
+    # Freeform mode (client/app's typed chat, kanban or db): a client that already
     # called POST /kanban_prompt sends that response's "context"/"world"/"now"
     # back here instead of a task_id — same compile/execute path, just a
     # freshly-built context instead of a data/curriculum_tasks.jsonl lookup.
@@ -1091,7 +1251,6 @@ def main() -> None:
     print(f"covenant-agent dev server")
     print(f"  repo root:      {ROOT}")
     print(f"  app (if built): {APP_DIST}")
-    print(f"  /rpg (if built):{RPG_DIST}")
     print(f"  /plan model:    {PLANNER.model_path} (available={PLANNER.available})")
     print(f"  models dir:     {MODELS_DIR}")
     print(f"  grammar file:   {GRAMMAR_FILE}")

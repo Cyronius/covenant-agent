@@ -1,0 +1,13 @@
+{"condition": "C1-prime", "task_id": "demo_00_s0", "ms": 7420.4, "tokens_in": 1373}
+{"condition": "C1", "task_id": "demo_00_s1", "ms": 23440.4, "tokens_in": 1374}
+{"condition": "C1", "task_id": "demo_00_s2", "ms": 58232.3, "tokens_in": 1376}
+{"condition": "C2-prime", "task_id": "demo_00_s0", "ms": 6962.5, "tokens_in": 1373}
+{"condition": "C2", "task_id": "demo_00_s1", "ms": 7043.9, "tokens_in": 1374}
+{"condition": "C2", "task_id": "demo_00_s2", "ms": 6947.8, "tokens_in": 1376}
+{"condition": "C3-prime", "task_id": "demo_00_s0", "ms": 5934.2, "tokens_in": 1373}
+{"condition": "C3", "task_id": "demo_00_s1", "ms": 6524.9, "tokens_in": 1374}
+{"condition": "C3", "task_id": "demo_00_s2", "ms": 5245.8, "tokens_in": 1376}
+{"condition": "C0-prime", "task_id": "demo_00_s0", "ms": 7075.4, "tokens_in": 1373}
+{"condition": "C0", "task_id": "demo_00_s1", "ms": 5129.0, "tokens_in": 1374}
+{"condition": "C0", "task_id": "demo_00_s2", "ms": 7536.7, "tokens_in": 1376}
+{"summary": {"n_tasks": 3, "ctx": 4096, "adapter_off_identical": true, "stats": {"switches": 10, "switch_ms_total": 55.2, "role": "write", "adapter": "C:\\code\\covenant-agent\\baselines\\qwen\\models\\lora_s2_f16.gguf"}, "C1": {"p50_ms": 40836.4, "delta_vs_C1_ms": 0.0, "n": 2}, "C2": {"p50_ms": 6995.9, "delta_vs_C1_ms": -33840.5, "n": 2}, "C3": {"p50_ms": 5885.4, "delta_vs_C1_ms": -34951.0, "n": 2}, "C0": {"p50_ms": 6332.9, "delta_vs_C1_ms": -34503.5, "n": 2}}}

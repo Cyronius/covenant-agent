@@ -1,0 +1,35 @@
+/* The landing page's own small stylesheet — not scoped under a .world-*
+   wrapper since Home never coexists with a world route (react-router
+   swaps them, never mounts both), but every selector here still only
+   targets classes under .home to stay out of the way regardless. */
+.home {
+  min-height: 100vh;
+  background: #f6f4ee;
+  color: #22261c;
+  font-family: 'Commissioner', sans-serif;
+  padding: 3rem 1.7rem 4rem;
+}
+.home-head { max-width: 720px; margin: 0 auto 2.5rem; text-align: center; }
+.home-head h1 {
+  font-family: 'Piazzolla', serif; font-weight: 600; font-size: 2.1rem; margin: 0 0 0.7rem;
+}
+.home-head p { color: #5c604f; font-size: 0.95rem; line-height: 1.55; margin: 0; }
+
+.home-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.2rem; max-width: 900px; margin: 0 auto;
+}
+.home-card {
+  display: flex; flex-direction: column; gap: 0.5rem;
+  background: #fff; border: 1px solid #d8d2c0; border-radius: 12px 4px 12px 4px;
+  padding: 1.3rem 1.4rem; text-decoration: none; color: inherit;
+  box-shadow: 3px 4px 0 rgba(43, 42, 33, 0.08);
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+.home-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 6px 0 rgba(43, 42, 33, 0.12);
+  border-color: #5b7052;
+}
+.home-card-title { font-family: 'Piazzolla', serif; font-weight: 600; font-size: 1.1rem; }
+.home-card-blurb { font-size: 0.85rem; color: #5c604f; line-height: 1.45; }
