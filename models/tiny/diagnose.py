@@ -94,11 +94,156 @@ def compare_calls(reference: str, program: str, tools: dict) -> Counter:
     return m
 
 
+
+# -- where a program goes wrong, by line ---------------------------------
+
+# Token classes inside a FILTER predicate. Enough to say whether a wrong
+# predicate is a wrong SYMBOL or a wrong SHAPE, which are different failures
+# with different fixes.
+#
+# The operators are the spec's, not a guess: `cmp = EQ | LT | GT | CONTAINS |
+# IN` (spec/agent_core.md:99). NE, LE and GE are not in the language.
+OPS = {"EQ", "LT", "GT", "CONTAINS", "IN"}
+JOIN = {"AND", "OR", "NOT"}
+
+
+def token_class(tok: str) -> str:
+    if tok in OPS:
+        return "op"
+    if tok in JOIN:
+        return "join"
+    if re.fullmatch(r"F\d+", tok):
+        return "field"
+    if re.fullmatch(r"r\d+\.?", tok):
+        return "reg"
+    if re.fullmatch(r"[CSNBDI]\d+|NOW|TRUE|FALSE", tok):
+        return "const"
+    return tok.lower()
+
+
+def shape(line: str) -> tuple[str, ...]:
+    """The line as a sequence of token classes: its grammatical shape."""
+    return tuple(token_class(t) for t in line.split())
+
+
+def adjacency_faults(line: str) -> list[str]:
+    """Where a predicate breaks the grammar's own production, named.
+
+    Straight off `spec/agent_core.md:95-99`:
+
+        pred   = clause { ("AND" | "OR") clause }
+        clause = [ "NOT" ] field cmp ( operand | field )
+
+    Which makes every rule below local -- it constrains what may follow what,
+    nothing more. That is the class of constraint a per-slot mask over the canvas
+    could carry and decision 8's symbol mask does not: the symbol mask says which
+    `F` symbols exist, not that a comparison needs a field on its left.
+    `sample.local_mask` already carries one rule of exactly this kind (a receiver
+    slot must be followed by a field), so the machinery is there.
+
+    Note `AND NOT` and `OR NOT` are legal: a clause may open with NOT. An earlier
+    version of this function counted them as faults and reported 30 per 67
+    programs on both arms, which is the corpus obeying the grammar.
+    """
+    toks = line.split()
+    if toks and toks[0] == "FILTER":
+        toks = toks[1:]                      # drop the keyword and the source reg
+        toks = toks[1:] if toks else toks
+    if "->" in toks:
+        toks = toks[:toks.index("->")]
+    out = []
+    for i, t in enumerate(toks):
+        nxt = toks[i + 1] if i + 1 < len(toks) else None
+        cls = token_class(t)
+        nc = token_class(nxt) if nxt else None
+        if t in ("AND", "OR"):
+            if nxt is None or not (nxt == "NOT" or nc == "field"):
+                out.append(f"{t} then {nxt or 'end'}")
+        elif t == "NOT":
+            if nc != "field":
+                out.append(f"NOT then {nxt or 'end'}")
+        elif cls == "op":
+            prev = token_class(toks[i - 1]) if i else None
+            if prev != "field":
+                out.append(f"{cls} with {prev or 'nothing'} on its left")
+            if nxt is None or nc in ("op", "join"):
+                out.append(f"{cls} then {nc or 'end'}")
+    return out
+
+
+def line_report(gen: dict, levels: dict, scored: dict | None) -> None:
+    """Which line breaks first, whether it breaks its shape or only its symbols,
+    and whether the program still reached the goal.
+
+    The distinction is the point. A predicate that names the wrong field is a
+    binding failure. A predicate whose token classes do not compose -- two joins
+    in a row, an operator where a field belongs -- is a grammar failure, and the
+    two have nothing to do with each other.
+    """
+    first = Counter()
+    kind = Counter()
+    faults = Counter()
+    equiv = Counter()
+    for tid, g in gen.items():
+        gl = [l.strip() for l in g["program"].strip().split("\n") if l.strip()]
+        rl = [l.strip() for l in g["reference"].strip().split("\n") if l.strip()]
+        goal = bool(scored.get(tid, {}).get("goal")) if scored else None
+        if gl == rl:
+            first["exact"] += 1
+            continue
+        for a, b in zip(gl + [""] * max(0, len(rl) - len(gl)),
+                        rl + [""] * max(0, len(gl) - len(rl))):
+            if a == b:
+                continue
+            key = (b.split(" ")[0] if b else "extra line") or "extra line"
+            first[key] += 1
+            if goal is not None:
+                # A differing line that still reaches the goal was a different
+                # way of saying the same thing, not an error.
+                equiv[(key, "goal" if goal else "failed")] += 1
+            if shape(a) == shape(b):
+                kind[key + ": same shape, wrong symbols"] += 1
+            else:
+                kind[key + ": wrong shape"] += 1
+            for f in adjacency_faults(a):
+                faults[f] += 1
+            break
+
+    total = max(sum(first.values()), 1)
+    print(f"\n  first differing line, over {total} programs"
+          f" ({first.get('exact', 0)} exact):")
+    for k, v in first.most_common(8):
+        if k == "exact":
+            continue
+        print(f"    {k:14s} {v:5d}  {v/total:5.1%}")
+    if equiv:
+        print("\n  of those differing lines, did the program still reach the goal:")
+        keys = sorted({k for k, _ in equiv})
+        for k in keys:
+            ok, bad = equiv[(k, "goal")], equiv[(k, "failed")]
+            if ok + bad:
+                print(f"    {k:14s} goal {ok:4d}  failed {bad:4d}  "
+                      f"({ok/(ok+bad):.0%} of differences were harmless)")
+    if kind:
+        print("\n  was the shape wrong, or only the symbols in it:")
+        for k, v in sorted(kind.items(), key=lambda kv: -kv[1])[:8]:
+            print(f"    {k:48s} {v:5d}")
+    if faults:
+        print("\n  local adjacency rules broken (a per-slot mask could carry these):")
+        for k, v in faults.most_common(8):
+            print(f"    {k:22s} {v:5d}")
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--gen", required=True, help="a generated JSONL from evaluate.py")
     ap.add_argument("--cache", default="data_cache_struct")
     ap.add_argument("--split", default="test")
+    ap.add_argument("--lines", action="store_true",
+                    help="which line of a program breaks first, whether its shape "
+                         "or only its symbols, and whether the goal was reached "
+                         "anyway; reads the .score.json beside --gen if it exists")
+    ap.add_argument("--level", type=int, default=None,
+                    help="restrict --lines to one curriculum level")
     args = ap.parse_args()
 
     rows = pickle.load(open(Path(args.cache) / "rows.pkl", "rb"))[args.split]
@@ -107,6 +252,21 @@ def main():
         r = json.loads(line)
         gen[r["task_id"]] = r
     strip = lambda s: re.sub(r"=F\d+", "", s)          # drop per-request field symbols
+
+    if args.lines:
+        levels = {r["id"]: r.get("level") for r in rows}
+        want = {t: g for t, g in gen.items()
+                if args.level is None or levels.get(t) == args.level}
+        sc_path = Path(args.gen).with_suffix(".score.json")
+        scored = None
+        if sc_path.exists():
+            scored = {r["task_id"]: r for r in json.loads(
+                sc_path.read_text(encoding="utf-8"))["rows"] if "task_id" in r}
+        where = f"level {args.level}" if args.level is not None else "every level"
+        print(f"{args.gen}  {where}, {len(want)} programs"
+              + ("" if scored else "  (no .score.json beside it: no goal column)"))
+        line_report(want, levels, scored)
+        return
 
     n = 0
     uniq_full = uniq_stripped = lex = 0.0

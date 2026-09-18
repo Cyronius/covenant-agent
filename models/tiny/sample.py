@@ -51,15 +51,22 @@ class Trace:
 
 # -- the grammar's local half: a receiver is followed by a field -----------
 
+CMP = ("EQ", "LT", "GT", "CONTAINS", "IN")     # spec/agent_core.md:99
+JOIN = ("AND", "OR")
+
+
 def local_sets(ov):
-    """(receiver ids, field ids) as bool tensors over the codec's id space.
-    Cached on the codec, which is per task for the structural binding."""
+    """(receiver, field, cmp, join, not) as bool tensors over the codec's id
+    space. Cached on the codec, which is per task for the structural binding."""
     cached = getattr(ov, "_local_sets", None)
     if cached is None:
         toks = ov.decode(list(range(len(ov))))
         recv = torch.tensor([bool(re.fullmatch(r"r\d+\.", t)) for t in toks])
         fld = torch.tensor([bool(re.fullmatch(r"F\d+", t)) for t in toks])
-        cached = (recv, fld)
+        cmp_ = torch.tensor([t in CMP for t in toks])
+        join = torch.tensor([t in JOIN for t in toks])
+        neg = torch.tensor([t == "NOT" for t in toks])
+        cached = (recv, fld, cmp_, join, neg)
         try:
             ov._local_sets = cached
         except AttributeError:
@@ -69,27 +76,68 @@ def local_sets(ov):
 
 def local_mask(canvas: torch.Tensor, ov) -> torch.Tensor:
     """(1, C, V) True where a joint id is illegal at that slot given the slots
-    already on the canvas. Two finite-state rules and nothing else
-    (`.claude/plans/canvas-field-access-split.md` section 7):
+    already on the canvas. Finite-state rules over immediate neighbours, and
+    nothing else (`.claude/plans/canvas-field-access-split.md` section 7):
 
       after a receiver `rN.`   the slot must hold a field
       before a filled non-field the slot must not hold a receiver
+      after AND or OR          the slot is not AND, OR, or a comparator
+      after NOT                the slot is not AND, OR, NOT, or a comparator
+      after a comparator       the slot is not AND, OR, NOT, or a comparator
+      before a comparator      the slot is not AND, OR, NOT, or a comparator
+      before AND or OR         the slot is not AND, OR, or a comparator
+      before NOT               the slot is not NOT or a comparator
+
+    The predicate rules are the grammar's own productions read locally
+    (`spec/agent_core.md:95-99`): `pred = clause {("AND"|"OR") clause}` and
+    `clause = ["NOT"] field cmp (operand|field)`, plus the `cond` form for `IF`,
+    which differs only in allowing an operand or `EMPTY` where `pred` wants a
+    field. Every rule above holds under both, so no line-head scope is needed:
+    each one says only that two operators cannot sit next to each other, and
+    `AND NOT` -- the one legal operator pair -- is allowed.
+
+    They exist because a left-to-right decoder cannot break them and a parallel
+    one can. Measured on the step-1 runs (`results/R7.md` section 3): the control
+    arm produced no ungrammatical predicate in 1,415 programs, while the
+    diffusion arm broke these rules in a third of level-3 programs -- `AND AND`,
+    a comparator where a field belongs -- because each slot's distribution was
+    computed before its neighbour committed. This is decision 8's mask carrying
+    the part of the grammar that is about adjacency rather than about which
+    symbols exist.
 
     Everything entity-aware (a field of the entity in r0, a register bound
     before use) stays with the host typechecker in `repair`.
     """
-    recv, fld = local_sets(ov)
-    recv, fld = recv.to(canvas.device), fld.to(canvas.device)
+    recv, fld, cmp_, join, neg = (t.to(canvas.device) for t in local_sets(ov))
     tok = canvas[0]
     n = tok.numel()
     blocked = torch.zeros(1, n, recv.numel(), dtype=torch.bool, device=canvas.device)
     filled = tok != ov.mask
-    after_recv = torch.zeros(n, dtype=torch.bool, device=canvas.device)
-    after_recv[1:] = recv[tok[:-1]] & filled[:-1]
+
+    def shifted(sel, by):
+        """True at slot i when the neighbour `by` away is filled and in `sel`."""
+        out = torch.zeros(n, dtype=torch.bool, device=canvas.device)
+        if by == 1:                                   # the slot before
+            out[1:] = sel[tok[:-1]] & filled[:-1]
+        else:                                         # the slot after
+            out[:-1] = sel[tok[1:]] & filled[1:]
+        return out
+
+    after_recv = shifted(recv, 1)
     blocked[0, after_recv] = ~fld
     before_nonfield = torch.zeros(n, dtype=torch.bool, device=canvas.device)
     before_nonfield[:-1] = filled[1:] & ~fld[tok[1:]]
     blocked[0, before_nonfield] |= recv
+
+    # Two operators cannot be adjacent. AND NOT is the exception and is legal.
+    op = cmp_ | join | neg
+    for sel, by, ban in ((join, 1, join | cmp_),      # AND/OR then ...
+                         (neg, 1, op),                # NOT then ...
+                         (cmp_, 1, op),               # a comparator then ...
+                         (cmp_, -1, op),              # ... then a comparator
+                         (join, -1, join | cmp_),     # ... then AND/OR
+                         (neg, -1, neg | cmp_)):      # ... then NOT
+        blocked[0, shifted(sel, by)] |= ban
     return blocked
 
 
@@ -133,9 +181,21 @@ def diffusion_sample(model, inputs: dict, ov, steps: int = 8, temperature: float
             continue
         cand = conf.masked_fill(filled, -1.0)
         idx = cand[0].topk(min(need, int((~filled).sum()))).indices
-        canvas[0, idx] = pred[0, idx]
-        filled[0, idx] = True
-        for i in idx.tolist():
+        # Commit in descending confidence, re-checking the local rules against
+        # what THIS step has already committed.
+        #
+        # Committing the whole set at once is what let `AND AND` through. The
+        # mask above is computed from the canvas as the step began, so for two
+        # slots filled in the same step neither sees the other, and the last step
+        # of an 8-step schedule commits about 13 slots together -- exactly the
+        # low-confidence ones, which is where a predicate's operators live. The
+        # loop costs no forward pass: the model's logits are reused and only the
+        # mask is recomputed.
+        for i in idx[conf[0, idx].argsort(descending=True)].tolist():
+            row = logits[0, i].masked_fill(local_mask(canvas, ov)[0, i], float("-inf"))
+            tok = int(row.argmax()) if bool(torch.isfinite(row).any()) else int(pred[0, i])
+            canvas[0, i] = tok
+            filled[0, i] = True
             tr.unmask_step[i] = s
         if filled.all():
             break

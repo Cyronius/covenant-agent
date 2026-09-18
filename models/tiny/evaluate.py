@@ -110,6 +110,13 @@ def generate(args):
 
     n = min(args.limit or len(split), len(split))
     arm = "ar" if model.c.causal else "diffusion"
+    # A level filter, for re-measuring one curriculum level without regenerating
+    # the split. The tasks it picks are the same tasks whatever else changes, so
+    # two runs over the same level are comparable slot for slot.
+    which = [i for i in range(n)
+             if args.level is None or split.meta[i].get("level") == args.level]
+    if args.level is not None:
+        print(f"level {args.level}: {len(which)} of {n} tasks", flush=True)
 
     # The compiler loop needs covenant-agent. Without it, generate plain and
     # let --score do the compiling later.
@@ -122,7 +129,7 @@ def generate(args):
 
     out = []
     t0 = time.time()
-    for i in range(n):
+    for k, i in enumerate(which):
         inputs = split.inputs(i, model)
         ov = split.codec(i)
         tr = Trace()
@@ -153,8 +160,8 @@ def generate(args):
             # one forward pass applies the block dec_layers x loops times.
             "loops": model.c.dec_loops, "dec_layers": model.c.dec_layers,
         })
-        if (i + 1) % 25 == 0:
-            print(f"  {i+1}/{n}  {(time.time()-t0)/(i+1):.2f}s/example", flush=True)
+        if (k + 1) % 25 == 0:
+            print(f"  {k+1}/{len(which)}  {(time.time()-t0)/(k+1):.2f}s/example", flush=True)
 
     dest = Path(args.gen_out)
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -296,6 +303,9 @@ def main():
     ap.add_argument("--repair-rounds", type=int, default=0)
     ap.add_argument("--repair-steps", type=int, default=4)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--level", type=int, default=None,
+                    help="generate only this curriculum level, for re-measuring "
+                         "one level without regenerating the split")
     ap.add_argument("--gen-out", default="runs/gen.jsonl")
     ap.add_argument("--generate", action="store_true")
     ap.add_argument("--score", action="store_true")
