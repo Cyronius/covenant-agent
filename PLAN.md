@@ -587,3 +587,31 @@ covenant-agent/
   without reading the request — the same context-not-words cue behind the
   demo over-abstention. Plan: `.claude/plans/abort-referent.md`. Corpus
   regen and the retrain that carries this to the 0.8B are the plan's step 3.
+
+- **2026-09-17 — R3 started (`models/tiny/`), one size, encoder-decoder.**
+  The tiny-planner track (§5) now has code and a first result: a 7.9M
+  from-scratch encoder-decoder trained on `s5_plain` (25k single-segment
+  pairs, 6 epochs) scores 8% goal success and sits at chance on tool and
+  field selection while parsing 100% and getting the abort tasks right.
+  `results/R3.md`. Two deviations from §5 as written, both recorded there:
+  the shape is encoder-decoder rather than decoder-only, because the input
+  is ~1,100 tokens against a 30-token output and encoding once is the cheap
+  shape; and a masked-diffusion decoder rides along as a second arm differing
+  in one attention mask. That arm is §12 material and stays deferred: its
+  one-pass speed result is the reason the experiment was built, and its
+  quality comparison is unreadable until a model can do the task, which is
+  §12's rule found empirically. **Motivating result:** §0's browser budget
+  and H5 for the track itself; `results/S2.md`'s finding that the planner's
+  failures track request phrasing, not task difficulty, which makes the
+  input side the thing a small encoder has to get right; and R3.md §3, which
+  found that in `s5_plain` the typed signature identifies every called tool
+  without its description, and that the model matches the reference tool's
+  effect class at chance (27.5% against 27.2%), so the failure is symbol
+  binding, not English. That result is what motivates the one piece of
+  architecture novelty the next round spends: atomic symbol tokens in the
+  input tokenizer and a shared symbol embedding tying input `T8` to output
+  `T8`, with a pointer over the symbol token. Everything else stays boring.
+  C4 for this sampler is `harness/task_grammar.py`, not a new mechanism.
+  The code came from `abc-diffusion-window/canvas/` (commit `0d9d1c2`),
+  where it was phase 1 of the prose-decoder design; that repo keeps the
+  design and points here. Plan: `.claude/plans/r3-round3-symbol-binding.md`.

@@ -21,3 +21,11 @@ dist/
 # raw production session pulls (PII) - never committed; only the scrubbed, reviewed eval slice is tracked
 data/real_sessions/
 data/open_pairs/
+
+# R3 tiny-model experiment (models/tiny): tensors, checkpoints, generations
+# and pod bundles stay local; the code, results/R3.md and results/logs are tracked
+models/tiny/data_cache*/
+models/tiny/runs/
+models/tiny/out/
+models/tiny/*.tar.gz
+*.pt
