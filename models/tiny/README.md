@@ -175,10 +175,10 @@ locally on a tiny model before it costs pod time.
 One kernel measurement changed step 3 before it ran.
 `models/npu/kernels/tern_mk/README.md` found that this part has a native
 `mmul<4,16,16,int8,uint4>` whose unpack is folded into the MAC, while ternary has
-no 2-bit equivalent and pays 0.031 cycles per weight in software. So decision 3's
+no 2-bit equivalent and pays 0.0156 cycles per weight in software. So decision 3's
 "ternary strictly dominates 4-bit" does not hold here, the fallback from ternary
 is 4-bit at 8M rather than int8 at 4M, and the format question is capacity
-against a 25% tax rather than a free win.
+against a 12.5% tax rather than a free win.
 
 ## Running it
 

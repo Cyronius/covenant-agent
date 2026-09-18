@@ -8,7 +8,7 @@
 # resident: 4M at int8, 8M at 4-bit, 16M at ternary. `kernels/tern_mk/README.md`
 # measured what each costs in cycles and found the speed argument for ternary is
 # not available on this silicon -- 4-bit gets its unpack folded into the MAC by
-# the hardware, ternary pays 0.031 cycles per weight in software, a 25% tax at a
+# the hardware, ternary pays 0.0156 cycles per weight in software, a 12.5% tax at a
 # 64-slot canvas. So the trade is 2x the parameters against 25% more time per
 # weight, and only training says whether that is worth taking.
 #

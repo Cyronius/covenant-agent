@@ -18,12 +18,12 @@ Three formats, one flag (`Config.weights`):
           memory with the unpack folded into the MAC, so this format pays no
           unpack at all
   tern    {-1, 0, +1} with one scale per output row, 16M resident, and a
-          software unpack of 0.031 cycles per weight
+          software unpack of 0.0156 cycles per weight
 
 `kernels/tern_mk/README.md` measured those unpack costs and contradicts
 decision 3's claim that ternary strictly dominates 4-bit: on this silicon 4-bit
 gets its unpack free in hardware and ternary does not, so the choice is 2x the
-resident parameters against a 25% tax at a 64-slot canvas. That is a capacity
+resident parameters against a 12.5% tax at a 64-slot canvas. That is a capacity
 question, which is what this module exists to answer, and it is why `u4` is
 here as a first-class arm rather than as int8's fallback.
 
