@@ -21,8 +21,9 @@ from statistics import mean, stdev
 
 
 def parse_name(stem: str) -> dict:
-    """out/diff_s0_k8_repair -> {arm: diffusion, seed: 0, steps: 8, repair: True}"""
-    d: dict = {"arm": "diffusion" if stem.startswith("diff") else "ar",
+    """out/diff_s0_k8_repair -> {arm: diffusion, seed: 0, steps: 8, repair: True};
+    a run tag may precede the arm (out/s1_diff_s0_k8 from run_step1.sh)."""
+    d: dict = {"arm": "diffusion" if re.search(r"(^|_)diff(_|$)", stem) else "ar",
                "seed": None, "steps": None, "repair": "repair" in stem,
                "split": "holdout" if "holdout" in stem else "test",
                "big": "big" in stem,

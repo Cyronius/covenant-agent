@@ -29,3 +29,7 @@ models/tiny/runs/
 models/tiny/out/
 models/tiny/*.tar.gz
 *.pt
+
+# NPU tooling (models/npu): build output and the driver link library we
+# reconstruct from the installed driver. Vendored headers and the shim are tracked.
+models/npu/build/

@@ -1,13 +1,17 @@
 """When does the diffusion sampler decide each kind of token?
 
-This is the measurement the experiment exists for. If the model fills keywords
-first and leaves the effects header and result registers until last, it is
-solving the program in an order of its own choosing rather than left to right.
-If the unmask step just tracks slot position, there is no evidence here for the
-non-linear-solving intuition, and that is worth knowing before anything is built
-on top of it.
+This is the measurement decision 11 of `.claude/plans/npu-native-planner.md`
+rests on. If the model fills keywords and tools first and leaves arguments
+until later, it already resolves the skeleton before the arguments, and a
+planner/decoder split would only be a capacity upgrade. If the unmask step
+just tracks slot position, there is no evidence here for content-driven
+solving, and that is worth knowing before anything is built on top of it.
 
     python probe.py --gen runs/diffusion_test.jsonl
+
+Works from the surface tokens evaluate.py writes per slot (`canvas_tokens`),
+so it needs no cache and reads either binding; older files without that
+field fall back to decoding `canvas` through the flat vocabulary.
 """
 from __future__ import annotations
 
@@ -16,8 +20,6 @@ import json
 from collections import defaultdict
 from pathlib import Path
 from statistics import mean, median
-
-from tok import OutVocab
 
 CLASSES = {
     "header": lambda t: t in ("EFFECTS", "READ", "WRITE", "DELETE", "SEND", "PAY", "EXTERNAL"),
@@ -28,7 +30,7 @@ CLASSES = {
     "tool": lambda t: t.startswith("T") and t[1:].isdigit(),
     "field": lambda t: t.startswith("F") and t[1:].isdigit(),
     "const": lambda t: t[0] in "SNBDIC" and t[1:].isdigit(),
-    "register": lambda t: t.startswith("r") and t[1:].isdigit(),
+    "register": lambda t: t.startswith("r") and t[1:].rstrip(".").isdigit(),
     "structure": lambda t: t in ("NL", "IND", "->"),
     "pad": lambda t: t == "PAD",
 }
@@ -47,24 +49,29 @@ def classify(tok: str) -> str:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--gen", required=True, help="a generated JSONL from evaluate.py")
-    ap.add_argument("--cache", default="data_cache")
+    ap.add_argument("--cache", default="data_cache",
+                    help="only needed for files without canvas_tokens (flat, pre-split)")
     ap.add_argument("--compiled-only", action="store_true",
                     help="only count programs that compiled, so the order reflects "
                          "successful solving rather than noise")
     args = ap.parse_args()
 
-    ov = OutVocab.load(Path(args.cache) / "out_vocab.json")
     rows = [json.loads(l) for l in open(args.gen, encoding="utf-8")]
     if args.compiled_only:
         rows = [r for r in rows if r.get("compiled_inline")]
     if not rows:
         raise SystemExit("no rows to probe")
 
+    ov = None
+    if not all("canvas_tokens" in r for r in rows):
+        from tok import OutVocab
+        ov = OutVocab.load(Path(args.cache) / "out_vocab.json")
+
     by_class = defaultdict(list)
     by_position = defaultdict(list)
     max_step = 0
     for r in rows:
-        toks = ov.decode(r["canvas"])
+        toks = r.get("canvas_tokens") or ov.decode(r["canvas"])
         for slot, (tok, step) in enumerate(zip(toks, r["unmask_step"])):
             if step < 0:
                 continue
@@ -83,7 +90,6 @@ def main():
     slots = sorted(by_position)
     xs = [s for s in slots for _ in by_position[s]]
     ys = [v for s in slots for v in by_position[s]]
-    n = len(xs)
     mx, my = mean(xs), mean(ys)
     cov = sum((x - mx) * (y - my) for x, y in zip(xs, ys))
     vx = sum((x - mx) ** 2 for x in xs) ** 0.5

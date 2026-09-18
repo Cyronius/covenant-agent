@@ -8,6 +8,10 @@
 #   bash run_phase1.sh            # three seeds, both arms, the sweeps
 #   SEEDS=0 bash run_phase1.sh    # one seed, for a first look
 #   SKIP_BIG=1 bash run_phase1.sh # skip the capacity check
+#
+# This is the R3 phase-1 recipe (6 epochs, flat cache). The step-1 run of the
+# NPU-native planner sequence is run_step1.sh; it trains whatever binding the
+# cache declares and copies the curves out.
 set -euo pipefail
 
 SEEDS="${SEEDS:-0 1 2}"

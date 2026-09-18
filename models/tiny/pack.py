@@ -6,8 +6,9 @@ meter runs. This produces a single tarball that unpacks and runs.
 What goes in, and why each piece:
 
   tiny/*.py               the experiment
-  data_cache/               pre-tokenized tensors, so the pod never parses the
-                            500 MB corpus or trains a tokenizer
+  data_cache_struct/        pre-tokenized tensors (per-line token tensors, graph
+                            edges, canvas targets, keywords.json), so the pod
+                            never parses the 500 MB corpus or trains a tokenizer
   core/, harness/context.py covenant-agent's parser, typechecker and compiler.
                             Pure stdlib Python, 214 KB, and shipping it means
                             the compiler repair loop runs on the pod instead of
@@ -32,7 +33,7 @@ HERE = Path(__file__).parent
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cache", default="data_cache")
+    ap.add_argument("--cache", default="data_cache_struct")
     ap.add_argument("--out", default="pod_bundle.tar.gz")
     ap.add_argument("--no-cache", action="store_true",
                     help="code only, for when the cache is already uploaded")
@@ -48,7 +49,7 @@ def main():
         for py in sorted(HERE.glob("*.py")):
             tar.add(py, arcname=f"tiny/{py.name}")
             n += 1
-        for extra in ("README.md", "pod.md", "run_phase1.sh"):
+        for extra in ("README.md", "pod.md", "run_phase1.sh", "run_step1.sh", "selftest.sh"):
             p = HERE / extra
             if p.exists():
                 tar.add(p, arcname=f"tiny/{extra}")
@@ -73,8 +74,8 @@ def main():
     print("\non the pod:")
     print(f"  tar xzf {out.name} && cd tiny")
     print("  pip install torch tokenizers")
-    print("  bash run_phase1.sh")
-    print("\nbring back: out/*.jsonl and runs/*/log.jsonl")
+    print(f"  CACHE={args.cache} bash run_step1.sh")
+    print("\nbring back: out/ (generations and curves/)")
 
 
 if __name__ == "__main__":

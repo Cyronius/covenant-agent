@@ -37,16 +37,98 @@ program calls, so the top of the program is determined by the bottom. A
 left-to-right generator has to predict it before writing the calls. A diffusion
 generator can leave it until last. Header accuracy is reported on its own.
 
+## Structural binding (step 1 of the NPU-native planner)
+
+`results/R3.md` section 3 diagnosed why both 7.9M arms sat at chance on tool
+selection: the input BPE tokenizer splits `T23` into `T` `2` `3`, nothing ties
+the input `T8` to the output token `T8`, and the output vocabulary holds `r0.F6`
+as one token, so a third of the field references are not even symbol slots.
+`.claude/plans/npu-native-planner.md` (decisions 4, 6, 7, 8, 11) replaces the
+representation rather than the tokenizer. That is what `--binding structural`
+builds; `--binding flat` is the R3 model, unchanged.
+
+**What changed.** One flag to `prep.py`, recorded in the cache's `config.json`;
+`train.py` and `evaluate.py` build whichever model the cache declares.
+
+| | flat (R3) | structural |
+|---|---|---|
+| context | one token stream, about 1,100 tokens | one token tensor per tool line, field line and constant line, plus the request tokens |
+| encoder | 3 layers over the stream | a line encoder (one vector per line, pooled through a CLS token), a sparse graph pass over the line vectors, a turn encoder over tools + fields + constants + request |
+| region A | the encoder states | a tagged sequence: TOOL, FIELD, CONST, REQUEST vectors, then the canvas tagged CANVAS |
+| output | a row per vocabulary entry (401) | a fixed keyword head (62 rows) plus pointer scores: dot products against this task's tool, field and constant vectors and 32 register embeddings |
+| undeclared symbol | masked, if `--pointer` | has no row; cannot be produced |
+| canvas input | the token's embedding | a keyword's embedding, or the region-A vector the slot points at |
+
+The graph pass is sparse by construction: a tool attends to the fields its
+signature names (`=F2`), a field attends to the tools that name it and to the
+other fields of its entity, and every line attends to itself. The edges come
+from the serialized signature text and are stored in the cache (`adj`). The
+line encoder and graph pass depend only on the world's schema and are separate
+functions (`encode_world`), so they are cacheable per world as decision 6
+says; the turn encoder (`encode_turn`) is the per-turn part. Caching itself is
+not implemented.
+
+**The canvas** (`canvas.py`). Every slot holds one joint id over
+
+```
+[ keywords (62) | tools (<=18) | fields (<=23) | constants (<=10) | registers (32) ]
+```
+
+PAD is 0 and MASK is 1 as before. The pointer ranges beyond what a task declares
+are masked to `-inf` in the forward pass, so the grammar's symbol half is
+automatic; the keyword half is a per-task `kw_allowed` mask (everything but
+MASK, and an effect name only if some declared tool carries it), applied in the
+same place. Two register forms: `r0`..`r15` (an operand) and `r0.`..`r15.` (the
+receiver of a field access). `r0.F6` is two slots, `r0.` then `F6`, so every
+field reference is a field slot the pointer head can reach.
+
+**The split is shared by both bindings**, because it lives in
+`corpus.program_tokens` / `detokenize` (plan:
+`.claude/plans/canvas-field-access-split.md`). Forward: a whitespace token
+matching `^r(\d{1,2})\.(F\d+)$` becomes `r<n>.` then `F<k>`. Inverse: when a
+line is joined, a part ending in `.` absorbs the next token. Both are total
+functions of the token sequence with no grammar knowledge; a dangling `r0.`
+renders verbatim and is a `PARSE_ERROR`, never repaired. The flat vocabulary
+goes from 500 entries (115 compounds) to 401 (0 compounds); the longest program
+in `s5_plain` goes from 56 to 57 of 64 slots, and nothing is excluded.
+`MAX_PROGRAM_TOKENS` is now checked on the split count. The old caches
+(`data_cache`, `data_cache_ptr`, 500-entry vocabulary) still load and their
+checkpoints still generate byte-identical programs; a fresh flat cache is the
+same architecture on the split vocabulary.
+
+The samplers also apply one local rule from the canvas itself
+(`sample.local_mask`): after a receiver slot the next slot must be a field,
+and a receiver cannot sit before a filled non-field. Everything entity-aware
+(a field of the entity in `r0`, a register bound before use) stays with the
+host typechecker in the repair loop, as decision 8 says.
+
+**Instrumentation.** Every evaluation in `runs/<name>/log.jsonl` records, beside
+`val_loss`, `acc_kw acc_tool acc_field acc_const acc_reg` with their counts and
+the exact chance rates (`chance_tool` is the mean of 1/n_tools). For the
+diffusion arm the symbol accuracies come from one pass over the reference
+canvas with every pointer slot hidden; for the control they are teacher-forced.
+`evaluate.py --score` adds per-slot-kind accuracy against the reference canvas
+(same slot index) and the line-aligned CALL agreement from `diagnose.py` (same
+tool, same effect class, each against chance). `probe.py` reads the surface
+tokens `evaluate.py` writes per slot, so it works under either binding.
+
+**Model size.** Structural at the R3 widths (d=256, line 2, graph 1, turn 2,
+decoder 4) is 9.4M parameters against the flat 7.9M; the difference is the
+extra encoder layers. `--dec-loops` applies the decoder stack repeatedly under
+both bindings (step 2 of the sequence).
+
 ## Running it
 
 ```bash
-python prep.py --limit 20000                    # tokenize once, write tensors
-python test_pipeline.py --cache data_cache      # references must score 100%
-python train.py --arm diffusion --epochs 5
-python train.py --arm ar        --epochs 5
-python evaluate.py --ckpt runs/diffusion_s0/best.pt --split test \
+python prep.py --limit 30000                        # structural cache: data_cache_struct/
+python prep.py --limit 30000 --binding flat --out data_cache_flat   # the R3 baseline
+bash selftest.sh data_cache_struct                  # round trip must be 40/40 and 20/20
+python train.py --arm diffusion --cache data_cache_struct --epochs 12 --batch 64 --pad-weight 0.5
+python train.py --arm ar        --cache data_cache_struct --epochs 12 --batch 64
+python evaluate.py --ckpt runs/diffusion_s0/best.pt --cache data_cache_struct --split test \
                    --steps 8 --repair-rounds 2 --gen-out runs/diff_test.jsonl
 python probe.py --gen runs/diff_test.jsonl --compiled-only
+python diagnose.py --gen runs/diff_test.jsonl --cache data_cache_struct
 ```
 
 `test_pipeline.py` is the one to run first and after any change to the data path.
@@ -60,17 +142,18 @@ The sandbox needs Node; a GPU pod does not. So:
 
 ```bash
 # laptop
-python prep.py --limit 20000
-# pod: needs torch, the data_cache directory, and pure-Python imports only
-python train.py --arm diffusion --epochs 5
-python evaluate.py --ckpt runs/diffusion_s0/best.pt --generate --gen-out g.jsonl
+python prep.py --limit 30000
+python pack.py --cache data_cache_struct --out pod_bundle.tar.gz
+# pod: needs torch and tokenizers, the cache directory, and pure-Python imports only
+CACHE=data_cache_struct bash run_step1.sh
 # laptop
-python evaluate.py --score --gen-out g.jsonl --split test
+python evaluate.py --score --cache data_cache_struct --gen-out out/s1_diff_s0_k8.jsonl --split test
 ```
 
-On this CPU a full-config step is about 8.7 seconds at batch 16. Smoke-test
-locally with `--limit-train 128 --d 128 --enc-layers 2 --dec-layers 2`, then run
-seeds and sweeps on a pod.
+Smoke-test locally with `--limit-train 128 --d 128 --enc-layers 2 --dec-layers 2`
+(batch 4 to 8 on a CPU), then run seeds and sweeps on a pod. On the structural
+smoke cache that configuration is 3.0M parameters and about 2 s/step here,
+which per the memory section below is not a number to size anything by.
 
 Watch a long run through `runs/<name>/log.jsonl`, which the trainer writes and
 flushes at every evaluation. Do not watch it by piping the console output through
@@ -82,24 +165,36 @@ Redirect to a file instead, or read the JSONL.
 
 | file | what |
 |---|---|
-| `corpus.py` | load tasks, derive the header, program text to tokens and back |
-| `tok.py` | byte-pair tokenizer for the input, exact symbol table for the output |
-| `prep.py` | tokenize once, write tensors, refuse to truncate silently |
-| `model.py` | the shared encoder-decoder and the masked-diffusion training objective |
-| `train.py` | both arms, one flag |
-| `sample.py` | cosine-schedule unmasking, and the compiler repair loop |
-| `evaluate.py` | generate programs, then score them in the sandbox |
-| `probe.py` | when the sampler decides each kind of token |
+| `corpus.py` | load tasks, derive the header, program text to tokens and back; splits `r0.F6` into `r0.` `F6` and folds it back |
+| `tok.py` | byte-pair tokenizer for the input, exact symbol table for the flat output |
+| `canvas.py` | structural binding: the keyword table, the joint-id layout, the per-task codec (text to pointer ids and back), the keyword mask |
+| `prep.py` | tokenize once, write tensors, refuse to truncate silently; `--binding structural|flat` |
+| `model.py` | `CanvasModel` (flat) and `StructuralModel` (line encoder, graph pass, turn encoder, keyword + pointer head); the masked-diffusion objective |
+| `train.py` | both arms, one flag; per-slot-kind accuracy at every evaluation |
+| `sample.py` | cosine-schedule unmasking, the receiver rule, and the compiler repair loop |
+| `evaluate.py` | generate programs, then score them in the sandbox; slot accuracy and CALL agreement |
+| `diagnose.py` | signature uniqueness, and the line-aligned CALL agreement (also used by `evaluate.py --score`) |
+| `probe.py` | when the sampler decides each kind of token (decision 11's evidence) |
+| `ablate_desc.py` | permute descriptions or requests at inference (flat binding only) |
+| `report.py` | the accuracy-against-passes table over a directory of scored runs |
 | `sandbox.py` | register the 104 generated theme worlds so the sandbox can run them |
 | `test_pipeline.py` | the reference round trip, the check everything else rests on |
+| `test_samplers.py` | both samplers reproduce an oracle; the receiver rule never blocks a reference |
+| `selftest.sh` | the correctness checks, on either binding |
+| `run_step1.sh` | the pod script for step 1: both arms, three seeds, the step sweep, curves copied out |
+| `run_phase1.sh` | the R3 phase-1 recipe (6 epochs, flat) |
+| `pack.py` | the pod bundle: code, cache, compiler |
 
 Not named `data.py` on purpose: that shadows covenant-agent's `data` package and
 breaks every import of the theme generator.
 
 ## Memory, and why a too-large batch looks like a slow model
 
-The encoder reads about 1100 input tokens, and self-attention over them holds an
-`S x S` score matrix per head that autograd keeps for the backward pass:
+Under the flat binding the encoder reads about 1100 input tokens, and
+self-attention over them holds an `S x S` score matrix per head that autograd
+keeps for the backward pass (the structural binding's largest attention is the
+line encoder's, 64 x 64 over about 50 lines per task, so it is far lighter per
+example; the guidance below is for flat):
 
 ```
 batch x heads x 1280 x 1280 x 4 bytes   ~= 105 MB per head-batch unit

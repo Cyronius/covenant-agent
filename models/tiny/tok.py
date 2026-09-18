@@ -42,6 +42,11 @@ class OutVocab:
     def decode(self, ids: list[int]) -> list[str]:
         return [self.itos[i] for i in ids]
 
+    def render(self, ids: list[int]) -> str:
+        """Program text; the same call the structural codec offers."""
+        from corpus import detokenize
+        return detokenize(self.decode(ids))
+
     def save(self, path: Path) -> None:
         path.write_text(json.dumps(self.itos), encoding="utf-8")
 
@@ -68,6 +73,9 @@ class OutVocab:
         for letter in ("T", "F", "C", "S", "N", "B", "D", "I", "r"):
             limit = 16 if letter == "r" else extra_symbols
             seen.update(f"{letter}{i}" for i in range(limit))
+        # The receiver of a field access keeps its dot (corpus.program_tokens),
+        # so a held-out world cannot render an out-of-vocabulary `r13.`.
+        seen.update(f"r{i}." for i in range(16))
         return cls(sorted(seen))
 
 

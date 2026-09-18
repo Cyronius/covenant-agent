@@ -11,31 +11,39 @@ Two modes, because the sandbox needs Node and a GPU pod does not:
   --score      read that JSONL, execute each program. Needs Node and covenant-agent.
 
 Running both at once is the normal path on a laptop.
+
+Beside goal, compile and parse, `--score` reports two grounding measurements:
+per-slot-kind accuracy of the generated canvas against the reference canvas
+(same slot index; keyword, tool, field, constant, register), and the
+line-aligned CALL agreement `diagnose.py` computes: on lines where both the
+reference and the generation CALL, the same tool, and the same effect class,
+each against exact chance.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import pickle
+import re
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
 import torch
 
-from model import CanvasModel, Config
+from model import Config, build_model
+from prep import STRUCT_KEYS
 from sample import Trace, ar_sample, diffusion_sample, repair, to_text
 from tok import OutVocab
 
 
-def load_model(ckpt_path: Path, device, ov=None) -> CanvasModel:
+def load_model(ckpt_path: Path, device, ov=None):
     ck = torch.load(ckpt_path, map_location=device)
     cfg = Config(**ck["cfg"])
-    m = CanvasModel(cfg)
-    if cfg.pointer and ov is not None:
-        import re as _re
+    m = build_model(cfg)
+    if cfg.binding == "flat" and cfg.pointer and ov is not None:
         m.set_symbol_ids([i for i, t in enumerate(ov.itos)
-                          if _re.fullmatch(r"[TFCSNBDI]\d+", t)])
+                          if re.fullmatch(r"[TFCSNBDI]\d+", t)])
     m = m.to(device)
     # symbol_ids is derived from the vocabulary, not learned. Some checkpoints
     # were saved while it was still persistent, so drop it rather than relaxing
@@ -46,15 +54,53 @@ def load_model(ckpt_path: Path, device, ov=None) -> CanvasModel:
     return m
 
 
+class Split:
+    """One cached split, and the per-example inputs and codec for either binding."""
+
+    def __init__(self, cache: Path, name: str, device):
+        self.cache, self.name, self.device = cache, name, device
+        self.meta_cfg = json.loads((cache / "config.json").read_text(encoding="utf-8"))
+        self.binding = self.meta_cfg.get("binding", "flat")
+        self.d = torch.load(cache / f"{name}.pt")
+        self.meta = json.loads((cache / f"{name}_meta.json").read_text(encoding="utf-8"))
+        if self.binding == "flat":
+            self.ov = OutVocab.load(cache / "out_vocab.json")
+        else:
+            from canvas import Layout, load_keywords
+            self.keywords = load_keywords(cache / "keywords.json")
+            self.layout = Layout.from_dict(self.meta_cfg["layout"])
+
+    def __len__(self) -> int:
+        return len(self.meta)
+
+    def codec(self, i: int):
+        if self.binding == "flat":
+            return self.ov
+        from canvas import TaskCodec
+        return TaskCodec(self.keywords, self.layout, **self.meta[i]["syms"])
+
+    def inputs(self, i: int, model) -> dict:
+        d = self.d
+        if self.binding == "flat":
+            out = {"src": d["src"][i:i + 1].to(self.device), "pad": d["pad"][i:i + 1].to(self.device)}
+            if "sym" in d and getattr(model.c, "pointer", False):
+                out["sym"] = d["sym"][i:i + 1].to(self.device)
+            return out
+        return {k: d[k][i:i + 1].to(self.device) for k in STRUCT_KEYS if k != "tgt"}
+
+    def target(self, i: int) -> torch.Tensor:
+        return self.d["tgt"][i:i + 1].long()
+
+
 def generate(args):
     device = torch.device(args.device)
     cache = Path(args.cache)
-    ov = OutVocab.load(cache / "out_vocab.json")
-    model = load_model(Path(args.ckpt), device, ov)
-    d = torch.load(cache / f"{args.split}.pt")
-    meta = json.loads((cache / f"{args.split}_meta.json").read_text(encoding="utf-8"))
+    split = Split(cache, args.split, device)
+    model = load_model(Path(args.ckpt), device, split.ov if split.binding == "flat" else None)
+    if model.c.binding != split.binding:
+        raise SystemExit(f"checkpoint binding={model.c.binding} but cache binding={split.binding}")
 
-    n = min(args.limit or len(meta), len(meta))
+    n = min(args.limit or len(split), len(split))
     arm = "ar" if model.c.causal else "diffusion"
 
     # The compiler loop needs covenant-agent. Without it, generate plain and
@@ -69,26 +115,31 @@ def generate(args):
     out = []
     t0 = time.time()
     for i in range(n):
-        src = d["src"][i:i + 1].to(device)
-        pad = d["pad"][i:i + 1].to(device)
-        sym = d["sym"][i:i + 1].to(device) if "sym" in d and model.c.pointer else None
+        inputs = split.inputs(i, model)
+        ov = split.codec(i)
         tr = Trace()
         if arm == "diffusion":
-            canvas, tr = diffusion_sample(model, src, pad, ov, steps=args.steps,
-                                          temperature=args.temperature, trace=tr, sym=sym)
+            canvas, tr = diffusion_sample(model, inputs, ov, steps=args.steps,
+                                          temperature=args.temperature, trace=tr)
             if build_fn is not None:
-                canvas, tr = repair(model, src, pad, ov, canvas, build_fn, ctxs[i],
+                canvas, tr = repair(model, inputs, ov, canvas, build_fn, ctxs[i],
                                     rounds=args.repair_rounds, steps=args.repair_steps,
-                                    trace=tr, sym=sym)
+                                    trace=tr)
         else:
-            canvas, tr = ar_sample(model, src, pad, ov, trace=tr, sym=sym)
+            canvas, tr = ar_sample(model, inputs, ov, trace=tr)
+        tgt = split.target(i)
+        meta = {k: v for k, v in split.meta[i].items() if k != "syms"}
         out.append({
-            **meta[i],
+            **meta,
             "program": to_text(canvas, ov),
-            "reference": to_text(d["tgt"][i:i + 1], ov),
+            "reference": to_text(tgt, ov),
             "passes": tr.passes, "steps": tr.steps, "repairs": tr.repairs,
             "unmask_step": tr.unmask_step,
             "canvas": canvas[0].tolist(),
+            # Surface tokens per slot, so probe.py and --score can classify
+            # slots without the cache and under either binding.
+            "canvas_tokens": ov.decode(canvas[0].tolist()),
+            "reference_tokens": ov.decode(tgt[0].tolist()),
             "compiled_inline": tr.compiled,
         })
         if (i + 1) % 25 == 0:
@@ -102,12 +153,37 @@ def generate(args):
     print(f"wrote {len(out)} programs -> {dest}")
 
 
+def slot_kind(tok: str) -> str:
+    if re.fullmatch(r"T\d+", tok):
+        return "tool"
+    if re.fullmatch(r"F\d+", tok):
+        return "field"
+    if re.fullmatch(r"[CSNBDI]\d+", tok):
+        return "const"
+    if re.fullmatch(r"r\d+\.?", tok):
+        return "reg"
+    return "kw"
+
+
+def slot_accuracy(gen: list[str], ref: list[str], acc: dict) -> None:
+    """Per-kind agreement at the same slot index, over the reference's
+    non-PAD slots. A misaligned program scores low here even when it is
+    right; the line-aligned CALL agreement below is the complement."""
+    for g, r in zip(gen, ref):
+        if r == "PAD":
+            break
+        k = slot_kind(r)
+        acc[k]["n"] += 1
+        acc[k]["hit"] += g == r
+
+
 def score(args):
     """Execute each generated program against its task. Needs Node."""
     from sandbox import register_themes
     register_themes()
     from core.pipeline import build
-    from harness.context import TaskContext
+    from diagnose import compare_calls, parse as parse_context
+    from harness.context import TaskContext, serialize_context
     from harness.run import run_task
 
     cache = Path(args.cache)
@@ -117,6 +193,8 @@ def score(args):
 
     stats = Counter()
     by_level = defaultdict(Counter)
+    slot_acc = defaultdict(Counter)
+    calls = Counter()
     passes = []
     results = []
     for g in gen:
@@ -133,6 +211,10 @@ def score(args):
         lvl = g.get("level", -1)
         by_level[lvl]["n"] += 1
         by_level[lvl]["compile"] += bool(res.compile_ok)
+        if "canvas_tokens" in g:
+            slot_accuracy(g["canvas_tokens"], g["reference_tokens"], slot_acc)
+        tools, _ = parse_context(serialize_context(row["request"], ctx))
+        calls.update(compare_calls(g["reference"], g["program"], tools))
 
         goal = False
         if res.compile_ok:
@@ -158,6 +240,16 @@ def score(args):
     if stats["sandbox_error"]:
         print(f"  sandbox errors {stats['sandbox_error']} (not model failures)")
     print(f"  passes   mean {sum(passes)/max(len(passes),1):.1f}")
+    if slot_acc:
+        print("\n  slot accuracy against the reference canvas (same slot):")
+        for k in ("kw", "tool", "field", "const", "reg"):
+            c = slot_acc[k]
+            if c["n"]:
+                print(f"    {k:6s} {c['hit']/c['n']:6.1%}  (n={c['n']})")
+    c = max(calls["compared"], 1)
+    print(f"\n  CALL lines where both reference and generation CALL: {calls['compared']}")
+    print(f"    same tool    {calls['same_tool']/c:6.1%}   chance {calls['chance_tool']/c:6.1%}")
+    print(f"    same effect  {calls['same_effect']/c:6.1%}   chance {calls['chance_effect']/c:6.1%}")
     print("\n  by level:")
     for lvl in sorted(by_level):
         c = by_level[lvl]
@@ -169,6 +261,8 @@ def score(args):
                "goal": stats["goal"], "exact": stats["exact"],
                "sandbox_error": stats["sandbox_error"],
                "mean_passes": sum(passes) / max(len(passes), 1),
+               "slot_acc": {k: dict(v) for k, v in slot_acc.items()},
+               "call_agreement": dict(calls),
                "by_level": {str(k): dict(v) for k, v in by_level.items()}}
     dest = Path(args.gen_out).with_suffix(".score.json")
     dest.write_text(json.dumps({"summary": summary, "rows": results}, indent=1),
@@ -179,7 +273,7 @@ def score(args):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ckpt", default=None)
-    ap.add_argument("--cache", default="data_cache")
+    ap.add_argument("--cache", default="data_cache_struct")
     ap.add_argument("--split", default="test")
     ap.add_argument("--steps", type=int, default=8)
     ap.add_argument("--temperature", type=float, default=0.0)

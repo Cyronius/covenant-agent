@@ -12,6 +12,9 @@ answers three questions from the reference programs and the task contexts alone:
     bind symbols to lines sits at chance on both.
 
     python diagnose.py --gen out/ar_s0_test.jsonl
+
+`compare_calls` is the third measurement on its own; `evaluate.py --score`
+reports it with every scored file.
 """
 from __future__ import annotations
 
@@ -64,10 +67,37 @@ def effect(sig: str) -> str:
     return m.group(1) if m else ""
 
 
+def compare_calls(reference: str, program: str, tools: dict) -> Counter:
+    """Line-aligned CALL agreement between a generation and its reference.
+
+    Counts: `compared` (reference CALL lines where the generation also wrote
+    a CALL), `same_tool`, `same_effect`, and the exact chance for each: a
+    uniform pick over the task's declared tools.
+    """
+    m = Counter()
+    gen_calls = dict(calls(program))
+    for line, sym in calls(reference):
+        if sym not in tools:
+            continue
+        sig = tools[sym][0]
+        pick = gen_calls.get(line)
+        if pick is None:
+            m["no_call_on_line"] += 1
+            continue
+        m["compared"] += 1
+        m["same_tool"] += pick == sym
+        if pick in tools:
+            m["same_effect"] += effect(tools[pick][0]) == effect(sig)
+        m["chance_tool"] += 1 / len(tools)
+        m["chance_effect"] += sum(1 for s, _ in tools.values()
+                                  if effect(s) == effect(sig)) / len(tools)
+    return m
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--gen", required=True, help="a generated JSONL from evaluate.py")
-    ap.add_argument("--cache", default="data_cache")
+    ap.add_argument("--cache", default="data_cache_struct")
     ap.add_argument("--split", default="test")
     args = ap.parse_args()
 
@@ -89,9 +119,7 @@ def main():
         ctx = TaskContext.from_json(r["context"])
         tools, fields = parse(serialize_context(r["request"], ctx))
         req_w = words(r["request"])
-        ref_calls = calls(g["reference"])
-        gen_calls = dict(calls(g["program"]))
-        for line, sym in ref_calls:
+        for line, sym in calls(g["reference"]):
             if sym not in tools:
                 continue
             n += 1
@@ -102,18 +130,7 @@ def main():
             best = max(sc.values())
             win = [s for s, v in sc.items() if v == best]
             lex += (1 / len(win)) if sym in win else 0
-            pick = gen_calls.get(line)
-            if pick is None:
-                m["no_call_on_line"] += 1
-                continue
-            m["compared"] += 1
-            m["same_tool"] += pick == sym
-            if pick in tools:
-                m["same_effect"] += effect(tools[pick][0]) == effect(sig)
-            # Exact chance: a uniform pick over this task's declared tools.
-            m["chance_tool"] += 1 / len(tools)
-            m["chance_effect"] += sum(1 for s, _ in tools.values()
-                                      if effect(s) == effect(sig)) / len(tools)
+        m.update(compare_calls(g["reference"], g["program"], tools))
         for tok in set(re.findall(r"\bF\d+\b", g["reference"])):
             if tok in fields:
                 fld_n += 1

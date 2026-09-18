@@ -615,3 +615,30 @@ covenant-agent/
   The code came from `abc-diffusion-window/canvas/` (commit `0d9d1c2`),
   where it was phase 1 of the prose-decoder design; that repo keeps the
   design and points here. Plan: `.claude/plans/r3-round3-symbol-binding.md`.
+
+- **2026-09-18 — NPU-native planner proposed
+  (`.claude/plans/npu-native-planner.md`).** Motivating results:
+  `results/R3.md` section 3, both 7.9M arms at chance on tool selection
+  because nothing ties an input symbol to its output token, a
+  representational failure and not capacity; `results/S2.md` "S3 and the
+  LFM2.5-350M arm," capacity gates generalisation past corpus phrasing
+  rather than the task itself; and the measurement that 104 of 104 worlds
+  in `s5_plain` have exactly one tool set, so about 90% of every prompt is
+  static per world. Proposal: a from-scratch pipeline of small resident
+  stages over the Agent Core IR, in which the schema is encoded once per
+  world into one vector per tool and field, the planner emits keywords plus
+  pointers into those vectors instead of symbol tokens, the canvas is
+  filled by masked diffusion, and a looped block supplies compute. Sized by
+  the NPU's on-chip memory (16M ternary parameters per stage), which is
+  under the browser budget by an order of magnitude. The goal is the best
+  planner that runs on the NPU alone; beating the integrated GPU is worth
+  measuring and is not a requirement (owner, 2026-09-18). Section 12's
+  deferral of diffusion-style construction for the planner is lifted for
+  this track only. **This track may change `spec/agent_core.md`** — it is a
+  redesign, and the pointer output, the one-symbol-per-slot canvas and the
+  `r0.F6` compound are the likely places; any such change takes a plan and
+  requirement IDs and lands in the spec before the corpus regenerates. The
+  harness remains the only source of accuracy numbers. Gated on step 1 of
+  the plan's sequence (tool-slot accuracy leaving chance on the R3 model
+  with structural binding) before anything larger starts. Plan:
+  `.claude/plans/npu-native-planner.md`.

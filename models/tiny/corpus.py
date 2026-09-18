@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import random
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -75,11 +76,22 @@ def derive_effects(program: str, ctx: TaskContext) -> str:
     return "EFFECTS " + " ".join(e for e in order if e in found) if found else ""
 
 
+_REGFIELD = re.compile(r"^r(\d{1,2})\.(F\d+)$")
+
+
 def program_tokens(program: str) -> list[str]:
     """Whitespace tokens with structure made explicit.
 
     Two spaces of indent become one IND token and a line break becomes NL, so
     the canvas holds a flat token sequence that still round-trips to text.
+
+    A field access `r0.F6` is two tokens, `r0.` then `F6`, so that every field
+    reference on the canvas is a field slot (results/R3.md section 3 found a
+    third of them hidden inside compounds). The receiver keeps its dot as a
+    marker, which is what lets `detokenize` re-join it with no knowledge of
+    the grammar: `FILTER r0 F1` (a plain register, then a field operand) and
+    `GET r0. F6` (a receiver, then its field) are distinguishable by the
+    marker alone. Plan: `.claude/plans/canvas-field-access-split.md`.
     """
     out: list[str] = []
     for line in program.splitlines():
@@ -88,16 +100,39 @@ def program_tokens(program: str) -> list[str]:
         if not stripped:
             continue
         out.extend(["IND"] * depth)
-        out.extend(stripped.split())
+        for tok in stripped.split():
+            m = _REGFIELD.match(tok)
+            if m:
+                out.append(f"r{m.group(1)}.")
+                out.append(m.group(2))
+            else:
+                out.append(tok)
         out.append("NL")
     return out
 
 
 def detokenize(tokens: list[str]) -> str:
-    """Inverse of program_tokens. Unknown or padding tokens are dropped."""
+    """Inverse of program_tokens. Unknown or padding tokens are dropped.
+
+    A total function of the token sequence: no parse, no grammar. A part that
+    ends with `.` absorbs the next token (`r0.` + `F6` -> `r0.F6`). A dangling
+    `r0.` at the end of a line, or `r0.` followed by something that is not a
+    field, renders verbatim and is the compiler's to reject; repairing it
+    here would hide a mask bug as a scoring result.
+    """
     lines: list[str] = []
     depth = 0
     cur: list[str] = []
+
+    def emit():
+        parts: list[str] = []
+        for t in cur:
+            if parts and parts[-1].endswith("."):
+                parts[-1] += t
+            else:
+                parts.append(t)
+        lines.append("  " * depth + " ".join(parts))
+
     for tok in tokens:
         if tok in ("PAD", "MASK"):
             continue
@@ -107,18 +142,22 @@ def detokenize(tokens: list[str]) -> str:
             continue
         if tok == "NL":
             if cur:
-                lines.append("  " * depth + " ".join(cur))
+                emit()
             cur, depth = [], 0
             continue
         cur.append(tok)
     if cur:
-        lines.append("  " * depth + " ".join(cur))
+        emit()
     return "\n".join(lines) + "\n" if lines else ""
 
 
 def load(path: Path, limit: int | None = None,
          max_tokens: int = MAX_PROGRAM_TOKENS) -> list[Example]:
-    """Single-segment tasks only: no PAUSE, so the whole program fits one canvas."""
+    """Single-segment tasks only: no PAUSE, so the whole program fits one canvas.
+
+    `max_tokens` is checked on the count that actually occupies canvas slots,
+    with `r0.F6` already split into two.
+    """
     out: list[Example] = []
     with open(path, encoding="utf-8") as fh:
         for line in fh:

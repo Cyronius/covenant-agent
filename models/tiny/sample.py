@@ -6,13 +6,18 @@ count forward passes, because that is the axis the two arms have to be compared
 on: the control spends one pass per token no matter what, while the diffusion
 arm spends however many steps it is given.
 
-Both encode the input exactly once. The input runs about 1100 tokens against a
-64-slot canvas, so the encoder dominates a full forward pass, and re-encoding per
-step would bury the difference between the arms under a cost they share. Caching
-it makes the pass count measure decoder work, which is the thing that actually
-differs. It also removes the main way this comparison could have been unfair,
-since the control takes one pass per token and would have paid that encoder cost
-sixty-four times.
+Both encode the input exactly once. Under the flat binding the input runs about
+1100 tokens against a 64-slot canvas, so the encoder dominates a full forward
+pass, and re-encoding per step would bury the difference between the arms under
+a cost they share. Caching it makes the pass count measure decoder work, which
+is the thing that actually differs. Under structural binding the cached thing
+is region A (`model.Memory`), the same object the NPU design keeps on-chip.
+
+The model is used through two calls so that both bindings fit one sampler:
+`mem = model.encode_inputs(inputs)` and `logits = model.decode(inputs, canvas,
+mem=mem)`, where `inputs` is a dict of whatever tensors the binding needs.
+`ov` is the flat `OutVocab` or the structural `TaskCodec`; the sampler uses
+only `.pad`, `.mask`, `decode(ids)` and `render(ids)`.
 
 The compiler loop is the part worth paying attention to. After sampling, the
 program goes through covenant-agent's real parser and typechecker. Diagnostics
@@ -29,10 +34,6 @@ from dataclasses import dataclass, field
 import torch
 import torch.nn.functional as F
 
-from corpus import detokenize
-from model import CanvasModel
-from tok import OutVocab
-
 LINE_RE = re.compile(r"line:(\d+)")
 REG_RE = re.compile(r"\br(\d+)\b")
 
@@ -48,9 +49,55 @@ class Trace:
     diagnostics: list[str] = field(default_factory=list)
 
 
+# -- the grammar's local half: a receiver is followed by a field -----------
+
+def local_sets(ov):
+    """(receiver ids, field ids) as bool tensors over the codec's id space.
+    Cached on the codec, which is per task for the structural binding."""
+    cached = getattr(ov, "_local_sets", None)
+    if cached is None:
+        toks = ov.decode(list(range(len(ov))))
+        recv = torch.tensor([bool(re.fullmatch(r"r\d+\.", t)) for t in toks])
+        fld = torch.tensor([bool(re.fullmatch(r"F\d+", t)) for t in toks])
+        cached = (recv, fld)
+        try:
+            ov._local_sets = cached
+        except AttributeError:
+            pass
+    return cached
+
+
+def local_mask(canvas: torch.Tensor, ov) -> torch.Tensor:
+    """(1, C, V) True where a joint id is illegal at that slot given the slots
+    already on the canvas. Two finite-state rules and nothing else
+    (`.claude/plans/canvas-field-access-split.md` section 7):
+
+      after a receiver `rN.`   the slot must hold a field
+      before a filled non-field the slot must not hold a receiver
+
+    Everything entity-aware (a field of the entity in r0, a register bound
+    before use) stays with the host typechecker in `repair`.
+    """
+    recv, fld = local_sets(ov)
+    recv, fld = recv.to(canvas.device), fld.to(canvas.device)
+    tok = canvas[0]
+    n = tok.numel()
+    blocked = torch.zeros(1, n, recv.numel(), dtype=torch.bool, device=canvas.device)
+    filled = tok != ov.mask
+    after_recv = torch.zeros(n, dtype=torch.bool, device=canvas.device)
+    after_recv[1:] = recv[tok[:-1]] & filled[:-1]
+    blocked[0, after_recv] = ~fld
+    before_nonfield = torch.zeros(n, dtype=torch.bool, device=canvas.device)
+    before_nonfield[:-1] = filled[1:] & ~fld[tok[1:]]
+    blocked[0, before_nonfield] |= recv
+    return blocked
+
+
+# -- samplers ----------------------------------------------------------------
+
 @torch.no_grad()
-def diffusion_sample(model: CanvasModel, src, pad, ov: OutVocab, steps: int = 8,
-                     temperature: float = 0.0, trace: Trace | None = None, sym=None):
+def diffusion_sample(model, inputs: dict, ov, steps: int = 8, temperature: float = 0.0,
+                     trace: Trace | None = None):
     """Cosine-schedule confidence unmasking. Batch of one, for clarity.
 
     temperature 0 takes the argmax. That is the opposite of what the prose
@@ -59,15 +106,16 @@ def diffusion_sample(model: CanvasModel, src, pad, ov: OutVocab, steps: int = 8,
     most likely program is the one to want.
     """
     n = model.c.canvas
-    device = src.device
+    device = next(iter(inputs.values())).device
     canvas = torch.full((1, n), ov.mask, dtype=torch.long, device=device)
     filled = torch.zeros(1, n, dtype=torch.bool, device=device)
     tr = trace or Trace()
     tr.unmask_step = [-1] * n
-    mem = model.encode(src, pad)          # once: the encoder dwarfs the decoder
+    mem = model.encode_inputs(inputs)      # once: the encoder dwarfs the decoder
 
     for s in range(steps):
-        logits = model(src, pad, canvas, mem=mem, sym=sym)
+        logits = model.decode(inputs, canvas, mem=mem)
+        logits = logits.masked_fill(local_mask(canvas, ov), float("-inf"))
         tr.passes += 1
         tr.steps += 1
         probs = F.softmax(logits.float(), dim=-1)
@@ -96,20 +144,23 @@ def diffusion_sample(model: CanvasModel, src, pad, ov: OutVocab, steps: int = 8,
 
 
 @torch.no_grad()
-def ar_sample(model: CanvasModel, src, pad, ov: OutVocab, trace: Trace | None = None,
-              sym=None):
+def ar_sample(model, inputs: dict, ov, trace: Trace | None = None):
     """Greedy left to right. Stops at the first PAD, which is the trained stop."""
     n = model.c.canvas
-    device = src.device
+    device = next(iter(inputs.values())).device
     canvas = torch.full((1, n), ov.mask, dtype=torch.long, device=device)
     tr = trace or Trace()
     tr.unmask_step = [-1] * n
     out = torch.full((1, n), ov.pad, dtype=torch.long, device=device)
-    mem = model.encode(src, pad)          # once, same as the diffusion arm
+    mem = model.encode_inputs(inputs)      # once, same as the diffusion arm
     for i in range(n):
-        logits = model(src, pad, canvas, mem=mem, sym=sym)
+        logits = model.decode(inputs, canvas, mem=mem)
         tr.passes += 1
-        tok = int(logits[0, i].argmax())
+        row = logits[0, i]
+        if i > 0:
+            # The receiver rule, left to right: after `rN.` comes a field.
+            row = row.masked_fill(local_mask(out[:, :i + 1], ov)[0, i], float("-inf"))
+        tok = int(row.argmax())
         out[0, i] = tok
         tr.unmask_step[i] = i
         if tok == ov.pad:
@@ -119,7 +170,9 @@ def ar_sample(model: CanvasModel, src, pad, ov: OutVocab, trace: Trace | None = 
     return out, tr
 
 
-def slots_for_lines(ids: list[int], ov: OutVocab, lines: set[int]) -> list[int]:
+# -- the compiler in the loop -------------------------------------------------
+
+def slots_for_lines(ids: list[int], ov, lines: set[int]) -> list[int]:
     """Map 1-based program line numbers back to canvas slot indices.
 
     A line is a run of slots ending in NL. Indentation tokens belong to the line
@@ -140,12 +193,14 @@ def slots_for_lines(ids: list[int], ov: OutVocab, lines: set[int]) -> list[int]:
     return out
 
 
-def slots_for_register(ids: list[int], ov: OutVocab, reg: str) -> list[int]:
+def slots_for_register(ids: list[int], ov, reg: str) -> list[int]:
+    """Every slot that names `reg`, as an operand (`r0`) or as the receiver
+    of a field access (`r0.`); an UNBOUND diagnostic blames both forms."""
     toks = ov.decode(ids)
-    return [i for i, t in enumerate(toks) if t == reg]
+    return [i for i, t in enumerate(toks) if t == reg or t == reg + "."]
 
 
-def repair_targets(ids: list[int], ov: OutVocab, diagnostics: list[str]) -> list[int]:
+def repair_targets(ids: list[int], ov, diagnostics: list[str]) -> list[int]:
     """Which slots a set of diagnostics blames.
 
     A diagnostic with a line number blames that line. An unbound register also
@@ -169,9 +224,8 @@ def repair_targets(ids: list[int], ov: OutVocab, diagnostics: list[str]) -> list
 
 
 @torch.no_grad()
-def repair(model: CanvasModel, src, pad, ov: OutVocab, canvas: torch.Tensor,
-           build_fn, ctx, rounds: int = 2, steps: int = 4, trace: Trace | None = None,
-           sym=None):
+def repair(model, inputs: dict, ov, canvas: torch.Tensor, build_fn, ctx,
+           rounds: int = 2, steps: int = 4, trace: Trace | None = None):
     """Remask what the compiler blamed, refill, repeat.
 
     build_fn is covenant-agent's pipeline.build. Everything the compiler did not
@@ -180,7 +234,7 @@ def repair(model: CanvasModel, src, pad, ov: OutVocab, canvas: torch.Tensor,
     """
     tr = trace or Trace()
     ids = canvas[0].tolist()
-    res = build_fn(detokenize(ov.decode(ids)), ctx)
+    res = build_fn(ov.render(ids), ctx)
     tr.compiled = res.compile_ok
     tr.diagnostics = res.rendered_diagnostics() if not res.compile_ok else []
     if res.compile_ok:
@@ -198,9 +252,10 @@ def repair(model: CanvasModel, src, pad, ov: OutVocab, canvas: torch.Tensor,
         canvas[0, idx] = ov.mask
         filled = torch.ones_like(canvas, dtype=torch.bool)
         filled[0, idx] = False
-        mem = model.encode(src, pad)
+        mem = model.encode_inputs(inputs)
         for s in range(steps):
-            logits = model(src, pad, canvas, mem=mem, sym=sym)
+            logits = model.decode(inputs, canvas, mem=mem)
+            logits = logits.masked_fill(local_mask(canvas, ov), float("-inf"))
             tr.passes += 1
             conf, pred = F.softmax(logits.float(), dim=-1).max(dim=-1)
             need = int((~filled).sum()) if s == steps - 1 else max(
@@ -212,7 +267,7 @@ def repair(model: CanvasModel, src, pad, ov: OutVocab, canvas: torch.Tensor,
             if filled.all():
                 break
         tr.repairs += 1
-        res = build_fn(detokenize(ov.decode(canvas[0].tolist())), ctx)
+        res = build_fn(ov.render(canvas[0].tolist()), ctx)
         tr.compiled = res.compile_ok
         tr.diagnostics = res.rendered_diagnostics() if not res.compile_ok else []
         if res.compile_ok:
@@ -220,5 +275,5 @@ def repair(model: CanvasModel, src, pad, ov: OutVocab, canvas: torch.Tensor,
     return canvas, tr
 
 
-def to_text(canvas: torch.Tensor, ov: OutVocab) -> str:
-    return detokenize(ov.decode(canvas[0].tolist()))
+def to_text(canvas: torch.Tensor, ov) -> str:
+    return ov.render(canvas[0].tolist())

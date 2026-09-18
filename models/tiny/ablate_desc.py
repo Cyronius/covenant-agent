@@ -92,7 +92,15 @@ def main():
     tk = Tokenizer.from_file(str(cache / "in_tok.json"))
     meta = json.loads((cache / f"{args.split}_meta.json").read_text(encoding="utf-8"))
     device = torch.device(args.device)
+    if cfg.get("binding", "flat") != "flat":
+        # The structural cache holds per-line tensors, not one token stream, so
+        # a permuted context has to be re-split and re-encoded per line. Not
+        # built yet; refuse rather than silently ablate the wrong thing.
+        raise SystemExit("ablate_desc.py supports the flat binding only; "
+                         "this cache is structural")
     model = load_model(Path(args.ckpt), device, ov)
+    if model.c.binding != "flat":
+        raise SystemExit("ablate_desc.py supports flat checkpoints only")
     arm = "ar" if model.c.causal else "diffusion"
 
     # Rebuild the inputs from the cached raw rows, so the descriptions can be
@@ -120,16 +128,15 @@ def main():
             ids += [tk.token_to_id("<pad>")] * (cfg["max_in"] - len(ids))
             src = torch.tensor([ids], device=device)
             pad = (src == tk.token_to_id("<pad>"))
-            sym = None
+            inputs = {"src": src, "pad": pad}
             if model.c.pointer:
-                sym = torch.tensor([symbol_positions(text, enc, ov, cfg["max_in"])],
-                                   device=device)
+                inputs["sym"] = torch.tensor([symbol_positions(text, enc, ov, cfg["max_in"])],
+                                             device=device)
             tr = Trace()
             if arm == "diffusion":
-                canvas, tr = diffusion_sample(model, src, pad, ov, steps=args.steps,
-                                              trace=tr, sym=sym)
+                canvas, tr = diffusion_sample(model, inputs, ov, steps=args.steps, trace=tr)
             else:
-                canvas, tr = ar_sample(model, src, pad, ov, trace=tr, sym=sym)
+                canvas, tr = ar_sample(model, inputs, ov, trace=tr)
             rows.append({**m, "condition": tag, "program": to_text(canvas, ov),
                          "passes": tr.passes, "canvas": canvas[0].tolist(),
                          "unmask_step": tr.unmask_step, "repairs": 0,

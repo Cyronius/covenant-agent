@@ -2,52 +2,50 @@
 
 This is the check that matters most before any training result is believed. It
 takes the reference program out of the tensor cache, decodes it back to text
-through the output vocabulary, compiles it and executes it in the sandbox. If
-the references do not score 100% here, then every model number measured later is
-sitting on a broken data path and means nothing.
+through the output vocabulary (flat) or the per-task codec (structural, where
+`r0.F6` is two slots and every symbol is a pointer index), compiles it and
+executes it in the sandbox. If the references do not score 100% here, then
+every model number measured later is sitting on a broken data path and means
+nothing.
 
     python test_pipeline.py --cache data_cache_smoke --n 60
 """
 from __future__ import annotations
 
 import argparse
-import json
-import pickle
 from collections import Counter
-from pathlib import Path
 
 import torch
 
-from corpus import detokenize
-from tok import OutVocab
+from evaluate import Split
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cache", default="data_cache")
+    ap.add_argument("--cache", default="data_cache_struct")
     ap.add_argument("--split", default="val")
     ap.add_argument("--n", type=int, default=50)
     args = ap.parse_args()
 
     from sandbox import register_themes
     register_themes()
+    import pickle
+    from pathlib import Path
     from core.pipeline import build
     from harness.context import TaskContext
     from harness.run import run_task
 
-    cache = Path(args.cache)
-    ov = OutVocab.load(cache / "out_vocab.json")
-    d = torch.load(cache / f"{args.split}.pt")
-    meta = json.loads((cache / f"{args.split}_meta.json").read_text(encoding="utf-8"))
-    rows = pickle.load(open(cache / "rows.pkl", "rb"))[args.split]
+    split = Split(Path(args.cache), args.split, torch.device("cpu"))
+    rows = pickle.load(open(Path(args.cache) / "rows.pkl", "rb"))[args.split]
     by_id = {r["id"]: r for r in rows}
+    print(f"binding: {split.binding}")
 
     stats = Counter()
     failures = []
-    n = min(args.n, len(meta))
+    n = min(args.n, len(split))
     for i in range(n):
-        row = by_id[meta[i]["task_id"]]
-        text = detokenize(ov.decode(d["tgt"][i].tolist()))
+        row = by_id[split.meta[i]["task_id"]]
+        text = split.codec(i).render(split.target(i)[0].tolist())
         ctx = TaskContext.from_json(row["context"])
         stats["n"] += 1
 
@@ -88,8 +86,10 @@ def main():
         for line in text.splitlines():
             print(f"    {line}")
 
-    ok = stats["goal"] == stats["n"] and stats["compile"] == stats["n"]
-    print("\nPASS" if ok else f"\nFAIL: {stats['n'] - stats['goal']} tasks did not reach the goal")
+    ok = (stats["goal"] == stats["n"] and stats["compile"] == stats["n"]
+          and stats["matches_reference"] == stats["n"])
+    print("\nPASS" if ok else f"\nFAIL: {stats['n'] - stats['goal']} tasks did not reach the goal, "
+          f"{stats['n'] - stats['matches_reference']} did not match the reference text")
     raise SystemExit(0 if ok else 1)
 
 
