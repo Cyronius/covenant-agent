@@ -106,6 +106,16 @@ whole sweep. Stage A trains cheapest-first and generates after each L, so the
 small end is complete and scoreable before the expensive end starts, and dropping
 L=32 is a decision that can be taken after seeing L=16.
 
+**The sweep running on 2026-09-18 predates the sampler fix** in
+`sample.local_mask` (the grammar's adjacency rules, applied per committed slot
+rather than per denoising pass; `results/R7.md` section 3). Its generations are
+therefore on the older sampler, which is the right thing for a sweep -- every arm
+inside it is comparable -- but its absolute numbers are not comparable with
+anything generated after the fix. The fix is worth about +2 points of parse and
++0.1 of goal, so the loop trend it is measuring is unaffected. Do not re-upload
+code into a running sweep to close that gap; finish the sweep, then regenerate
+from the checkpoints if the absolute numbers matter.
+
 Scoring is the same as step 1, and `report.py` prints the loop table and the gate
 verdict:
 

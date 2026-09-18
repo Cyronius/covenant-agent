@@ -29,6 +29,13 @@ models/tiny/runs/
 models/tiny/out/
 models/tiny/*.tar.gz
 *.pt
+# Scored runs brought back from a pod: the generations are megabytes each and
+# regenerable from a checkpoint, the score summaries are what every table in
+# results/ is computed from, so those are tracked.
+models/tiny/out_*/**/*.jsonl
+models/tiny/out_*/*.jsonl
+!models/tiny/out_*/curves/**/log.jsonl
+models/tiny/*.log
 
 # NPU tooling (models/npu): build output and the driver link library we
 # reconstruct from the installed driver. Vendored headers and the shim are tracked.

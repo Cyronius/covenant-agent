@@ -33,13 +33,11 @@ def parse_name(stem: str) -> dict:
                "seed": None, "steps": None, "repair": "repair" in stem,
                "split": "holdout" if "holdout" in stem else "test",
                "big": "big" in stem,
-               # The pointer head is a different model, not a different setting
-               # of the same one, so it never shares a row with the baseline.
-               # The pointer head and the loop-index bias are different models,
-               # not different settings of the same one, so neither ever shares
-               # a row with the baseline.
-               # A weight format is a different model too, and step 3 compares
-               # formats at matched resident bytes, so the format is the row.
+               # The weight format, the pointer head and the loop-index bias are
+               # each a different model rather than a different setting of one,
+               # so none of them ever shares a row with the baseline. Step 3
+               # compares formats at matched resident bytes, so the format wins
+               # the row when a name carries one.
                "variant": (re.search(r"_(fp|int8|u4|tern)(_|$)", stem).group(1)
                            if re.search(r"_(fp|int8|u4|tern)(_|$)", stem) else
                            "pointer" if "_ptr" in stem else
@@ -136,12 +134,17 @@ def loop_report(rows: list[dict]) -> None:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dir", default="out")
+    ap.add_argument("--dir", default="out",
+                    help="one directory of scored runs, or several separated by "
+                         "commas: seeds that ran in different sessions land in "
+                         "different directories and belong in one table")
     ap.add_argument("--split", default="test")
     args = ap.parse_args()
 
     rows = []
-    for f in sorted(Path(args.dir).glob("*.score.json")):
+    files = sorted(f for d in args.dir.split(",")
+                   for f in Path(d.strip()).glob("*.score.json"))
+    for f in files:
         stem = f.name.replace(".score.json", "")
         meta = parse_name(stem)
         s = json.loads(f.read_text(encoding="utf-8"))["summary"]
@@ -164,6 +167,9 @@ def main():
     want = [r for r in rows if r["split"] == args.split and not r["big"]]
     if not want:
         raise SystemExit(f"no scored runs for split={args.split} in {args.dir}")
+    if len({r["file"] for r in rows}) != len(rows):
+        raise SystemExit("the same run name appears in more than one directory; "
+                         "a duplicate would count as an extra seed")
 
     # Group across seeds so a single number never stands in for a distribution.
     groups: dict = defaultdict(list)

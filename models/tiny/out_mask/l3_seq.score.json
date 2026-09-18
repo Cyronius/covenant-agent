@@ -1,0 +1,714 @@
+{
+ "summary": {
+  "gen": "out_mask/l3_seq.jsonl",
+  "split": "test",
+  "n": 67,
+  "parse": 32,
+  "compile": 11,
+  "goal": 1,
+  "exact": 1,
+  "sandbox_error": 0,
+  "mean_passes": 8.0,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 1609,
+    "hit": 1260
+   },
+   "tool": {
+    "n": 134,
+    "hit": 118
+   },
+   "reg": {
+    "n": 445,
+    "hit": 377
+   },
+   "field": {
+    "n": 178,
+    "hit": 58
+   },
+   "const": {
+    "n": 181,
+    "hit": 91
+   }
+  },
+  "call_agreement": {
+   "compared": 133,
+   "same_tool": 129,
+   "same_effect": 133,
+   "chance_tool": 7.388888888888879,
+   "chance_effect": 41.05555555555552,
+   "no_call_on_line": 1
+  },
+  "by_level": {
+   "3": {
+    "n": 67,
+    "compile": 11,
+    "goal": 1
+   }
+  }
+ },
+ "rows": [
+  {
+   "task_id": "real_estate_L3_90263615",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "ski_resort_L3_30262028",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'D0'"
+   ]
+  },
+  {
+   "task_id": "airport_ground_crew_L3_50263750",
+   "level": 3,
+   "compile": true,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": []
+  },
+  {
+   "task_id": "game_studio_L3_30263470",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "boutique_retail_L3_60264150",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "podcast_network_L3_30261338",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'D0'"
+   ]
+  },
+  {
+   "task_id": "music_label_L3_60261220",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 BOOL TIME",
+    "TYPE_ERROR line:3 INT|TIME BOOL"
+   ]
+  },
+  {
+   "task_id": "public_health_L3_90265142",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected AND/OR, got 'S0'"
+   ]
+  },
+  {
+   "task_id": "city_council_L3_60261148",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'D0'"
+   ]
+  },
+  {
+   "task_id": "radiology_L3_20262691",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "game_studio_L3_30264948",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "utility_company_L3_40265181",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 INT|TIME ID:account"
+   ]
+  },
+  {
+   "task_id": "auto_repair_L3_40261154",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:customer BOOL",
+    "TYPE_ERROR line:3 TIME BOOL",
+    "UNREACHABLE 7"
+   ]
+  },
+  {
+   "task_id": "catering_company_L3_50265027",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected AND/OR, got 'S0'"
+   ]
+  },
+  {
+   "task_id": "furniture_store_L3_40262454",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected AND/OR, got 'D0'"
+   ]
+  },
+  {
+   "task_id": "podcast_network_L3_70262550",
+   "level": 3,
+   "compile": true,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": []
+  },
+  {
+   "task_id": "gym_L3_50262065",
+   "level": 3,
+   "compile": true,
+   "goal": true,
+   "passes": 8,
+   "diagnostics": []
+  },
+  {
+   "task_id": "fire_department_L3_40263634",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 INT|TIME BOOL"
+   ]
+  },
+  {
+   "task_id": "animal_rescue_transport_L3_90262936",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 TIME STR"
+   ]
+  },
+  {
+   "task_id": "legal_practice_L3_30264919",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:6 unknown instruction 'S0'"
+   ]
+  },
+  {
+   "task_id": "election_office_L3_40264905",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:voter BOOL",
+    "TYPE_ERROR line:3 TIME BOOL"
+   ]
+  },
+  {
+   "task_id": "airline_ops_L3_80261753",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'F10'"
+   ]
+  },
+  {
+   "task_id": "ferry_line_L3_70264151",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected AND/OR, got 'I0'"
+   ]
+  },
+  {
+   "task_id": "airport_ground_crew_L3_70261055",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:airline BOOL",
+    "TYPE_ERROR line:3 ID:airline BOOL"
+   ]
+  },
+  {
+   "task_id": "publishing_house_L3_70261063",
+   "level": 3,
+   "compile": true,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": []
+  },
+  {
+   "task_id": "cleaning_service_L3_60262098",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'NOW'"
+   ]
+  },
+  {
+   "task_id": "travel_clinic_L3_80263069",
+   "level": 3,
+   "compile": true,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": []
+  },
+  {
+   "task_id": "language_school_L3_30262744",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:5 expected '-> rN'"
+   ]
+  },
+  {
+   "task_id": "student_housing_L3_30261102",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 INT|TIME BOOL"
+   ]
+  },
+  {
+   "task_id": "physical_therapy_L3_50261349",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 STR BOOL",
+    "TYPE_ERROR line:3 STR BOOL"
+   ]
+  },
+  {
+   "task_id": "news_desk_L3_80261367",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 STR BOOL"
+   ]
+  },
+  {
+   "task_id": "translation_agency_L3_30262437",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'I0'"
+   ]
+  },
+  {
+   "task_id": "volunteer_center_L3_60263879",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "sports_league_L3_90261974",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:6 STOP takes no arguments"
+   ]
+  },
+  {
+   "task_id": "hotel_frontdesk_L3_90261746",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:guest BOOL"
+   ]
+  },
+  {
+   "task_id": "game_studio_L3_20262221",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:6 STOP takes no arguments"
+   ]
+  },
+  {
+   "task_id": "brewery_L3_30262245",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 TIME BOOL"
+   ]
+  },
+  {
+   "task_id": "catering_company_L3_20263132",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected AND/OR, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "fire_department_L3_50264238",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:proprietor BOOL",
+    "TYPE_ERROR line:3 ID:proprietor BOOL"
+   ]
+  },
+  {
+   "task_id": "sleep_clinic_L3_90262437",
+   "level": 3,
+   "compile": true,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": []
+  },
+  {
+   "task_id": "brewery_L3_20261535",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'NOW'"
+   ]
+  },
+  {
+   "task_id": "storage_facility_L3_90262570",
+   "level": 3,
+   "compile": true,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": []
+  },
+  {
+   "task_id": "dive_shop_L3_20263364",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "cleaning_service_L3_40264567",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 TIME BOOL"
+   ]
+  },
+  {
+   "task_id": "food_delivery_L3_40263832",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:driver BOOL",
+    "TYPE_ERROR line:3 ID:driver BOOL"
+   ]
+  },
+  {
+   "task_id": "hotel_frontdesk_L3_70264900",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:5 expected operand, got '->'"
+   ]
+  },
+  {
+   "task_id": "cinema_L3_30261827",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 INT|TIME BOOL",
+    "TYPE_ERROR line:3 INT|TIME BOOL"
+   ]
+  },
+  {
+   "task_id": "hr_recruiting_L3_50264525",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "travel_clinic_L3_60262261",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 INT|TIME BOOL"
+   ]
+  },
+  {
+   "task_id": "data_platform_L3_50264499",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'D0'"
+   ]
+  },
+  {
+   "task_id": "boutique_retail_L3_90264844",
+   "level": 3,
+   "compile": true,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": []
+  },
+  {
+   "task_id": "animal_rescue_transport_L3_30263554",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 TIME BOOL",
+    "TYPE_ERROR line:3 INT|TIME BOOL"
+   ]
+  },
+  {
+   "task_id": "disaster_relief_L3_90262215",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected AND/OR, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "hospital_ward_L3_80261896",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:patient BOOL",
+    "TYPE_ERROR line:3 ID:patient BOOL"
+   ]
+  },
+  {
+   "task_id": "medical_lab_L3_60262396",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:6 unknown instruction '->'"
+   ]
+  },
+  {
+   "task_id": "apartment_maintenance_L3_20262374",
+   "level": 3,
+   "compile": true,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": []
+  },
+  {
+   "task_id": "swim_school_L3_20264921",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected AND/OR, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "dive_shop_L3_60261637",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'I0'"
+   ]
+  },
+  {
+   "task_id": "apartment_maintenance_L3_20262460",
+   "level": 3,
+   "compile": true,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": []
+  },
+  {
+   "task_id": "publishing_house_L3_30262577",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'D0'"
+   ]
+  },
+  {
+   "task_id": "public_health_L3_70262332",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected AND/OR, got 'D0'"
+   ]
+  },
+  {
+   "task_id": "legal_practice_L3_60263164",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 STR BOOL",
+    "TYPE_ERROR line:3 STR BOOL"
+   ]
+  },
+  {
+   "task_id": "blood_drive_L3_20264563",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:6 unknown instruction 'S1'"
+   ]
+  },
+  {
+   "task_id": "ski_resort_L3_60263338",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected AND/OR, got 'I0'"
+   ]
+  },
+  {
+   "task_id": "refugee_services_L3_60264466",
+   "level": 3,
+   "compile": true,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": []
+  },
+  {
+   "task_id": "refugee_services_L3_90262651",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected comparator, got 'B0'"
+   ]
+  },
+  {
+   "task_id": "online_course_platform_L3_90262034",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 8,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:organization BOOL"
+   ]
+  }
+ ]
+}

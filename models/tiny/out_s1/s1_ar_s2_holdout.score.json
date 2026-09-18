@@ -1,0 +1,2607 @@
+{
+ "summary": {
+  "gen": "out_s1/s1_ar_s2_holdout.jsonl",
+  "split": "holdout",
+  "n": 275,
+  "parse": 261,
+  "compile": 201,
+  "goal": 182,
+  "exact": 163,
+  "sandbox_error": 0,
+  "mean_passes": 28.396363636363635,
+  "loops": 1,
+  "dec_layers": null,
+  "slot_acc": {
+   "kw": {
+    "n": 4796,
+    "hit": 4643
+   },
+   "tool": {
+    "n": 512,
+    "hit": 428
+   },
+   "const": {
+    "n": 518,
+    "hit": 498
+   },
+   "reg": {
+    "n": 1408,
+    "hit": 1361
+   },
+   "field": {
+    "n": 373,
+    "hit": 303
+   }
+  },
+  "call_agreement": {
+   "compared": 509,
+   "same_tool": 431,
+   "same_effect": 489,
+   "chance_tool": 28.2777777777778,
+   "chance_effect": 136.83333333333331,
+   "no_call_on_line": 3
+  },
+  "by_level": {
+   "7": {
+    "n": 18,
+    "compile": 0,
+    "goal": 0
+   },
+   "8": {
+    "n": 12,
+    "compile": 8,
+    "goal": 6
+   },
+   "18": {
+    "n": 16,
+    "compile": 16,
+    "goal": 16
+   },
+   "16": {
+    "n": 17,
+    "compile": 17,
+    "goal": 17
+   },
+   "2": {
+    "n": 15,
+    "compile": 11,
+    "goal": 7
+   },
+   "17": {
+    "n": 16,
+    "compile": 16,
+    "goal": 16
+   },
+   "9": {
+    "n": 12,
+    "compile": 8,
+    "goal": 8
+   },
+   "19": {
+    "n": 17,
+    "compile": 17,
+    "goal": 12
+   },
+   "12": {
+    "n": 10,
+    "compile": 0,
+    "goal": 0
+   },
+   "13": {
+    "n": 17,
+    "compile": 14,
+    "goal": 14
+   },
+   "14": {
+    "n": 13,
+    "compile": 13,
+    "goal": 13
+   },
+   "11": {
+    "n": 18,
+    "compile": 18,
+    "goal": 18
+   },
+   "4": {
+    "n": 14,
+    "compile": 14,
+    "goal": 14
+   },
+   "0": {
+    "n": 13,
+    "compile": 13,
+    "goal": 10
+   },
+   "6": {
+    "n": 12,
+    "compile": 10,
+    "goal": 6
+   },
+   "5": {
+    "n": 15,
+    "compile": 0,
+    "goal": 0
+   },
+   "3": {
+    "n": 8,
+    "compile": 7,
+    "goal": 6
+   },
+   "15": {
+    "n": 19,
+    "compile": 19,
+    "goal": 19
+   },
+   "1": {
+    "n": 13,
+    "compile": 0,
+    "goal": 0
+   }
+  }
+ },
+ "rows": [
+  {
+   "task_id": "bookstore_L7_20260994",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 45,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "TYPE_ERROR line:7 ID:reader OBJ:special_order"
+   ]
+  },
+  {
+   "task_id": "bookstore_L8_20261150",
+   "level": 8,
+   "compile": true,
+   "goal": true,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L18_20261153",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_20261261",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_20261471",
+   "level": 2,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_20261822",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_20261881",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 5,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L9_20261887",
+   "level": 9,
+   "compile": true,
+   "goal": true,
+   "passes": 34,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_20262134",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 45,
+   "diagnostics": [
+    "PARSE_ERROR line:7 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L19_20262257",
+   "level": 19,
+   "compile": true,
+   "goal": false,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L12_20262466",
+   "level": 12,
+   "compile": false,
+   "goal": false,
+   "passes": 28,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F3",
+    "UNKNOWN_FIELD r0 F11",
+    "UNKNOWN_FIELD r0 F9"
+   ]
+  },
+  {
+   "task_id": "bookstore_L16_20262718",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_20262720",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_20262801",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L14_20262810",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_20262836",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L14_20262884",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_20262917",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 45,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "TYPE_ERROR line:7 ID:reader OBJ:special_order"
+   ]
+  },
+  {
+   "task_id": "bookstore_L9_20263041",
+   "level": 9,
+   "compile": true,
+   "goal": true,
+   "passes": 34,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_20263087",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_20263092",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_20263096",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 51,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L14_20263187",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 24,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_20263197",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 47,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L18_20263211",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_20263300",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 38,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L0_20263681",
+   "level": 0,
+   "compile": true,
+   "goal": true,
+   "passes": 10,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L18_20263706",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_20263755",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 31,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L6_20263819",
+   "level": 6,
+   "compile": false,
+   "goal": false,
+   "passes": 56,
+   "diagnostics": [
+    "UNKNOWN_FIELD r3 F6"
+   ]
+  },
+  {
+   "task_id": "bookstore_L17_20263829",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_20263886",
+   "level": 13,
+   "compile": false,
+   "goal": false,
+   "passes": 16,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L14_20263917",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L14_20263989",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 25,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L5_20264223",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 42,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F9",
+    "UNBOUND r1",
+    "UNKNOWN_FIELD r0 F14",
+    "TYPE_ERROR line:7 ID:special_order OBJ:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L3_20264258",
+   "level": 3,
+   "compile": true,
+   "goal": true,
+   "passes": 42,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L9_20264552",
+   "level": 9,
+   "compile": true,
+   "goal": true,
+   "passes": 36,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_20264592",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 51,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_20264716",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 39,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L18_20264795",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_20264822",
+   "level": 2,
+   "compile": true,
+   "goal": true,
+   "passes": 32,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_20265083",
+   "level": 2,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_20265100",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L8_30261086",
+   "level": 8,
+   "compile": false,
+   "goal": false,
+   "passes": 38,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r1 F14"
+   ]
+  },
+  {
+   "task_id": "bookstore_L15_30261229",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 19,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_30261322",
+   "level": 2,
+   "compile": true,
+   "goal": false,
+   "passes": 30,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L8_30261374",
+   "level": 8,
+   "compile": true,
+   "goal": true,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_30261475",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_30261935",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 36,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_30262556",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L8_30262924",
+   "level": 8,
+   "compile": true,
+   "goal": false,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L18_30263298",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_30263351",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_30263905",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 5,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L5_30263935",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 40,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F14",
+    "UNBOUND r1",
+    "TYPE_ERROR line:5 ID:special_order OBJ:reader",
+    "TYPE_ERROR line:7 ID:special_order OBJ:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L13_30263946",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_30264084",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L14_30264098",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L18_30264289",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_30264291",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_30264418",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L6_30264516",
+   "level": 6,
+   "compile": true,
+   "goal": true,
+   "passes": 56,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L1_30264579",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F3"
+   ]
+  },
+  {
+   "task_id": "bookstore_L19_30264707",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L0_30264751",
+   "level": 0,
+   "compile": true,
+   "goal": true,
+   "passes": 11,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_30264853",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_30264866",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L6_30264874",
+   "level": 6,
+   "compile": true,
+   "goal": true,
+   "passes": 53,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_40260988",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_40261255",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_40261317",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_40261417",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L5_40261430",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 39,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F14",
+    "UNBOUND r1",
+    "TYPE_ERROR line:5 ID:special_order OBJ:reader",
+    "UNKNOWN_FIELD r0 F7"
+   ]
+  },
+  {
+   "task_id": "bookstore_L19_40261471",
+   "level": 19,
+   "compile": true,
+   "goal": false,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_40261529",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 45,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "TYPE_ERROR line:7 ID:reader OBJ:special_order"
+   ]
+  },
+  {
+   "task_id": "bookstore_L6_40261751",
+   "level": 6,
+   "compile": true,
+   "goal": false,
+   "passes": 56,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_40261784",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 5,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L6_40262124",
+   "level": 6,
+   "compile": true,
+   "goal": false,
+   "passes": 56,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_40263048",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L6_40263243",
+   "level": 6,
+   "compile": true,
+   "goal": true,
+   "passes": 53,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_40263261",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L12_40263341",
+   "level": 12,
+   "compile": false,
+   "goal": false,
+   "passes": 28,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F3",
+    "UNKNOWN_FIELD r0 F20",
+    "UNKNOWN_FIELD r0 F14"
+   ]
+  },
+  {
+   "task_id": "bookstore_L7_40263431",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 45,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "TYPE_ERROR line:7 ID:reader OBJ:special_order"
+   ]
+  },
+  {
+   "task_id": "bookstore_L6_40263469",
+   "level": 6,
+   "compile": true,
+   "goal": true,
+   "passes": 53,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_40264227",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L0_40264623",
+   "level": 0,
+   "compile": true,
+   "goal": false,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_40264760",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 51,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_40264888",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 38,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_40265118",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L1_50261033",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F17"
+   ]
+  },
+  {
+   "task_id": "bookstore_L12_50261076",
+   "level": 12,
+   "compile": false,
+   "goal": false,
+   "passes": 28,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F2",
+    "UNKNOWN_FIELD r0 F4",
+    "UNKNOWN_FIELD r0 F3"
+   ]
+  },
+  {
+   "task_id": "bookstore_L0_50261343",
+   "level": 0,
+   "compile": true,
+   "goal": true,
+   "passes": 10,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L8_50261465",
+   "level": 8,
+   "compile": false,
+   "goal": false,
+   "passes": 38,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r1 F14"
+   ]
+  },
+  {
+   "task_id": "bookstore_L17_50261630",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_50261678",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 51,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_50262451",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 45,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "TYPE_ERROR line:7 ID:reader OBJ:special_order"
+   ]
+  },
+  {
+   "task_id": "bookstore_L4_50262501",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 37,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_50262561",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 39,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L14_50262626",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 12,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_50262641",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L9_50262686",
+   "level": 9,
+   "compile": true,
+   "goal": true,
+   "passes": 34,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L14_50262738",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 24,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L12_50262769",
+   "level": 12,
+   "compile": false,
+   "goal": false,
+   "passes": 28,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F16",
+    "UNKNOWN_FIELD r0 F8",
+    "UNKNOWN_FIELD r0 F18"
+   ]
+  },
+  {
+   "task_id": "bookstore_L1_50262872",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F5"
+   ]
+  },
+  {
+   "task_id": "bookstore_L15_50263251",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_50263395",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L9_50263432",
+   "level": 9,
+   "compile": true,
+   "goal": true,
+   "passes": 34,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_50263800",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 45,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "TYPE_ERROR line:7 ID:reader OBJ:special_order"
+   ]
+  },
+  {
+   "task_id": "bookstore_L8_50264134",
+   "level": 8,
+   "compile": true,
+   "goal": true,
+   "passes": 17,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L3_50264356",
+   "level": 3,
+   "compile": true,
+   "goal": false,
+   "passes": 41,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_50264397",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 51,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L9_50264524",
+   "level": 9,
+   "compile": false,
+   "goal": false,
+   "passes": 33,
+   "diagnostics": [
+    "PARSE_ERROR line:5 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L15_50264649",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_50264659",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 51,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_50264662",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 42,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L8_50264710",
+   "level": 8,
+   "compile": true,
+   "goal": true,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L9_50264742",
+   "level": 9,
+   "compile": true,
+   "goal": true,
+   "passes": 34,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_50264797",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L12_50264967",
+   "level": 12,
+   "compile": false,
+   "goal": false,
+   "passes": 28,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F8",
+    "UNKNOWN_FIELD r0 F16",
+    "UNKNOWN_FIELD r0 F12"
+   ]
+  },
+  {
+   "task_id": "bookstore_L11_50264982",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 41,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_50265032",
+   "level": 2,
+   "compile": true,
+   "goal": false,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L1_50265037",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F4"
+   ]
+  },
+  {
+   "task_id": "bookstore_L6_50265087",
+   "level": 6,
+   "compile": true,
+   "goal": false,
+   "passes": 53,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_60261378",
+   "level": 13,
+   "compile": false,
+   "goal": false,
+   "passes": 16,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L4_60261593",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 31,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_60261742",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 41,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L18_60261811",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_60262038",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 5,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L0_60262207",
+   "level": 0,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_60262238",
+   "level": 2,
+   "compile": false,
+   "goal": false,
+   "passes": 29,
+   "diagnostics": [
+    "PARSE_ERROR line:5 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L6_60262389",
+   "level": 6,
+   "compile": false,
+   "goal": false,
+   "passes": 56,
+   "diagnostics": [
+    "UNKNOWN_FIELD r3 F17"
+   ]
+  },
+  {
+   "task_id": "bookstore_L17_60262551",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L0_60262685",
+   "level": 0,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L0_60262726",
+   "level": 0,
+   "compile": true,
+   "goal": true,
+   "passes": 11,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_60262729",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L1_60262851",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F12"
+   ]
+  },
+  {
+   "task_id": "bookstore_L11_60263035",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L18_60263146",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_60263242",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_60263275",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_60263358",
+   "level": 2,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L3_60263370",
+   "level": 3,
+   "compile": true,
+   "goal": true,
+   "passes": 41,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L3_60263443",
+   "level": 3,
+   "compile": true,
+   "goal": true,
+   "passes": 37,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L1_60263675",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F5"
+   ]
+  },
+  {
+   "task_id": "bookstore_L19_60263686",
+   "level": 19,
+   "compile": true,
+   "goal": false,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L14_60263778",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 25,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_60263823",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 46,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "EFFECT_UNDECLARED DELETE"
+   ]
+  },
+  {
+   "task_id": "bookstore_L16_60264038",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_60264149",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 45,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "TYPE_ERROR line:7 ID:reader OBJ:special_order"
+   ]
+  },
+  {
+   "task_id": "bookstore_L1_60264179",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F15"
+   ]
+  },
+  {
+   "task_id": "bookstore_L13_60264520",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_60264574",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 45,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "TYPE_ERROR line:7 ID:reader OBJ:special_order"
+   ]
+  },
+  {
+   "task_id": "bookstore_L7_60264644",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 47,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L16_60264814",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_60265101",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 51,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L0_70261159",
+   "level": 0,
+   "compile": true,
+   "goal": false,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_70261161",
+   "level": 19,
+   "compile": true,
+   "goal": false,
+   "passes": 51,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L0_70261204",
+   "level": 0,
+   "compile": true,
+   "goal": true,
+   "passes": 10,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_70261266",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_70261315",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L18_70261318",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_70261419",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L3_70261450",
+   "level": 3,
+   "compile": true,
+   "goal": true,
+   "passes": 37,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L5_70261645",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 40,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F19",
+    "UNBOUND r1",
+    "TYPE_ERROR line:5 ID:special_order OBJ:reader",
+    "TYPE_ERROR line:7 ID:special_order OBJ:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L3_70261964",
+   "level": 3,
+   "compile": true,
+   "goal": true,
+   "passes": 37,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_70262076",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_70262118",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_70262175",
+   "level": 2,
+   "compile": true,
+   "goal": true,
+   "passes": 30,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_70262200",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 19,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L12_70262202",
+   "level": 12,
+   "compile": false,
+   "goal": false,
+   "passes": 28,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F14",
+    "UNKNOWN_FIELD r0 F17",
+    "UNKNOWN_FIELD r0 F10"
+   ]
+  },
+  {
+   "task_id": "bookstore_L12_70262272",
+   "level": 12,
+   "compile": false,
+   "goal": false,
+   "passes": 28,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F10",
+    "UNKNOWN_FIELD r0 F13",
+    "UNKNOWN_FIELD r0 F8"
+   ]
+  },
+  {
+   "task_id": "bookstore_L0_70262350",
+   "level": 0,
+   "compile": true,
+   "goal": true,
+   "passes": 11,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L9_70262527",
+   "level": 9,
+   "compile": true,
+   "goal": true,
+   "passes": 34,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L18_70262580",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L0_70262599",
+   "level": 0,
+   "compile": true,
+   "goal": false,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_70262605",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L1_70262647",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F8"
+   ]
+  },
+  {
+   "task_id": "bookstore_L5_70262707",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 39,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F20",
+    "UNBOUND r1",
+    "TYPE_ERROR line:5 ID:special_order OBJ:reader",
+    "TYPE_ERROR line:7 ID:special_order OBJ:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L8_70262954",
+   "level": 8,
+   "compile": true,
+   "goal": true,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L5_70263051",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 38,
+   "diagnostics": [
+    "PARSE_ERROR line:7 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L18_70263106",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_70263151",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 37,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L14_70263288",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 25,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L1_70263325",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F16"
+   ]
+  },
+  {
+   "task_id": "bookstore_L11_70263353",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 39,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_70263630",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 5,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_70263731",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 47,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L11_70263773",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_70263932",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 31,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L0_70263979",
+   "level": 0,
+   "compile": true,
+   "goal": true,
+   "passes": 11,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L3_70264139",
+   "level": 3,
+   "compile": true,
+   "goal": true,
+   "passes": 42,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_70264170",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 46,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "EFFECT_UNDECLARED DELETE"
+   ]
+  },
+  {
+   "task_id": "bookstore_L18_70264187",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_70264260",
+   "level": 19,
+   "compile": true,
+   "goal": false,
+   "passes": 51,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_70264320",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 5,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_70264634",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 19,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_70264679",
+   "level": 2,
+   "compile": true,
+   "goal": true,
+   "passes": 32,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_70265014",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 19,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L18_80260938",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 36,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L14_80260944",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 24,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L3_80260989",
+   "level": 3,
+   "compile": false,
+   "goal": false,
+   "passes": 34,
+   "diagnostics": [
+    "PARSE_ERROR line:5 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L13_80261028",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L9_80261038",
+   "level": 9,
+   "compile": false,
+   "goal": false,
+   "passes": 33,
+   "diagnostics": [
+    "PARSE_ERROR line:5 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L18_80261263",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 36,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_80261350",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_80261386",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 42,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L5_80261426",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 38,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F3",
+    "UNBOUND r1",
+    "TYPE_ERROR line:7 ID:special_order OBJ:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L8_80261436",
+   "level": 8,
+   "compile": true,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_80261483",
+   "level": 2,
+   "compile": false,
+   "goal": false,
+   "passes": 29,
+   "diagnostics": [
+    "PARSE_ERROR line:5 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L6_80261622",
+   "level": 6,
+   "compile": true,
+   "goal": true,
+   "passes": 55,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_80261747",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_80261824",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 39,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_80262097",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_80262147",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 5,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L18_80262200",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_80262289",
+   "level": 2,
+   "compile": true,
+   "goal": true,
+   "passes": 32,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L9_80262359",
+   "level": 9,
+   "compile": true,
+   "goal": true,
+   "passes": 34,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_80262494",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L5_80262628",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 42,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F1",
+    "UNBOUND r1",
+    "UNKNOWN_FIELD r0 F6",
+    "TYPE_ERROR line:7 ID:special_order OBJ:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L13_80262652",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L5_80262667",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 42,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F6",
+    "UNBOUND r1",
+    "TYPE_ERROR line:5 ID:special_order OBJ:reader",
+    "TYPE_ERROR line:7 ID:special_order OBJ:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L18_80262780",
+   "level": 18,
+   "compile": true,
+   "goal": true,
+   "passes": 14,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L9_80262937",
+   "level": 9,
+   "compile": false,
+   "goal": false,
+   "passes": 33,
+   "diagnostics": [
+    "PARSE_ERROR line:5 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L16_80263003",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L1_80263011",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F8"
+   ]
+  },
+  {
+   "task_id": "bookstore_L13_80263111",
+   "level": 13,
+   "compile": false,
+   "goal": false,
+   "passes": 17,
+   "diagnostics": [
+    "PARSE_ERROR line:3 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L7_80263385",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 46,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "EFFECT_UNDECLARED DELETE"
+   ]
+  },
+  {
+   "task_id": "bookstore_L2_80263392",
+   "level": 2,
+   "compile": true,
+   "goal": false,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_80263631",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L8_80263838",
+   "level": 8,
+   "compile": false,
+   "goal": false,
+   "passes": 38,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r1 F7"
+   ]
+  },
+  {
+   "task_id": "bookstore_L5_80263854",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 40,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F7",
+    "UNBOUND r1",
+    "TYPE_ERROR line:5 ID:special_order OBJ:reader",
+    "TYPE_ERROR line:7 ID:special_order OBJ:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L14_80264036",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 25,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_80264095",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_80264264",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 5,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L4_80264270",
+   "level": 4,
+   "compile": true,
+   "goal": true,
+   "passes": 31,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L11_80264506",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 42,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_80264567",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L5_80264595",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 41,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F5",
+    "UNBOUND r1",
+    "TYPE_ERROR line:5 ID:special_order OBJ:reader",
+    "UNKNOWN_FIELD r0 F16"
+   ]
+  },
+  {
+   "task_id": "bookstore_L11_80264705",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L12_80265003",
+   "level": 12,
+   "compile": false,
+   "goal": false,
+   "passes": 28,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F0",
+    "UNKNOWN_FIELD r0 F13",
+    "UNKNOWN_FIELD r0 F5"
+   ]
+  },
+  {
+   "task_id": "bookstore_L7_80265038",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 45,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "TYPE_ERROR line:7 ID:reader OBJ:special_order"
+   ]
+  },
+  {
+   "task_id": "bookstore_L5_80265102",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 40,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F13",
+    "UNBOUND r1",
+    "TYPE_ERROR line:5 ID:special_order OBJ:reader",
+    "TYPE_ERROR line:7 ID:special_order OBJ:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L12_80265145",
+   "level": 12,
+   "compile": false,
+   "goal": false,
+   "passes": 28,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F0",
+    "UNKNOWN_FIELD r0 F19",
+    "UNKNOWN_FIELD r0 F18"
+   ]
+  },
+  {
+   "task_id": "bookstore_L6_90260963",
+   "level": 6,
+   "compile": true,
+   "goal": true,
+   "passes": 56,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_90261251",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_90261501",
+   "level": 2,
+   "compile": false,
+   "goal": false,
+   "passes": 29,
+   "diagnostics": [
+    "PARSE_ERROR line:5 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L6_90261640",
+   "level": 6,
+   "compile": true,
+   "goal": false,
+   "passes": 56,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L2_90261671",
+   "level": 2,
+   "compile": false,
+   "goal": false,
+   "passes": 29,
+   "diagnostics": [
+    "PARSE_ERROR line:5 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L16_90261716",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_90261810",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L1_90261868",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F6"
+   ]
+  },
+  {
+   "task_id": "bookstore_L15_90261876",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L16_90262099",
+   "level": 16,
+   "compile": true,
+   "goal": true,
+   "passes": 5,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_90262217",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L5_90262526",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 39,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F3",
+    "UNBOUND r1",
+    "TYPE_ERROR line:5 ID:special_order OBJ:reader",
+    "TYPE_ERROR line:7 ID:special_order OBJ:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L8_90262590",
+   "level": 8,
+   "compile": true,
+   "goal": true,
+   "passes": 20,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L17_90262596",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L0_90262646",
+   "level": 0,
+   "compile": true,
+   "goal": true,
+   "passes": 10,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L1_90262721",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F1"
+   ]
+  },
+  {
+   "task_id": "bookstore_L11_90262741",
+   "level": 11,
+   "compile": true,
+   "goal": true,
+   "passes": 4,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L15_90262749",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_90262875",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 45,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader",
+    "TYPE_ERROR line:7 ID:reader OBJ:special_order"
+   ]
+  },
+  {
+   "task_id": "bookstore_L17_90262913",
+   "level": 17,
+   "compile": true,
+   "goal": true,
+   "passes": 13,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L9_90263606",
+   "level": 9,
+   "compile": false,
+   "goal": false,
+   "passes": 33,
+   "diagnostics": [
+    "PARSE_ERROR line:5 expected tool symbol, got 'r4'"
+   ]
+  },
+  {
+   "task_id": "bookstore_L5_90263655",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 40,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F9",
+    "UNBOUND r1",
+    "TYPE_ERROR line:5 ID:special_order OBJ:reader",
+    "TYPE_ERROR line:7 ID:special_order OBJ:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L12_90263951",
+   "level": 12,
+   "compile": false,
+   "goal": false,
+   "passes": 28,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F4",
+    "UNKNOWN_FIELD r0 F16",
+    "UNKNOWN_FIELD r0 F19"
+   ]
+  },
+  {
+   "task_id": "bookstore_L2_90264208",
+   "level": 2,
+   "compile": true,
+   "goal": false,
+   "passes": 33,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L13_90264434",
+   "level": 13,
+   "compile": true,
+   "goal": true,
+   "passes": 22,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L14_90264576",
+   "level": 14,
+   "compile": true,
+   "goal": true,
+   "passes": 25,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L19_90264732",
+   "level": 19,
+   "compile": true,
+   "goal": true,
+   "passes": 50,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L5_90264735",
+   "level": 5,
+   "compile": false,
+   "goal": false,
+   "passes": 39,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F6",
+    "UNBOUND r1",
+    "TYPE_ERROR line:5 ID:special_order OBJ:reader",
+    "UNKNOWN_FIELD r0 F14"
+   ]
+  },
+  {
+   "task_id": "bookstore_L8_90264893",
+   "level": 8,
+   "compile": false,
+   "goal": false,
+   "passes": 38,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r1 F6"
+   ]
+  },
+  {
+   "task_id": "bookstore_L15_90264919",
+   "level": 15,
+   "compile": true,
+   "goal": true,
+   "passes": 18,
+   "diagnostics": []
+  },
+  {
+   "task_id": "bookstore_L7_90265178",
+   "level": 7,
+   "compile": false,
+   "goal": false,
+   "passes": 47,
+   "diagnostics": [
+    "TYPE_ERROR line:3 ID:special_order ID:reader"
+   ]
+  },
+  {
+   "task_id": "bookstore_L1_90265201",
+   "level": 1,
+   "compile": false,
+   "goal": false,
+   "passes": 19,
+   "diagnostics": [
+    "TYPE_ERROR line:2 ID:reader ID:special_order",
+    "UNKNOWN_FIELD r0 F7"
+   ]
+  }
+ ]
+}
