@@ -23,12 +23,36 @@ shut down.
 from __future__ import annotations
 
 import argparse
+import io
 import tarfile
 from pathlib import Path
 
 from corpus import COVENANT
 
 HERE = Path(__file__).parent
+
+# Everything in the bundle runs on Linux, and a shell script with CRLF line
+# endings dies there on `set: -: invalid option` -- which reads like a broken
+# flag rather than a broken file. Editors on this machine produce CRLF without
+# being asked, and .gitattributes only fixes what git touches, not what tarfile
+# reads off the disk. So the bundle normalises text on the way in.
+TEXT_SUFFIXES = {".sh", ".py", ".md", ".json"}
+CRLF, LF = bytes((13, 10)), bytes((10,))
+
+
+def add_text(tar: tarfile.TarFile, src: Path, arcname: str) -> None:
+    """Add a text file with LF endings, whatever it looks like on disk."""
+    data = src.read_bytes().replace(CRLF, LF)
+    info = tar.gettarinfo(str(src), arcname=arcname)
+    info.size = len(data)
+    tar.addfile(info, io.BytesIO(data))
+
+
+def add(tar: tarfile.TarFile, src: Path, arcname: str) -> None:
+    if src.suffix in TEXT_SUFFIXES:
+        add_text(tar, src, arcname)
+    else:
+        tar.add(src, arcname=arcname)
 
 
 def main():
@@ -47,27 +71,27 @@ def main():
     n = 0
     with tarfile.open(out, "w:gz") as tar:
         for py in sorted(HERE.glob("*.py")):
-            tar.add(py, arcname=f"tiny/{py.name}")
+            add(tar, py, f"tiny/{py.name}")
             n += 1
         for extra in ("README.md", "pod.md", "run_phase1.sh", "run_step1.sh",
                       "run_step2.sh", "run_step3.sh", "selftest.sh"):
             p = HERE / extra
             if p.exists():
-                tar.add(p, arcname=f"tiny/{extra}")
+                add(tar, p, f"tiny/{extra}")
                 n += 1
 
         # The compiler, so repair runs on the pod.
         for py in sorted((COVENANT / "core").glob("*.py")):
-            tar.add(py, arcname=f"core/{py.name}")
+            add(tar, py, f"core/{py.name}")
             n += 1
-        tar.add(COVENANT / "harness" / "__init__.py", arcname="harness/__init__.py")
-        tar.add(COVENANT / "harness" / "context.py", arcname="harness/context.py")
+        add(tar, COVENANT / "harness" / "__init__.py", "harness/__init__.py")
+        add(tar, COVENANT / "harness" / "context.py", "harness/context.py")
         n += 2
 
         if not args.no_cache:
             for f in sorted(cache.iterdir()):
                 if f.suffix in (".pt", ".json") or f.name == "rows.pkl":
-                    tar.add(f, arcname=f"tiny/{args.cache}/{f.name}")
+                    add(tar, f, f"tiny/{args.cache}/{f.name}")
                     n += 1
 
     mb = out.stat().st_size / 1e6
