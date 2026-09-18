@@ -49,7 +49,8 @@ def main():
         for py in sorted(HERE.glob("*.py")):
             tar.add(py, arcname=f"tiny/{py.name}")
             n += 1
-        for extra in ("README.md", "pod.md", "run_phase1.sh", "run_step1.sh", "selftest.sh"):
+        for extra in ("README.md", "pod.md", "run_phase1.sh", "run_step1.sh",
+                      "run_step2.sh", "run_step3.sh", "selftest.sh"):
             p = HERE / extra
             if p.exists():
                 tar.add(p, arcname=f"tiny/{extra}")
@@ -74,7 +75,8 @@ def main():
     print("\non the pod:")
     print(f"  tar xzf {out.name} && cd tiny")
     print("  pip install torch tokenizers")
-    print(f"  CACHE={args.cache} bash run_step1.sh")
+    print("  bash selftest.sh " + args.cache + "   # 2 minutes, catches what an hour in would not")
+    print(f"  CACHE={args.cache} bash run_step2.sh   # or run_step1.sh, or run_step3.sh")
     print("\nbring back: out/ (generations and curves/)")
 
 

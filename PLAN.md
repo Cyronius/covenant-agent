@@ -642,3 +642,26 @@ covenant-agent/
   the plan's sequence (tool-slot accuracy leaving chance on the R3 model
   with structural binding) before anything larger starts. Plan:
   `.claude/plans/npu-native-planner.md`.
+
+- **2026-09-18 — NPU-native planner, step 1 passes (`results/R7.md`).** The
+  step-1 gate is met by a margin that retires it. Structural binding at 9.4M
+  parameters, same data and scorer as R3: tool-slot accuracy 6% → 99.5% on
+  test and 98.0% on a world the model never trained on, compile 8.6% → 99.9%,
+  goal success 8.3% → 98.6% (control) and 88.9% (diffusion at 32 steps). On
+  the held-out world, 96.4% and 82.5%. R3's failure was representational, as
+  diagnosed, and the three changes that fixed it are one vector per schema
+  line, pointers instead of a symbol vocabulary, and `r0.F6` split into two
+  canvas slots. Three consequences for the plan. Bet 1 (a small resident
+  block can do the task) is no longer open at this size, and the loop body is
+  4.21M parameters, which is 1.00 MB at ternary against a 4 MB budget. The
+  pretrained text encoder stays off the table, because binding transfers to
+  unseen declarations. And the left-to-right control beats the masked-diffusion
+  decode by 10 points, concentrated on compound filter predicates (level 3:
+  78% against 16%), which makes the decode order a real decision: the design
+  takes diffusion for the NPU because it fills 8 slots per pass instead of
+  one, and step 2 now has to show the loop buying those points back. Step 2
+  runs on a one-layer block rather than this one, which is saturated
+  (`models/tiny/run_step2.sh`); step 3 sweeps four weight formats at matched
+  resident bytes rather than assuming ternary, because
+  `models/npu/kernels/tern_mk/README.md` measured ternary's unpack as a real
+  cost that 4-bit does not pay on this silicon (`models/tiny/run_step3.sh`).

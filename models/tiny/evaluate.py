@@ -99,6 +99,14 @@ def generate(args):
     model = load_model(Path(args.ckpt), device, split.ov if split.binding == "flat" else None)
     if model.c.binding != split.binding:
         raise SystemExit(f"checkpoint binding={model.c.binding} but cache binding={split.binding}")
+    if args.dec_loops:
+        # The loop count is an inference-time dial (decision 9), not a shape, so
+        # it can be turned after training. A model trained with --rand-loops has
+        # seen every setting; one trained at a fixed L has not, and running it
+        # somewhere else is a measurement of how far the dial travels.
+        model.c.dec_loops = args.dec_loops
+    print(f"loops={model.c.dec_loops} dec_layers={model.c.dec_layers} "
+          f"weights={model.c.weights}", flush=True)
 
     n = min(args.limit or len(split), len(split))
     arm = "ar" if model.c.causal else "diffusion"
@@ -141,6 +149,9 @@ def generate(args):
             "canvas_tokens": ov.decode(canvas[0].tolist()),
             "reference_tokens": ov.decode(tgt[0].tolist()),
             "compiled_inline": tr.compiled,
+            # The compute this program cost, for the axis report.py draws:
+            # one forward pass applies the block dec_layers x loops times.
+            "loops": model.c.dec_loops, "dec_layers": model.c.dec_layers,
         })
         if (i + 1) % 25 == 0:
             print(f"  {i+1}/{n}  {(time.time()-t0)/(i+1):.2f}s/example", flush=True)
@@ -261,6 +272,8 @@ def score(args):
                "goal": stats["goal"], "exact": stats["exact"],
                "sandbox_error": stats["sandbox_error"],
                "mean_passes": sum(passes) / max(len(passes), 1),
+               "loops": gen[0].get("loops", 1) if gen else 1,
+               "dec_layers": gen[0].get("dec_layers") if gen else None,
                "slot_acc": {k: dict(v) for k, v in slot_acc.items()},
                "call_agreement": dict(calls),
                "by_level": {str(k): dict(v) for k, v in by_level.items()}}
@@ -276,6 +289,9 @@ def main():
     ap.add_argument("--cache", default="data_cache_struct")
     ap.add_argument("--split", default="test")
     ap.add_argument("--steps", type=int, default=8)
+    ap.add_argument("--dec-loops", type=int, default=None,
+                    help="run the block this many times per pass, overriding "
+                         "the checkpoint's setting")
     ap.add_argument("--temperature", type=float, default=0.0)
     ap.add_argument("--repair-rounds", type=int, default=0)
     ap.add_argument("--repair-steps", type=int, default=4)

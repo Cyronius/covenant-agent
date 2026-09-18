@@ -30,6 +30,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
+import quant
 from model import Config, build_model, mask_canvas
 from prep import STRUCT_KEYS
 from tok import OutVocab
@@ -99,11 +100,16 @@ def shift_right(tgt: torch.Tensor, bos: int) -> torch.Tensor:
     return torch.cat([torch.full_like(tgt[:, :1], bos), tgt[:, :-1]], dim=1)
 
 
-def batch_loss(model, inputs, tgt, arm: str, generator=None, pad_weight: float = 1.0):
-    """Returns (loss, n_predicted, logits, scored_mask)."""
+def batch_loss(model, inputs, tgt, arm: str, generator=None, pad_weight: float = 1.0,
+               loops: int | None = None):
+    """Returns (loss, n_predicted, logits, scored_mask).
+
+    `loops` overrides the configured loop count for this batch, which is how
+    `--rand-loops` trains one checkpoint to serve every effort setting.
+    """
     if arm == "diffusion":
         canvas, loss_mask, _ = mask_canvas(tgt, MASK_ID, generator)
-        logits = model.decode(inputs, canvas)
+        logits = model.decode(inputs, canvas, loops=loops)
         # Loss only on the slots that were hidden. The visible ones are free
         # and scoring them would let the model earn reward for copying.
         y = tgt[loss_mask]
@@ -119,7 +125,7 @@ def batch_loss(model, inputs, tgt, arm: str, generator=None, pad_weight: float =
         else:
             loss = per.mean()
         return loss, int(loss_mask.sum()), logits, loss_mask
-    logits = model.decode(inputs, shift_right(tgt, bos=MASK_ID))
+    logits = model.decode(inputs, shift_right(tgt, bos=MASK_ID), loops=loops)
     # Padding slots after the program end carry no information; scoring
     # them would reward predicting PAD forever. The diffusion arm keeps
     # them because knowing where a program stops is part of its job, so
@@ -214,13 +220,32 @@ def main():
     ap.add_argument("--warmup", type=int, default=200)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--d", type=int, default=256)
+    ap.add_argument("--ff", type=int, default=None,
+                    help="feed-forward width; 4x the model width by default, "
+                         "which is what d=256 already used")
     ap.add_argument("--enc-layers", type=int, default=None,
                     help="flat: the encoder; structural: the turn encoder. "
                          "Default 3 flat, 2 structural")
     ap.add_argument("--line-layers", type=int, default=2, help="structural: per-line encoder")
     ap.add_argument("--graph-layers", type=int, default=1, help="structural: schema graph pass")
     ap.add_argument("--dec-layers", type=int, default=4)
-    ap.add_argument("--dec-loops", type=int, default=1)
+    ap.add_argument("--dec-loops", type=int, default=1,
+                    help="apply the decoder stack L times with the same weights: "
+                         "step 2's compute knob, free on the NPU")
+    ap.add_argument("--loop-emb", action="store_true",
+                    help="give each loop iteration its own learned bias vector")
+    ap.add_argument("--rand-loops", type=int, default=0,
+                    help="sample the loop count from 1..N per batch, so one "
+                         "checkpoint serves every effort setting (decision 9)")
+    ap.add_argument("--weights", choices=list(quant.MODES), default="fp",
+                    help="step 3: the format the transformer stacks train in. "
+                         "int8/u4/tern are 4M/8M/16M resident in 4 MB of "
+                         "memory tiles")
+    ap.add_argument("--act-bits", type=int, default=8,
+                    help="activation bits at every quantised matmul; 0 to leave "
+                         "activations in floating point")
+    ap.add_argument("--quant-ends", choices=["fp", "int8"], default="int8",
+                    help="format of the embeddings and the output heads")
     ap.add_argument("--pointer", action="store_true",
                     help="flat only: decide symbol slots by pointing at the input")
     ap.add_argument("--dropout", type=float, default=0.1)
@@ -235,6 +260,8 @@ def main():
     ap.add_argument("--eval-every", type=int, default=200)
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     args = ap.parse_args()
+    if args.ff is None:
+        args.ff = 4 * args.d
 
     torch.manual_seed(args.seed)
     cache = Path(args.cache)
@@ -254,9 +281,11 @@ def main():
         ov = OutVocab.load(cache / "out_vocab.json")
         out_vocab = len(ov)
         cfg = Config(
-            in_vocab=meta["in_vocab"], out_vocab=out_vocab, d=args.d,
+            in_vocab=meta["in_vocab"], out_vocab=out_vocab, d=args.d, ff=args.ff,
             enc_layers=args.enc_layers, dec_layers=args.dec_layers,
             dec_loops=args.dec_loops, dropout=args.dropout,
+            loop_emb=args.loop_emb, rand_loops=args.rand_loops,
+            weights=args.weights, act_bits=args.act_bits, quant_ends=args.quant_ends,
             max_in=meta["max_in"], canvas=meta["canvas"],
             causal=(args.arm == "ar"), pointer=args.pointer, binding="flat",
         )
@@ -267,10 +296,12 @@ def main():
         layout = Layout.from_dict(meta["layout"])
         out_vocab = layout.size
         cfg = Config(
-            in_vocab=meta["in_vocab"], out_vocab=out_vocab, d=args.d,
+            in_vocab=meta["in_vocab"], out_vocab=out_vocab, d=args.d, ff=args.ff,
             enc_layers=args.enc_layers, dec_layers=args.dec_layers,
             line_layers=args.line_layers, graph_layers=args.graph_layers,
             dec_loops=args.dec_loops, dropout=args.dropout, canvas=meta["canvas"],
+            loop_emb=args.loop_emb, rand_loops=args.rand_loops,
+            weights=args.weights, act_bits=args.act_bits, quant_ends=args.quant_ends,
             causal=(args.arm == "ar"), binding="structural",
             in_pad=meta["in_pad"], max_line=meta["max_line"], max_req=meta["max_req"],
             n_kw=layout.n_kw, max_tool=layout.max_tool, max_field=layout.max_field,
@@ -303,8 +334,17 @@ def main():
 
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lr_at)
     log = open(run / "log.jsonl", "a", encoding="utf-8")
+    # The loop body is what has to fit in the NPU's 4 MB of memory tiles, and it
+    # is not the model's parameter count: the encoders run once per world or once
+    # per turn, the decoder stack runs L times per turn and is the resident part.
+    body = quant.loop_body_params(model)
+    budget = {"loop_body_params": body,
+              "resident_bytes": quant.resident_bytes(model, args.weights),
+              "resident_budget_bytes": 4 << 20,
+              **getattr(model, "quant", {})}
     (run / "config.json").write_text(json.dumps(
-        {**vars(args), "params": model.n_params(), "git_sha": git_sha(), **meta}, indent=1),
+        {**vars(args), "params": model.n_params(), **budget,
+         "git_sha": git_sha(), **meta}, indent=1),
         encoding="utf-8")
 
     # flush: stdout is block-buffered when redirected to a file, so without this
@@ -312,6 +352,11 @@ def main():
     # run that died at startup looks exactly like one that is working.
     print(f"arm={args.arm} binding={binding} params={model.n_params()/1e6:.2f}M "
           f"device={device} train={len(train_ds)} steps={steps}", flush=True)
+    print(f"weights={args.weights} act_bits={args.act_bits if args.weights != 'fp' else 0} "
+          f"loops={args.dec_loops} loop_body={body/1e6:.2f}M params "
+          f"= {budget['resident_bytes']/(1<<20):.2f} MB resident "
+          f"of 4.00 MB{'  OVER BUDGET' if budget['resident_bytes'] > (4 << 20) else ''}",
+          flush=True)
 
     def eval_and_log(step, epoch, t0):
         rec = evaluate(model, val_dl, args.arm, binding, kind_of, device, out_vocab,
@@ -330,7 +375,10 @@ def main():
         for batch in train_dl:
             batch = [t.to(device) for t in batch]
             inputs, tgt = unpack(batch, binding, out_vocab)
-            loss, k, _, _ = batch_loss(model, inputs, tgt, args.arm, pad_weight=args.pad_weight)
+            loops = (int(torch.randint(1, args.rand_loops + 1, (1,)).item())
+                     if args.rand_loops else None)
+            loss, k, _, _ = batch_loss(model, inputs, tgt, args.arm,
+                                       pad_weight=args.pad_weight, loops=loops)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()

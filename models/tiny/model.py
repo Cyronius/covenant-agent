@@ -54,6 +54,13 @@ class Config:
     causal: bool = False
     pointer: bool = False    # flat: symbol slots decided by pointing at the input
     dec_loops: int = 1          # knob A: apply the decoder stack this many times
+    loop_emb: bool = False      # tell the block which iteration it is on
+    rand_loops: int = 0         # train at a loop count sampled from 1..this
+    # step 3: the weight format the block trains under (quant.py). "fp" is the
+    # baseline; int8/u4/tern are 4M/8M/16M resident in the NPU's memory tiles.
+    weights: str = "fp"
+    act_bits: int = 8           # int8 activations when a weight format is set
+    quant_ends: str = "int8"    # embeddings and heads, never ternary
     # structural binding
     binding: str = "flat"
     line_layers: int = 2        # per-line encoder depth
@@ -280,6 +287,13 @@ class StructuralModel(nn.Module):
         self.turn = nn.ModuleList([EncoderLayer(c) for _ in range(c.enc_layers)])
         self.enc_norm = nn.LayerNorm(d)
         self.dec = nn.ModuleList([DecoderLayer(c) for _ in range(c.dec_layers)])
+        # Which iteration the block is on, as one resident vector per iteration.
+        # 8k parameters at d=256 and, on the NPU, one add per loop against no
+        # streamed weights. Without it every iteration sees the same input and
+        # has to infer its own depth from the residual stream, which is the
+        # reported failure mode of naive recurrent stacks at high loop counts.
+        self.loop_emb = (nn.Embedding(max(c.dec_loops, c.rand_loops, 1), d)
+                         if c.loop_emb else None)
         self.dec_norm = nn.LayerNorm(d)
         self.slot_norm = nn.LayerNorm(d)                 # one scale for keyword and pointer inputs
         self.q, self.k = nn.Linear(d, d), nn.Linear(d, d)   # pointer projections
@@ -397,7 +411,11 @@ class StructuralModel(nn.Module):
         table = self.slot_table(mem)                                     # (B, J, d)
         x = table.gather(1, canvas.long().unsqueeze(-1).expand(-1, -1, c.d))
         x = self.drop(x + self.out_pos + self.tag_emb.weight[TAG_CANVAS])
-        for _ in range(loops or c.dec_loops):
+        for i in range(loops or c.dec_loops):
+            if self.loop_emb is not None:
+                # Iterations past the table reuse its last row, so a model
+                # trained at L can still be run at more than L.
+                x = x + self.loop_emb.weight[min(i, self.loop_emb.num_embeddings - 1)]
             for layer in self.dec:
                 x = layer(x, mem.mem, mem.pad, self.causal_mask)
         h = self.dec_norm(x)
@@ -416,7 +434,15 @@ class StructuralModel(nn.Module):
 
 
 def build_model(c: Config) -> nn.Module:
-    return StructuralModel(c) if c.binding == "structural" else CanvasModel(c)
+    m = StructuralModel(c) if c.binding == "structural" else CanvasModel(c)
+    if c.weights != "fp":
+        # Quantisation is part of the architecture, not a post-processing step:
+        # decision 3 trains the block in its deployed format from step zero, and
+        # a checkpoint's cfg carries the format so evaluate.py rebuilds the same
+        # model without being told.
+        from quant import apply_quant
+        m.quant = apply_quant(m, c.weights, c.act_bits, c.quant_ends)
+    return m
 
 
 def mask_canvas(target: torch.Tensor, mask_id: int, generator=None

@@ -117,6 +117,69 @@ decoder 4) is 9.4M parameters against the flat 7.9M; the difference is the
 extra encoder layers. `--dec-loops` applies the decoder stack repeatedly under
 both bindings (step 2 of the sequence).
 
+**Step 1's result is in `results/R7.md`.** Tool slots 6% to 99.5%, compile 8.6%
+to 99.9%, and 96.4% goal success on a world the model never trained on. Read it
+before running anything below, because it moves both of the next steps: the
+model is saturated, so step 2 sweeps a smaller block, and the control arm beats
+the diffusion decode by 10 points, which is what step 2 has to close.
+
+## The loop and the weight format (steps 2 and 3)
+
+The NPU holds one stage's weights in 4 MB of memory tiles and pays nothing to
+reapply them, so the two knobs the design cares about are how many times the
+block runs and how many bits a weight costs. Both are flags here, and both are
+swept by a script.
+
+**The loop.** `--dec-loops L` applies the decoder stack L times with the same
+weights, so the parameter count does not move (`test_quant.py` asserts that,
+because a sweep whose parameters drift is measuring the wrong thing). Two
+optional knobs come with it, both cheap on the NPU:
+
+| flag | what | why it is a knob and not a default |
+|---|---|---|
+| `--loop-emb` | one learned bias vector per iteration, added to the residual at the start of each | 8k parameters and one add per loop on chip, but it is a change to the recorded design, so it is measured beside plain looping rather than assumed |
+| `--rand-loops N` | sample the loop count from 1..N per batch | decision 9 calls L "the effort dial", which only holds if one checkpoint serves several L; a model trained at a fixed L has never seen another |
+
+`evaluate.py --dec-loops N` turns the dial at inference, overriding whatever the
+checkpoint trained at. The generation file records the loop count and block
+depth per row, so `report.py` can draw goal success against block applications
+rather than against denoising steps.
+
+**The weight format.** `--weights {fp,int8,u4,tern}` trains the transformer
+stacks in the format they will be deployed in, from step zero, with int8
+activations per token (`--act-bits`) and the embeddings and heads held at int8
+(`--quant-ends`). `quant.py` has the details and the reasoning; the short version
+is that it is fake quantisation through a straight-through estimator, applied as
+a `torch.nn.utils.parametrize` parametrization so it also covers
+`nn.MultiheadAttention`'s packed `in_proj_weight`, and so the checkpoint keeps
+the master float weights. Every run prints and records what its loop body costs
+on chip:
+
+```
+weights=tern act_bits=8 loops=8 loop_body=4.21M params = 1.00 MB resident of 4.00 MB
+```
+
+Step 1's model is that line: 4.21M parameters in the loop body, which is 4.02 MB
+at int8, 2.01 MB at 4-bit and 1.00 MB at ternary. All three fit.
+
+**What the two sweeps are for.** `run_step2.sh` asks whether goal success rises
+with L at fixed parameters, and draws the unlooped depth ladder beside it so a
+win from looping is never confused with a win from more distinct weights.
+`run_step3.sh` compares the four formats at *matched resident bytes* — int8 at
+one layer, 4-bit at two, ternary at four — because the question is not whether
+rounding hurts (it does) but which format writes better programs in the same
+4 MB. Both scripts skip work that already exists, so an interrupted sweep
+resumes, and both take `EXTRA`/`GEN_EXTRA` so the whole thing can be smoke-tested
+locally on a tiny model before it costs pod time.
+
+One kernel measurement changed step 3 before it ran.
+`models/npu/kernels/tern_mk/README.md` found that this part has a native
+`mmul<4,16,16,int8,uint4>` whose unpack is folded into the MAC, while ternary has
+no 2-bit equivalent and pays 0.031 cycles per weight in software. So decision 3's
+"ternary strictly dominates 4-bit" does not hold here, the fallback from ternary
+is 4-bit at 8M rather than int8 at 4M, and the format question is capacity
+against a 25% tax rather than a free win.
+
 ## Running it
 
 ```bash
@@ -129,6 +192,14 @@ python evaluate.py --ckpt runs/diffusion_s0/best.pt --cache data_cache_struct --
                    --steps 8 --repair-rounds 2 --gen-out runs/diff_test.jsonl
 python probe.py --gen runs/diff_test.jsonl --compiled-only
 python diagnose.py --gen runs/diff_test.jsonl --cache data_cache_struct
+```
+
+The sweeps, rather than single runs:
+
+```bash
+bash run_step2.sh                 # the loop sweep, the depth ladder, the dial
+bash run_step3.sh                 # four weight formats at matched resident bytes
+python report.py --dir out        # the tables, and step 2's gate verdict
 ```
 
 `test_pipeline.py` is the one to run first and after any change to the data path.
@@ -176,12 +247,16 @@ Redirect to a file instead, or read the JSONL.
 | `diagnose.py` | signature uniqueness, and the line-aligned CALL agreement (also used by `evaluate.py --score`) |
 | `probe.py` | when the sampler decides each kind of token (decision 11's evidence) |
 | `ablate_desc.py` | permute descriptions or requests at inference (flat binding only) |
-| `report.py` | the accuracy-against-passes table over a directory of scored runs |
+| `report.py` | the accuracy-against-passes table over a directory of scored runs, plus the loop sweep and its gate verdict |
+| `quant.py` | the weight formats (int8, 4-bit, ternary) as quantisation-aware training, and the resident-byte arithmetic |
 | `sandbox.py` | register the 104 generated theme worlds so the sandbox can run them |
 | `test_pipeline.py` | the reference round trip, the check everything else rests on |
 | `test_samplers.py` | both samplers reproduce an oracle; the receiver rule never blocks a reference |
+| `test_quant.py` | the quantised model is the deployed model: level counts, per-row scales, the estimator, the checkpoint round trip |
 | `selftest.sh` | the correctness checks, on either binding |
 | `run_step1.sh` | the pod script for step 1: both arms, three seeds, the step sweep, curves copied out |
+| `run_step2.sh` | step 2: the loop-count sweep at fixed parameters, the unlooped depth ladder beside it, and the effort dial |
+| `run_step3.sh` | step 3: four weight formats at matched resident bytes |
 | `run_phase1.sh` | the R3 phase-1 recipe (6 epochs, flat) |
 | `pack.py` | the pod bundle: code, cache, compiler |
 

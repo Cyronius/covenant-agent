@@ -46,11 +46,35 @@ for arm in diffusion ar; do
 done
 
 echo
-echo "=== 4. does the fill-order probe read a generated file ==="
+echo "=== 4. is the quantised model the model that would be deployed ==="
+# Quantisation-aware training fails silently in both directions: unreached fake
+# quantisation reports float accuracy for weights about to be rounded, and a
+# broken estimator trains nothing while looking undertrained.
+python test_quant.py
+
+echo
+echo "=== 5. does a looped, ternary run train, generate and score ==="
+# The two knobs steps 2 and 3 sweep, exercised together on a handful of rows.
+# Catches the failures that would otherwise surface an hour into a paid run: a
+# parametrized checkpoint that will not reload, a loop count that changes a
+# tensor shape, an inference-time loop override the sampler ignores.
+python train.py --arm diffusion --cache "$CACHE" --epochs 1 --limit-train 32 \
+  --limit-val 16 --batch 4 --d 64 --enc-layers 1 --dec-layers 1 \
+  --dec-loops 4 --loop-emb --rand-loops 4 --weights tern \
+  --eval-every 8 --out runs/_selftest_q
+grep -q '"acc_tool"' runs/_selftest_q/log.jsonl || { echo "log has no per-slot accuracy"; exit 1; }
+python -c "import json; c = json.load(open('runs/_selftest_q/config.json')); assert c['weights'] == 'tern' and c['resident_bytes'] > 0, c; print('  block', c['loop_body_params'], 'params ->', c['resident_bytes'], 'resident bytes')"
+python evaluate.py --ckpt runs/_selftest_q/best.pt --cache "$CACHE" --split val \
+  --limit 4 --steps 2 --dec-loops 2 --gen-out runs/_selftest_q.jsonl
+python -c "import json; r = [json.loads(l) for l in open('runs/_selftest_q.jsonl', encoding='utf-8')]; assert all(x['loops'] == 2 for x in r), 'the inference-time loop override was ignored'; print('  generation ran at the overridden loop count')"
+
+echo
+echo "=== 6. does the fill-order probe read a generated file ==="
 python probe.py --gen runs/_selftest_diffusion.jsonl --cache "$CACHE"
 
-rm -rf runs/_selftest_diffusion runs/_selftest_ar \
-       runs/_selftest_diffusion.jsonl runs/_selftest_ar.jsonl \
-       runs/_selftest_diffusion.score.json runs/_selftest_ar.score.json
+rm -rf runs/_selftest_diffusion runs/_selftest_ar runs/_selftest_q \
+       runs/_selftest_diffusion.jsonl runs/_selftest_ar.jsonl runs/_selftest_q.jsonl \
+       runs/_selftest_diffusion.score.json runs/_selftest_ar.score.json \
+       runs/_selftest_q.score.json
 echo
 echo "ALL PASS -- correctness only, no timing claimed"
