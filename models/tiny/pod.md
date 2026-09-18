@@ -78,6 +78,57 @@ evaluate their checkpoints.
 Environment overrides for `run_step1.sh`: `SEEDS`, `EPOCHS` (12), `BATCH` (64),
 `STEPS_SWEEP` (1 2 4 8 16 32), `DEC_LOOPS` (1; step 2 sweeps it), `TAG` (s1).
 
+## Step 2: the loop-count sweep
+
+`.claude/plans/npu-native-planner.md`, sequence step 2, and bet 2. Same cache and
+scorer as step 1; what differs is the block. The sweep runs on a ONE-layer block
+because step 1's four-layer model is saturated at 98.6% goal on test, so a sweep
+on it would measure the ceiling rather than the loop.
+
+```bash
+# pod, after unpacking the bundle
+CACHE=data_cache_struct SEEDS=0 STAGES=A bash run_step2.sh > s2_A.log 2>&1   # the gate
+CACHE=data_cache_struct SEEDS=0 STAGES=B bash run_step2.sh > s2_B.log 2>&1   # depth ladder + control
+CACHE=data_cache_struct SEEDS=0 STAGES=C bash run_step2.sh > s2_C.log 2>&1   # loop-emb, the dial
+```
+
+The three stages touch disjoint run directories, so they can run at the same
+time. **Two at a time, not three, on a 24 GB card** (measured 2026-09-18 on a
+community 3090): each training process reserves about 10 GB at batch 64 --
+attention over 41 schema lines of 65 tokens is the bulk of it, not the 6M
+parameters -- and a third process dies on `torch.OutOfMemoryError` within a
+minute. Stage A is the gate, so it gets a slot; the rest queue behind it.
+
+Two shared processes cost about 0.53 s/step at L=1 against 0.35 alone, and step
+time scales with the loop count, so budget the sweep by
+`sum over L of L` rather than by the number of runs: L=32 alone is a third of the
+whole sweep. Stage A trains cheapest-first and generates after each L, so the
+small end is complete and scoreable before the expensive end starts, and dropping
+L=32 is a decision that can be taken after seeing L=16.
+
+Scoring is the same as step 1, and `report.py` prints the loop table and the gate
+verdict:
+
+```bash
+for f in out/s2_*_k8.jsonl out/s2_*_test.jsonl; do
+  python evaluate.py --score --cache data_cache_struct --gen-out "$f" --split test
+done
+for f in out/s2_*_holdout.jsonl; do
+  python evaluate.py --score --cache data_cache_struct --gen-out "$f" --split holdout
+done
+python report.py --dir out
+```
+
+Overrides: `LOOPS` (1 2 4 8 16 32), `LADDER` (2 4 8), `DL` (1), `BEST_L` (8),
+`DIAL` (1 2 4 8 16), `STAGES` (A B C), plus `EPOCHS`, `BATCH`, `K`, `SEEDS`,
+`TAG`, and `EXTRA`/`GEN_EXTRA` for a local smoke test.
+
+## Step 3: the weight format
+
+`run_step3.sh`, five arms at matched resident bytes (see its header). Needs step
+2's winning loop count, which it takes as `LOOPS`. Everything else is the same
+recipe.
+
 ## What the bundle contains
 
 Everything needed, nothing else.
