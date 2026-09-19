@@ -665,3 +665,31 @@ covenant-agent/
   resident bytes rather than assuming ternary, because
   `models/npu/kernels/tern_mk/README.md` measured ternary's unpack as a real
   cost that 4-bit does not pay on this silicon (`models/tiny/run_step3.sh`).
+
+- **2026-09-19 — NPU-native planner, step 2 done (`results/R8.md`).** The
+  loop-count gate passes: on a one-layer block, goal success rises with the
+  loop count at identical parameters from 85.7% at one application to 92.5%
+  at sixteen, and sixteen applications of 1.05M parameters beat an unlooped
+  8.4M block. Thirty-two is below sixteen on both splits, so decision 9's
+  range reads 4 to 16. Two findings the plan did not anticipate matter more.
+  First, the sampler's commit schedule: committing every slot the model is
+  0.99-confident of, instead of a fixed count per pass, is worth +3.3 points
+  and cuts passes from 8 (or 32) to 2.7 — better than 32 cosine steps and
+  better than the compiler in the loop, at a twelfth of the passes. The
+  in-kernel mask (decision 8) must be applied per committed slot, not per
+  pass; applied per pass it does nothing. Second, the decode comparison:
+  three seeds each, matched block. On worlds the model trained on the causal
+  control is five points ahead (97.4 ± 0.9 against 92.1 ± 0.4), reliably. On
+  the held-out world the control spans 74 to 95 across seeds while the
+  diffusion arm's seeds sit between 86 and 90; the failures are binding
+  failures in both arms, in the encoder they share. The plan's cost argument
+  for the parallel decode does not hold as written — the control needs one
+  application per pass and the diffusion arm sixteen, so in block
+  applications per program it is 30 against 37 — and the accuracy argument
+  on the test split goes against it; what stands for it is the unseen-world
+  reliability, which is the argument a planner needs and the one that was
+  never in the plan. The best unseen-world number in the track is an 8-layer
+  block looped 4 times at 95.3%, one seed, 2 MB at ternary. Step 3's format
+  sweep is written and unrun; the next spend is seeds on that cell and
+  anything that stabilises binding transfer, which now matters more than the
+  weight format.
