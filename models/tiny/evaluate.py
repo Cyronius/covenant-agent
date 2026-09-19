@@ -135,7 +135,8 @@ def generate(args):
         tr = Trace()
         if arm == "diffusion":
             canvas, tr = diffusion_sample(model, inputs, ov, steps=args.steps,
-                                          temperature=args.temperature, trace=tr)
+                                          temperature=args.temperature, trace=tr,
+                                          threshold=args.threshold)
             if build_fn is not None:
                 canvas, tr = repair(model, inputs, ov, canvas, build_fn, ctxs[i],
                                     rounds=args.repair_rounds, steps=args.repair_steps,
@@ -300,6 +301,10 @@ def main():
                     help="run the block this many times per pass, overriding "
                          "the checkpoint's setting")
     ap.add_argument("--temperature", type=float, default=0.0)
+    ap.add_argument("--threshold", type=float, default=0.0,
+                    help="commit every slot the model is this confident of, and "
+                         "at least one, instead of following the cosine "
+                         "schedule; --steps becomes a cap on passes")
     ap.add_argument("--repair-rounds", type=int, default=0)
     ap.add_argument("--repair-steps", type=int, default=4)
     ap.add_argument("--limit", type=int, default=None)

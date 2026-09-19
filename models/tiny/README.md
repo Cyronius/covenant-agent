@@ -324,6 +324,31 @@ program. Knowing where a program ends is genuinely part of the job, so padding
 keeps a share of the loss, but `--pad-weight` makes the share adjustable rather
 than accidental.
 
+**The schedule, which turned out to matter more than the step count.** The cosine
+schedule commits a fixed number of slots per pass whether or not the model is sure
+of them, so every program costs exactly `--steps` passes. `--threshold 0.99`
+commits instead every slot the model is at least that confident of, and at least
+one so it cannot stall, with `--steps` as a cap. Measured on step 1's diffusion
+checkpoint, full test split:
+
+| schedule | mean passes | compile | goal |
+|---|---|---|---|
+| cosine, 8 steps | 8.0 | 90.7% | 86.1% |
+| cosine, 8 steps + compiler repair | 8.6 | 94.1% | 88.2% |
+| cosine, 32 steps | 32.0 | 94.8% | 88.9% |
+| **threshold 0.99** | **2.7** | **97.1%** | **89.4%** |
+| threshold 0.99 + compiler repair | 2.9 | 97.2% | 89.5% |
+
+Better than 32 cosine steps at a twelfth of the passes, and better than the
+compiler in the loop without needing the compiler. It wins at every level, most of
+all where the cosine schedule was weakest: level 3 (a compound filter predicate)
+goes 1% -> 16% -> 18% across the three rows above, level 5 (IF/ELSE) 48% -> 67% ->
+71%. What a pass buys is not refinement, it is a smaller commit granularity, and
+paying 32 passes on every program to get it is waste: most programs have nothing
+hard in them and finish in one or two passes, while a compound predicate takes
+about fifteen. That is compute proportional to difficulty, which is what the NPU
+wants from a decode.
+
 **The argmax.** The sampler takes the most likely token, which is the opposite of
 what the prose decoder in the parent design does. That is deliberate. Here the
 target is near-deterministic given the input and a compiler decides correctness,

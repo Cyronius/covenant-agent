@@ -145,13 +145,32 @@ def local_mask(canvas: torch.Tensor, ov) -> torch.Tensor:
 
 @torch.no_grad()
 def diffusion_sample(model, inputs: dict, ov, steps: int = 8, temperature: float = 0.0,
-                     trace: Trace | None = None):
-    """Cosine-schedule confidence unmasking. Batch of one, for clarity.
+                     trace: Trace | None = None, threshold: float = 0.0):
+    """Confidence unmasking. Batch of one, for clarity.
 
     temperature 0 takes the argmax. That is the opposite of what the prose
     decoder wants, and deliberately so: here the target is near-deterministic
     given the input, and a compiler decides whether the answer is right, so the
     most likely program is the one to want.
+
+    Two schedules, and what `steps` means differs between them:
+
+      threshold = 0   the cosine schedule. `steps` passes, each committing the
+                      slots the schedule calls for whether or not the model is
+                      sure of them. Every program costs exactly `steps` passes.
+      threshold > 0   commit every unfilled slot the model is at least this
+                      confident of, and at least the best one so it cannot
+                      stall; `steps` becomes a cap rather than a count, and a
+                      program costs as many passes as it needs.
+
+    The second exists because of what step 2 measured. On compound filter
+    predicates (level 3) goal success is 0% at 8 passes and 7 to 16% at 32,
+    while looping the block -- eight times the arithmetic per pass, free on the
+    NPU -- does nothing for them. So what a pass buys is not refinement, it is a
+    smaller commit granularity: at 32 passes over a 64-slot canvas the sampler
+    commits about two slots per pass, each seeing the last. Paying that price on
+    every program is the waste the threshold removes, because most programs have
+    no predicate in them.
     """
     n = model.c.canvas
     device = next(iter(inputs.values())).device
@@ -173,14 +192,24 @@ def diffusion_sample(model, inputs: dict, ov, steps: int = 8, temperature: float
                 F.softmax(logits.float()[0] / temperature, dim=-1), 1).squeeze(1).unsqueeze(0)
             conf = probs[0].gather(1, pred[0].unsqueeze(1)).squeeze(1).unsqueeze(0)
 
-        # How many slots should be filled after this step, on a cosine schedule.
-        target_filled = n if s == steps - 1 else int(
-            n * (1 - math.cos(math.pi / 2 * (s + 1) / steps)))
-        need = target_filled - int(filled.sum())
-        if need <= 0:
-            continue
         cand = conf.masked_fill(filled, -1.0)
-        idx = cand[0].topk(min(need, int((~filled).sum()))).indices
+        if threshold > 0:
+            # Everything the model is sure of, and never nothing: a pass that
+            # commits no slot would loop until the cap with the canvas unchanged.
+            take = (~filled[0]) & (conf[0] >= threshold)
+            if s == steps - 1 or not bool(take.any()):
+                take = ~filled[0] if s == steps - 1 else torch.zeros_like(take)
+                if not bool(take.any()):
+                    take[int(cand[0].argmax())] = True
+            idx = take.nonzero(as_tuple=True)[0]
+        else:
+            # How many slots should be filled after this step, on a cosine schedule.
+            target_filled = n if s == steps - 1 else int(
+                n * (1 - math.cos(math.pi / 2 * (s + 1) / steps)))
+            need = target_filled - int(filled.sum())
+            if need <= 0:
+                continue
+            idx = cand[0].topk(min(need, int((~filled).sum()))).indices
         # Commit in descending confidence, re-checking the local rules against
         # what THIS step has already committed.
         #
