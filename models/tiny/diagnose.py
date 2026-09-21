@@ -73,6 +73,16 @@ def compare_calls(reference: str, program: str, tools: dict) -> Counter:
     Counts: `compared` (reference CALL lines where the generation also wrote
     a CALL), `same_tool`, `same_effect`, and the exact chance for each: a
     uniform pick over the task's declared tools.
+
+    `chance_tool_sig` is the chance line that matters on a decoyed suite: a
+    uniform pick among the tools sharing the reference tool's *signature*,
+    which is what a model that infers the type shape and never reads a
+    description is left choosing between. Against the flat `chance_tool` a
+    decoyed suite flatters itself -- 30 tools per task makes chance 3.3% when
+    a pure type matcher already scores 40% -- and that gap is the shortcut
+    results/GROUNDING.md is about. On an undecoyed suite the signature is
+    unique, so `chance_tool_sig` is 100% and `same_tool` beating it is the
+    only evidence worth anything.
     """
     m = Counter()
     gen_calls = dict(calls(program))
@@ -89,6 +99,7 @@ def compare_calls(reference: str, program: str, tools: dict) -> Counter:
         if pick in tools:
             m["same_effect"] += effect(tools[pick][0]) == effect(sig)
         m["chance_tool"] += 1 / len(tools)
+        m["chance_tool_sig"] += 1 / sum(1 for s, _ in tools.values() if s == sig)
         m["chance_effect"] += sum(1 for s, _ in tools.values()
                                   if effect(s) == effect(sig)) / len(tools)
     return m

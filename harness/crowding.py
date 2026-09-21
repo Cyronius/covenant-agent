@@ -10,16 +10,28 @@ matching real deployments, where calling the wrong tool is legal.
 
 Name collisions (tool or entity) between the native world and donors, or
 between donors, are skipped rather than renamed.
+
+`foreign=` is the second distractor source: entity-free tools from outside
+the themed vocabulary, which is how the imported open schemas enter the
+corpus (`data/gen/open_pool.py`, and
+`.claude/plans/imported-schemas-as-distractors.md` for why they are
+distractors and not worlds). They carry no entities, so they can never
+conflict on one; only the tool-name check applies.
 """
 from __future__ import annotations
 
 import copy
 import random
-from typing import List
+from typing import List, Optional
+
+# Foreign tools declare no entities, so the entity-merge and entity-conflict
+# paths below are no-ops for them; this stands in for a donor world.
+_NO_ENTITIES = {"entities": {}}
 
 
 def crowd_world(world: dict, donors: List[dict], rng: random.Random,
-                n_extra_tools: int) -> dict:
+                n_extra_tools: int,
+                foreign: Optional[List[dict]] = None) -> dict:
     merged = {
         "name": world["name"], "now": world["now"],
         "entities": dict(world["entities"]),
@@ -34,6 +46,8 @@ def crowd_world(world: dict, donors: List[dict], rng: random.Random,
     for donor in donors:
         for tool in donor["tools"]:
             candidates.append((donor, tool))
+    for tool in foreign or ():
+        candidates.append((_NO_ENTITIES, tool))
     rng.shuffle(candidates)
 
     added = 0

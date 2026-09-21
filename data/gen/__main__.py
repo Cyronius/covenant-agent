@@ -44,7 +44,8 @@ if _DOMAIN_SPLIT.exists():
 def gen_one(level: int, seed: int, holdout: bool, teacher: str,
             crowd: tuple | None = None, symbols: str = "classic",
             enums: bool = False, kinds: bool = False,
-            decoys: tuple | None = None, decoy_nonsense: float = 0.15) -> dict:
+            decoys: tuple | None = None, decoy_nonsense: float = 0.15,
+            inject_open: tuple | None = None) -> dict:
     rng = random.Random(seed)
     if holdout:
         pool = [w for w in RESERVED["worlds"] if w in programs.PROFILES]
@@ -78,6 +79,24 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
                                       min(10, len(donor_names)))]
         world = crowd_world(world, donors, rng,
                             rng.randint(crowd[0], crowd[1]))
+    n_injected = 0
+    if inject_open:
+        # imported open schemas as distractors: tool names from outside the
+        # themed vocabulary, injected into a themed world whose program,
+        # entities and ID:/OBJ: typing are untouched
+        # (.claude/plans/imported-schemas-as-distractors.md)
+        from data.gen.open_pool import load_pool
+        from harness.crowding import crowd_world
+        before = len(world["tools"])
+        # its own RNG, like --decoys: --inject-open draws the *same* world,
+        # state and program as the run without it, so the pair is a clean
+        # A/B and the gap between the two scores is the number this is
+        # after. --crowd, which consumes the shared rng, is not.
+        irng = random.Random(seed ^ 0xFEED)
+        world = crowd_world(world, [], irng,
+                            irng.randint(inject_open[0], inject_open[1]),
+                            foreign=load_pool(holdout=holdout))
+        n_injected = len(world["tools"]) - before
     now = world["now"]
     state = gen_state(world_name, rng, now)
 
@@ -121,15 +140,19 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
             "style": style, "frame": sample.frame,
         },
         prebuilt=(ctx, sandbox_ctx))
-    if crowd or decoy_names:
-        # crowded and decoyed contexts contain tools the native world cannot
-        # rebuild a sandbox for — store the payload with the task
+    if crowd or decoy_names or n_injected:
+        # crowded, decoyed and injected contexts contain tools the native
+        # world cannot rebuild a sandbox for — store the payload with the
+        # task, or harness/run.py:101 KeyErrors in sandbox_from_context
         task["sandbox"] = sandbox_ctx
         task["tags"] = sorted(set(task["tags"])
                               | ({"crowded"} if crowd else set())
-                              | ({"decoyed"} if decoy_names else set()))
+                              | ({"decoyed"} if decoy_names else set())
+                              | ({"open-injected"} if n_injected else set()))
     if decoy_names:
         task["provenance"]["decoys"] = decoy_names
+    if n_injected:
+        task["provenance"]["open_distractors"] = n_injected
 
     # training-pair extras
     task["input_text"] = serialize_context(request, ctx)
@@ -212,9 +235,22 @@ def main():
                          "siblings with the same signature and a "
                          "neighbouring description, so only the description "
                          "says which one the request means")
+    ap.add_argument("--inject-open", default=None, metavar="MIN:MAX",
+                    help="inject MIN..MAX imported open-schema tools "
+                         "(data/open_pairs) into each themed world as "
+                         "distractors; the program, entities and typing stay "
+                         "the themed world's")
     ap.add_argument("--decoy-nonsense", type=float, default=0.15,
                     help="share of decoys named foo17 / operation_93, so the "
                          "name cannot carry the choice at all")
+    ap.add_argument("--require-collisions", type=float, default=None,
+                    metavar="PCT",
+                    help="fail if more than PCT%% of reference CALLs name a "
+                         "tool whose signature no sibling shares. A file "
+                         "above the ceiling cannot teach or test description "
+                         "reading (results/GROUNDING.md); every new corpus "
+                         "and exam should pass this. Without it the "
+                         "statistic is printed and a 100%% file warns.")
     args = ap.parse_args()
     crowd = None
     if args.crowd:
@@ -224,6 +260,10 @@ def main():
     if args.decoys:
         lo, hi = args.decoys.split(":")
         decoys = (int(lo), int(hi))
+    inject_open = None
+    if args.inject_open:
+        lo, hi = args.inject_open.split(":")
+        inject_open = (int(lo), int(hi))
     if args.domains:
         from data.gen.domains import register_domains
         registered = register_domains(args.domains)
@@ -251,7 +291,8 @@ def main():
                                         symbols=args.symbols,
                                         enums=args.enums, kinds=args.kinds,
                                         decoys=decoys,
-                                        decoy_nonsense=args.decoy_nonsense)
+                                        decoy_nonsense=args.decoy_nonsense,
+                                        inject_open=inject_open)
                 except (programs.SampleError, ReferenceError):
                     failures += 1
                     continue
@@ -272,6 +313,40 @@ def main():
                       f"noops dropped: {noops})")
     print(f"wrote {written} tasks -> {out} "
           f"(resamples: {failures}, noops dropped: {noops})")
+    report_signature_uniqueness(out, args.require_collisions)
+
+
+def report_signature_uniqueness(out: Path, ceiling: float | None) -> None:
+    """Can the typed signature alone pick the tool in this file?
+
+    A file where it always can cannot teach description reading and cannot
+    test it either, whatever accuracy it later produces — see
+    `results/GROUNDING.md`, which found every suite in the tree at 100%
+    except the two built with decoys. Printed with every generated file so
+    the property is never again an unexamined one.
+    """
+    from harness.signature_uniqueness import measure_tasks
+
+    r = measure_tasks(out)
+    if r is None:
+        return
+    print(f"signature uniqueness: {r['full']:.1%} full, "
+          f"{r['stripped']:.1%} types-only, over {r['calls']} reference CALLs "
+          f"({r['tools_per_task']:.1f} tools/task)")
+    if ceiling is not None and r["full"] * 100 > ceiling:
+        print(f"FATAL: {r['full']:.1%} of reference CALLs name a tool no "
+              f"sibling shares a signature with, over the {ceiling:.0f}% "
+              f"ceiling. A model can pick every tool by type shape alone, so "
+              f"nothing scored on this file says anything about grounding. "
+              f"Add signature-identical siblings with --decoys MIN:MAX.",
+              file=sys.stderr)
+        sys.exit(1)
+    if r["full"] >= 0.99:
+        print("WARNING: the signature identifies the tool in essentially "
+              "every call. This file cannot teach or test description "
+              "reading; H4 and R5 claims taken on it are unsupported "
+              "(results/GROUNDING.md). --decoys MIN:MAX adds the "
+              "discrimination; --require-collisions makes this fatal.")
 
 
 if __name__ == "__main__":

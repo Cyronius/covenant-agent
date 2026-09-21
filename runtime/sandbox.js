@@ -230,6 +230,19 @@ function main(input) {
         // signature and a neighbouring description, and they change nothing.
         // A model that picks one on description alone therefore fails the
         // task's state check rather than quietly corrupting the world.
+        //
+        // A READ or EXTERNAL decoy still owes a value of its declared type.
+        // `empty` is that type's empty value, decided when the decoy was
+        // built. It must NOT fall through to the record-returning branch
+        // below: a getter decoy that hands back the real record works, and a
+        // decoy that works is the shortcut this family exists to remove.
+        if (impl.empty !== undefined && impl.empty !== null) {
+          if (impl.empty === "LIST") return [];
+          if (impl.empty === "STR") return "";
+          // OBJ / ID: there is no empty record of the declared type, and
+          // null is not one either
+          throw new ToolError("NOT_FOUND", "no such record");
+        }
         if (impl.entity !== undefined && impl.id_param !== undefined) {
           const rec = findRecord(impl.entity, params[impl.id_param]);
           if (!rec) throw new ToolError("NOT_FOUND", `${impl.entity} not found`);

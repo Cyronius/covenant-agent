@@ -6,13 +6,15 @@ harness.run - a family whose references do not execute is not a corpus.
 """
 import json
 import random
+import re
 from pathlib import Path
 
 import pytest
 
 from core.ir import TaskContext
 from data.gen import askact, recovery
-from harness.decoys import DECOY_OPS, decoy_world
+from harness.decoys import (DECOY_OPS, MUTATING, _bank_key, _return_shape,
+                            decoy_world)
 from harness.run import reference_planner, run_task
 from runtime.worlds import get_world
 
@@ -59,16 +61,63 @@ def test_decoys_share_the_signature_and_differ_only_in_description():
 
 def test_a_decoy_never_describes_an_operation_its_effects_deny():
     """A copy operation carrying [SEND] is a tell, and the family is about
-    the description being the only signal."""
+    the description being the only signal. Since READ and EXTERNAL joined,
+    the return shape is part of it too: "list every" against a `OBJ:x` return
+    is the same kind of tell."""
     world = get_world("crm")
     decoyed, added = decoy_world(world, random.Random(11), nonsense=0.0)
     by_name = {t["name"]: t for t in decoyed["tools"]}
     for name in added:
         tool = by_name[name]
-        bank = next(e for e in ("PAY", "SEND", "DELETE", "WRITE")
-                    if e in tool["effects"])
+        bank = DECOY_OPS[_bank_key(tool)]
         assert any(tool["desc"].startswith(text.split("{")[0])
-                   for text in DECOY_OPS[bank].values()), (name, tool["desc"])
+                   for text in bank.values()), (name, tool["desc"])
+
+
+def test_a_read_decoy_returns_its_declared_types_empty_value():
+    """A getter decoy that hands back the real record *works*, and a decoy
+    that works teaches nothing -- it is the type shortcut with extra steps.
+    Each READ/EXTERNAL decoy carries the empty value of its return instead
+    (harness/decoys.py, runtime/sandbox.js noop)."""
+    shapes = {}
+    for world_name in ("crm", "kanban"):
+        decoyed, added = decoy_world(get_world(world_name), random.Random(5))
+        by_name = {t["name"]: t for t in decoyed["tools"]}
+        for name in added:
+            tool = by_name[name]
+            if MUTATING & set(tool["effects"]):
+                continue
+            shape = _return_shape(tool)
+            assert tool["impl"] == {"op": "noop", "empty": shape}, name
+            assert "entity" not in tool["impl"], (name, "returns a real record")
+            shapes[shape] = shapes.get(shape, 0) + 1
+    # the three the worlds actually declare (results/GROUNDING.md section 5)
+    assert set(shapes) == {"LIST", "OBJ", "STR"}, shapes
+
+
+def test_a_decoy_stays_distinguishable_after_prep_compacts_its_description(themed):
+    """prep.py trims every schema line's description to its first sentence and
+    then to 60 characters, and the description is the ONLY thing separating a
+    decoy from its original. A bank entry whose first 60 characters match its
+    neighbour's makes the task unanswerable rather than hard -- the reference
+    answer would be unreachable from what the model is shown."""
+    import sys
+    sys.path.insert(0, str(ROOT / "models" / "tiny"))
+    from prep import compact_line
+    from data.gen.__main__ import gen_one
+
+    checked = 0
+    for seed in (101, 202, 303, 404, 505):
+        task = gen_one(2, seed, False, "template", decoys=(2, 4))
+        lines = {t["sym"]: f"{t['sym']} :: {t['desc']}"
+                 for t in task["context"]["tools"]}
+        compacted = {s: compact_line(l) for s, l in lines.items()}
+        for sym in lines:
+            dupes = [o for o, c in compacted.items()
+                     if c == compacted[sym] and o != sym]
+            assert not dupes, (task["id"], lines[sym], dupes)
+            checked += 1
+    assert checked > 100, checked
 
 
 def test_a_decoyed_task_runs_green_and_never_calls_a_decoy(themed):
@@ -82,6 +131,59 @@ def test_a_decoyed_task_runs_green_and_never_calls_a_decoy(themed):
         assert not (tool_names(task) & set(task["provenance"]["decoys"]))
         row = run_task(task, reference_planner(task))
         assert row["goal_success"], row["diagnostics"][:2]
+
+
+def _swap_to_a_decoy(task: dict):
+    """A planner that runs the reference program with one call redirected to
+    a decoy sibling. Returns (planner, decoy name). The sibling shares the
+    signature and is a noop, so the program still type-checks and runs."""
+    by_sym = {t["sym"]: t for t in task["context"]["tools"]}
+    decoys = set(task["provenance"]["decoys"])
+    for line in "\n".join(task["reference"]["segments"]).splitlines():
+        parts = line.strip().split()
+        if len(parts) < 2 or parts[0] != "CALL" or parts[1] not in by_sym:
+            continue
+        real = by_sym[parts[1]]
+        sig = ([p["type"] for p in real["params"]], real["returns"],
+               real["effects"])
+        for cand in task["context"]["tools"]:
+            if cand["name"] not in decoys:
+                continue
+            if ([p["type"] for p in cand["params"]], cand["returns"],
+                    cand["effects"]) != sig:
+                continue
+            swapped = [re.sub(rf"\bCALL {real['sym']}\b",
+                              f"CALL {cand['sym']}", s)
+                       for s in task["reference"]["segments"]]
+
+            def plan(request, ctx, seg_idx, registers, _segs=swapped):
+                return _segs[seg_idx] if seg_idx < len(_segs) else None
+
+            return plan, cand["name"]
+    raise AssertionError("no called tool in this task has a decoy sibling")
+
+
+def test_decoy_called_records_a_grounding_miss_outcome_scoring_cannot_see(themed):
+    """A decoy is never in a reference program, so calling one is a miss
+    whatever the task returns -- and on an abstain task the outcome is
+    identical either way (harness/metrics.py, results/GROUNDING.md section 5).
+    Recorded, not gated: goal_success keeps the meaning it has in results/."""
+    from data.gen.__main__ import gen_one
+
+    task = gen_one(2, 101, False, "template", decoys=(2, 4))
+    clean = run_task(task, reference_planner(task))
+    assert clean["decoy_called"] is False
+    assert clean["goal_success"]
+
+    planner, name = _swap_to_a_decoy(task)
+    missed = run_task(task, planner)
+    assert missed["decoy_called"] is True, name
+    assert name in {c["name"] for c in missed["calls"]}
+
+    # None, not False, where there is nothing to miss, so a mean over an
+    # undecoyed suite is not diluted by a column that cannot apply
+    plain = gen_one(2, 101, False, "template")
+    assert run_task(plain, reference_planner(plain))["decoy_called"] is None
 
 
 def test_the_adversarial_names_turn_up_at_the_rate_asked_for():

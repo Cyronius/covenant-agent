@@ -20,7 +20,10 @@ dist/
 
 # raw production session pulls (PII) - never committed; only the scrubbed, reviewed eval slice is tracked
 data/real_sessions/
-data/open_pairs/
+# `/*` not `/`: git cannot re-include a file inside an excluded directory,
+# and the note recording the corrected inventory is tracked
+data/open_pairs/*
+!data/open_pairs/README.md
 
 # R3 tiny-model experiment (models/tiny): tensors, checkpoints, generations
 # and pod bundles stay local; the code, results/R3.md and results/logs are tracked

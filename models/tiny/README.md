@@ -112,6 +112,19 @@ canvas with every pointer slot hidden; for the control they are teacher-forced.
 tool, same effect class, each against chance). `probe.py` reads the surface
 tokens `evaluate.py` writes per slot, so it works under either binding.
 
+**Read `same_tool` against `chance_tool_sig`, not `chance_tool`.** The flat
+line is a uniform pick over every declared tool, and on a decoyed suite it is
+badly wrong: a model that infers the type shape from the request and reads no
+description has already narrowed to the tools sharing that signature, and it
+picks inside *that* group. `chance_tool_sig` is that number. The two are far
+apart — on the 42-world holdout, `chance_tool` reports 3.3% where a pure shape
+matcher scores **73.4%** with decoys on mutating tools only, and 43.5% with
+decoys on READ and EXTERNAL as well. Undecoyed it is 100.0%, which is the
+whole point of `results/GROUNDING.md`: on those suites there is no score a
+shape matcher cannot reach. `decoy_called` is the companion column — a decoy
+is never in a reference program, so calling one is a miss whatever the task
+returns, and on an abstain task the outcome is identical either way.
+
 **Model size.** Structural at the R3 widths (d=256, line 2, graph 1, turn 2,
 decoder 4) is 9.4M parameters against the flat 7.9M; the difference is the
 extra encoder layers. `--dec-loops` applies the decoder stack repeatedly under
@@ -206,6 +219,109 @@ python report.py --dir out        # the tables, and step 2's gate verdict
 It takes reference programs out of the tensor cache, decodes them back to text,
 compiles them and executes them. If that is not 100%, no model number below it
 means anything.
+
+## Distractor injection, and holding out more than one world
+
+Two knobs added 2026-09-19, motivated by R8 §5b: on the held-out world the
+control arm spans 74–95% across three seeds while the diffusion arm holds
+86–90%, and the failure is in the encoder's binding transfer. Plan:
+`.claude/plans/imported-schemas-as-distractors.md`.
+
+**Injection.** `data/open_pairs/` holds 7,263 tool names from three imported
+open function-calling sets, and the themed vocabulary intersects them in 8.
+They are not a harder corpus — a tf-idf baseline solves them at 94.2% against
+13.4% on `s5_plain`, because their parameters are bare scalars and their
+`returns` are null — but as *distractors* inside a themed world they are 42
+descriptions per row in a vocabulary the encoder has never read, with the
+program, the entities and the `ID:`/`OBJ:` typing still the themed world's.
+
+```bash
+bash results/logs/gen_s5_inject.sh          # data/s5_inject.jsonl, pairs row-for-row with s5_plain
+python prep.py --corpus ../../data/s5_inject.jsonl --limit 30000 --max-line 80 --out data_cache_inject
+```
+
+`--max-line 80`, not the default 64, and this is the part to know before
+spending pod time. The default was tuned to themed lines, whose longest is 56
+tokens. An injected world is 60 tools and ~150 fields rather than 18 and 23,
+its `input_text` is 13.8k chars rather than 3.1k, and its joint-id space is
+312 rather than 145 — so the per-line encoder does roughly five times the work
+per example, and the pointer head's output space doubles. The line budget has
+to move with it: foreign vocabulary splits into more BPE pieces, and the
+longest injected line lands at 66. `prep.py` refuses to truncate, so it stops
+rather than corrupting a row. **Time one arm-seed before committing a sweep.**
+
+**The unseen-world split, from the worlds that were always reserved for it.**
+R3, R7 and R8 measured generalisation by holding out `bookstore` — one world,
+275 rows, **0.96%** of the training data, carved from inside the training
+pool. Meanwhile `data/holdout/reserved.json` and
+`data/holdout/reserved_domains.json` reserve 46 names, **42** of which the
+generator can build, against 104 training worlds; `data.gen --holdout` has
+drawn from them since S2, and nothing has ever trained on them. They are
+generated themes like the training ones — same `ID:entity` typing, same
+program recipes, same English templates. So R8's 74–95% control spread, the
+variance claim this whole track now turns on, is an n=1-world estimate taken
+while 42 purpose-built unseen worlds sat unused.
+
+Use them. It costs no training data, the training corpus does not change, and
+the comparison is against 42 worlds instead of one:
+
+```bash
+bash results/logs/gen_s5_holdout.sh 42          # data/s5_holdout.jsonl (+ _inject)
+bash results/logs/gen_s5_holdout.sh 0 typed 1:2 # data/s5_holdout_decoy.jsonl
+python prep.py --corpus ../../data/s5_plain.jsonl --limit 30000 --max-line 80 \
+    --holdout-corpus ../../data/s5_holdout_both.jsonl --out data_cache_ho42
+```
+
+`prep.py` refuses a `--holdout-corpus` that shares a world with `--corpus`,
+so "unseen" is checked, not assumed, and the layout, keyword table and symbol
+vocabulary are sized over both corpora so a holdout row cannot overflow a
+tensor sized on train.
+
+**Both holdouts, one cache, and why.** `s5_holdout_both.jsonl` is the plain
+and decoyed holdouts concatenated, with the decoyed side's ids suffixed
+`+decoy` — they are generated from the same seeds, so they pair row for row on
+id, world, state and request, and a by-id lookup
+(`models/tiny/evaluate.py`) would otherwise silently drop half of them.
+
+Two numbers off one training run, and the difference between them is the
+grounding measurement. The plain rows are 100% signature-unique, so a model
+that reads no tool description still has a unique shape match for every call
+there (`results/GROUNDING.md`); the decoyed rows are 2.6%. Watch
+`chance_tool_sig` rather than `chance_tool` on the decoyed half — see below.
+
+The cost is real and larger than it looks. A decoyed row declares up to
+**50** tools against the plain 18, and `prep.py` sizes `Layout.max_tool` over
+every split, so the joint id space goes from 145 to **177** and — the part
+that costs — the per-row tool tensor that *every training row* carries is
+sized at 50 lines instead of 18. `train.pt` goes from 264 MB to 490 MB for
+the same 25,711 training rows. Check `pod.md`'s per-process budget before
+assuming a 24 GB card still fits two training processes side by side.
+
+It is arm-neutral — both arms read the same cache, so R8's control-spread
+question is untouched — but neither number in this cache is layout-continuous
+with R8's `bookstore` figures. Compare within the cache, not across to R8.
+
+Headroom to watch: the holdout's longest schema line is **75** of the 80-token
+budget (the plain holdout's was 67). Decoy descriptions are what pushed it.
+Another bank entry a few words longer would hit the cap, and `prep.py` stops
+rather than truncating — a truncated line loses its CONSTANTS section, which
+is silent corruption, not a small loss of context.
+
+`--max-line 80` here is a finding, not a formality. The default 64 was fitted
+to the 104 training worlds, whose longest schema line is 56 tokens, and the
+input BPE is trained on training lines only — so unseen-world vocabulary
+splits into more pieces and `notary_office` carries a 67-token tool line. The
+default cap rejects the reserved corpus outright, with no injection involved.
+Both arms read the same cache, so the arm comparison is unaffected; only the
+absolute number moves against an R8 cache built at 64.
+
+**Carving worlds out of the training pool** is still available —
+`--holdout-worlds N` draws N from the mid-sized band, `--holdout-seed S`
+varies the draw, and without `--holdout-seed` N=1 reproduces the historical
+median-sized pick so existing caches rebuild unchanged. But it is the second
+choice: five worlds costs 4.8% of the training data, which makes the control
+arm's test number incomparable to R8's, and it still measures fewer worlds
+than the reserved set gives for free.
 
 ## Splitting the work across machines
 

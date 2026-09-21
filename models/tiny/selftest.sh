@@ -14,13 +14,53 @@ CACHE="${1:-data_cache_struct}"
 BINDING=$(python -c "import json,sys; print(json.load(open(sys.argv[1]+'/config.json')).get('binding','flat'))" "$CACHE")
 echo "cache $CACHE  binding $BINDING"
 
+# Can this machine EXECUTE a program, or only write one? Executing needs the
+# Node sandbox and the themed world definitions, and pack.py ships neither --
+# scoring is a laptop job, after the pod is shut down. Every step below that
+# would execute is gated on this, because on a pod the alternative is `set -e`
+# killing the run on an ImportError that is not a defect.
+if python -c "import corpus, harness.run, data.gen.domains" 2>/dev/null; then
+  CAN_SCORE=1; GENFLAG=""              # generate AND score, as on a laptop
+else
+  CAN_SCORE=0; GENFLAG="--generate"    # write programs only
+  echo "  (no sandbox here: generating only, scoring is a laptop job)"
+fi
+
 echo "=== 1. do reference programs survive the round trip and reach the goal ==="
 # The check everything else rests on. If this fails, no model number means
 # anything, because the data path itself is wrong. Under structural binding
 # this is the canvas of keywords and pointers, with r0.F6 as two slots,
 # rendered back to text and executed.
-python test_pipeline.py --cache "$CACHE" --split test --n 40
-python test_pipeline.py --cache "$CACHE" --split holdout --n 20
+#
+# Executing needs the Node sandbox, and pack.py deliberately leaves it behind
+# (scoring happens on the laptop after the pod is shut down). So ON THE POD
+# this step cannot run, and it used to take the whole script down with it --
+# `set -e` and an ImportError on `harness.run`, as the first command of the
+# session, on the meter. Steps 2-6 need none of it and are the checks that
+# actually gate an expensive run, so skip rather than abort.
+# `import corpus` first: it is what puts the covenant checkout (or the bundle
+# root) on sys.path, so a bare `import harness.run` would say "absent" from
+# this directory even on the laptop, where it is present and should run.
+if [ "$CAN_SCORE" = 1 ]; then
+  python test_pipeline.py --cache "$CACHE" --split test --n 40
+  python test_pipeline.py --cache "$CACHE" --split holdout --n 20
+  # A combined holdout stores the plain rows first, so the line above checks
+  # only those; the decoyed half declares up to 50 tools instead of 18 and is
+  # the half a layout or symbol bug would break. Skipped when the cache's
+  # holdout has no decoyed rows.
+  if python -c "
+import pickle,sys
+rows = pickle.load(open(sys.argv[1] + '/rows.pkl','rb')).get('holdout') or []
+sys.exit(0 if any(r['id'].endswith('+decoy') for r in rows) else 1)" "$CACHE"; then
+    python test_pipeline.py --cache "$CACHE" --split holdout --n 20 --id-contains '+decoy'
+  else
+    echo "  (holdout has no decoyed rows; skipped)"
+  fi
+else
+  echo "  SKIPPED: no harness.run in this tree -- the Node sandbox stays on the"
+  echo "  laptop by design (pack.py). Run this step there; it gates the data"
+  echo "  path, not the model, so it does not need to run where training does."
+fi
 
 echo
 echo "=== 2. can both samplers reproduce a known answer ==="
@@ -42,7 +82,7 @@ for arm in diffusion ar; do
   extra=""
   [ "$arm" = diffusion ] && extra="--steps 2 --repair-rounds 1"
   python evaluate.py --ckpt "runs/_selftest_$arm/best.pt" --cache "$CACHE" \
-    --split val --limit 4 $extra --gen-out "runs/_selftest_$arm.jsonl"
+    --split val --limit 4 $GENFLAG $extra --gen-out "runs/_selftest_$arm.jsonl"
 done
 
 echo
@@ -65,7 +105,7 @@ python train.py --arm diffusion --cache "$CACHE" --epochs 1 --limit-train 32 \
 grep -q '"acc_tool"' runs/_selftest_q/log.jsonl || { echo "log has no per-slot accuracy"; exit 1; }
 python -c "import json; c = json.load(open('runs/_selftest_q/config.json')); assert c['weights'] == 'tern' and c['resident_bytes'] > 0, c; print('  block', c['loop_body_params'], 'params ->', c['resident_bytes'], 'resident bytes')"
 python evaluate.py --ckpt runs/_selftest_q/best.pt --cache "$CACHE" --split val \
-  --limit 4 --steps 2 --dec-loops 2 --gen-out runs/_selftest_q.jsonl
+  --limit 4 $GENFLAG --steps 2 --dec-loops 2 --gen-out runs/_selftest_q.jsonl
 python -c "import json; r = [json.loads(l) for l in open('runs/_selftest_q.jsonl', encoding='utf-8')]; assert all(x['loops'] == 2 for x in r), 'the inference-time loop override was ignored'; print('  generation ran at the overridden loop count')"
 
 echo

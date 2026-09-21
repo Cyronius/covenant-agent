@@ -99,6 +99,25 @@ attention over 41 schema lines of 65 tokens is the bulk of it, not the 6M
 parameters -- and a third process dies on `torch.OutOfMemoryError` within a
 minute. Stage A is the gate, so it gets a slot; the rest queue behind it.
 
+**That budget is per-cache, and `data_cache_ho42` breaks it.** The 41 schema
+lines above are `max_tool` 18 + `max_field` 23, and `prep.py` sizes
+`max_tool` over every split -- so a cache whose holdout carries decoyed rows
+(up to 50 tools against the plain 18) widens the tool tensor that *every
+training row* carries. `data_cache_ho42` is 73 lines, not 41.
+
+| cache | max_tool | schema lines | GB/process at batch 64 | fits on 24 GB |
+|---|---|---|---|---|
+| `data_cache_struct`, `data_cache_ho42_plain` | 18 | 41 | 10.0 (measured) | 2 |
+| `data_cache_ho42` (plain + decoyed holdout) | 50 | 73 | **~15.9** | **1** |
+
+The 15.9 is a local measurement of the activation ratio (1.589x, every module
+output summed for both models identically) applied to the 10 GB measured on
+the 3090; the ratio is solid, the absolute inherits whatever that 10 GB
+included. At batch 32 it is about 8.0 GB and two fit again -- but batch is
+part of the recipe R8 ran at, so halving it buys a slot at the cost of the
+comparison. **Run one process and read `nvidia-smi` before launching a
+second**; two minutes against an hour.
+
 Two shared processes cost about 0.53 s/step at L=1 against 0.35 alone, and step
 time scales with the loop count, so budget the sweep by
 `sum over L of L` rather than by the number of runs: L=32 alone is a third of the

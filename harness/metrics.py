@@ -118,6 +118,22 @@ def metrics_row(task: dict, *, parse_ok: bool, compile_ok: bool,
     referent_match = None
     if expected_status == "aborted" and ref.get("abort_refs"):
         referent_match = sorted(abort_refs or []) == sorted(ref["abort_refs"])
+    # Family B: a decoy is a signature-identical sibling and is never in a
+    # reference program (harness/decoys.py), so calling one is a grounding
+    # miss whatever else the task returns. Recorded, not gated, like
+    # referent_match above -- every existing number keeps its meaning.
+    #
+    # The column exists because outcome scoring cannot see the miss on an
+    # abstain task. A decoy READ's natural noop return is an empty list, and
+    # an empty list is also the legitimate trigger for check-then-decline, so
+    # a model that picks a decoy list tool, sees nothing and emits
+    # ABORT NOT_FOUND scores `correct_abstain` while having chosen the wrong
+    # tool. Report `correct_abstain and not decoy_called` where the grounding
+    # claim is the point (results/GROUNDING.md section 5). None when the task
+    # carries no decoys, so it never dilutes a mean over an undecoyed suite.
+    decoy_names = set((task.get("provenance") or {}).get("decoys") or [])
+    decoy_called = (bool(decoy_names & {c.get("name") for c in call_log})
+                    if decoy_names else None)
     ref_calls = ref.get("calls") or None
     ref_instr = ref.get("instructions") or None
     n_calls = len(call_log)
@@ -144,6 +160,8 @@ def metrics_row(task: dict, *, parse_ok: bool, compile_ok: bool,
         "abort_reason": abort_reason,
         "abort_refs": abort_refs or [],
         "abort_referent_match": referent_match,
+        # True/False on a decoyed task, None where there are no decoys
+        "decoy_called": decoy_called,
         "unnecessary_destructive": unnecessary_destructive(
             call_log, ref.get("call_log", []), sandbox_tools),
         "pauses": pauses,

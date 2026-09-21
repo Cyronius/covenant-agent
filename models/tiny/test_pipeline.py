@@ -25,6 +25,13 @@ def main():
     ap.add_argument("--cache", default="data_cache_struct")
     ap.add_argument("--split", default="val")
     ap.add_argument("--n", type=int, default=50)
+    ap.add_argument("--id-contains", default=None, metavar="TEXT",
+                    help="only rows whose task_id contains TEXT. A combined "
+                         "holdout (data/s5_holdout_both.jsonl) stores the "
+                         "plain rows first and the decoyed ones after, with "
+                         "`+decoy` on their ids, so the first --n rows are "
+                         "all plain and the decoyed half goes unchecked "
+                         "without this")
     args = ap.parse_args()
 
     from sandbox import register_themes
@@ -42,8 +49,13 @@ def main():
 
     stats = Counter()
     failures = []
-    n = min(args.n, len(split))
-    for i in range(n):
+    which = [i for i in range(len(split))
+             if args.id_contains is None
+             or args.id_contains in split.meta[i]["task_id"]]
+    if args.id_contains is not None and not which:
+        raise SystemExit(f"no {args.split} row's id contains "
+                         f"{args.id_contains!r}")
+    for i in which[:args.n]:
         row = by_id[split.meta[i]["task_id"]]
         text = split.codec(i).render(split.target(i)[0].tolist())
         ctx = TaskContext.from_json(row["context"])

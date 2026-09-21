@@ -400,6 +400,17 @@ Optional fifth arm, only if time allows: shared-block recursion (one block appli
 **Fail action:** the generalization claim is dead. The product becomes a per-domain planner trained on each customer's tool set. Say so in the results.
 **Depends on:** R3. Independent of R4, R6–R8.
 
+> **This bar cannot fail for the right reason on the suites that exist**
+> (`results/GROUNDING.md`, 2026-09-19). `r2_holdout` is 100% signature-unique,
+> so a model that never reads a description scores the same on it as on
+> `e_known_plain`, and adversarial names cost such a model nothing because it
+> was not using the name. Do not run R5 against these suites and report a pass.
+> The restatement — held-out and adversarial arms built with decoys, so the
+> description is required in a majority of calls — is step 3 of
+> `.claude/plans/binding-transfer-signature-shortcut.md`, and edits this
+> section when the retrain that motivates it lands. The 5-point criterion
+> itself is fine; the instrument is not.
+
 ---
 
 ## 8. R6 — Where does English break?
@@ -693,3 +704,199 @@ covenant-agent/
   sweep is written and unrun; the next spend is seeds on that cell and
   anything that stabilises binding transfer, which now matters more than the
   weight format.
+
+- **2026-09-19 — imported schemas become distractors, not worlds
+  (`.claude/plans/imported-schemas-as-distractors.md`).** **Motivating
+  result:** R8 §5b — on the held-out world the control arm spans 74–95%
+  across three seeds while the diffusion arm holds 86–90%, and R8 §4
+  locates the failure in the encoder's binding transfer, not the decode.
+  The proposal on the table was to recombine `data/open_pairs/`'s imported
+  open schemas into 18–60-tool worlds and train on those. The direction is
+  backwards. A lexical tf-idf baseline over request-vs-tool text scores
+  94.2% on those worlds as-is and 77.0% after crowding them to 60 tools,
+  against 13.4% on `s5_plain` and 12.1% on `s5_crowded`: the imports are six
+  times easier than the corpus the tiny model already trains on, because
+  every imported parameter is a bare scalar and every `returns` is null, so
+  there is no `ID:entity` or `OBJ:` structure for selection to go through.
+  Crowding raises the tool count without raising the task. What the imports
+  actually are is 7,263 tool names the encoder has never read, against a
+  themed vocabulary they intersect in 8. So they enter as **distractors
+  injected into themed worlds** (`--inject-open MIN:MAX`,
+  `data/gen/open_pool.py`, `harness/crowding.py`'s `foreign=`), where the
+  program, entities and `ID:`/`OBJ:` typing stay the donor world's. The
+  same lexical baseline falls to 7.9% under injection, and injection is an
+  index-preserving append onto a world built before `build_context`, so no
+  program is re-derived or re-resolved; one shard of 3,750 rows generates,
+  preps and passes `selftest.sh` (40/40 round trip on test and on holdout).
+  Not free, measured on that shard: 18 tools / 23 fields becomes 60 / 149,
+  `input_text` 3.1k → 13.8k chars, the joint-id space 145 → 313, and the
+  per-line encoder runs over 209 lines instead of 41 — about five times the
+  work per example — so an arm-seed has to be timed on the pod before the
+  sweep is committed. Foreign text also breaks two assumptions the themed
+  corpus let stand, both of which stop a prep run *after* the corpus is
+  generated: four imported descriptions contain a newline, which splits a
+  tool line in two, and 159 tools declare more than seven parameters, which
+  overflows a schema line (`data/gen/open_pool.py` normalises both, keeping
+  7,257 of 7,263 names). Even capped, foreign vocabulary tokenizes into more
+  BPE pieces, so the longest injected line is 66 tokens and the injected
+  cache needs `prep.py --max-line 80`. That default of 64 turns out to be
+  fitted to the 104 training worlds, whose longest line is 56, with the
+  input BPE trained on training lines only — the reserved eval corpus below
+  needs the wider budget too (`notary_office`, 67 tokens) with no injection
+  involved, so the cap was quietly a training-set artifact. Two other
+  decisions ride with it. The first
+  corrects the plan and outranks the injection work: **the unseen-world
+  split now comes from the 42 reserved eval worlds, not from carving worlds
+  out of training** (`prep.py --holdout-corpus`,
+  `results/logs/gen_s5_holdout.sh`). `data/holdout/reserved_domains.json`
+  has reserved those themes since S2 and `data.gen --holdout` has drawn
+  from them since then; they carry the same `ID:entity` typing and program
+  recipes as the training worlds and nothing has ever trained on them. R3,
+  R7 and R8 nonetheless measured generalisation on `bookstore` — one world,
+  275 rows, 0.96% of the training data, carved from inside the training
+  pool — so the 74–95% spread that motivates this whole amendment is an
+  n=1-world estimate taken while 42 purpose-built unseen worlds sat unused.
+  Measuring on 42 costs no training data, needs no change to `split()`, and
+  may settle R8's variance question before any injection arm is run; that
+  is now the first thing to do. Carving worlds out of `--corpus`
+  (`--holdout-worlds N --holdout-seed S`) stays available as the second
+  choice. The other decision: the imported rows themselves stay out of
+  training, reserved as a candidate non-template-request eval suite.
+  Corrected inventory: `data/open_pairs/` holds 6,893 distinct rows, not
+  8,242 — `b3_draw.jsonl` is a re-draw of the other three files, and the
+  true union is 3,235 tool sets / 7,263 names, not ~4,300 / ~10,000
+  (`data/open_pairs/README.md`).
+
+- **2026-09-19 — grounding is unmeasured: the signature identifies the tool in
+  every suite (`results/GROUNDING.md`).** **Motivating result:**
+  `results/R3.md` section 3 measured that in `s5_plain` the typed signature
+  identifies the called tool uniquely in 100% of reference `CALL`s, and used it
+  to place R3's failure in symbol binding rather than English, which was right.
+  `harness/signature_uniqueness.py` now measures the same property across the
+  tree, and it is not a `s5_plain` quirk: `s5_tasks`, `s5_crowded`,
+  `s5_holdout`, `e_known_plain`, `e_foreign`, `e_crowded`, `e_crowded_v2`,
+  `e_ood_english`, `r2_holdout`, `e_demo_requests`, `e_db_requests`,
+  `r1_tasks` and `curriculum_tasks` are **all 100.0%**, and every exam among
+  them is 100% with field symbols stripped as well — stricter than the corpus
+  that trains for it, which sits at 90–94%. Crowding does not touch it
+  (`e_crowded`, 55 tools per task, 100.0%/100.0%): foreign tools add candidates
+  without adding collisions. The only exceptions in the tree are the two suites
+  `harness/decoys.py` built, at 68.3% and 69.6%. **What this costs us:** a
+  suite whose signature is unique cannot distinguish tool grounding from type
+  inference, so **H4 is unmeasured** — not refuted — and **R5 (§7) cannot fail
+  for the right reason as written**, because `r2_holdout` is 100.0% and
+  adversarial names cost a signature matcher nothing. `results/R7.md`'s
+  transfer result stands as a *binding* claim; the grounding reading of it does
+  not follow. The real tool sets are not like this: `coursebuilder_tools.json`,
+  in Agent Core form and so directly comparable, is 77.8% unique with
+  `apply_to_lessons` and `generate_lesson_content` both
+  `(ID:module, STR) -> None [WRITE]`; the mobi frontend schemas measure 28.0%
+  and 34.5% under coarser JSON Schema typing, a floor rather than the figure.
+  **What changes:** signature uniqueness becomes a statistic `data.gen` prints
+  for every file it writes, with a ceiling no corpus or exam may ship at;
+  decoys leave family B for the main generation path and the exams; and §7's
+  pass bar is restated against a suite that can fail it, landing with the
+  retrain that motivates it rather than ahead of it. No IR change, no spec
+  change. Plan: `.claude/plans/binding-transfer-signature-shortcut.md`.
+
+  Two things this does **not** claim, recorded so they are not read into it.
+  It does not explain `results/R7.md` §4's seed instability — the shortcut is a
+  candidate mechanism and the suites cannot currently separate it from an
+  optimisation accident. And it does not establish that tool collisions cause
+  the real-request gap (`route_write_match` 53.75%); that needs a breakdown of
+  real-session misses against collisions in their own contexts, which has not
+  been run.
+
+  **Step 1 landed the same day, and the pilot changed step 2**
+  (`results/GROUNDING.md` §5). `data.gen` now prints signature uniqueness for
+  every file it writes and warns at ≥99%; `--require-collisions PCT` makes it
+  fatal and is opt-in, so every `results/logs/gen_*.sh` still reproduces the
+  corpus it produced before while new corpora and exams gate on it. Three
+  measured results from a 200-task pilot. The decoy **rate is the wrong knob**:
+  1:2, 2:4 and 3:6 siblings per mutating tool give 59.2%, 59.2% and 60.0% full
+  uniqueness while tools per task go 30.7 → 47.4, so the rollout uses 1:2. A
+  **defect in the decoy device** was found and fixed: `harness/context.py`
+  keyed an unlinked tool param by tool name, so a SEND decoy's free-text slot
+  got a different `F` symbol than its original's and the pair stayed
+  distinguishable without reading either description (SEND 97.9% unique by full
+  signature against 2.1% by shape). A decoy now carries `decoy_of` and inherits
+  its original's symbol; a decoyed file goes 59.2% → **46.6%**, under the
+  ceiling, with full and types-only equal. Non-decoy generation is
+  byte-for-byte unchanged on the same seed, **decoyed generation is not**, so
+  `fam_decoy.jsonl` and `e_known_decoy.jsonl` as stored predate the fix.
+  Finally, **READ is the remaining wall**: 165 of 365 reference calls are READ
+  and 100% signature-unique at every rate, because `harness/decoys.py` targets
+  mutating tools only. Extending it needs a scoring decision first — an empty
+  list is both the natural noop return and the legitimate trigger for
+  check-then-decline, so a model that picks a decoy list tool and aborts would
+  score as a correct abstain. That decision, the corpus regen and §7's
+  restatement are what remain.
+
+- **2026-09-20 — step 1 of the merged plan, and the wall came down
+  (`results/GROUNDING.md` §8).** Two sessions had collided:
+  `.claude/plans/merged-state-2026-09-20.md` records that Session A's 42-world
+  unseen holdout was built hours before Session B measured that every suite in
+  the tree is 100% signature-unique, so the pod run at the front of the queue
+  would have measured binding transfer on a suite where a model that reads no
+  description still has a unique shape match for every call.
+
+  **The holdout is now decoyed, and both variants are kept.**
+  `gen_s5_holdout.sh` takes a third argument and writes to a `_decoy` suffix
+  rather than over the plain files. Keeping both is not tidiness: the plain
+  holdout is continuous with the `bookstore` measurement R3/R7/R8 reported and
+  is what R8's 74–95% control spread compares against, while only the decoyed
+  one poses the discrimination. Reading a decoyed number as if it were the
+  plain one attributes the decoy drop to the unseen worlds.
+
+  **Decoys now cover READ and EXTERNAL, and the blocker turned out to be
+  smaller than it looked.** §14's previous entry left the extension waiting on
+  an abstain-scoring decision: a decoy READ's natural noop return is an empty
+  list, an empty list is also the legitimate trigger for check-then-decline,
+  so a model that picks a decoy list tool and aborts scores a correct abstain
+  having chosen the wrong tool. The outcome cannot separate those two runs but
+  the **call log always could**, and it was simply never read — a decoy's name
+  has been in `task["provenance"]["decoys"]` since the family was built.
+  `harness/metrics.py` now carries `decoy_called`, recorded and not gated,
+  following `abort_referent_match` directly above it so that no number already
+  in `results/` changes meaning; `models/tiny/evaluate.py` tallies it.
+
+  **A second defect surfaced while wiring the first, and it is the one that
+  matters.** `compare_calls` scored `same_tool` against
+  `chance_tool = 1/len(tools)`, a uniform pick over every declared tool. That
+  is the wrong null for a decoyed suite: a model that infers the type shape
+  has already narrowed to the tools sharing that signature and picks inside
+  *that* group. `chance_tool_sig` measures it, and the gap is the whole
+  finding — on a mutating-only decoyed holdout a pure shape matcher scores
+  **73.4%** while `chance_tool` reports 3.3%, so a model at 80% would have
+  read as twenty-four times chance. Extending decoys to READ and EXTERNAL
+  takes that shortcut ceiling to **43.5%** and the file from 53.1% to **2.6%**
+  full uniqueness; every effect class now collides at a mean group of 2.4
+  tools, and 200/200 reference programs still execute green with no decoy
+  called. A READ decoy returns its declared type's empty value (`[]`, `""`, or
+  `NOT_FOUND` where there is no empty record) and explicitly does *not* take
+  the mutating branch that hands back the real record — a getter decoy that
+  returns the real record works, and a decoy that works is the type shortcut
+  with extra steps.
+
+  **The cache holds both holdouts, and it is not free.**
+  `data/s5_holdout_both.jsonl` is the plain and decoyed holdouts concatenated
+  with the decoyed side's ids suffixed `+decoy` — they share seeds, so they
+  pair row for row and collide on id otherwise. One training run then yields
+  both numbers and the difference between them is the grounding measurement.
+  The cost is encoder input size, not just a wider output head: a decoyed row
+  declares up to **50** tools against the plain 18, `prep.py` sizes
+  `Layout.max_tool` over every split, so the joint id space goes 145 → **177**
+  and the per-row tool tensor *every training row* carries is sized at 50
+  lines instead of 18. `train.pt` goes 264 MB → **490 MB** for the same 25,711
+  rows. `pod.md` reserves ~10 GB per training process and a 24 GB card was
+  taken to fit exactly two; that assumption needs re-checking before the run
+  is scheduled, and it bears directly on §4's unanswered "the 2 planners in
+  sequence" question. Arm-neutral, so R8's control-spread question is
+  untouched, but no number in this cache is layout-continuous with R8's
+  `bookstore` figures.
+
+  **What is not settled.** The training corpus is still undecoyed, so a pod
+  run against this holdout measures a model that never trained on
+  discrimination being asked to discriminate. That is the measurement the
+  grounding question asks for, but it is not R8's, and the two are not one
+  trend line. The corpus regen and §7's restatement remain open.

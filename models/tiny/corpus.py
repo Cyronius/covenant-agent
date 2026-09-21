@@ -185,16 +185,26 @@ def load(path: Path, limit: int | None = None,
 
 
 def split(examples: list[Example], seed: int = 0,
-          holdout_world: str | None = None
+          holdout_worlds: set[str] | str | None = None
           ) -> tuple[list[Example], list[Example], list[Example], list[Example]]:
-    """train, val, test, holdout-world.
+    """train, val, test, holdout-worlds.
 
     Held out by world, not by row, so the held-out split measures whether the
     encoder can read an unfamiliar tool's description rather than whether it
     memorized a symbol.
+
+    A set of worlds, not one. R8's open claim is a variance claim -- the
+    control arm spans 74-95% across three seeds on the held-out world -- and
+    it was measured on a single world holding ~1% of the data, so an unlucky
+    draw and a seed-unstable encoder are indistinguishable in it. Widening
+    the set, and varying which worlds it holds (prep.py --holdout-seed), is
+    what separates them. A bare string is still accepted, so a caller that
+    holds out one world reads the same as before.
     """
-    held = [e for e in examples if holdout_world and e.world == holdout_world]
-    rest = [e for e in examples if not (holdout_world and e.world == holdout_world)]
+    hw = ({holdout_worlds} if isinstance(holdout_worlds, str)
+          else set(holdout_worlds or ()))
+    held = [e for e in examples if e.world in hw]
+    rest = [e for e in examples if e.world not in hw]
     rng = random.Random(seed)
     rng.shuffle(rest)
     n = len(rest)

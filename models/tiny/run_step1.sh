@@ -58,12 +58,43 @@ for s in $SEEDS; do
 done
 
 echo
+# Holdout generation, sampled. Generation is one row at a time (evaluate.py),
+# so an unsampled holdout dominates the whole script: this cache's holdout is
+# 15,248 rows against the 275 that pod.md sized its two-hour estimate on, and
+# six passes over it is ~91,000 single-row generations. HOLDOUT_LIMIT rows per
+# half is plenty -- 2,000 is ~48 rows per unseen world per half, and the claim
+# is an aggregate plain-vs-decoyed difference, not a per-world one.
+#
+# Both halves separately, because the plain rows come first and a bare --limit
+# would return nothing else. Skipped on a holdout with no decoyed rows.
+HOLDOUT_LIMIT="${HOLDOUT_LIMIT:-2000}"
+hogen() {                        # hogen <ar|diff> <seed> [extra evaluate.py args]
+  local arm="$1" seed="$2"; shift 2
+  local ck run
+  case "$arm" in
+    ar)   ck="runs/${TAG}_ar_s${seed}/best.pt";        run="${TAG}_ar_s${seed}" ;;
+    diff) ck="runs/${TAG}_diffusion_s${seed}/best.pt"; run="${TAG}_diff_s${seed}" ;;
+  esac
+  python evaluate.py --generate --ckpt "$ck" --cache "$CACHE" --split holdout \
+    --limit "$HOLDOUT_LIMIT" --id-not-contains '+decoy' "$@" \
+    --gen-out "out/${run}_holdout.jsonl"
+  if python -c "
+import json,sys
+m = json.load(open(sys.argv[1] + '/holdout_meta.json'))
+sys.exit(0 if any('+decoy' in r['task_id'] for r in m) else 1)" "$CACHE"; then
+    python evaluate.py --generate --ckpt "$ck" --cache "$CACHE" --split holdout \
+      --limit "$HOLDOUT_LIMIT" --id-contains '+decoy' "$@" \
+      --gen-out "out/${run}_holdout_decoy.jsonl"
+  else
+    echo "  (holdout has no decoyed rows; plain half only)"
+  fi
+}
+
 echo "=== generate: the control, once per seed ==="
 for s in $SEEDS; do
   python evaluate.py --generate --ckpt "runs/${TAG}_ar_s${s}/best.pt" --cache "$CACHE" \
     --split test --gen-out "out/${TAG}_ar_s${s}_test.jsonl"
-  python evaluate.py --generate --ckpt "runs/${TAG}_ar_s${s}/best.pt" --cache "$CACHE" \
-    --split holdout --gen-out "out/${TAG}_ar_s${s}_holdout.jsonl"
+  hogen ar "$s"
 done
 
 echo
@@ -74,9 +105,7 @@ for s in $SEEDS; do
       --cache "$CACHE" --split test --steps "$k" \
       --gen-out "out/${TAG}_diff_s${s}_k${k}.jsonl"
   done
-  python evaluate.py --generate --ckpt "runs/${TAG}_diffusion_s${s}/best.pt" \
-    --cache "$CACHE" --split holdout --steps 8 \
-    --gen-out "out/${TAG}_diff_s${s}_holdout.jsonl"
+  hogen diff "$s" --steps 8
 done
 
 echo
@@ -103,7 +132,9 @@ echo "=== done ==="
 echo "bring back:  out/  (generations, and curves/ with every log.jsonl and config.json)"
 echo "score on the laptop:"
 echo "  for f in out/${TAG}_*_test.jsonl out/${TAG}_*_k*.jsonl; do python evaluate.py --score --cache $CACHE --gen-out \$f --split test; done"
-echo "  for f in out/${TAG}_*_holdout.jsonl; do python evaluate.py --score --cache $CACHE --gen-out \$f --split holdout; done"
+echo "  for f in out/${TAG}_*_holdout.jsonl out/${TAG}_*_holdout_decoy.jsonl; do python evaluate.py --score --cache $CACHE --gen-out \$f --split holdout; done"
+echo "    ^ the _decoy files are the grounding half: read same_tool against"
+echo "      chance_tool_sig (43.5% there, 100% on the plain half), and decoy_called"
 echo "  python probe.py --gen out/${TAG}_diff_s0_k8.jsonl --compiled-only"
 echo "  python diagnose.py --gen out/${TAG}_diff_s0_k8.jsonl --cache $CACHE"
 ls -la out/ | tail -20

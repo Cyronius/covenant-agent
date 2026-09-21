@@ -79,6 +79,13 @@ def main():
     ap.add_argument("--cache", default="data_cache")
     ap.add_argument("--split", default="test")
     ap.add_argument("--limit", type=int, default=400)
+    ap.add_argument("--id-contains", default=None, metavar="TEXT",
+                    help="only rows whose task_id contains TEXT, applied "
+                         "before --limit. '+decoy' is a combined holdout's "
+                         "decoyed half -- the only half where permuting "
+                         "descriptions can change the answer, since on the "
+                         "plain half the signature already identifies the "
+                         "tool (results/GROUNDING.md)")
     ap.add_argument("--steps", type=int, default=8)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default="out/ablate.jsonl")
@@ -88,16 +95,25 @@ def main():
 
     cache = Path(args.cache)
     cfg = json.loads((cache / "config.json").read_text(encoding="utf-8"))
-    ov = OutVocab.load(cache / "out_vocab.json")
-    tk = Tokenizer.from_file(str(cache / "in_tok.json"))
-    meta = json.loads((cache / f"{args.split}_meta.json").read_text(encoding="utf-8"))
-    device = torch.device(args.device)
+    # The binding check comes FIRST. A structural cache has no out_vocab.json,
+    # so loading it above gave a FileNotFoundError on a path nobody asked
+    # about, hiding the real answer -- which is that this tool does not
+    # support the binding, deliberately.
     if cfg.get("binding", "flat") != "flat":
         # The structural cache holds per-line tensors, not one token stream, so
         # a permuted context has to be re-split and re-encoded per line. Not
         # built yet; refuse rather than silently ablate the wrong thing.
-        raise SystemExit("ablate_desc.py supports the flat binding only; "
-                         "this cache is structural")
+        raise SystemExit(
+            "ablate_desc.py supports the flat binding only; this cache is "
+            "structural. Permuting descriptions there means re-splitting the "
+            "context with prep.Lines and re-encoding tool/field/const/request "
+            "tensors per row (prep.encode_structural), which is not written. "
+            "Until it is, the decoyed holdout's margin over the shape-only "
+            "null cannot be attributed to descriptions rather than names.")
+    ov = OutVocab.load(cache / "out_vocab.json")
+    tk = Tokenizer.from_file(str(cache / "in_tok.json"))
+    meta = json.loads((cache / f"{args.split}_meta.json").read_text(encoding="utf-8"))
+    device = torch.device(args.device)
     model = load_model(Path(args.ckpt), device, ov)
     if model.c.binding != "flat":
         raise SystemExit("ablate_desc.py supports flat checkpoints only")
@@ -112,8 +128,20 @@ def main():
              for r in rows_raw}
     rng = random.Random(args.seed)
 
+    # Filter before --limit. A combined holdout stores the plain rows first
+    # and the decoyed ones after (`+decoy` on their ids), so `meta[:limit]`
+    # alone is all-plain -- and the plain half is where the signature already
+    # identifies the tool, which is precisely the half this ablation cannot
+    # say anything on.
+    pool = [m for m in meta
+            if args.id_contains is None or args.id_contains in m["task_id"]]
+    if args.id_contains is not None:
+        print(f"id filter '{args.id_contains}': {len(pool)} of {len(meta)} tasks")
+        if not pool:
+            raise SystemExit("the id filter matched no row in this split")
+
     rows = []
-    for m in meta[:args.limit]:
+    for m in pool[:args.limit]:
         raw = by_id.get(m["task_id"])
         if raw is None:
             continue

@@ -145,10 +145,18 @@ def build_context(world: dict, constants: List[dict],
     for entity in sorted(world["entities"]):
         for fname in world["entities"][entity]:
             slots.append(("field", entity, fname))
+    # a decoy shares its original's slot for unlinked params: the two tools
+    # are meant to differ by description alone, and a fresh symbol per tool
+    # name would leave the signatures distinguishable (harness/decoys.py)
+    seen = set()
     for t in sorted(tools, key=lambda t: t["name"]):
         for p in t["params"]:
-            if not p.get("field"):
-                slots.append(("param", t["name"], p["name"]))
+            if p.get("field"):
+                continue
+            slot = ("param", t.get("decoy_of") or t["name"], p["name"])
+            if slot not in seen:
+                seen.add(slot)
+                slots.append(slot)
     rng.shuffle(slots)
 
     field_syms = {}   # ('field', entity, fname) / ('param', tool, pname) -> sym
@@ -164,7 +172,10 @@ def build_context(world: dict, constants: List[dict],
                 desc=f"{entity}.{fname}")
         else:
             _, tname, pname = slot
-            tool = next(t for t in tools if t["name"] == tname)
+            # the slot is keyed by the original when a decoy shares it, and
+            # the original may not itself be visible
+            tool = next(t for t in tools
+                        if tname in (t["name"], t.get("decoy_of")))
             p = next(p for p in tool["params"] if p["name"] == pname)
             field_decls[sym] = FieldDecl(
                 sym=sym, entity=None, name=pname,
@@ -179,7 +190,8 @@ def build_context(world: dict, constants: List[dict],
             if p.get("field"):
                 psym = field_syms[("field", p["field"][0], p["field"][1])]
             else:
-                psym = field_syms[("param", t["name"], p["name"])]
+                psym = field_syms[("param", t.get("decoy_of") or t["name"],
+                                   p["name"])]
             params.append(ToolParam(
                 sym=psym, type=parse_type(p["type"]),
                 required=p.get("required", True), desc=p.get("desc", "")))

@@ -1,0 +1,8 @@
+registered 143 generated domains
+200/1000 (resamples: 2, noops dropped: 32)
+400/1000 (resamples: 5, noops dropped: 52)
+600/1000 (resamples: 8, noops dropped: 74)
+800/1000 (resamples: 14, noops dropped: 108)
+1000/1000 (resamples: 16, noops dropped: 133)
+wrote 1000 tasks -> data\s5_shards\holdout_decoy_4.jsonl (resamples: 16, noops dropped: 133)
+signature uniqueness: 2.7% full, 2.6% types-only, over 1910 reference CALLs (41.6 tools/task)

@@ -1,0 +1,7 @@
+registered 143 generated domains
+200/1000 (resamples: 4, noops dropped: 23)
+400/1000 (resamples: 9, noops dropped: 57)
+600/1000 (resamples: 11, noops dropped: 79)
+800/1000 (resamples: 16, noops dropped: 97)
+1000/1000 (resamples: 25, noops dropped: 115)
+wrote 1000 tasks -> data\s5_shards\holdout_inject_1.jsonl (resamples: 25, noops dropped: 115)

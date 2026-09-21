@@ -108,15 +108,37 @@ def generate(args):
     print(f"loops={model.c.dec_loops} dec_layers={model.c.dec_layers} "
           f"weights={model.c.weights}", flush=True)
 
-    n = min(args.limit or len(split), len(split))
     arm = "ar" if model.c.causal else "diffusion"
     # A level filter, for re-measuring one curriculum level without regenerating
     # the split. The tasks it picks are the same tasks whatever else changes, so
     # two runs over the same level are comparable slot for slot.
-    which = [i for i in range(n)
-             if args.level is None or split.meta[i].get("level") == args.level]
+    #
+    # The id filters exist for a combined holdout (plain rows then decoyed ones,
+    # `+decoy` on their ids). Generation is one row at a time, so an unsampled
+    # 15,248-row holdout is 6 passes x 15,248 single-row generations and the
+    # dominant cost of the whole script -- and `--limit` alone cannot help,
+    # because the first N rows of that split are all plain.
+    #
+    # Filters apply BEFORE --limit, so `--limit 2000 --id-contains +decoy` means
+    # "the first 2000 decoyed rows" rather than "the decoyed rows among the
+    # first 2000", which would be none. This also changes --level + --limit the
+    # same way; that combination appears in no recorded run and the new reading
+    # is the useful one.
+    which = [i for i in range(len(split))
+             if (args.level is None or split.meta[i].get("level") == args.level)
+             and (args.id_contains is None
+                  or args.id_contains in split.meta[i]["task_id"])
+             and (args.id_not_contains is None
+                  or args.id_not_contains not in split.meta[i]["task_id"])]
     if args.level is not None:
-        print(f"level {args.level}: {len(which)} of {n} tasks", flush=True)
+        print(f"level {args.level}: {len(which)} of {len(split)} tasks", flush=True)
+    if args.id_contains or args.id_not_contains:
+        print(f"id filter (+{args.id_contains} -{args.id_not_contains}): "
+              f"{len(which)} of {len(split)} tasks", flush=True)
+        if not which:
+            raise SystemExit("the id filter matched no row in this split")
+    if args.limit:
+        which = which[:args.limit]
 
     # The compiler loop needs covenant-agent. Without it, generate plain and
     # let --score do the compiling later.
@@ -240,6 +262,13 @@ def score(args):
             try:
                 m = run_task(row, lambda *a, **k: g["program"])
                 goal = bool(m.get("goal_success"))
+                # Family B: `goal` cannot see a decoy on an abstain task --
+                # the decoy's empty return is the same observation the real
+                # tool gives (harness/metrics.py). None on an undecoyed row,
+                # so the denominator is decoyed tasks only.
+                if m.get("decoy_called") is not None:
+                    stats["decoyed"] += 1
+                    stats["decoy_called"] += bool(m["decoy_called"])
             except Exception as exc:                      # a sandbox failure is not a model result
                 stats["sandbox_error"] += 1
                 results.append({"task_id": g["task_id"], "error": str(exc)[:200]})
@@ -258,6 +287,10 @@ def score(args):
     print(f"  exact    {stats['exact']/n:6.1%}")
     if stats["sandbox_error"]:
         print(f"  sandbox errors {stats['sandbox_error']} (not model failures)")
+    if stats["decoyed"]:
+        print(f"  decoy called {stats['decoy_called']/stats['decoyed']:6.1%} "
+              f"of {stats['decoyed']} decoyed tasks  (a signature-identical "
+              f"sibling, never in a reference)")
     print(f"  passes   mean {sum(passes)/max(len(passes),1):.1f}")
     if slot_acc:
         print("\n  slot accuracy against the reference canvas (same slot):")
@@ -268,6 +301,11 @@ def score(args):
     c = max(calls["compared"], 1)
     print(f"\n  CALL lines where both reference and generation CALL: {calls['compared']}")
     print(f"    same tool    {calls['same_tool']/c:6.1%}   chance {calls['chance_tool']/c:6.1%}")
+    # the chance line that matters on a decoyed suite: uniform inside the
+    # signature collision group, which is all a type matcher has left to
+    # choose between. Undecoyed it is 100% and beating it is the whole claim.
+    print(f"      vs shape   {calls['same_tool']/c:6.1%}   chance "
+          f"{calls['chance_tool_sig']/c:6.1%}  (uniform inside the signature group)")
     print(f"    same effect  {calls['same_effect']/c:6.1%}   chance {calls['chance_effect']/c:6.1%}")
     print("\n  by level:")
     for lvl in sorted(by_level):
@@ -279,6 +317,7 @@ def score(args):
                "n": stats["n"], "parse": stats["parse"], "compile": stats["compile"],
                "goal": stats["goal"], "exact": stats["exact"],
                "sandbox_error": stats["sandbox_error"],
+               "decoyed": stats["decoyed"], "decoy_called": stats["decoy_called"],
                "mean_passes": sum(passes) / max(len(passes), 1),
                "loops": gen[0].get("loops", 1) if gen else 1,
                "dec_layers": gen[0].get("dec_layers") if gen else None,
@@ -308,6 +347,12 @@ def main():
     ap.add_argument("--repair-rounds", type=int, default=0)
     ap.add_argument("--repair-steps", type=int, default=4)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--id-contains", default=None, metavar="TEXT",
+                    help="only rows whose task_id contains TEXT. For a "
+                         "combined holdout: '+decoy' is the decoyed half")
+    ap.add_argument("--id-not-contains", default=None, metavar="TEXT",
+                    help="only rows whose task_id does NOT contain TEXT. For "
+                         "a combined holdout: '+decoy' is the plain half")
     ap.add_argument("--level", type=int, default=None,
                     help="generate only this curriculum level, for re-measuring "
                          "one level without regenerating the split")

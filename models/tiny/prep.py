@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import pickle
+import random
 import re
 from pathlib import Path
 
@@ -280,6 +281,30 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
     return d
 
 
+def pick_holdout_worlds(counts: dict[str, int], n: int,
+                        seed: int | None) -> list[str]:
+    """Which worlds to hold out, drawn from the mid-sized band.
+
+    The largest worlds are too much of the training set to give away and the
+    smallest estimate nothing, so the draw is over the middle half by row
+    count. `seed=None` and n=1 reproduce the historical pick -- the world at
+    the median rank -- so a cache prepared before this flag existed still
+    rebuilds byte for byte.
+    """
+    ranked = [w for w, _ in sorted(counts.items(), key=lambda kv: -kv[1])]
+    if not ranked:
+        raise SystemExit("no worlds in the corpus")
+    if seed is None and n == 1:
+        return [ranked[len(ranked) // 2]]
+    lo, hi = len(ranked) // 4, (3 * len(ranked)) // 4
+    band = ranked[lo:hi] or ranked
+    if n > len(band):
+        raise SystemExit(
+            f"--holdout-worlds {n} exceeds the {len(band)}-world mid band "
+            f"of {len(ranked)} worlds; name them with --holdout-world")
+    return sorted(random.Random(seed).sample(band, n))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--corpus", default=str(COVENANT / "data" / "s5_plain.jsonl"))
@@ -290,8 +315,28 @@ def main():
     ap.add_argument("--max-line", type=int, default=64, help="structural: tokens per schema line")
     ap.add_argument("--max-req", type=int, default=128, help="structural: request tokens")
     ap.add_argument("--canvas", type=int, default=64)
-    ap.add_argument("--holdout-world", default=None,
-                    help="world name to hold out entirely; default picks a mid-sized one")
+    ap.add_argument("--holdout-corpus", default=None, metavar="PATH",
+                    help="take the holdout split from a SECOND corpus, "
+                         "generated over the reserved eval worlds "
+                         "(`data.gen --holdout`). Preferred over carving "
+                         "worlds out of --corpus: it costs no training data "
+                         "and gives 42 unseen worlds instead of one")
+    ap.add_argument("--holdout-limit", type=int, default=None, metavar="N",
+                    help="rows to load from --holdout-corpus (default: "
+                         "--limit)")
+    ap.add_argument("--holdout-world", default=None, metavar="NAME[,NAME...]",
+                    help="world name(s) to carve out of --corpus; default "
+                         "draws --holdout-worlds from the mid-sized band. "
+                         "Ignored when --holdout-corpus is given")
+    ap.add_argument("--holdout-worlds", type=int, default=1, metavar="N",
+                    help="how many worlds to hold out when --holdout-world "
+                         "does not name them (default 1)")
+    ap.add_argument("--holdout-seed", type=int, default=None, metavar="S",
+                    help="seed the world draw. Without it, N=1 keeps the "
+                         "historical median-sized pick, so existing caches "
+                         "reproduce; with it the drawn worlds vary, which is "
+                         "what lets a seed sweep tell a seed-unstable encoder "
+                         "from an unlucky world (R8 §5b)")
     ap.add_argument("--out", default=None, help="default data_cache (flat) or data_cache_struct")
     args = ap.parse_args()
 
@@ -302,19 +347,54 @@ def main():
     ex = load(Path(args.corpus), limit=args.limit)
     print(f"  {len(ex)} single-segment examples, {len(set(e.world for e in ex))} worlds")
 
-    if args.holdout_world is None:
-        counts = {}
-        for e in ex:
-            counts[e.world] = counts.get(e.world, 0) + 1
-        mid = sorted(counts.items(), key=lambda kv: -kv[1])
-        args.holdout_world = mid[len(mid) // 2][0]
-    print(f"  holding out world: {args.holdout_world}")
+    counts = {}
+    for e in ex:
+        counts[e.world] = counts.get(e.world, 0) + 1
 
-    tr, va, te, ho = split(ex, seed=0, holdout_world=args.holdout_world)
+    config = {"corpus": Path(args.corpus).name, "limit": args.limit,
+              "binding": args.binding, "canvas": args.canvas}
+
+    if args.holdout_corpus:
+        # The reserved eval worlds are already unseen by construction
+        # (data/holdout/reserved_domains.json, reserved since S2, drawn by
+        # `data.gen --holdout`), they carry the same ID:entity typing and
+        # program structure as the training worlds, and there are 42 of
+        # them. Measuring on those costs no training data. Carving worlds
+        # out of --corpus costs 1% per world and gave R7 and R8 an n=1
+        # estimate of a claim that is about variance.
+        ho = load(Path(args.holdout_corpus),
+                  limit=args.holdout_limit or args.limit)
+        ho_worlds = sorted({e.world for e in ho})
+        overlap = sorted({e.world for e in ex} & set(ho_worlds))
+        if overlap:
+            raise SystemExit(
+                "--holdout-corpus shares worlds with --corpus, so the "
+                f"holdout split is not unseen: {overlap[:5]}")
+        print(f"  holdout corpus: {len(ho)} examples over "
+              f"{len(ho_worlds)} unseen worlds, 0% of the training data")
+        tr, va, te, _ = split(ex, seed=0)
+        config.update({"holdout_corpus": Path(args.holdout_corpus).name,
+                       "holdout_worlds": ho_worlds})
+    else:
+        if args.holdout_world:
+            holdout_worlds = [w.strip() for w in args.holdout_world.split(",") if w.strip()]
+            missing = [w for w in holdout_worlds if w not in counts]
+            if missing:
+                raise SystemExit(f"--holdout-world names worlds not in the corpus: {missing}")
+        else:
+            holdout_worlds = pick_holdout_worlds(counts, args.holdout_worlds,
+                                                 args.holdout_seed)
+        share = sum(counts[w] for w in holdout_worlds) / max(len(ex), 1)
+        print(f"  carving out {len(holdout_worlds)} world(s): "
+              f"{', '.join(holdout_worlds)}  ({share:.1%} of the training data)")
+        tr, va, te, ho = split(ex, seed=0, holdout_worlds=set(holdout_worlds))
+        config.update({"holdout_worlds": holdout_worlds,
+                       "holdout_seed": args.holdout_seed})
+
     print(f"  train {len(tr)}  val {len(va)}  test {len(te)}  holdout {len(ho)}")
-
-    config = {"corpus": Path(args.corpus).name, "limit": args.limit, "binding": args.binding,
-              "canvas": args.canvas, "holdout_world": args.holdout_world}
+    # the layout, the keyword table and the flat symbol vocabulary have to
+    # cover every split, or a holdout row overflows a tensor sized on train
+    ex = ex + ho if args.holdout_corpus else ex
 
     if args.binding == "flat":
         ov = OutVocab.build(ex)
