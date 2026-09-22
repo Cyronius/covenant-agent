@@ -424,7 +424,17 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
 
     print(f"loading {args.limit} from {Path(args.corpus).name} ...")
+    # a paused task's registers come from running its reference, which
+    # needs the generated theme worlds registered or every replay
+    # raises and the continuation rows vanish silently
+    from sandbox import register_themes
+    register_themes()
     ex = load(Path(args.corpus), limit=args.limit)
+    from corpus import DROPPED_REPLAY
+    if DROPPED_REPLAY:
+        print("  paused tasks dropped (no honest register state): "
+              + ", ".join(f"{n}x {why}"
+                          for why, n in DROPPED_REPLAY.most_common()))
     cont = sum(1 for e in ex if "#s" in e.task_id)
     print(f"  {len(ex)} examples, {len(set(e.world for e in ex))} worlds"
           + (f"; {cont} of them segments of a paused task, "

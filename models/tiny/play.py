@@ -93,6 +93,12 @@ def main() -> int:
                     help="print this many programs in full")
     args = ap.parse_args()
 
+    # the generated theme worlds are registered at generation time, not baked
+    # into the registry; without this every themed task dies on a missing
+    # world and it reads as a model failure (models/tiny/sandbox.py)
+    from sandbox import register_themes
+    register_themes()
+
     device = torch.device(args.device)
     cache = Path(args.cache)
     cfg = json.loads((cache / "config.json").read_text(encoding="utf-8"))

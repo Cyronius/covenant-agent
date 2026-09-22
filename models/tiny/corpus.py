@@ -12,6 +12,7 @@ import os
 import random
 import re
 import sys
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -190,6 +191,14 @@ def load(path: Path, limit: int | None = None,
     return out
 
 
+# Why a paused task produced no rows, counted rather than swallowed. A silent
+# drop here is invisible and expensive: the first themed cache built with
+# continuation rows dropped every one of them, because the theme worlds were
+# not registered in that process and every replay raised, which `_replay` read
+# as "this reference does not execute".
+DROPPED_REPLAY: "Counter[str]" = Counter()
+
+
 def _replay(row: dict, segs: list[str]) -> list[tuple] | None:
     """[(ctx, registers)] — the state each segment is written from, by running
     the reference through the sandbox. None when it does not replay."""
@@ -205,9 +214,19 @@ def _replay(row: dict, segs: list[str]) -> list[tuple] | None:
 
     try:
         result = run_task(row, planner)
-    except Exception:
+    except KeyError as exc:
+        # the usual one: a themed world that nobody registered
+        DROPPED_REPLAY[f"world/context missing: {exc}"] += 1
         return None
-    if not result.get("goal_success") or len(starts) != len(segs):
+    except Exception as exc:                                  # noqa: BLE001
+        DROPPED_REPLAY[type(exc).__name__] += 1
+        return None
+    if not result.get("goal_success"):
+        DROPPED_REPLAY[f"reference did not reach the goal "
+                       f"({result.get('status')})"] += 1
+        return None
+    if len(starts) != len(segs):
+        DROPPED_REPLAY["fewer segments ran than the reference has"] += 1
         return None
     return starts
 
