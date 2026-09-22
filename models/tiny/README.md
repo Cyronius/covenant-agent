@@ -376,7 +376,9 @@ Redirect to a file instead, or read the JSONL.
 | `report.py` | the accuracy-against-passes table over a directory of scored runs, plus the loop sweep and its gate verdict |
 | `quant.py` | the weight formats (int8, 4-bit, ternary) as quantisation-aware training, and the resident-byte arithmetic |
 | `sandbox.py` | register the 104 generated theme worlds so the sandbox can run them |
+| `play.py` | drive the harness loop: sample a segment, let the sandbox run it, re-encode with the registers it bound, sample the next (plan step 4) |
 | `test_pipeline.py` | the reference round trip, the check everything else rests on |
+| `test_second_turn.py` | a paused task becomes one row per segment, the register region reaches the encoder, and the pointer bank does not move |
 | `test_samplers.py` | both samplers reproduce an oracle; the receiver rule never blocks a reference |
 | `test_quant.py` | the quantised model is the deployed model: level counts, per-row scales, the estimator, the checkpoint round trip |
 | `selftest.sh` | the correctness checks, on either binding |
@@ -388,6 +390,34 @@ Redirect to a file instead, or read the JSONL.
 
 Not named `data.py` on purpose: that shadows covenant-agent's `data` package and
 breaks every import of the theme generator.
+
+## The second turn (plan step 4)
+
+The model used to see one kind of row: a whole program, written from nothing.
+`corpus.load` admitted single-segment tasks only and `prep.Lines` exited on a
+`REGISTERS:` section, so a task that pauses was not in the training data and
+could not be scored either. That is what made "the loop exists but the tiny
+model cannot take a second turn" true.
+
+A paused task now becomes one row per segment. The continuation's input is the
+same context plus a register region: one line per bound register — its symbol,
+its type, and a bounded view of what it holds (`n=8 [card_1 card_2 card_3
+...]`), rendered by `harness/context.py`'s `render_register` and capped
+because eight kanban cards in full are 3.6 KB. Getting those registers means
+running the earlier segments for real, which `corpus._replay` does through the
+sandbox; a task whose reference will not replay produces no rows rather than
+rows with a guessed register state.
+
+In the encoder the region sits between the constants and the request, with its
+own tag. The pointer bank is unchanged — a canvas slot still points at a tool,
+a field or a constant, and `r1` was always an output row. What was missing was
+any way to *read* what `r1` holds.
+
+`play.py` is the loop: sample a segment, hand it to `harness/run.py`, let the
+sandbox run it, re-serialize the context with the registers it bound, encode
+that, sample again. It reports how many paused tasks got a second segment at
+all and how many reached the goal — the plan's first gate, which is "does the
+continuation work", not accuracy.
 
 ## Memory, and why a too-large batch looks like a slow model
 

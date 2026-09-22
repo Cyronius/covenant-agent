@@ -31,8 +31,8 @@ from tok import OutVocab, train_input_tokenizer
 CACHE = Path(__file__).parent / "data_cache"
 
 # Column order of the structural tensors, as train.py's TensorDataset sees them.
-STRUCT_KEYS = ("tool_tok", "field_tok", "const_tok", "req_tok",
-               "n_tool", "n_field", "n_const", "adj", "tgt")
+STRUCT_KEYS = ("tool_tok", "field_tok", "const_tok", "reg_tok", "req_tok",
+               "n_tool", "n_field", "n_const", "n_reg_bound", "adj", "tgt")
 
 
 def compact_line(line: str, desc_chars: int = 60) -> str:
@@ -58,6 +58,7 @@ def compact(src: str, desc_chars: int = 60) -> str:
 
 
 SYM_LINE = re.compile(r"^([TFCSNBDI]\d+)\b")
+REG_LINE = re.compile(r"^(r\d{1,2})\b")
 
 
 def symbol_positions(source: str, enc, ov: OutVocab, max_in: int) -> list[int]:
@@ -127,6 +128,11 @@ class Lines:
         self.tools: list[tuple[str, str]] = []      # (sym, line text)
         self.fields: list[tuple[str, str]] = []
         self.consts: list[tuple[str, str]] = []
+        # plan step 4: the registers a continuation starts from — what is
+        # bound, its type, and a bounded rendering of what it holds
+        # (`harness/context.py`'s `render_register`). A region of its own
+        # rather than more request tokens, so the request budget is untouched.
+        self.regs: list[tuple[str, str]] = []
         section = None
         for line in source.splitlines():
             if line.startswith("REQUEST: "):
@@ -134,10 +140,12 @@ class Lines:
                 continue
             if line in ("TOOLS:", "FIELDS:", "CONSTANTS:", "REGISTERS:"):
                 section = line[:-1]
-                if section == "REGISTERS":
-                    # No task in s5_plain has initial registers. Region A has
-                    # no place for them yet; refuse rather than drop them.
-                    raise SystemExit("REGISTERS section not supported by structural binding")
+                continue
+            if section == "REGISTERS":
+                m = REG_LINE.match(line)
+                if not m:
+                    raise SystemExit(f"unrecognized register line: {line!r}")
+                self.regs.append((m.group(1), line))
                 continue
             m = SYM_LINE.match(line)
             if not m:
@@ -186,13 +194,16 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
     MT, MF, MC = layout.max_tool, layout.max_field, layout.max_const
     N = len(examples)
 
+    MR = dims["max_reg"]
     tool_tok = torch.full((N, MT, TL), pad_id, dtype=torch.int16)
     field_tok = torch.full((N, MF, TL), pad_id, dtype=torch.int16)
     const_tok = torch.full((N, MC, TL), pad_id, dtype=torch.int16)
+    reg_tok = torch.full((N, MR, TL), pad_id, dtype=torch.int16)
     req_tok = torch.full((N, RL), pad_id, dtype=torch.int16)
     n_tool = torch.zeros(N, dtype=torch.int16)
     n_field = torch.zeros(N, dtype=torch.int16)
     n_const = torch.zeros(N, dtype=torch.int16)
+    n_reg_bound = torch.zeros(N, dtype=torch.int16)
     adj = torch.zeros((N, MT + MF, MT + MF), dtype=torch.bool)
     tgt = torch.zeros((N, canvas), dtype=torch.int16)
     meta = []
@@ -209,6 +220,7 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
         all_lines.extend(t for _, t in ln.tools)
         all_lines.extend(t for _, t in ln.fields)
         all_lines.extend(t for _, t in ln.consts)
+        all_lines.extend(t for _, t in ln.regs)
     encs = tk.encode_batch(all_lines)
     cursor = 0
 
@@ -224,9 +236,13 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
         req = encs[cursor].ids
         cursor += 1
         groups = []
-        for count in (len(ln.tools), len(ln.fields), len(ln.consts)):
+        for count in (len(ln.tools), len(ln.fields), len(ln.consts),
+                      len(ln.regs)):
             groups.append([enc.ids for enc in encs[cursor:cursor + count]])
             cursor += count
+        if len(ln.regs) > MR:
+            raise SystemExit(f"{e.task_id}: {len(ln.regs)} bound registers, "
+                             f"cap is {MR}; raise --max-reg")
         max_req_seen = max(max_req_seen, len(req))
         for g in groups:
             for ids in g:
@@ -241,10 +257,11 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
                                      f"{TL}; raise --max-line (prep refuses to truncate)")
 
         req_tok[n, :len(req)] = torch.tensor(req, dtype=torch.int16)
-        for dest, g in zip((tool_tok, field_tok, const_tok), groups):
+        for dest, g in zip((tool_tok, field_tok, const_tok, reg_tok), groups):
             for i, ids in enumerate(g):
                 dest[n, i, :len(ids)] = torch.tensor(ids, dtype=torch.int16)
         n_tool[n], n_field[n], n_const[n] = len(ln.tools), len(ln.fields), len(ln.consts)
+        n_reg_bound[n] = len(ln.regs)
 
         L = len(ln.tools) + len(ln.fields)
         a = adj[n]
@@ -267,15 +284,75 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
     excluded = N - len(keep)
     if excluded:
         idx = torch.tensor(keep)
-        tool_tok, field_tok, const_tok, req_tok = (t[idx] for t in (tool_tok, field_tok, const_tok, req_tok))
-        n_tool, n_field, n_const, adj, tgt = (t[idx] for t in (n_tool, n_field, n_const, adj, tgt))
+        tool_tok, field_tok, const_tok, reg_tok, req_tok = (
+            t[idx] for t in (tool_tok, field_tok, const_tok, reg_tok, req_tok))
+        n_tool, n_field, n_const, n_reg_bound, adj, tgt = (
+            t[idx] for t in (n_tool, n_field, n_const, n_reg_bound, adj, tgt))
         meta = [m for m in meta if m is not None]
-    d = {"tool_tok": tool_tok, "field_tok": field_tok, "const_tok": const_tok, "req_tok": req_tok,
-         "n_tool": n_tool, "n_field": n_field, "n_const": n_const, "adj": adj, "tgt": tgt,
+    d = {"tool_tok": tool_tok, "field_tok": field_tok, "const_tok": const_tok,
+         "reg_tok": reg_tok, "req_tok": req_tok,
+         "n_tool": n_tool, "n_field": n_field, "n_const": n_const,
+         "n_reg_bound": n_reg_bound, "adj": adj, "tgt": tgt,
          "meta": meta,
          "stats": {"max_slots": max_len, "excluded": excluded, "kept": [examples[i] for i in keep],
                    "max_line_seen": max_line_seen, "max_req_seen": max_req_seen}}
     return d
+
+
+def encode_one(source: str, syms: dict, tk, layout, dims: dict,
+               device=None) -> dict:
+    """Model inputs for one serialized context, encoded exactly as the cache
+    encodes it (plan step 4).
+
+    The cache is built once from a corpus; a second turn is not in it, because
+    the registers a continuation starts from depend on what the model itself
+    just ran. So the loop runner (`play.py`) re-serializes the context after
+    every `PAUSE` and encodes it here — same tokenizer, same caps, same line
+    order — rather than reaching into a pickled split.
+    """
+    pad_id = tk.token_to_id("<pad>")
+    TL, RL, MR = dims["max_line"], dims["max_req"], dims.get("max_reg", 8)
+    MT, MF, MC = layout.max_tool, layout.max_field, layout.max_const
+    ln = Lines(source)
+    if [s for s, _ in ln.tools] != syms["tools"] \
+            or [s for s, _ in ln.fields] != syms["fields"] \
+            or [s for s, _ in ln.consts] != syms["consts"]:
+        raise SystemExit("serialized symbol order disagrees with the context")
+
+    texts = [ln.request] + [t for _, t in ln.tools] + [t for _, t in ln.fields] \
+        + [t for _, t in ln.consts] + [t for _, t in ln.regs]
+    encs = tk.encode_batch(texts)
+    req = encs[0].ids[:RL]
+    cursor = 1
+    groups = []
+    for count in (len(ln.tools), len(ln.fields), len(ln.consts), len(ln.regs)):
+        groups.append([e.ids[:TL] for e in encs[cursor:cursor + count]])
+        cursor += count
+
+    out = {}
+    req_tok = torch.full((1, RL), pad_id, dtype=torch.int16)
+    req_tok[0, :len(req)] = torch.tensor(req, dtype=torch.int16)
+    out["req_tok"] = req_tok
+    for key, cap, g in zip(("tool_tok", "field_tok", "const_tok", "reg_tok"),
+                           (MT, MF, MC, MR), groups):
+        t = torch.full((1, cap, TL), pad_id, dtype=torch.int16)
+        for i, ids in enumerate(g[:cap]):
+            t[0, i, :len(ids)] = torch.tensor(ids, dtype=torch.int16)
+        out[key] = t
+    for key, n in (("n_tool", len(ln.tools)), ("n_field", len(ln.fields)),
+                   ("n_const", len(ln.consts)),
+                   ("n_reg_bound", min(len(ln.regs), MR))):
+        out[key] = torch.tensor([n], dtype=torch.int16)
+
+    adj = torch.zeros((1, MT + MF, MT + MF), dtype=torch.bool)
+    adj[0, torch.arange(MT + MF), torch.arange(MT + MF)] = True
+    for i, j in ln.edges():
+        adj[0, i, j] = True
+        adj[0, j, i] = True
+    out["adj"] = adj
+    if device is not None:
+        out = {k: v.to(device) for k, v in out.items()}
+    return out
 
 
 def pick_holdout_worlds(counts: dict[str, int], n: int,
@@ -311,6 +388,12 @@ def main():
     ap.add_argument("--max-in", type=int, default=1280, help="flat: input token cap")
     ap.add_argument("--max-line", type=int, default=64, help="structural: tokens per schema line")
     ap.add_argument("--max-req", type=int, default=128, help="structural: request tokens")
+    ap.add_argument("--max-reg", type=int, default=8,
+                    help="structural: bound registers a continuation may "
+                         "start from, one line each (plan step 4). A "
+                         "segment after a PAUSE has as many as the paused "
+                         "program left bound; 8 covers every reference in "
+                         "the tree.")
     ap.add_argument("--canvas", type=int, default=64)
     ap.add_argument("--holdout-corpus", default=None, metavar="PATH",
                     help="take the holdout split from a SECOND corpus, "
@@ -342,7 +425,12 @@ def main():
 
     print(f"loading {args.limit} from {Path(args.corpus).name} ...")
     ex = load(Path(args.corpus), limit=args.limit)
-    print(f"  {len(ex)} single-segment examples, {len(set(e.world for e in ex))} worlds")
+    cont = sum(1 for e in ex if "#s" in e.task_id)
+    print(f"  {len(ex)} examples, {len(set(e.world for e in ex))} worlds"
+          + (f"; {cont} of them segments of a paused task, "
+             f"{sum(1 for e in ex if e.task_id.endswith('#s0'))} first and the "
+             f"rest continuations that start from bound registers"
+             if cont else ""))
 
     counts = {}
     for e in ex:
@@ -445,12 +533,14 @@ def main():
         for e in tr[:8000]:
             ln = Lines(e.source)
             texts.append(ln.request)
-            texts.extend(t for _, t in ln.tools + ln.fields + ln.consts)
+            texts.extend(t for _, t in ln.tools + ln.fields + ln.consts
+                         + ln.regs)
         tk = train_input_tokenizer(texts, args.in_vocab, max_length=max(args.max_line, args.max_req))
         tk.no_truncation()       # lengths are checked below; nothing is cut silently
         tk.no_padding()
         tk.save(str(out / "in_tok.json"))
-        dims = {"max_line": args.max_line, "max_req": args.max_req}
+        dims = {"max_line": args.max_line, "max_req": args.max_req,
+                "max_reg": args.max_reg}
         config.update({"in_vocab": tk.get_vocab_size(), "in_pad": tk.token_to_id("<pad>"),
                        "layout": layout.to_dict(), **dims})
 

@@ -239,7 +239,7 @@ class CanvasModel(nn.Module):
 
 
 # Kind tags for region A and the canvas (decision 4).
-TAG_TOOL, TAG_FIELD, TAG_CONST, TAG_REQUEST, TAG_CANVAS = range(5)
+TAG_TOOL, TAG_FIELD, TAG_CONST, TAG_REQUEST, TAG_CANVAS, TAG_REG = range(6)
 
 
 class Memory:
@@ -275,7 +275,7 @@ class StructuralModel(nn.Module):
         self.kw_emb = nn.Embedding(c.n_kw, d)           # canvas input for keyword slots
         self.kw_head = nn.Linear(d, c.n_kw)              # the fixed keyword output rows
         self.reg_emb = nn.Embedding(c.n_reg, d)          # r0..r15, r0...r15.
-        self.tag_emb = nn.Embedding(5, d)
+        self.tag_emb = nn.Embedding(6, d)
         self.cls = nn.Parameter(torch.zeros(d))          # the line-pooling token
         self.register_buffer("line_pos", sinusoids(c.max_line + 1, d), persistent=False)
         self.register_buffer("req_pos", sinusoids(c.max_req, d), persistent=False)
@@ -343,33 +343,54 @@ class StructuralModel(nn.Module):
     # -- per-turn -------------------------------------------------------
 
     def encode_turn(self, tool_vecs, field_vecs, const_tok, req_tok,
-                    n_tool, n_field, n_const) -> Memory:
-        """Region A: tools, fields, constants, request tokens, each tagged."""
+                    n_tool, n_field, n_const, reg_tok=None,
+                    n_reg_bound=None) -> Memory:
+        """Region A: tools, fields, constants, the registers a continuation
+        starts from, and the request tokens, each tagged.
+
+        The register region is what makes a second turn possible (plan step
+        4). It sits after the pointer lines and before the request, so the
+        pointer bank is unchanged — a canvas slot still points at a tool, a
+        field or a constant, and `r1` is an output row it already had. What
+        was missing was any way to *read* what `r1` holds. Absent or empty on
+        a first turn, which is every row the model saw before this.
+        """
         c = self.c
-        B = tool_vecs.size(0)
         cv = self.encode_lines(const_tok, TAG_CONST)
         req = req_tok.long()
         rq = (self.in_emb(req) * math.sqrt(c.d) + self.req_pos[:req.size(1)]
               + self.tag_emb.weight[TAG_REQUEST])
-        x = torch.cat([tool_vecs + self.tag_emb.weight[TAG_TOOL],
-                       field_vecs + self.tag_emb.weight[TAG_FIELD],
-                       cv + self.tag_emb.weight[TAG_CONST], rq], 1)
-        dev = x.device
-        pad = torch.cat([
+        parts = [tool_vecs + self.tag_emb.weight[TAG_TOOL],
+                 field_vecs + self.tag_emb.weight[TAG_FIELD],
+                 cv + self.tag_emb.weight[TAG_CONST]]
+        dev = tool_vecs.device
+        masks = [
             torch.arange(tool_vecs.size(1), device=dev)[None] >= n_tool.long()[:, None],
             torch.arange(field_vecs.size(1), device=dev)[None] >= n_field.long()[:, None],
             torch.arange(cv.size(1), device=dev)[None] >= n_const.long()[:, None],
-            req == c.in_pad], 1)
-        x = self.drop(x)
+        ]
+        n_ptr = tool_vecs.size(1) + field_vecs.size(1) + cv.size(1)
+        if reg_tok is not None and reg_tok.size(1):
+            rv = self.encode_lines(reg_tok, TAG_REG)
+            parts.append(rv + self.tag_emb.weight[TAG_REG])
+            bound = (torch.zeros_like(n_tool) if n_reg_bound is None
+                     else n_reg_bound)
+            masks.append(torch.arange(rv.size(1), device=dev)[None]
+                         >= bound.long()[:, None])
+        parts.append(rq)
+        masks.append(req == c.in_pad)
+        x = self.drop(torch.cat(parts, 1))
+        pad = torch.cat(masks, 1)
         for layer in self.turn:
             x = layer(x, pad)
-        n_ptr = tool_vecs.size(1) + field_vecs.size(1) + cv.size(1)
         return Memory(self.enc_norm(x), pad, n_ptr)
 
     def encode_inputs(self, inputs: dict) -> Memory:
         tv, fv = self.encode_world(inputs["tool_tok"], inputs["field_tok"], inputs["adj"])
         return self.encode_turn(tv, fv, inputs["const_tok"], inputs["req_tok"],
-                                inputs["n_tool"], inputs["n_field"], inputs["n_const"])
+                                inputs["n_tool"], inputs["n_field"],
+                                inputs["n_const"], inputs.get("reg_tok"),
+                                inputs.get("n_reg_bound"))
 
     # -- the canvas ------------------------------------------------------
 

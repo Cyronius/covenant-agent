@@ -1133,3 +1133,28 @@ covenant-agent/
   why this is 12.9% and not the third of the corpus
   `reactive-execution.md` §6 sized. Levels with nothing to observe still do
   not pause.
+
+- **2026-09-22 — the tiny model can take a second turn (step 4 of
+  `.claude/plans/agent-loop-and-ir-review.md`; `results/SECOND_TURN.md`).** For
+  the 0.8B and the 27B the loop already handed registers back; for the model
+  that ships in the browser it genuinely could not, and not subtly:
+  `models/tiny/corpus.py` admitted single-segment tasks only, `prep.py` exited
+  on a `REGISTERS:` section, and region A had nowhere to put what a register
+  holds. A paused task is now one training row per segment, the continuation
+  carrying the registers the earlier segments really left bound — obtained by
+  replaying the reference through the sandbox, with a task that will not replay
+  producing no rows rather than a guessed state. A register renders as symbol,
+  type and a bounded view of its value (`r1 LIST OBJ:card n=9 [card_0 card_1
+  card_2 ...]`), because nine kanban cards in full are 3.6 KB against a
+  64-token line cap. The encoder gains a register region between the constants
+  and the request; **the pointer bank does not move**, since `r1` was always an
+  output row. `models/tiny/play.py` drives the real harness loop — sample, run,
+  re-serialize with the new registers, sample again. **Gate 1 met on CPU:** a
+  0.9M model memorizing the 48-task curriculum gets 3/3 paused tasks to a
+  second segment and 2/3 to the goal, reference round trip 15/15 with
+  continuation rows included; the one failure rewrote the first segment after
+  the pause, which is the habit the region exists to cure. **Gate 2 — two-
+  segment goal success within five points of one-segment on the 42-world
+  holdout — is a trained-model measurement and is not run: one pod run, riding
+  with step 6's single rebuild, since this is new weights and a new cache like
+  1b, 1e and 1g.**

@@ -58,7 +58,13 @@ def load_split(cache: Path, name: str, binding: str, limit: int | None = None) -
         cols = (d["src"], d["pad"], d["tgt"],
                 d.get("sym", torch.full_like(d["tgt"][:, :1], -1).expand(-1, 1)))
     else:
-        cols = tuple(d[k] for k in STRUCT_KEYS)
+        # a cache built before step 4 has no register region; a
+        # zero-width column makes the model skip it rather than fail
+        n = d["tgt"].size(0)
+        empty = {"reg_tok": torch.zeros((n, 0, d["tool_tok"].size(2)),
+                                        dtype=d["tool_tok"].dtype),
+                 "n_reg_bound": torch.zeros(n, dtype=d["n_tool"].dtype)}
+        cols = tuple(d[k] if k in d else empty[k] for k in STRUCT_KEYS)
     if limit:
         cols = tuple(t[:limit].clone() for t in cols)
     return TensorDataset(*cols)

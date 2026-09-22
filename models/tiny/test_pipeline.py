@@ -55,31 +55,55 @@ def main():
     if args.id_contains is not None and not which:
         raise SystemExit(f"no {args.split} row's id contains "
                          f"{args.id_contains!r}")
+    from corpus import _replay
     for i in which[:args.n]:
-        row = by_id[split.meta[i]["task_id"]]
+        task_id = split.meta[i]["task_id"]
+        # a segment of a paused task is cached as `<id>#s<k>` (plan step 4);
+        # the row it replays in is the whole task
+        base_id, _, seg_part = task_id.partition("#s")
+        seg_idx = int(seg_part) if seg_part else 0
+        row = by_id[base_id]
+        segments = row["reference"]["segments"]
         text = split.codec(i).render(split.target(i)[0].tolist())
-        ctx = TaskContext.from_json(row["context"])
         stats["n"] += 1
 
         # Target is the reference verbatim (spec 0.7.0: no derived header).
-        original = row["reference"]["segments"][0]
-        stats["matches_reference"] += text.strip() == original.strip()
+        stats["matches_reference"] += text.strip() == segments[seg_idx].strip()
+
+        ctx = TaskContext.from_json(row["context"])
+        if seg_idx:
+            # a continuation compiles against the context its PAUSE left
+            # behind, registers and all
+            starts = _replay(row, segments)
+            if starts is None:
+                stats["sandbox_error"] += 1
+                failures.append((task_id, ["reference does not replay"], text))
+                continue
+            ctx = starts[seg_idx][0]
 
         res = build(text, ctx)
         stats["parse"] += bool(res.parse_ok)
         stats["compile"] += bool(res.compile_ok)
         if not res.compile_ok:
-            failures.append((row["id"], res.rendered_diagnostics(), text))
+            failures.append((task_id, res.rendered_diagnostics(), text))
             continue
         try:
-            m = run_task(row, lambda *a, **k: text)
+            # score the whole task, with this segment's decoded text in its
+            # own place and the reference elsewhere
+            def planner(request, pctx, k, registers, _text=text, _segs=segments,
+                        _at=seg_idx):
+                if k >= len(_segs):
+                    return None
+                return _text if k == _at else _segs[k]
+
+            m = run_task(row, planner)
             ok = bool(m.get("goal_success"))
             stats["goal"] += ok
             if not ok:
-                failures.append((row["id"], [f"goal_success=False status={m.get('status')}"], text))
+                failures.append((task_id, [f"goal_success=False status={m.get('status')}"], text))
         except Exception as exc:
             stats["sandbox_error"] += 1
-            failures.append((row["id"], [f"sandbox: {exc}"], text))
+            failures.append((task_id, [f"sandbox: {exc}"], text))
 
     print(f"reference round-trip on {args.split}, {stats['n']} tasks")
     for k in ("matches_reference", "parse", "compile", "goal"):

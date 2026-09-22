@@ -327,8 +327,47 @@ def effect_code(effects) -> str:
     return "".join(code for prop, code in _PROPERTY_CODES if prop in have)
 
 
-def serialize_context(request: str, ctx: TaskContext) -> str:
-    """The model-facing input: request, then schemas, all symbolic."""
+# A continuation's registers, rendered for a model that has to decide what to
+# do next from them (plan step 4). Bounded on purpose: a LIST OBJ register can
+# hold every field of every matching record — 3.6 KB for eight kanban cards —
+# and the tiny model's input is a fixed line budget, so a register line says
+# how many there are and names a few, the way `run_a.build_prompt` caps its
+# JSON dump at 1,500 characters for the 27B.
+REG_LIST_IDS = 3
+REG_SCALAR_CHARS = 40
+
+
+def render_register(sym: str, type_, value) -> str:
+    """One REGISTERS line: the symbol, its type, and a bounded rendering of
+    what it holds. Types only when there is no value to show."""
+    head = f"{sym} {format_type(type_)}"
+    if value is None:
+        return head
+    if isinstance(value, list):
+        ids = [str(v.get("id", "?")) if isinstance(v, dict) else str(v)
+               for v in value[:REG_LIST_IDS]]
+        more = "" if len(value) <= REG_LIST_IDS else " ..."
+        return f"{head} n={len(value)}" + (f" [{' '.join(ids)}{more}]"
+                                           if ids else " []")
+    if isinstance(value, dict):
+        return f"{head} {value.get('id', '?')}"
+    if isinstance(value, bool):
+        return f"{head} {'true' if value else 'false'}"
+    text = str(value)
+    if len(text) > REG_SCALAR_CHARS:
+        text = text[:REG_SCALAR_CHARS] + "..."
+    return f"{head} {text}"
+
+
+def serialize_context(request: str, ctx: TaskContext,
+                      registers: dict | None = None) -> str:
+    """The model-facing input: request, then schemas, all symbolic.
+
+    `registers` are the values a continuation starts from (`harness/run.py`
+    hands them back after a `PAUSE`). Without them the REGISTERS section
+    still lists what is bound and its type, which is what a one-shot task
+    with seeded registers needs.
+    """
     typed = is_typed(ctx)
     lines = [f"REQUEST: {request}", "TOOLS:"]
     for t in sorted(ctx.tools.values(), key=lambda t: int(t.sym[1:])):
@@ -351,6 +390,8 @@ def serialize_context(request: str, ctx: TaskContext) -> str:
         lines.append(f"{c.sym} {format_type(c.type)}{kind} :: {c.desc}")
     if ctx.initial_registers:
         lines.append("REGISTERS:")
+        values = registers or {}
         for r in sorted(ctx.initial_registers, key=lambda r: int(r[1:])):
-            lines.append(f"{r} {format_type(ctx.initial_registers[r])}")
+            lines.append(render_register(r, ctx.initial_registers[r],
+                                         values.get(r)))
     return "\n".join(lines) + "\n"

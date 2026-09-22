@@ -132,8 +132,23 @@ def detokenize(tokens: list[str]) -> str:
 
 
 def load(path: Path, limit: int | None = None,
-         max_tokens: int = MAX_PROGRAM_TOKENS) -> list[Example]:
-    """Single-segment tasks only: no PAUSE, so the whole program fits one canvas.
+         max_tokens: int = MAX_PROGRAM_TOKENS,
+         segments: bool = True) -> list[Example]:
+    """One example per segment. A paused task becomes two rows, and the second
+    one's input carries the registers it starts from (plan step 4).
+
+    Before this the loader took single-segment tasks only, which is why the
+    tiny model could not take a second turn at all: every row it had ever seen
+    was a whole program written from nothing. A continuation row is the same
+    context with a REGISTERS section — what is bound, its type, and a bounded
+    rendering of what it holds — and the target is only the segment that
+    starts there.
+
+    Getting those registers means running the earlier segments, which is what
+    `_replay` does through the real sandbox, the same path `harness/run.py`
+    takes. A task whose reference will not replay is dropped rather than
+    shipped with a guessed register state. `segments=False` restores the
+    one-segment-only behaviour for a caller that wants the old cache.
 
     `max_tokens` is checked on the count that actually occupies canvas slots,
     with `r0.F6` already split into two.
@@ -144,22 +159,57 @@ def load(path: Path, limit: int | None = None,
             if limit is not None and len(out) >= limit:
                 break
             row = json.loads(line)
-            segments = row.get("reference", {}).get("segments") or []
-            if len(segments) != 1:
+            segs = row.get("reference", {}).get("segments") or []
+            if not segs or (len(segs) != 1 and not segments):
                 continue
-            ctx = TaskContext.from_json(row["context"])
-            program = segments[0]
-            if len(program_tokens(program)) > max_tokens:
+            if any(len(program_tokens(s)) > max_tokens for s in segs):
                 continue
-            out.append(Example(
-                task_id=row["id"],
-                level=row.get("level", -1),
-                world=row.get("world", "?"),
-                source=serialize_context(row["request"], ctx),
-                target=program,
-                row=row,
-            ))
+            if len(segs) == 1:
+                ctx = TaskContext.from_json(row["context"])
+                out.append(Example(
+                    task_id=row["id"],
+                    level=row.get("level", -1),
+                    world=row.get("world", "?"),
+                    source=serialize_context(row["request"], ctx),
+                    target=segs[0],
+                    row=row,
+                ))
+                continue
+            starts = _replay(row, segs)
+            if starts is None:
+                continue
+            for i, (ctx, registers) in enumerate(starts):
+                out.append(Example(
+                    task_id=f"{row['id']}#s{i}",
+                    level=row.get("level", -1),
+                    world=row.get("world", "?"),
+                    source=serialize_context(row["request"], ctx, registers),
+                    target=segs[i],
+                    row=row,
+                ))
     return out
+
+
+def _replay(row: dict, segs: list[str]) -> list[tuple] | None:
+    """[(ctx, registers)] — the state each segment is written from, by running
+    the reference through the sandbox. None when it does not replay."""
+    from harness.run import run_task
+
+    starts: list[tuple] = []
+
+    def planner(request, ctx, seg_idx, registers):
+        if seg_idx >= len(segs):
+            return None
+        starts.append((ctx, dict(registers or {})))
+        return segs[seg_idx]
+
+    try:
+        result = run_task(row, planner)
+    except Exception:
+        return None
+    if not result.get("goal_success") or len(starts) != len(segs):
+        return None
+    return starts
 
 
 def split(examples: list[Example], seed: int = 0,
