@@ -13,17 +13,13 @@ def test_minimal_program():
     assert diags == []
     assert isinstance(prog.body[0], ir.Call)
     assert prog.body[0].dst == ir.Reg(0)
-    assert prog.effects_decl is None
 
 
-def test_effects_header():
-    prog, diags = parse("EFFECTS READ WRITE\nSTOP\n")
-    assert diags == []
-    assert prog.effects_decl == ["READ", "WRITE"]
-
-
-def test_bad_effect_name():
-    prog, codes = _diag_codes("EFFECTS READ FROB\nSTOP\n")
+def test_effects_header_is_retired():
+    """0.7.0: EFFECTS was never anything but a declaration nothing read
+    (spec/agent_core.md §7 history) and is gone from the grammar. The word
+    is now just an unrecognized instruction, the same as any other."""
+    prog, codes = _diag_codes("EFFECTS READ WRITE\nSTOP\n")
     assert prog is None and codes == ["PARSE_ERROR"]
 
 

@@ -18,7 +18,7 @@ Three columns, each a stricter claim about what the suite can teach or test:
 
   full        unique by the whole signature, per-request field symbols included
   stripped    unique by types, arity and effects, field symbols removed
-  effect      unique by effect class alone (READ/WRITE/SEND/...)
+  effect      unique by property set alone (mutates/irreversible/external)
 
 `full` at 100% means the suite cannot distinguish tool grounding from type
 inference, and no accuracy number taken on it supports a claim about reading
@@ -40,7 +40,9 @@ from harness.context import TaskContext, serialize_context
 # per-request symbols carry no type information the model can generalize from
 _FIELD_SYM = re.compile(r"=[A-Z]+\d+")
 _TOOL_SYM = re.compile(r"T\d+")
-_EFFECTS = re.compile(r"\[([A-Z, ]+)\]")
+# spec 0.7.0 §7: the bracket holds a compact property code (M/!/X in a fixed
+# order, "" for none of the three) rather than comma-joined effect words.
+_EFFECTS = re.compile(r"\[([A-Z!]*)\]")
 
 
 def strip_field_symbols(sig: str) -> str:

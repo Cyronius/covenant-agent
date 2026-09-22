@@ -81,7 +81,7 @@ WORLD = {
             "params": [{"name": "direction", "type": "STR",
                         "desc": "which way to walk: north, south, east or west"}],
             "returns": "OBJ:player",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "rpg", "fn": "move"},
         },
         {
@@ -91,7 +91,7 @@ WORLD = {
             "params": [{"name": "target", "type": "ID:enemy",
                         "desc": "the enemy to hit", "field": ["enemy", "id"]}],
             "returns": "OBJ:enemy",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "rpg", "fn": "attack"},
         },
         {
@@ -102,7 +102,7 @@ WORLD = {
                         "desc": "the item on the floor here",
                         "field": ["item", "id"]}],
             "returns": "OBJ:item",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "rpg", "fn": "pick_up"},
         },
         {
@@ -118,7 +118,7 @@ WORLD = {
                  "field": ["enemy", "id"]},
             ],
             "returns": "OBJ:player",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "rpg", "fn": "use_item"},
         },
         {
@@ -128,7 +128,7 @@ WORLD = {
             "params": [{"name": "target", "type": "ID:door",
                         "desc": "the door to open", "field": ["door", "id"]}],
             "returns": "OBJ:door",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "rpg", "fn": "interact"},
         },
     ],

@@ -1,0 +1,19 @@
+# L4_crm_most_tickets_manual  (level 4, world crm)
+# request: Find whichever customer has the most tickets on file, open or closed, and email their account manager about it.
+# $0: INT = 0 — zero, the initial best count
+# $1: STR = 'Your customer holds the most tickets on file.' — email text
+
+CALL @list_customers -> r0
+CALL @list_tickets -> r1
+LET $0 -> r2
+FIRST r0 -> r3
+FOREACH r0 -> r4
+  FILTER r1 @ticket.customer EQ r4.@customer.id -> r5
+  COUNT r5 -> r6
+  IF r6 GT r2
+    LET r6 -> r2
+    LET r4 -> r3
+CALL @get_staff r3.@customer.manager -> r7
+GET r7.@user.email -> r8
+CALL @send_email r8 $1
+STOP

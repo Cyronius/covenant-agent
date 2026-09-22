@@ -163,7 +163,7 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
     return task
 
 
-MUTATING_EFFECTS = {"WRITE", "DELETE", "SEND", "PAY", "EXTERNAL"}
+MUTATING_EFFECTS = {"mutates", "external"}
 
 
 def is_noop(task: dict) -> bool:
@@ -230,11 +230,14 @@ def main():
     ap.add_argument("--crowd", default=None, metavar="MIN:MAX",
                     help="add MIN..MAX distractor tools from other domains "
                          "to each task's context (E-crowded)")
-    ap.add_argument("--decoys", default=None, metavar="MIN:MAX",
+    ap.add_argument("--decoys", default="1:2", metavar="MIN:MAX",
                     help="family B: give every mutating tool MIN..MAX "
                          "siblings with the same signature and a "
                          "neighbouring description, so only the description "
-                         "says which one the request means")
+                         "says which one the request means. Default 1:2, so "
+                         "a plain invocation passes --require-collisions "
+                         "below; pass 0 to disable (fails the ceiling "
+                         "without --allow-signature-unique)")
     ap.add_argument("--inject-open", default=None, metavar="MIN:MAX",
                     help="inject MIN..MAX imported open-schema tools "
                          "(data/open_pairs) into each themed world as "
@@ -243,21 +246,28 @@ def main():
     ap.add_argument("--decoy-nonsense", type=float, default=0.15,
                     help="share of decoys named foo17 / operation_93, so the "
                          "name cannot carry the choice at all")
-    ap.add_argument("--require-collisions", type=float, default=None,
+    ap.add_argument("--require-collisions", type=float, default=50,
                     metavar="PCT",
-                    help="fail if more than PCT%% of reference CALLs name a "
-                         "tool whose signature no sibling shares. A file "
-                         "above the ceiling cannot teach or test description "
-                         "reading (results/GROUNDING.md); every new corpus "
-                         "and exam should pass this. Without it the "
-                         "statistic is printed and a 100%% file warns.")
+                    help="fail (and write nothing) if more than PCT%% of "
+                         "reference CALLs name a tool whose signature no "
+                         "sibling shares. A file above the ceiling cannot "
+                         "teach or test description reading "
+                         "(results/GROUNDING.md). Default 50; see "
+                         "--allow-signature-unique to write such a file "
+                         "anyway, with the fact stamped on every row.")
+    ap.add_argument("--allow-signature-unique", action="store_true",
+                    help="disable the --require-collisions ceiling above, "
+                         "and stamp every row's provenance with "
+                         "signature_unique_allowed so this file can never "
+                         "later be mistaken for one that passed it. "
+                         "Required to pass --decoys 0.")
     args = ap.parse_args()
     crowd = None
     if args.crowd:
         lo, hi = args.crowd.split(":")
         crowd = (int(lo), int(hi))
     decoys = None
-    if args.decoys:
+    if args.decoys and args.decoys not in ("0", "0:0"):
         lo, hi = args.decoys.split(":")
         decoys = (int(lo), int(hi))
     inject_open = None
@@ -306,6 +316,8 @@ def main():
                       f"{args.max_attempts} consecutive attempts",
                       file=sys.stderr)
                 sys.exit(1)
+            if args.allow_signature_unique:
+                task["provenance"]["signature_unique_allowed"] = True
             f.write(json.dumps(task) + "\n")
             written += 1
             if written % 200 == 0:
@@ -313,10 +325,62 @@ def main():
                       f"noops dropped: {noops})")
     print(f"wrote {written} tasks -> {out} "
           f"(resamples: {failures}, noops dropped: {noops})")
-    report_signature_uniqueness(out, args.require_collisions)
+    report_signature_uniqueness(out, args.require_collisions,
+                                args.allow_signature_unique)
+    report_filter_grounding(out)
 
 
-def report_signature_uniqueness(out: Path, ceiling: float | None) -> None:
+def report_filter_grounding(out: Path, limit: int = 2000) -> None:
+    """Does this file's references filter on what the request says?
+
+    A corpus that pads is a corpus that teaches padding: 97.2% of training
+    rows that call a list tool then `FILTER`, so the model writes the slot
+    whether or not the request fills it, and the demos come back with
+    `delinquent EQ true AND delinquent EQ false`
+    (`.claude/plans/general-agent-plan.md` §2B, `results/REFLEX.md`).
+    Printed with every generated file so the property is visible where it
+    is created rather than only where it is scored.
+
+    Not a gate. Reference programs are correct by construction and still
+    read 0-17% here, because some correct clauses are inference the wording
+    never spells ("overdue invoices" -> `NOT paid EQ true`). The number is
+    a floor to compare against, not a bar to pass.
+    """
+    from core.ir import TaskContext
+    from core.pipeline import build
+    from harness.filter_check import padded_clauses, _walk_filters
+
+    rows = with_filter = padded = 0
+    with out.open(encoding="utf-8") as fh:
+        for line in fh:
+            if rows >= limit:
+                break
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            segments = (row.get("reference") or {}).get("segments") or []
+            if not segments or "context" not in row:
+                continue
+            rows += 1
+            ctx = TaskContext.from_json(row["context"])
+            res = build(segments[0], ctx)
+            if res.program is None:
+                continue
+            if not list(_walk_filters(res.program.body)):
+                continue
+            with_filter += 1
+            if padded_clauses(res.program, ctx, row.get("request", "")):
+                padded += 1
+    if not with_filter:
+        return
+    print(f"filter grounding: {padded}/{with_filter} of rows with a FILTER "
+          f"({padded / with_filter:.1%}) filter on something the request "
+          f"never names, over {rows} rows read")
+
+
+def report_signature_uniqueness(out: Path, ceiling: float | None,
+                                allow_signature_unique: bool = False) -> None:
     """Can the typed signature alone pick the tool in this file?
 
     A file where it always can cannot teach description reading and cannot
@@ -333,13 +397,23 @@ def report_signature_uniqueness(out: Path, ceiling: float | None) -> None:
     print(f"signature uniqueness: {r['full']:.1%} full, "
           f"{r['stripped']:.1%} types-only, over {r['calls']} reference CALLs "
           f"({r['tools_per_task']:.1f} tools/task)")
+    if allow_signature_unique:
+        print("--allow-signature-unique passed: the ceiling below was not "
+              "enforced, and every row's provenance is stamped "
+              "signature_unique_allowed so this file can never be mistaken "
+              "for one that passed it.")
+        return
     if ceiling is not None and r["full"] * 100 > ceiling:
         print(f"FATAL: {r['full']:.1%} of reference CALLs name a tool no "
               f"sibling shares a signature with, over the {ceiling:.0f}% "
               f"ceiling. A model can pick every tool by type shape alone, so "
               f"nothing scored on this file says anything about grounding. "
-              f"Add signature-identical siblings with --decoys MIN:MAX.",
+              f"Add signature-identical siblings with --decoys MIN:MAX, or "
+              f"pass --allow-signature-unique with a recorded reason if "
+              f"this file is deliberately not meant to teach or test "
+              f"description reading.",
               file=sys.stderr)
+        out.unlink(missing_ok=True)
         sys.exit(1)
     if r["full"] >= 0.99:
         print("WARNING: the signature identifies the tool in essentially "

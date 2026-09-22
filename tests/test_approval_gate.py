@@ -59,7 +59,7 @@ def test_a_board_wide_assignment_is_blocked_with_the_full_list():
     res = run("assign everything to bob", ASSIGN_ALL)
     assert res["status"] == "effect_blocked"
     err = res["error"]
-    assert err["code"] == "BULK_WRITE" and err["effect"] == "WRITE"
+    assert err["code"] == "BULK_WRITE" and err["effect"] == "mutates"
     assert err["count"] == len(demo_state()["entities"]["card"])
     # the list is exact: the run finished, so every write it would make is here
     assert [c["name"] for c in err["calls"]] == ["assign_card"] * err["count"]
@@ -123,7 +123,7 @@ def test_a_loop_of_deletions_previews_every_one_of_them():
     res = run("let's delete the oldest issue", DELETE_TODO)
     assert res["status"] == "effect_blocked"
     err = res["error"]
-    assert err["code"] == "DESTRUCTIVE" and err["effect"] == "DELETE"
+    assert err["code"] == "DESTRUCTIVE" and err["effect"] == "irreversible"
     todo = [c["id"] for c in demo_state()["entities"]["card"]
             if c["status"] == "todo"]
     assert err["count"] == len(todo) > 1
@@ -161,7 +161,7 @@ def test_without_preview_the_run_still_halts_at_the_first_destructive_call():
                        **sandbox_ctx})
     assert res["status"] == "effect_blocked"
     assert res["error"]["code"] == "EFFECT_BLOCKED"
-    assert res["error"]["tool"] and res["error"]["effect"] == "DELETE"
+    assert res["error"]["tool"] and res["error"]["effect"] == "irreversible"
     # the halted call is deliberately not logged (unnecessary_destructive
     # diffs this log against the approved run's)
     assert [c["name"] for c in res["calls"]] == ["list_cards"]

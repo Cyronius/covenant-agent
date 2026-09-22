@@ -599,6 +599,30 @@ covenant-agent/
   demo over-abstention. Plan: `.claude/plans/abort-referent.md`. Corpus
   regen and the retrain that carries this to the 0.8B are the plan's step 3.
 
+- **2026-09-08 — reactive execution closed: keep `PAUSE`, drop the prompt,
+  no corpus yet (`.claude/plans/reactive-execution.md`, `results/R4.md`).**
+  Overdue entry — the decision has lived in those two documents since the
+  day it was made and never made it into this one, which `§14` requires.
+  The owner's diagnosis was that one-shotting a whole program is the
+  design's problem, not the model's: "we need to be able to split the
+  problem up, or at least react to errors." Tested on Qwen3.8-27B
+  (RunPod 5090, `results/logs/react_qwen38_27b.sh`), 150 task-runs: the
+  built runtime-error rule (`harness/run.py react_on_error`, spec 0.3.1
+  §4/§9) never fired — every failure on this model is static, caught by
+  the typechecker before execution, so a runtime-error turn has nothing to
+  react to. Telling the model in the prompt when to `PAUSE` (the
+  observe-then-decide paragraph) cost 4 of 25 tasks (17 → 13), inducing
+  *anticipatory* `IF r1 EQ C6` branches in place of a `PAUSE`. **Decision:**
+  `PAUSE` stays exactly as it is — the L10 checkpoint mechanism already in
+  the IR and harness — the observe-then-decide prompt expansion is
+  dropped, and the runtime-error rule stays built with no corpus cost
+  since it costs nothing when it does not fire. What was *not* done at the
+  time: teaching `PAUSE` through the corpus instead of the prompt
+  (`reactive-execution.md` §6) — that half stayed unbuilt for two weeks
+  until `results/R4.md`'s own finding (`repeat_after_failure`) and
+  `general-agent-plan.md`'s Tier 1 item 1 pointed the same way, and it is
+  now step 3 of `.claude/plans/agent-loop-and-ir-review.md`.
+
 - **2026-09-17 — R3 started (`models/tiny/`), one size, encoder-decoder.**
   The tiny-planner track (§5) now has code and a first result: a 7.9M
   from-scratch encoder-decoder trained on `s5_plain` (25k single-segment
@@ -900,3 +924,106 @@ covenant-agent/
   discrimination being asked to discriminate. That is the measurement the
   grounding question asks for, but it is not R8's, and the two are not one
   trend line. The corpus regen and §7's restatement remain open.
+
+- **2026-09-20 — R9: the variance question dissolves, and the first
+  grounding number (`results/R9.md`).** One RTX 4090, ~6.5 GPU-hours,
+  $2.22. Both arms x three seeds, scored on the 42-world holdout's plain
+  and decoyed halves at once (`data_cache_ho42`).
+
+  **R8's 74-95% control spread was the measurement, not the encoder.**
+  Held out over 42 worlds instead of one (`bookstore`, 0.96% of training
+  data), the same arm at the same three seeds spans **1.8 points**
+  (69.3-71.2%); diffusion spans 1.0 point. This removes the premise of
+  step 5 in `.claude/plans/merged-state-2026-09-20.md` and the motivating
+  result at the top of `.claude/plans/imported-schemas-as-distractors.md`
+  — "it stabilises the control arm" is no longer a reason to run the
+  open-schema injection arm. The rejection-pressure question in both
+  plans is untouched and unmeasured.
+
+  **The first grounding number this project has been able to take.**
+  `chance_tool_sig` — the score a model gets by mapping English to a type
+  shape and picking uniformly inside the signature collision group,
+  reading no description at all — is **43.6%** on the decoyed holdout. The
+  control arm scores 62.8%, **+19.2 points** over that null, stable across
+  seeds; diffusion +16.1. Read against the old, wrong null (`chance_tool`,
+  a uniform pick over all 41 tools, 2.4%) the same number would have read
+  as twenty-six times chance and meant nothing — every decoyed number from
+  here on is read against `chance_tool_sig`, never `chance_tool`. Still
+  open: whether the margin comes from the tool **description** or the tool
+  **name** — the adversarial-name probe finds only +5.3 points (n=288,
+  ~1.9σ), and the instrument that would settle it (`ablate_desc.py`)
+  does not yet support the structural cache.
+
+  **The diffusion arm leans harder on the shortcut.** It selects tools
+  better than the control on the plain half (88.3% vs 86.9%) and worse on
+  the decoyed half (59.8% vs 62.8%), dropping 28.5 points to the control's
+  24.0 — an ordering no 100%-signature-unique suite could ever show.
+
+  **Two cost corrections to `pod.md` and `models/tiny/README.md`,** both
+  in the optimistic direction: 18.9 GB measured at batch 64 against a
+  15.9 GB prediction, and 0.53 s/step against "well under 0.19 s" — about
+  2.8x low, matching the README's own warning about this box. One process
+  per 24 GB card confirmed; two would need 37.8 GB.
+
+  **What made the measurement possible:** `harness/signature_uniqueness.py`
+  (is the type signature alone unique per call — 100% in every suite in
+  the tree before this one, except the two built with decoys),
+  `decoy_called` in `harness/metrics.py` (did the model pick a
+  never-correct sibling — ~30% of decoyed tasks), and `chance_tool_sig` in
+  `models/tiny/diagnose.py` (the honest null). All three landed in the
+  2026-09-19/20 session immediately before this one and are what turned
+  "the control arm is unstable" into a settled, dated number.
+
+  **Stale as of this result, corrected 2026-09-21** (`.claude/plans/
+  agent-loop-and-ir-review.md` step 1c): `merged-state-2026-09-20.md`'s
+  step 5 justification and `imported-schemas-as-distractors.md`'s opening
+  motivating result both rested on the 74-95% spread; both now say so.
+
+- **2026-09-21 — the `EFFECTS` header retired and the six effect words
+  become three properties (spec 0.7.0 §6/§7; steps 1b/1e of
+  `.claude/plans/agent-loop-and-ir-review.md`).** Two changes landing
+  together because both touch the same tool-declaration surface. First,
+  the optional `EFFECTS` header — the first line of every tiny-model
+  training target — is gone from the grammar: nothing ever read it (the
+  compiler ignored it, the approval gate reads a tool's own schema, and
+  `check_effects`'s `EFFECT_UNDECLARED` check only ever fired against a
+  header a model itself wrote, never against anything real). Second, the
+  closed six-word effect list (`READ WRITE DELETE SEND PAY EXTERNAL`) that
+  every tool declared is replaced by three composable yes/no properties —
+  `mutates`, `irreversible`, `external` — because the six-word list was
+  the actual generality defect: an unrelated new tool domain (a
+  firmware-flash tool, an e-signature tool, a calendar invite) needed a
+  new word in `core/` every time, while `tests/test_approval_gate.py`'s two
+  real bugs (four cards assigned to the wrong person with nothing to
+  click; seven cards deleted on one approval) show the underlying signal —
+  knowing a call's consequence class before it runs — is load-bearing.
+  **Every gate behaviour is unchanged:** the approval gate still blocks
+  what `DELETE`/`SEND`/`PAY` used to (now `irreversible`); the bulk gate
+  still fires on what `WRITE` used to (now `mutates`); `EXTERNAL`/
+  `external`-only was never gated either way. `test_approval_gate.py`'s
+  scenarios and status-code assertions are unchanged; its three literal
+  `effect` string assertions were updated from the retired words to their
+  replacement properties, which is the one place the migration is visible
+  in a test file rather than absorbed by it. On the model-facing tool
+  line, the six-word bracket (`[WRITE]`, `[DELETE]`, …) becomes a compact
+  per-property code with no separator — `[M]`, `[M!]`, `[!X]`, `[M!X]`,
+  `[X]`, `[]` — one letter per property in fixed order
+  (`mutates`=`M`, `irreversible`=`!`, `external`=`X`), so the bracket costs
+  no more tokens than the word it replaced. Every tool declaration in the
+  tree was migrated by a one-shot script (127 sites: 62 across
+  `runtime/worlds/*.py`, 18 in `data/gen/domains.py`, 11 in
+  `data/gen/world_from_schemas.py`'s override dict and fallback rule, 36
+  in `data/schemas/coursebuilder_tools.json`), plus the decoy bank
+  (`harness/decoys.py` `_bank_key`/`DECOY_OPS`, re-keyed on the property
+  set — verb content unchanged), `harness/metrics.py`
+  (`destructive_call_keys` keys on `irreversible`), `harness/
+  signature_uniqueness.py`'s bracket regex, `harness/context.py`'s bracket
+  renderer, and `baselines/qwen/run_a.py`'s worked example. **Deferred, not
+  done:** the kanban/db demo apps' own hand-maintained UI mirrors
+  (`client/app/src/worlds/{kanban,db}/data/*.ts`, `ToolsPanel.tsx`, the
+  effect-colour CSS) are static display-only copies with no runtime
+  dependency on the backend's tool declarations, so leaving them on the
+  old words is cosmetic staleness, not a functional break; redesigning a
+  five-colour badge system for a combinable three-property one is a visual
+  design decision that deserves its own pass rather than a rushed
+  substitution. Full suite green (366 passed) after the migration.

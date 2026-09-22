@@ -88,14 +88,12 @@ def test_unreachable_after_pause():
     assert codes == ["UNREACHABLE"]
 
 
-def test_effect_undeclared():
-    codes, _ = _codes("EFFECTS READ\nCALL @delete_card $0\nSTOP\n")
-    assert codes == ["EFFECT_UNDECLARED"]
-
-
 def test_effects_computed():
+    """0.7.0: static_effects is the union of consequence properties, not
+    effect words — delete_card is mutates+irreversible, list_cards is a
+    pure read (no properties at all)."""
     _, res = _codes("CALL @delete_card $0\nCALL @list_cards -> r0\nSTOP\n")
-    assert res.static_effects == ["DELETE", "READ"]
+    assert res.static_effects == ["irreversible", "mutates"]
 
 
 def test_if_branch_binding_merge():

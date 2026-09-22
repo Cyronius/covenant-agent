@@ -33,7 +33,7 @@ def test_effect_gate_blocks_delete():
         "CALL @delete_card $0\nSTOP\n")
     out = run_sandbox(_payload(world, sctx, res, approval=False))
     assert out["status"] == "effect_blocked"
-    assert out["error"]["effect"] == "DELETE"
+    assert out["error"]["effect"] == "irreversible"
     # state untouched
     assert len(out["state"]["entities"]["card"]) == \
         len(world["default_state"]["entities"]["card"])
@@ -195,7 +195,7 @@ def test_update_skips_omitted_optional_params():
                 {"name": "heading", "type": "STR", "desc": "h", "required": False, "field": ["element", "heading"]},
                 {"name": "text", "type": "STR", "desc": "t", "required": False, "field": ["element", "text"]},
             ],
-            "returns": "OBJ:element", "effects": ["WRITE"],
+            "returns": "OBJ:element", "effects": ["mutates"],
             "impl": {"op": "update", "entity": "element", "id_param": 0,
                      "set_from_params": {"heading": 1, "text": 2}},
         }],
@@ -226,7 +226,7 @@ def test_create_skips_null_slots_and_omitted_optionals():
                 {"name": "position", "type": "STR", "desc": "p", "required": False},
                 {"name": "heading", "type": "STR", "desc": "h", "required": False, "field": ["element", "heading"]},
             ],
-            "returns": "OBJ:element", "effects": ["WRITE"],
+            "returns": "OBJ:element", "effects": ["mutates"],
             "impl": {"op": "create", "entity": "element", "param_fields": ["type", None, "heading"],
                      "defaults": {"heading": "Untitled"}},
         }],

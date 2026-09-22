@@ -1,0 +1,8 @@
+# L2_kanban_titles_for_bob  (level 2, world kanban)
+# request: Give me the titles of Bob's cards.
+# $0: ID:user = 'user_1' — Bob
+
+CALL @list_cards -> r0
+FILTER r0 @card.assignee EQ $0 -> r1
+MAP r1 @card.title -> r2
+RETURN r2

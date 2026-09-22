@@ -50,7 +50,7 @@ WORLD = {
                         "desc": "which way to drive: north, south, east "
                                 "or west"}],
             "returns": "OBJ:robot",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "warehouse", "fn": "drive"},
         },
         {
@@ -61,7 +61,7 @@ WORLD = {
                         "desc": "the tote on this bay",
                         "field": ["tote", "id"]}],
             "returns": "OBJ:tote",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "warehouse", "fn": "lift"},
         },
         {
@@ -72,7 +72,7 @@ WORLD = {
                         "desc": "the tote you are carrying",
                         "field": ["tote", "id"]}],
             "returns": "OBJ:tote",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "warehouse", "fn": "set_down"},
         },
         {
@@ -81,7 +81,7 @@ WORLD = {
                     "standing on the charging pad.",
             "params": [],
             "returns": "OBJ:robot",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "warehouse", "fn": "charge"},
         },
     ],

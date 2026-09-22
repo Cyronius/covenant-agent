@@ -89,7 +89,10 @@ if [ -n "$DECOYS" ]; then
   DECOY_FLAG="--decoys $DECOYS"
   SUF=_decoy
 else
-  DECOY_FLAG=""
+  # 1f, 2026-09-21: predates the mandatory collision ceiling; the escape
+  # reproduces this plain (undecoyed) record exactly and stamps the fact
+  # into every row's provenance.
+  DECOY_FLAG="--decoys 0 --allow-signature-unique"
   SUF=""
 fi
 LEVELS="0:5,1:5,2:5,3:5,4:5,5:5,6:5,7:5,8:5,9:5,10:5,11:5,12:5.7,13:5.7,14:5.7,15:5.7,16:5.7,17:5.7,18:5.8,19:5"

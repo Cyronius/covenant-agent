@@ -34,6 +34,34 @@ from typing import Dict, List, Optional, Tuple
 from core.ir import (ConstDecl, FieldDecl, TaskContext, ToolDecl, ToolParam,
                      format_type, letter_for_type, parse_type)
 
+# The standard compute block (spec 0.7.0 §6, plan step 1g): always present,
+# never conditional, so their presence in a context carries no information
+# about what the task needs (the FILTER-padding reflex in another form if it
+# were only rendered when a task happened to need a total). `sum`/`avg`/
+# `max`/`min` cannot be opcodes under the admission test's new first
+# question (spec §12) — no field symbol, no type variable — so they are
+# tools every world gets for free, backed by runtime/engines/compute.js.
+# LIST FLOAT variants are not declared: no entity field in any world is
+# FLOAT-typed today, so they would be dead surface the way `SET` was.
+COMPUTE_TOOLS = [
+    {"name": "sum", "desc": "The sum of a list of numbers.",
+     "params": [{"name": "values", "type": "LIST INT", "desc": "the numbers"}],
+     "returns": "INT", "effects": [],
+     "impl": {"op": "engine", "module": "compute", "fn": "sum"}},
+    {"name": "avg", "desc": "The average of a list of numbers.",
+     "params": [{"name": "values", "type": "LIST INT", "desc": "the numbers"}],
+     "returns": "FLOAT", "effects": [],
+     "impl": {"op": "engine", "module": "compute", "fn": "avg"}},
+    {"name": "max", "desc": "The largest value in a list of numbers.",
+     "params": [{"name": "values", "type": "LIST INT", "desc": "the numbers"}],
+     "returns": "INT", "effects": [],
+     "impl": {"op": "engine", "module": "compute", "fn": "max"}},
+    {"name": "min", "desc": "The smallest value in a list of numbers.",
+     "params": [{"name": "values", "type": "LIST INT", "desc": "the numbers"}],
+     "returns": "INT", "effects": [],
+     "impl": {"op": "engine", "module": "compute", "fn": "min"}},
+]
+
 
 def _touched_entities(world: dict, tools: List[dict]) -> set:
     """Entities a tool set reads or writes: linked params and return types."""
@@ -137,7 +165,10 @@ def build_context(world: dict, constants: List[dict],
 
     tools = [t for t in world["tools"]
              if tool_subset is None or t["name"] in tool_subset]
-    tools = list(tools)
+    # the compute block is never subject to a world's holdout-tool
+    # restriction: it isn't part of any world's domain, so it is not one of
+    # the tools a holdout eval is withholding
+    tools = list(tools) + COMPUTE_TOOLS
     rng.shuffle(tools)
 
     # field slots: every (entity, field) pair, plus unlinked tool params
@@ -226,8 +257,16 @@ def build_context(world: dict, constants: List[dict],
 
 
 def sandbox_from_context(ctx: TaskContext, world: dict) -> dict:
-    """Rebuild the sandbox payload for a TaskContext restored from JSON."""
-    by_name = {t["name"]: t for t in world["tools"]}
+    """Rebuild the sandbox payload for a TaskContext restored from JSON.
+
+    The compute block is not part of any world's own tool list (it is
+    injected in `build_context` below), so it has to be checked here too —
+    same reason a crowded/decoyed/injected context stores its own `sandbox`
+    payload rather than relying on this rebuild, except the compute block is
+    a fixed, always-present table rather than a per-task draw, so it can
+    just be looked up alongside the world's own tools.
+    """
+    by_name = {t["name"]: t for t in world["tools"] + COMPUTE_TOOLS}
     tools = []
     for t in ctx.tools.values():
         w = by_name[t.name]
@@ -275,6 +314,19 @@ def render_kind(kind: str) -> str:
     return kind
 
 
+# spec 0.7.0 §7: one letter per declared property, always in this order,
+# with no separator — "M!X" for a tool that is mutates+irreversible+
+# external (the old PAY), "" for one with none of the three (the old READ).
+# Compact on purpose: the property is metadata on every tool line, not a
+# domain noun, so it should not cost more tokens than the word it replaced.
+_PROPERTY_CODES = (("mutates", "M"), ("irreversible", "!"), ("external", "X"))
+
+
+def effect_code(effects) -> str:
+    have = set(effects)
+    return "".join(code for prop, code in _PROPERTY_CODES if prop in have)
+
+
 def serialize_context(request: str, ctx: TaskContext) -> str:
     """The model-facing input: request, then schemas, all symbolic."""
     typed = is_typed(ctx)
@@ -287,7 +339,7 @@ def serialize_context(request: str, ctx: TaskContext) -> str:
                 f"{p.sym}:{format_type(p.type)}{'' if p.required else '?'}"
                 for p in t.params)
         ret = format_type(t.returns) if t.returns else "-"
-        eff = ",".join(t.effects)
+        eff = effect_code(t.effects)
         lines.append(f"{t.sym} ({ps}) -> {ret} [{eff}] :: {t.desc}")
     lines.append("FIELDS:")
     for f in sorted(ctx.fields.values(), key=lambda f: int(f.sym[1:])):

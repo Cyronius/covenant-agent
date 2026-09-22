@@ -71,7 +71,7 @@ export interface ValidateRequest<TState = unknown> {
   /**
    * Optional override of the default approval token. `false` deliberately
    * runs unapproved so the real runtime effect gate (runtime/sandbox.js)
-   * blocks the first DELETE/SEND/PAY call with a genuine EFFECT_BLOCKED;
+   * blocks the first `irreversible` call with a genuine EFFECT_BLOCKED;
    * omit to use the default (the fixed tasks' own stored value, or `false`
    * with an inline context, which has none).
    */

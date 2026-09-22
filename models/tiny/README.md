@@ -29,13 +29,23 @@ count and the data. Results are reported against forward passes, not steps,
 because the control spends one pass per token while the diffusion arm spends
 however many it is given.
 
-## The planted dependency
+## The planted dependency (retired 2026-09-21)
 
-Reference programs have no `EFFECTS` header. This pipeline derives one and puts
-it on the first line. The header is the union of the effects of every tool the
-program calls, so the top of the program is determined by the bottom. A
-left-to-right generator has to predict it before writing the calls. A diffusion
-generator can leave it until last. Header accuracy is reported on its own.
+Reference programs have no `EFFECTS` header. This pipeline derived one and put
+it on the first line. The header was the union of the effects of every tool the
+program calls, so the top of the program was determined by the bottom. A
+left-to-right generator had to predict it before writing the calls. A diffusion
+generator could leave it until last. Header accuracy was reported on its own.
+
+The experiment ran (R7, R8) and answered the question it was built for.
+Nothing outside this module ever read the header — not the compiler, not the
+approval gate, not the reference programs — so `corpus.py` stops deriving and
+prepending it, `canvas.py` drops `EFFECTS` and the effect words from the
+keyword table, and the corpus-declared-effects keyword mask (`kw_allowed`,
+`Codec.keyword_mask`) goes with it, since nothing else needed per-task
+keyword masking. Spec 0.7.0 also retires the six effect words themselves in
+favour of three consequence properties (`mutates`/`irreversible`/
+`external`); see `spec/agent_core.md` §7.
 
 ## Structural binding (step 1 of the NPU-native planner)
 

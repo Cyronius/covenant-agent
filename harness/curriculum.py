@@ -670,6 +670,86 @@ CURRICULUM = [
             "STOP\n"],
         tags=["writer"],
     ),
+    # ---------------- Instruction coverage: LET, MAP, COUNT, SELECT, RETURN
+    # had no worked example anywhere under spec/examples/ (43 files checked)
+    # before this pass; SET was the sixth and is retired instead (0.7.0),
+    # having produced zero recipes and zero examples across the whole tree.
+    dict(
+        id="L1_kanban_list_all_cards", level=1, world="kanban",
+        request="List all the cards on the board.",
+        constants=[],
+        segments=["CALL @list_cards -> r0\n"
+                  "RETURN r0\n"],
+        tags=["answering"],
+    ),
+    dict(
+        id="L2_kanban_count_overdue", level=2, world="kanban",
+        request="How many cards are overdue?",
+        constants=[],
+        segments=["CALL @list_cards -> r0\n"
+                  "FILTER r0 @card.due LT NOW -> r1\n"
+                  "COUNT r1 -> r2\n"
+                  "RETURN r2\n"],
+        tags=["answering"],
+    ),
+    dict(
+        id="L2_kanban_titles_for_bob", level=2, world="kanban",
+        request="Give me the titles of Bob's cards.",
+        constants=[{"type": "ID:user", "value": "user_1", "desc": "Bob"}],
+        segments=["CALL @list_cards -> r0\n"
+                  "FILTER r0 @card.assignee EQ $0 -> r1\n"
+                  "MAP r1 @card.title -> r2\n"
+                  "RETURN r2\n"],
+        tags=["answering"],
+    ),
+    dict(
+        id="L4_kanban_second_oldest_open", level=4, world="kanban",
+        request="Assign the second-oldest open card to Dana.",
+        constants=[
+            {"type": "STR", "value": "todo", "desc": "the open status"},
+            {"type": "ID:user", "value": "user_2", "desc": "Dana"},
+        ],
+        segments=["CALL @list_cards -> r0\n"
+                  "FILTER r0 @card.status EQ $0 -> r1\n"
+                  "SORT r1 @card.created ASC -> r2\n"
+                  "SELECT r2 1 -> r3\n"
+                  "CALL @assign_card r3.@card.id $1 -> r4\n"
+                  "STOP\n"],
+        tags=["adv:ordinal"],
+    ),
+    # LET's real justification (results/R4.md:104): before MOST existed, an
+    # argmax-by-count was a manual FOREACH/COUNT/IF loop that tracks a
+    # running best, and only LET can carry that best candidate's whole
+    # record past the point where the next iteration overwrites the loop
+    # variable. MOST/LEAST now cover the common case; LET remains how a
+    # program keeps a whole record alive when a later step only hands back
+    # an id or a scalar.
+    dict(
+        id="L4_crm_most_tickets_manual", level=4, world="crm",
+        request="Find whichever customer has the most tickets on file, open "
+                "or closed, and email their account manager about it.",
+        constants=[
+            {"type": "INT", "value": 0, "desc": "zero, the initial best count"},
+            {"type": "STR",
+             "value": "Your customer holds the most tickets on file.",
+             "desc": "email text"},
+        ],
+        segments=["CALL @list_customers -> r0\n"
+                  "CALL @list_tickets -> r1\n"
+                  "LET $0 -> r2\n"
+                  "FIRST r0 -> r3\n"
+                  "FOREACH r0 -> r4\n"
+                  "  FILTER r1 @ticket.customer EQ r4.@customer.id -> r5\n"
+                  "  COUNT r5 -> r6\n"
+                  "  IF r6 GT r2\n"
+                  "    LET r6 -> r2\n"
+                  "    LET r4 -> r3\n"
+                  "CALL @get_staff r3.@customer.manager -> r7\n"
+                  "GET r7.@user.email -> r8\n"
+                  "CALL @send_email r8 $1\n"
+                  "STOP\n"],
+        tags=["adv:aggregation"],
+    ),
     dict(
         id="GATE_kanban_delete_blocked", level=0, world="kanban",
         request="Delete card 4.",

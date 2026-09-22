@@ -37,6 +37,7 @@ from core.ir import TaskContext, parse_type  # noqa: E402
 from core.pipeline import build  # noqa: E402
 from harness import metrics as M  # noqa: E402
 from harness.context import sandbox_from_context  # noqa: E402
+from harness.filter_check import padded_clauses  # noqa: E402
 from runtime.worlds import get_world  # noqa: E402
 
 SANDBOX = ROOT / "runtime" / "sandbox.js"
@@ -107,6 +108,7 @@ def run_task(task: dict, planner: Planner,
     error_turns = 0
     feedback: Optional[dict] = None
     call_log: list = []
+    padded: list = []
     n_instructions = 0
     status = "error"
     final_state = state
@@ -141,6 +143,9 @@ def run_task(task: dict, planner: Planner,
             status = "static_error"
             break
         n_instructions += M.program_instructions(result.program)
+        # plan step 2a: FILTER clauses the request neither names nor supplies
+        # a value for, accumulated across segments. Recorded, never gated.
+        padded += padded_clauses(result.program, ctx, task["request"])
 
         payload = {
             "js": result.js,
@@ -205,7 +210,8 @@ def run_task(task: dict, planner: Planner,
         n_instructions=n_instructions or None, pauses=pauses,
         latency=lat, diagnostics=diagnostics, abort_reason=abort_reason,
         abort_refs=abort_refs, segments=segments, error_turns=error_turns,
-        return_value=(sres.get("return_value") if sres else None))
+        return_value=(sres.get("return_value") if sres else None),
+        padded_clauses=padded if parse_ok else None)
     return row
 
 

@@ -118,10 +118,10 @@ HAND_PARAMS = {
 }
 # Effects: verb rule with explicit overrides.
 EFFECTS = {
-    "submit_contact_form": ["SEND"], "write_text": ["EXTERNAL"],
-    "generate_image": ["EXTERNAL"], "edit_image": ["EXTERNAL"],
-    "search_help": ["READ"], "export_document": ["WRITE"],
-    "start_free_trial": ["WRITE"], "course_search_and_create": ["WRITE"],
+    "submit_contact_form": ["irreversible", "external"], "write_text": ["external"],
+    "generate_image": ["external"], "edit_image": ["external"],
+    "search_help": [], "export_document": ["mutates"],
+    "start_free_trial": ["mutates"], "course_search_and_create": ["mutates"],
 }
 RETURNS = {
     "list_modules": "LIST OBJ:module", "get_module": "OBJ:module",
@@ -186,10 +186,10 @@ def effect_for(name: str) -> list:
     if name in EFFECTS:
         return EFFECTS[name]
     if name.startswith(("list_", "get_", "find_", "search_")):
-        return ["READ"]
+        return []
     if name.startswith("delete_"):
-        return ["DELETE"]
-    return ["WRITE"]
+        return ["mutates", "irreversible"]
+    return ["mutates"]
 
 
 def convert(name: str, src: dict | None) -> dict:

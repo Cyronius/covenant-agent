@@ -43,9 +43,16 @@ SEED=20260910
 mkdir -p data/${TAG}_shards results/logs/fam
 
 # --- families A and C: oracle episodes with off-path restarts -------------
+# --allow-signature-unique (1f, 2026-09-21): measured at 62.5% full
+# signature uniqueness (python -m data.gen.episodes --world all --episodes 20
+# --seed 1 --out <tmp> --require-collisions 999), above the 50% ceiling for a
+# structural reason, not an accident — a decision world has a handful of
+# tools and a move is every one of them. Documented exception per the 1f
+# decision, not a dedicated fake-tool device.
 for i in 0 1 2 3 4 5 6 7; do
   python -m data.gen.episodes --world all --episodes 20 \
       --seed $((SEED + i * 1000)) --offpath 0.25 --illegal 0.3 $SURFACE \
+      --allow-signature-unique \
       --out data/${TAG}_shards/episodes_$i.jsonl \
       > results/logs/fam/gen_${TAG}_episodes_$i.log 2>&1 &
 done
@@ -112,7 +119,10 @@ EOF
 SFX=""; [ "$ARM" = typed ] && SFX="_typed"
 # Family B's number is a gap, so the pair has to be paired: same seed, same
 # worlds, same programs, one with decoys and one without.
+# --decoys 0 --allow-signature-unique (1f, 2026-09-21): this half is meant
+# to be the undecoyed control, and predates the mandatory collision ceiling.
 python -m data.gen --levels "$LEVELS" --n 400 --seed 777001 --drop-noops \
+    --decoys 0 --allow-signature-unique \
     $SURFACE --domains data/gen/themes --out data/holdout/e_known_plain${SFX}.jsonl
 python -m data.gen --levels "$LEVELS" --n 400 --seed 777001 --drop-noops \
     --decoys 2:4 $SURFACE --domains data/gen/themes \

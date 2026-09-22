@@ -41,14 +41,19 @@ case "$ARM" in
   classic) SURFACE="";                                TAG=s5c ;;
   *) echo "usage: gen_s5.sh [typed|classic]"; exit 2 ;;
 esac
+# --decoys 0 --allow-signature-unique (1f, 2026-09-21): predates the
+# mandatory collision ceiling; reproduces this plain (undecoyed) record
+# exactly, with the escape stamped into every row's provenance.
 LEVELS="0:5,1:5,2:5,3:5,4:5,5:5,6:5,7:5,8:5,9:5,10:5,11:5,12:5.7,13:5.7,14:5.7,15:5.7,16:5.7,17:5.7,18:5.8,19:5"
 mkdir -p data/${TAG}_shards
 for i in 0 1 2 3 4 5 6 7; do
   python -m data.gen --levels "$LEVELS" --n 3750 --seed $((20260912 + i*10000000)) --drop-noops \
+      --decoys 0 --allow-signature-unique \
       $SURFACE --domains data/gen/themes --out data/${TAG}_shards/plain_$i.jsonl > results/logs/gen_${TAG}_plain_$i.log 2>&1 &
 done
 for i in 0 1 2 3 4 5 6 7; do
   python -m data.gen --levels "$LEVELS" --n 3250 --seed $((20260913 + i*10000000)) --drop-noops \
+      --decoys 0 --allow-signature-unique \
       $SURFACE --domains data/gen/themes --crowd 15:60 --out data/${TAG}_shards/crowded_$i.jsonl > results/logs/gen_${TAG}_crowded_$i.log 2>&1 &
 done
 wait

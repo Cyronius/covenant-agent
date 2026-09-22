@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 CODES = (
     "PARSE_ERROR", "UNBOUND", "TYPE_ERROR", "UNKNOWN_TOOL", "UNKNOWN_FIELD",
-    "MISSING_ARG", "UNREACHABLE", "EFFECT_UNDECLARED", "RUNTIME",
+    "MISSING_ARG", "UNREACHABLE", "RUNTIME",
 )
 
 
@@ -59,10 +59,6 @@ def missing_arg(line: int, tool: str, param: str) -> Diagnostic:
 
 def unreachable(line: int) -> Diagnostic:
     return Diagnostic("UNREACHABLE", (), line)
-
-
-def effect_undeclared(effect: str) -> Diagnostic:
-    return Diagnostic("EFFECT_UNDECLARED", (effect,), 0)
 
 
 def runtime_error(code: str, line: int, detail: str = "") -> Diagnostic:

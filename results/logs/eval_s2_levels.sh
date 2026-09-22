@@ -27,9 +27,12 @@ cd /c/code/covenant-agent
 M=${1:-baselines/qwen/models/qwen3.5-0.8b-s2-pruned-q8.gguf}
 TPL="--template ${TEMPLATE:-qwen}"
 TAG=$(basename "$M" .gguf)
+# --decoys 0 --allow-signature-unique (1f, 2026-09-21): predates the
+# mandatory collision ceiling; reproduces this plain (undecoyed) record
+# exactly, with the escape stamped into every row's provenance.
 python -m data.gen --levels "11:1,12:1,13:1,14:1,15:1,16:1,17:1,18:1" --n 240 \
-    --seed 20260905 --holdout --drop-noops --domains data/gen/themes \
-    --out data/holdout/e_s2_levels.jsonl
+    --seed 20260905 --holdout --drop-noops --decoys 0 --allow-signature-unique \
+    --domains data/gen/themes --out data/holdout/e_s2_levels.jsonl
 python -m baselines.qwen.run_a --model "$M" --tasks data/holdout/e_s2_levels.jsonl $TPL \
     --ctx 16384 --domains data/gen/themes \
     --out "results/logs/${TAG}_e_s2_levels.jsonl" \

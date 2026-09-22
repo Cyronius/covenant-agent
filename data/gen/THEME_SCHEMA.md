@@ -51,7 +51,17 @@ and a **child** (the work item acted on), linked by a reference field.
        "gt_phrase": ["still ahead", "post"]},
       {"field": "booked", "kind": "time_cutoff",
        "phrase": "booked more than {d} days ago"}
-    ]
+    ],
+
+    "number": {                       // optional: one INT field, so the
+                                      // compute tools (sum/avg/max/min)
+                                      // have something to be called on
+      "field": "duration_minutes",
+      "noun": "appointment length",   // how a request says it: "the total
+                                      // appointment length across the
+                                      // appointments" — NOT the field name
+      "min": 10, "max": 90            // per-record range, ints, min < max
+    }
   },
 
   // Tool slots. The compiler fixes each slot's structure/effects/impl;
@@ -143,3 +153,12 @@ and a **child** (the work item acted on), linked by a reference field.
   appointments"), `post` = trailing phrase ("appointments already past").
 - Every list needs the stated minimum entries; JSON must parse; no comments
   in the actual files.
+- **`number` is the only numeric field a theme gets, and nothing sets it.**
+  It exists so a request can ask for a total, an average or a largest value
+  and the answer can be computed with the compute tools rather than
+  guessed. Pick a quantity the domain really records per record (minutes,
+  pages, units, kilometres, headcount — not money in cents), give it a
+  range a person would recognise, and write `noun` as the words a request
+  would use, not the field name. No tool takes it as an argument and no
+  filter reads it, so a theme without one loses only the aggregate
+  questions.

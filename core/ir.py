@@ -8,8 +8,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
 
-EFFECTS = ("READ", "WRITE", "DELETE", "SEND", "PAY", "EXTERNAL")
-DESTRUCTIVE_EFFECTS = ("DELETE", "SEND", "PAY")
+# spec 0.7.0 §7: three yes/no consequence properties any tool in any domain
+# can declare, replacing the closed six-word effect list. A tool's `effects`
+# is a subset of these, e.g. [] for a pure read, ["mutates"] for an ordinary
+# write, ["mutates", "irreversible"] for a delete.
+PROPERTIES = ("mutates", "irreversible", "external")
 CMPS = ("EQ", "LT", "GT", "CONTAINS", "IN")
 # spec 0.6.0 §3: IN is membership with the list on the right, so a FILTER
 # clause can say it; CONTAINS went back to meaning substring only.
@@ -50,7 +53,7 @@ def parse_type(s: str) -> Type:
         if kind not in ("ID", "OBJ"):
             raise ValueError(f"bad type: {s}")
         return (kind, entity)
-    if s not in ("INT", "STR", "BOOL", "TIME", "STATUS", "NULL"):
+    if s not in ("INT", "FLOAT", "STR", "BOOL", "TIME", "STATUS", "NULL"):
         raise ValueError(f"bad type: {s}")
     return (s,)
 
@@ -171,14 +174,6 @@ class Let(Instr):
 class Get(Instr):
     src: Reg
     field: str
-    dst: Reg
-
-
-@dataclass
-class SetF(Instr):
-    src: Reg
-    field: str
-    op: Operand
     dst: Reg
 
 
@@ -313,7 +308,6 @@ class Abort(Instr):
 
 @dataclass
 class Program:
-    effects_decl: Optional[list]  # list of effect names, or None if no header
     body: list
 
 

@@ -1,8 +1,9 @@
 """Load covenant-agent tasks and turn them into (input text, target program) pairs.
 
 The input is exactly what the real planner sees, built by covenant-agent's own
-serializer so we never drift from it. The target is the reference program with a
-derived EFFECTS header prepended -- see derive_effects for why.
+serializer so we never drift from it. The target is the reference program
+verbatim (spec 0.7.0: the EFFECTS header experiment ran — R7, R8 — and is
+retired; nothing ever read the header outside this module).
 """
 from __future__ import annotations
 
@@ -51,29 +52,8 @@ class Example:
     level: int
     world: str
     source: str        # serialized context: the model-facing input
-    target: str        # program text including the derived EFFECTS header
+    target: str        # program text, verbatim (no derived header)
     row: dict          # the original task, needed later to score in the sandbox
-
-
-def derive_effects(program: str, ctx: TaskContext) -> str:
-    """Union of the declared effects of every tool the program CALLs.
-
-    The reference programs omit the EFFECTS header, and the real spec makes it
-    optional. We add it because it is a dependency that points backwards: the
-    first line is determined by lines below it. An autoregressive model has to
-    predict it before writing the calls; a diffusion model can fill it last.
-    That asymmetry is one of the things this experiment measures, so the header
-    has to actually be in the target.
-    """
-    order = ["READ", "WRITE", "DELETE", "SEND", "PAY", "EXTERNAL"]
-    found = set()
-    for line in program.splitlines():
-        parts = line.strip().split()
-        if len(parts) >= 2 and parts[0] == "CALL":
-            tool = ctx.tools.get(parts[1])
-            if tool:
-                found.update(tool.effects)
-    return "EFFECTS " + " ".join(e for e in order if e in found) if found else ""
 
 
 _REGFIELD = re.compile(r"^r(\d{1,2})\.(F\d+)$")
@@ -169,16 +149,14 @@ def load(path: Path, limit: int | None = None,
                 continue
             ctx = TaskContext.from_json(row["context"])
             program = segments[0]
-            header = derive_effects(program, ctx)
-            target = (header + "\n" + program) if header else program
-            if len(program_tokens(target)) > max_tokens:
+            if len(program_tokens(program)) > max_tokens:
                 continue
             out.append(Example(
                 task_id=row["id"],
                 level=row.get("level", -1),
                 world=row.get("world", "?"),
                 source=serialize_context(row["request"], ctx),
-                target=target,
+                target=program,
                 row=row,
             ))
     return out

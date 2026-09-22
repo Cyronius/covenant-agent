@@ -22,8 +22,7 @@ from pathlib import Path
 from statistics import mean, median
 
 CLASSES = {
-    "header": lambda t: t in ("EFFECTS", "READ", "WRITE", "DELETE", "SEND", "PAY", "EXTERNAL"),
-    "keyword": lambda t: t in ("CALL", "LET", "GET", "SET", "FORMAT", "FILTER", "MAP",
+    "keyword": lambda t: t in ("CALL", "LET", "GET", "FORMAT", "FILTER", "MAP",
                                "COUNT", "SORT", "MOST", "LEAST", "SELECT", "FIRST",
                                "FOREACH", "IF", "ELSE", "PARALLEL", "TRY", "RETURN",
                                "STOP", "PAUSE", "ABORT"),

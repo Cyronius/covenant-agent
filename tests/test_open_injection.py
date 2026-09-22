@@ -150,7 +150,7 @@ def test_tools_of_row_recovers_param_names():
             "tools": [{"sym": "T0", "name": "get_quote", "desc": "A quote",
                        "params": [{"sym": "F3", "type": "STR",
                                    "required": True, "desc": "ticker"}],
-                       "returns": None, "effects": ["READ"]}],
+                       "returns": None, "effects": []}],
             "fields": [{"sym": "F3", "entity": None, "name": "symbol",
                         "type": "STR", "desc": "ticker"}],
             "constants": [],
@@ -182,7 +182,7 @@ def test_foreign_name_collisions_are_skipped(themed):
     world = get_world("bookstore")
     clash = dict(world["tools"][0])
     probe = {"name": "zz_unique_probe", "desc": "d", "params": [],
-             "returns": None, "effects": ["READ"],
+             "returns": None, "effects": [],
              "impl": {"op": "external", "kind": "zz_unique_probe"}}
     merged = crowd_world(world, [], random.Random(0), 2, foreign=[clash, probe])
     names = [t["name"] for t in merged["tools"]]
@@ -262,13 +262,16 @@ def test_injected_rows_still_execute(pairs):
 def test_holdout_rows_draw_only_holdout_distractors(themed):
     """The silent one: a held-out world whose distractors are the ones
     training saw stops measuring novel schema reading, and says nothing."""
+    from harness.context import COMPUTE_TOOLS
+
     train = {t["name"] for t in load_pool(holdout=False)}
     held = {t["name"] for t in load_pool(holdout=True)}
+    compute = {t["name"] for t in COMPUTE_TOOLS}
     for seed in SEEDS[:4]:
         row = gen_one(LEVEL, seed, True, "template", symbols="typed",
                       enums=True, kinds=True, inject_open=(42, 42))
         native = {t["name"] for t in get_world(row["world"])["tools"]}
-        injected = {t["name"] for t in row["context"]["tools"]} - native
+        injected = {t["name"] for t in row["context"]["tools"]} - native - compute
         assert injected <= held
         assert not injected & train
 

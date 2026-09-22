@@ -1,6 +1,6 @@
 # Agent Core IR — Specification (F1)
 
-**Version:** 0.6.0 (0.6.0, 2026-09-12: `IN` - membership with the list on the right, legal in a `FILTER` clause; `CONTAINS` is substring only, §2/§3/§4/§12; 0.5.0, 2026-09-11: a `FILTER` clause may compare against a second field of the element, §3/§4/§12; 0.4.0, 2026-09-08: `MOST`/`LEAST`, `EMPTY`, normalized STR comparison, §2/§3/§4/§12; typed constant letters and constant kinds, §1/§6 — landing in the same series; 0.3.1, 2026-09-08: runtime errors as a segment boundary, §4/§9; 0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
+**Version:** 0.7.0 (0.7.0, 2026-09-21: `SET` retired — no tool ever took a whole record as an argument, so nothing could act on what it produced, §1/§3/§4/§12; `FLOAT` added for the standard compute block's `avg`, §2; `sum`/`avg`/`max`/`min` are always-present tools, not opcodes, backed by `runtime/engines/compute.js`, §6; the admission test gains a first question, "can this be a tool?", §12; the optional `EFFECTS` header removed from the grammar — nothing ever read it, §1/§3; the closed six-word effect list (`READ`/`WRITE`/`DELETE`/`SEND`/`PAY`/`EXTERNAL`) retired for three composable consequence properties (`mutates`/`irreversible`/`external`) any tool in any domain can declare, gate behaviour unchanged, §6/§7; 0.6.0, 2026-09-12: `IN` - membership with the list on the right, legal in a `FILTER` clause; `CONTAINS` is substring only, §2/§3/§4/§12; 0.5.0, 2026-09-11: a `FILTER` clause may compare against a second field of the element, §3/§4/§12; 0.4.0, 2026-09-08: `MOST`/`LEAST`, `EMPTY`, normalized STR comparison, §2/§3/§4/§12; typed constant letters and constant kinds, §1/§6 — landing in the same series; 0.3.1, 2026-09-08: runtime errors as a segment boundary, §4/§9; 0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
 **Status:** Foundation draft. Every change to this document must land in the same
 commit as the matching changes to `core/` (parser, typechecker, effects, compiler),
 `data/gen/`, and `spec/examples/`, with round-trip tests passing.
@@ -28,15 +28,19 @@ job is tool orchestration, not programming.
 | `F0`, `F1`, … | Field symbols. Assigned per request to `(entity, field)` pairs. Tool parameters reference field symbols where the parameter corresponds to an entity field, and fresh `F` symbols otherwise. |
 | `S0`, `N0`, `B0`, `D0`, `I0`, … | Constant symbols (0.4.0). The letter is the base type — `S` STR, `N` INT, `B` BOOL, `D` TIME, `I` ID (the entity is in the declaration) — numbered per letter in declaration order. Values are held by the runtime binding supplied with the task input (extracted from the request by the serializer; exact in synthetic data). An `S` declaration carries a **kind**: `name` (a lookup key), `text` (content passed along), or `enum <entity>.<field>` (one of that field's declared values; the serializer emits every enum value of every entity the visible tools touch, whether or not the request spells it). Kinds are declaration metadata, not types: the typechecker ignores them; the per-task grammar and the corpus use them. `C0`, `C1`, … is the 0.3.x form, still parsed. |
 | `NOW` | The current time, bound by the runtime. Type `TIME`. |
-| `NULL` | The null value. Legal as an operand in a comparison, a `SET`, and an optional `CALL` slot; in a required `CALL` slot it is `MISSING_ARG` (§6). |
+| `NULL` | The null value. Legal as an operand in a comparison and an optional `CALL` slot; in a required `CALL` slot it is `MISSING_ARG` (§6). |
 
 ## 2. Types
 
 ```
-INT  STR  BOOL  TIME  ID(entity)  OBJ(entity)  LIST(elem)  STATUS  NULL
+INT  FLOAT  STR  BOOL  TIME  ID(entity)  OBJ(entity)  LIST(elem)  STATUS  NULL
 ```
 
 - `TIME` is an integer Unix timestamp (seconds). Comparisons use `LT`/`GT`.
+- `FLOAT` (0.7.0) exists for the standard compute block's `avg` (§6): the
+  average of a list of `INT`s is not itself an `INT`. `FLOAT` is otherwise
+  unused — no entity field in any world is `FLOAT`-typed today — and
+  comparisons (`LT`/`GT`) treat it as numeric alongside `INT`.
 - `STR` comparison (`EQ`, `CONTAINS`, `IN`) is **case-folded and trimmed** (0.4.0):
   "cyrus" equals "Cyrus". Ids and enum values are canonical and unaffected.
   The model never chooses this, so it cannot get it wrong.
@@ -50,20 +54,17 @@ INT  STR  BOOL  TIME  ID(entity)  OBJ(entity)  LIST(elem)  STATUS  NULL
 ## 3. Grammar (EBNF)
 
 ```ebnf
-program     = [effects_line] block ;
-effects_line= "EFFECTS" effect { effect } NL ;
-effect      = "READ" | "WRITE" | "DELETE" | "SEND" | "PAY" | "EXTERNAL" ;
+program     = block ;
 block       = { line } ;
 line        = instr NL [ body ] ;
 body        = INDENT block DEDENT ;              (* only after block heads *)
 
-instr       = let | get | set | call | format | filter | map | count | sort
+instr       = let | get | call | format | filter | map | count | sort
             | most | select | first | foreach | if | else | parallel | try
             | return | stop | pause | abort ;
 
 let         = "LET" operand "->" reg ;
 get         = "GET" reg "." field "->" reg ;
-set         = "SET" reg field operand "->" reg ;
 call        = "CALL" tool { operand } [ "->" reg ] ;
 format      = "FORMAT" const { operand } "->" reg ;
 filter      = "FILTER" reg pred "->" reg ;
@@ -115,7 +116,6 @@ Notes:
 |---|---|
 | `LET x -> r` | Bind value of operand `x` to `r`. |
 | `GET r0.F3 -> r1` | Field extraction. `r0` must hold `OBJ(e)` and `F3` a field of `e`. |
-| `SET r0 F3 x -> r1` | `r1` = copy of `r0` with field `F3` set to `x`. Pure; persistence only happens through tools. |
 | `CALL T2 a b -> r` | Invoke tool `T2` with positional args matching the tool schema's parameter order. Result bound to `r` if present, else discarded. Errors: see §8. |
 | `FORMAT C3 a b -> r1` | `C3` must be a `STR` constant whose value contains slots `{0}`, `{1}`, … — exactly one per operand. `r1` = the template with each slot replaced by the rendered operand (`STR` as is, `INT` as digits, `TIME` as an ISO date, `ID` as the id). Operands must be `STR`, `INT`, `TIME` or `ID(e)`. This is the only way a program produces new text, and it emits none: the template is a constant supplied by the serializer, the values are data. |
 | `FILTER r0 p -> r1` | `r0 : LIST(OBJ(e))`; keep elements satisfying predicate `p`, whose field symbols resolve against `e` — on either side of a clause. `FILTER r0 F1 LT F2 -> r1` keeps the elements whose own `F1` is below their own `F2` ("over budget", "understaffed", "past its own deadline"), so the set is a value that `COUNT`, `SORT`, `FIRST` and `RETURN` can take. Before 0.5.0 that comparison was legal only in an `IF` inside a `FOREACH`, which can act on each element but never bind the set. `FILTER r0 F1 IN r2 -> r3` (0.6.0) keeps the elements whose `F1` appears in the list `r2`, so an intersection is a value too. |
@@ -219,11 +219,17 @@ Each tool in the task input declares:
   "desc": "Archive a card on the board",
   "params": [ { "sym": "F0", "type": "ID:card", "required": true, "desc": "card id" } ],
   "returns": "OBJ:card",
-  "effects": ["WRITE"]
+  "effects": ["mutates"]
 }
 ```
 
-- `effects` ⊆ `{READ, WRITE, DELETE, SEND, PAY, EXTERNAL}`.
+- `effects` ⊆ `{mutates, irreversible, external}` (0.7.0 — three composable
+  consequence properties, replacing the closed six-word list `{READ, WRITE,
+  DELETE, SEND, PAY, EXTERNAL}` of 0.6.0 and earlier; see §7). On the
+  model-facing tool line the property set renders as a compact code —
+  `[M]`, `[M!]`, `[!X]`, `[M!X]`, `[X]`, `[]` in place of the old
+  `[WRITE]`…`[EXTERNAL]` — one letter per property in fixed order
+  (`mutates`=`M`, `irreversible`=`!`, `external`=`X`), no separator.
 - Positional `CALL` arguments map to `params` in order. Missing required
   parameter → `MISSING_ARG`; wrong type → `TYPE_ERROR`. An explicit `NULL`
   in a required slot is the absence of a value, so it is also
@@ -234,17 +240,42 @@ Each tool in the task input declares:
   the compiler); this keeps programs short (`CALL T9 r2 …` where `r2` is the
   loop element).
 
+### The standard compute block (0.7.0)
+
+`sum`, `avg`, `max`, `min` — `(LIST INT) -> INT`, except `avg`, which
+returns `FLOAT` — are always present in every task's tool table, the way
+`NOW` and `NULL` are always available as operands. They are ordinary tools,
+not opcodes (§12): `MAP` projects a field into a `LIST INT` first, and the
+compute tool folds it, so "the total of the invoice amounts" is `MAP` then
+`CALL @sum` rather than a new instruction. Deterministic, no state, no
+consequence — `effects: ["READ"]`, never gated. On an empty list, `sum` is
+`0` (the identity element); `avg`, `max` and `min` are `NULL`, matching
+`FIRST`'s empty-list convention (§4) rather than an arbitrary in-range
+number. Always present and never conditional on the task, so their
+presence in a context carries no information about what the task needs.
+
 ## 7. Effects
 
-- A program's **static effect set** is the union of the declared effects of
-  every tool that appears in a `CALL`, reachable or not.
-- The optional `EFFECTS` header is a declaration. If present, the static effect
-  set must be a subset of the declaration; each violation is
-  `EFFECT_UNDECLARED <effect>`. If absent, no declaration check occurs.
-- The runtime **effect gate** (see `runtime/sandbox.js`) blocks any `DELETE`,
-  `SEND`, or `PAY` call unless the run carries an approval token; a blocked
-  call halts the run with status `EFFECT_BLOCKED`. This is deterministic and
+- A program's **static effect set** is the union of the declared consequence
+  properties (`mutates`/`irreversible`/`external`) of every tool that
+  appears in a `CALL`, reachable or not.
+- The runtime **effect gate** (see `runtime/sandbox.js`) blocks any
+  `irreversible` call unless the run carries an approval token; a blocked
+  call halts the run with status `EFFECT_BLOCKED`. A separate bulk gate
+  fires when the number of `mutates` calls in an unapproved run exceeds the
+  caller's `bulk_write_limit` (`BULK_WRITE`). Both are deterministic and
   independent of the model.
+- **History (0.7.0):** before this version, a tool's consequence was one of
+  six closed words (`READ, WRITE, DELETE, SEND, PAY, EXTERNAL`), and an
+  optional `EFFECTS` header let a program declare its own expected set for
+  a static `EFFECT_UNDECLARED` check. Nothing ever read the header (the
+  gate always worked from the tool schema, never from what the model
+  wrote), and the six-word list did not generalise — an unrelated new tool
+  domain needed a new word in core every time. Both are gone: the header is
+  no longer grammar, and `effects` is the three-property set above. Every
+  gate behaviour is unchanged: what used to be `DELETE`/`SEND`/`PAY`
+  is now `irreversible`; what used to be `BULK_WRITE` on `WRITE` is now
+  `BULK_WRITE` on `mutates`.
 
 ## 8. Errors
 
@@ -324,11 +355,10 @@ JavaScript. Requirements:
 Request: *"Archive every overdue card, then message Bob about each one."*
 
 Input context (abridged): `T4` = list cards → `LIST(OBJ(card))`; `F7` = card.due
-(`TIME`); `T9` = send message(user id, text) `SEND`; `F0` = card.id; `C3` = the
-message text; `C1` = Bob's user id.
+(`TIME`); `T9` = send message(user id, text) `[!X]` (irreversible, external);
+`F0` = card.id; `C3` = the message text; `C1` = Bob's user id.
 
 ```
-EFFECTS READ WRITE SEND
 CALL T4 -> r0
 FILTER r0 F7 LT NOW -> r1
 FOREACH r1 -> r2
@@ -337,12 +367,25 @@ FOREACH r1 -> r2
 STOP
 ```
 
-Static effect set: `{READ, WRITE, SEND}` — covered by the declaration; the
-`SEND` calls execute only when the run carries an approval token.
+Static effect set: `{mutates, irreversible, external}` — the union of `T6`
+(archive, `mutates`) and `T9` (send, `irreversible`+`external`); `T4` (list)
+declares none of the three. The `T9` call executes only when the run
+carries an approval token (§7: any `irreversible` call is gated).
 
 ## 12. Change control
 
 ### Admitting a named composite (the "standard library")
+
+**First question, before the four below (0.7.0): can this be a tool?** An
+operation goes in the language only when it cannot be a tool. `FILTER`,
+`MAP`, `SORT`, `MOST`, `GET`, `COUNT` cannot be tools because they take a
+field symbol or work over any entity type, and the tool type system has no
+generics and no field-as-value. An operation over plain numbers or lists of
+numbers that needs neither — `sum`, `avg`, `max`, `min` (§6) — is a tool
+with a fixed signature instead, and the rest of this test does not apply to
+it. This is also why `SUM`/`AVG`/`MAX`/`MIN` never reach question 2 below:
+a monomorphic operation over `LIST INT` is exactly what a tool already
+expresses.
 
 Every instruction is the name of one `rt.*` function, and each name costs
 a grammar production, a spec row, a typecheck rule, a place in the small
@@ -381,6 +424,15 @@ on `STR` and nothing else. Nothing depended on it: no entity field in any world
 is `LIST`-typed — 141 theme worlds built through `data.gen.domains` plus the
 14 registered ones, every field `STR`, `BOOL`, `TIME` or `ID` — and
 `CONTAINS` appears in 0 of 56,000 S4c references.
+
+`SET` retired (0.7.0). It made a copy of a record with one field changed,
+persisting nothing itself — no tool takes a whole record as an argument
+(tools take ids and scalars), so nothing downstream could ever act on what it
+produced. A grep of the whole tree found zero generator recipes and zero
+worked examples that ever produced it; the search for a natural example
+during the examples pass (`spec/examples/`) came up empty, which is the same
+verdict `CONTAINS`'s list arm got. `runtime/sandbox.js`'s `setF` and the
+`SetF` AST node, parser rule and typecheck/compile handling go with it.
 
 Candidate missing primitives discovered during R1 are **listed for review** in
 `results/R1.md`, never added directly. Any grammar change bumps the version at

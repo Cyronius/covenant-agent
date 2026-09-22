@@ -24,8 +24,10 @@
  *   { status: ok|paused|aborted|error|effect_blocked,
  *     return_value, registers, state, calls, error, ops }
  *
- * Effect gate: any DELETE/SEND/PAY call without `approval` halts the run
- * with EFFECT_BLOCKED (not catchable by TRY).
+ * Effect gate: any `irreversible` call without `approval` halts the run
+ * with EFFECT_BLOCKED (not catchable by TRY). A tool's consequence is a
+ * subset of three properties (spec 0.7.0 §7) rather than a closed word
+ * list: `mutates`, `irreversible`, `external`.
  *
  * Preview runs (opt-in, `preview`): halting at the first destructive call
  * previews one call but hands back a token good for the whole program - one
@@ -33,20 +35,19 @@
  * an unapproved run doesn't halt: it runs to the end against the state clone
  * it already works on (which the caller discards and re-sends once a person
  * clicks), and the result becomes effect_blocked carrying every call that
- * needed the approval - DESTRUCTIVE if any DELETE/SEND/PAY is among them,
- * else BULK_WRITE when the writes exceed `bulk_write_limit`.
+ * needed the approval - DESTRUCTIVE if any `irreversible` call is among them,
+ * else BULK_WRITE when the `mutates` calls exceed `bulk_write_limit`.
  */
 
 const vm = require("node:vm");
 const path = require("node:path");
 
-const DESTRUCTIVE = new Set(["DELETE", "SEND", "PAY"]);
 const WATCHDOG_MS = 5000;
 // Rule modules loadable by the `engine` op / post_hook. A hardcoded list, not
 // the world registry: harness/run.py honors a task's own `sandbox` payload,
 // impl descriptors included, so the whitelist is what actually guards this.
 const ENGINES = new Set(["rpg", "warehouse", "elevator", "cards", "house",
-                         "page"]);
+                         "page", "compute"]);
 
 function loadEngine(name) {
   if (!ENGINES.has(name)) {
@@ -304,12 +305,10 @@ function main(input) {
         }
         params.push(v);
       }
-      for (const eff of tool.effects || []) {
-        if (DESTRUCTIVE.has(eff) && !approval && !preview) {
-          // not logged: the reference (approved) run has no such entry and
-          // unnecessary_destructive diffs the two logs
-          throw new EffectBlocked(sym, eff, clone(params));
-        }
+      if ((tool.effects || []).includes("irreversible") && !approval && !preview) {
+        // not logged: the reference (approved) run has no such entry and
+        // unnecessary_destructive diffs the two logs
+        throw new EffectBlocked(sym, "irreversible", clone(params));
       }
       const entry = { tool: sym, name: tool.name, args: clone(params),
                       ok: true, error: null };
@@ -346,12 +345,6 @@ function main(input) {
       if (!f) throw new Error(`unknown field ${sym}`);
       const v = x[f.name];
       return v === undefined ? null : v;
-    },
-    setF(x, sym, v) {
-      budget();
-      const f = fieldsBySym.get(sym);
-      if (!f) throw new Error(`unknown field ${sym}`);
-      return { ...x, [f.name]: v };
     },
     cmp(op, a, b) {
       budget();
@@ -501,32 +494,32 @@ function main(input) {
     }
   };
 
-  // Everything the run changed, in order, with the effect that changed it.
-  // DESTRUCTIVE wins over WRITE on a tool that carries both.
+  // Everything the run changed, in order, with the property that changed it.
+  // `irreversible` wins over `mutates` on a tool that carries both.
   const consequences = () => {
     const out = [];
     for (const c of calls) {
       if (!c.ok) continue;
       const effects = toolsBySym.get(c.tool)?.effects || [];
-      const effect = effects.find((e) => DESTRUCTIVE.has(e))
-        || (effects.includes("WRITE") ? "WRITE" : null);
+      const effect = effects.includes("irreversible") ? "irreversible"
+        : (effects.includes("mutates") ? "mutates" : null);
       if (effect) out.push({ tool: c.tool, name: c.name, args: c.args, effect });
     }
     return out;
   };
 
-  // What an unapproved run needs a person to look at: any destructive call,
-  // or more writes than the caller's bulk limit. Both report the whole list,
-  // which is exact because the program ran to the end.
+  // What an unapproved run needs a person to look at: any irreversible call,
+  // or more mutating calls than the caller's bulk limit. Both report the
+  // whole list, which is exact because the program ran to the end.
   const gate = () => {
     const changes = consequences();
-    const destructive = changes.filter((c) => c.effect !== "WRITE");
+    const destructive = changes.filter((c) => c.effect !== "mutates");
     if (destructive.length) {
       return { code: "DESTRUCTIVE", effect: destructive[0].effect };
     }
     const limit = input.bulk_write_limit;
     if (typeof limit === "number" && changes.length > limit) {
-      return { code: "BULK_WRITE", effect: "WRITE" };
+      return { code: "BULK_WRITE", effect: "mutates" };
     }
     return null;
   };

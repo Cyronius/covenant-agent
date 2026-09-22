@@ -82,7 +82,7 @@ def main() -> None:
     hermes = dedupe(hermes)
     glaive = dedupe(glaive)
     toolace = dedupe(toolace)
-    is_write = lambda r: bool(set(r.get("effects") or []) & {"WRITE", "SEND", "DELETE", "PAY"})  # noqa: E731
+    is_write = lambda r: bool(set(r.get("effects") or []) & {"mutates", "irreversible"})  # noqa: E731
     abstains = [r for r in glaive if r["expected_status"] == "aborted"]
     writes = [r for r in glaive + toolace if r["expected_status"] == "ok" and is_write(r)]
     reads = [r for r in glaive + toolace if r["expected_status"] == "ok" and not is_write(r)]

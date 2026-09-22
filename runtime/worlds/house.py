@@ -38,7 +38,7 @@ WORLD = {
                         "desc": "the way out to take",
                         "field": ["way", "id"]}],
             "returns": "OBJ:room",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "house", "fn": "go"},
         },
         {
@@ -48,7 +48,7 @@ WORLD = {
                         "desc": "the thing to pick up",
                         "field": ["thing", "id"]}],
             "returns": "OBJ:thing",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "house", "fn": "take"},
         },
         {
@@ -60,7 +60,7 @@ WORLD = {
                         "desc": "the carried thing to use",
                         "field": ["thing", "id"]}],
             "returns": "OBJ:thing",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "house", "fn": "use"},
         },
         {
@@ -71,7 +71,7 @@ WORLD = {
                         "desc": "the way out to open",
                         "field": ["way", "id"]}],
             "returns": "OBJ:way",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "house", "fn": "open"},
         },
     ],

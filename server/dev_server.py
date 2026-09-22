@@ -1009,16 +1009,17 @@ def handle_db_new(req: dict) -> dict:
 
 
 def analyst_world() -> dict:
-    """The crm world with only its READ tools. The Analyst demo's own header
-    says "Ask a question" and its blurb says "Ask questions of a fake CRM",
-    but it was handing the planner `delete_ticket`, `charge_customer`,
-    `send_invoice` and `send_email` on every question — so "show me the open
-    tickets" could, and once did, close them instead. Matching the tool table
-    to what the demo claims to be is worth 8 points on its own
-    (e_db_requests reads: 35% -> 43%, 2026-09-15)."""
+    """The crm world with only its pure-read tools (spec 0.7.0: none of
+    mutates/irreversible/external). The Analyst demo's own header says "Ask
+    a question" and its blurb says "Ask questions of a fake CRM", but it was
+    handing the planner `delete_ticket`, `charge_customer`, `send_invoice`
+    and `send_email` on every question — so "show me the open tickets"
+    could, and once did, close them instead. Matching the tool table to what
+    the demo claims to be is worth 8 points on its own (e_db_requests reads:
+    35% -> 43%, 2026-09-15)."""
     world = get_world("crm")
     return dict(world, tools=[t for t in world["tools"]
-                              if t["effects"] == ["READ"]])
+                              if t["effects"] == []])
 
 
 def analyst_grammar(grammar: str) -> str:
@@ -1148,7 +1149,7 @@ def handle_validate(req: dict) -> dict:
         default_state = None  # freeform requests always carry their own state
         default_approval = False  # no stored default; must come from "approval" below
         error_injection = []
-        # Kanban only: in the dungeon every tool is a WRITE (moving is one),
+        # Kanban only: in the dungeon every tool mutates (moving is one),
         # so counting them would gate an ordinary turn.
         preview = inline_world == "kanban"
         bulk_write_limit = BULK_WRITE_LIMIT if preview else None

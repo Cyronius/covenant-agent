@@ -35,7 +35,7 @@ WORLD = {
                     "once.",
             "params": [],
             "returns": "OBJ:table",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "cards", "fn": "hit"},
         },
         {
@@ -44,7 +44,7 @@ WORLD = {
                     "and it settles.",
             "params": [],
             "returns": "OBJ:table",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "cards", "fn": "stand"},
         },
         {
@@ -53,7 +53,7 @@ WORLD = {
                     "Only allowed on the first two cards of a hand.",
             "params": [],
             "returns": "OBJ:table",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "cards", "fn": "double_down"},
         },
     ],

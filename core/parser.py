@@ -10,12 +10,12 @@ import re
 from typing import List, Optional, Tuple
 
 from . import diagnostics as dg
-from .ir import (ABORT_MAX_REFS, ABORT_REASONS, CMPS, EFFECTS, EMPTY, NUM_REGISTERS, Abort, Call,
+from .ir import (ABORT_MAX_REFS, ABORT_REASONS, CMPS, EMPTY, NUM_REGISTERS, Abort, Call,
                  Clause, Const, Count, ElemField,
                  Filter, First, Foreach, Format, Get, If, IntLit, Let, MapF,
                  Most, Now, Null,
                  Parallel, Pause, Pred, Program, Reg, RegField, Return, Select,
-                 SetF, Sort, Stop, Try)
+                 Sort, Stop, Try)
 
 _REG_RE = re.compile(r"^r(\d{1,2})$")
 _REGFIELD_RE = re.compile(r"^r(\d{1,2})\.(F\d+)$")
@@ -139,12 +139,6 @@ def _parse_instr(toks: List[str], line: int):
         if not isinstance(src, RegField):
             raise _ParseFail(dg.parse_error(line, "GET takes rN.Fk"))
         return Get(Reg(src.n), src.field, dst, line=line)
-    if op == "SET":
-        rest, dst = _arrow_dst(rest, line)
-        if len(rest) != 3:
-            raise _ParseFail(dg.parse_error(line, "SET takes rN Fk operand"))
-        return SetF(_reg(rest[0], line), _field(rest[1], line),
-                    _operand(rest[2], line), dst, line=line)
     if op == "CALL":
         dst = None
         if "->" in rest:
@@ -309,24 +303,9 @@ def parse(text: str) -> Tuple[Optional[Program], List[dg.Diagnostic]]:
         lines = _lines(text)
         if not lines:
             return None, [dg.parse_error(1, "empty program")]
-        effects_decl = None
-        if lines[0][2][0] == "EFFECTS":
-            lineno, lvl, toks = lines[0]
-            if lvl != 0:
-                raise _ParseFail(dg.parse_error(lineno, "EFFECTS must be unindented"))
-            decl = toks[1:]
-            if not decl:
-                raise _ParseFail(dg.parse_error(lineno, "EFFECTS needs at least one effect"))
-            for e in decl:
-                if e not in EFFECTS:
-                    raise _ParseFail(dg.parse_error(lineno, f"unknown effect {e!r}"))
-            effects_decl = decl
-            lines = lines[1:]
-            if not lines:
-                raise _ParseFail(dg.parse_error(lineno, "program has no instructions"))
         body, pos = _parse_block(lines, 0, 0)
         if pos != len(lines):
             raise _ParseFail(dg.parse_error(lines[pos][0], "unexpected indent"))
-        return Program(effects_decl, body), []
+        return Program(body), []
     except _ParseFail as e:
         return None, [e.diag]

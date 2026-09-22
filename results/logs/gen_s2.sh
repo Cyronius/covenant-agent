@@ -6,14 +6,20 @@
 # draw. Run from the repo root in Git Bash:  bash results/logs/gen_s2.sh
 set -e
 cd /c/code/covenant-agent
+# --decoys 0 --allow-signature-unique (1f, 2026-09-21): this predates the
+# mandatory collision ceiling and reproduces its plain (undecoyed) record
+# exactly; the escape stamps every row's provenance so it is never mistaken
+# for a file that passed the ceiling on its own.
 LEVELS="0:5,1:5,2:5,3:5,4:5,5:5,6:5,7:5,8:5,9:5,10:5,11:5,12:5.7,13:5.7,14:5.7,15:5.7,16:5.7,17:5.7,18:5.8"
 mkdir -p data/s2_shards
 for i in 0 1 2 3 4 5 6 7; do
   python -m data.gen --levels "$LEVELS" --n 4375 --seed $((20260903 + i*10000000)) --drop-noops \
+      --decoys 0 --allow-signature-unique \
       --domains data/gen/themes --out data/s2_shards/plain_$i.jsonl > results/logs/gen_s2_plain_$i.log 2>&1 &
 done
 for i in 0 1 2 3; do
   python -m data.gen --levels "$LEVELS" --n 3750 --seed $((20260904 + i*10000000)) --drop-noops \
+      --decoys 0 --allow-signature-unique \
       --domains data/gen/themes --crowd 15:60 --out data/s2_shards/crowded_$i.jsonl > results/logs/gen_s2_crowded_$i.log 2>&1 &
 done
 wait

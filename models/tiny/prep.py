@@ -32,7 +32,7 @@ CACHE = Path(__file__).parent / "data_cache"
 
 # Column order of the structural tensors, as train.py's TensorDataset sees them.
 STRUCT_KEYS = ("tool_tok", "field_tok", "const_tok", "req_tok",
-               "n_tool", "n_field", "n_const", "adj", "tgt", "kw_allowed")
+               "n_tool", "n_field", "n_const", "adj", "tgt")
 
 
 def compact_line(line: str, desc_chars: int = 60) -> str:
@@ -195,7 +195,6 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
     n_const = torch.zeros(N, dtype=torch.int16)
     adj = torch.zeros((N, MT + MF, MT + MF), dtype=torch.bool)
     tgt = torch.zeros((N, canvas), dtype=torch.int16)
-    kw_allowed = torch.zeros((N, len(kws)), dtype=torch.bool)
     meta = []
     max_len = 0
     max_line_seen = max_req_seen = 0
@@ -262,8 +261,6 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
             meta.append(None)
             continue
         tgt[n, :len(ids)] = torch.tensor(ids, dtype=torch.int16)
-        declared = {eff for t in e.row["context"]["tools"] for eff in t["effects"]}
-        kw_allowed[n] = torch.tensor(codec.keyword_mask(declared))
         meta.append({"task_id": e.task_id, "level": e.level, "world": e.world, "syms": syms})
 
     keep = [i for i, m in enumerate(meta) if m is not None]
@@ -271,11 +268,11 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
     if excluded:
         idx = torch.tensor(keep)
         tool_tok, field_tok, const_tok, req_tok = (t[idx] for t in (tool_tok, field_tok, const_tok, req_tok))
-        n_tool, n_field, n_const, adj, tgt, kw_allowed = (t[idx] for t in (n_tool, n_field, n_const, adj, tgt, kw_allowed))
+        n_tool, n_field, n_const, adj, tgt = (t[idx] for t in (n_tool, n_field, n_const, adj, tgt))
         meta = [m for m in meta if m is not None]
     d = {"tool_tok": tool_tok, "field_tok": field_tok, "const_tok": const_tok, "req_tok": req_tok,
          "n_tool": n_tool, "n_field": n_field, "n_const": n_const, "adj": adj, "tgt": tgt,
-         "kw_allowed": kw_allowed, "meta": meta,
+         "meta": meta,
          "stats": {"max_slots": max_len, "excluded": excluded, "kept": [examples[i] for i in keep],
                    "max_line_seen": max_line_seen, "max_req_seen": max_req_seen}}
     return d

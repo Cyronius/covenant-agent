@@ -136,8 +136,8 @@ ABORT with the reason instead of guessing.
 
 Example:
 TOOLS:
-T0 () -> LIST OBJ:card [READ] :: List all cards.
-T1 (F2:ID:card) -> - [DELETE] :: Delete a card.
+T0 () -> LIST OBJ:card [] :: List all cards.
+T1 (F2:ID:card) -> - [M!] :: Delete a card.
 FIELDS:
 F1 card TIME :: card.due
 F2 card ID:card :: card.id
@@ -175,8 +175,8 @@ _TYPED_SUBS = (
      "key), text (content to pass along), enum x.y (a value of field y)."),
     ("FILTER r pred -> r       keep list elements matching pred, e.g. F3 EQ C0 AND NOT F5 LT NOW",
      "FILTER r pred -> r       keep list elements matching pred, e.g. F3 EQ S0 AND NOT F5 LT NOW"),
-    ("T1 (F2:ID:card) -> - [DELETE] :: Delete a card.",
-     "T1 (I:card=F2) -> - [DELETE] :: Delete a card."),
+    ("T1 (F2:ID:card) -> - [M!] :: Delete a card.",
+     "T1 (I:card=F2) -> - [M!] :: Delete a card."),
     ("CONSTANTS:\nC0 BOOL :: true", "CONSTANTS:\nB0 BOOL :: true"),
     ("FILTER r0 F1 LT NOW AND NOT F3 EQ C0 -> r1",
      "FILTER r0 F1 LT NOW AND NOT F3 EQ B0 -> r1"),

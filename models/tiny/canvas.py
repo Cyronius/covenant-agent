@@ -39,7 +39,7 @@ from pathlib import Path
 import torch
 
 from corpus import detokenize, program_tokens
-from core.ir import ABORT_REASONS, CMPS, EFFECTS, NUM_REGISTERS  # noqa: E402  corpus put covenant on sys.path
+from core.ir import ABORT_REASONS, CMPS, NUM_REGISTERS  # noqa: E402  corpus put covenant on sys.path
 
 PAD, MASK = "PAD", "MASK"
 
@@ -47,8 +47,10 @@ PAD, MASK = "PAD", "MASK"
 KINDS = ("kw", "tool", "field", "const", "reg")
 KW, TOOL, FIELD, CONST, REG = range(5)
 
-# Instructions of spec/agent_core.md section 3, plus the header.
-INSTRUCTIONS = ("EFFECTS", "LET", "GET", "SET", "CALL", "FORMAT", "FILTER", "MAP",
+# Instructions of spec/agent_core.md section 3. The EFFECTS header (spec
+# 0.7.0) and the six effect words it used are retired — nothing ever read
+# the header outside this module's own derivation of it.
+INSTRUCTIONS = ("LET", "GET", "CALL", "FORMAT", "FILTER", "MAP",
                 "COUNT", "MOST", "LEAST", "SORT", "SELECT", "FIRST", "FOREACH",
                 "IF", "ELSE", "PARALLEL", "TRY", "RETRY", "RETURN", "STOP",
                 "PAUSE", "ABORT")
@@ -68,7 +70,7 @@ class CanvasError(ValueError):
 
 def base_keywords() -> list[str]:
     """The fixed keyword table, before corpus extras. PAD=0, MASK=1."""
-    out = [PAD, MASK, *STRUCTURAL, *INSTRUCTIONS, *EFFECTS, *CMPS, *OPERAND_WORDS,
+    out = [PAD, MASK, *STRUCTURAL, *INSTRUCTIONS, *CMPS, *OPERAND_WORDS,
            *ABORT_REASONS, *[str(i) for i in range(10)]]
     assert len(out) == len(set(out)), "duplicate keyword"
     return out
@@ -285,18 +287,6 @@ class TaskCodec:
         garbage text and the compiler says so. The receiver marker is what
         re-joins `r0.` with `F6`; see corpus.detokenize."""
         return detokenize(self.decode(ids))
-
-    # -- the grammar's keyword half, per task ---------------------------
-
-    def keyword_mask(self, declared_effects: set[str]) -> list[bool]:
-        """Which keyword rows this task may emit: everything except MASK, and
-        an effect name only if some declared tool carries that effect. The
-        pointer half of the grammar needs no mask: undeclared symbols have
-        no row at all."""
-        eff = set(EFFECTS)
-        return [k != MASK and (k not in eff or k in declared_effects)
-                for k in self.keywords]
-
 
 def save_keywords(kws: list[str], path: Path) -> None:
     path.write_text(json.dumps(kws), encoding="utf-8")

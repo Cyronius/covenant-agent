@@ -72,7 +72,7 @@ def candidate_actions(world_dict: dict, constants: List[dict],
     for i, c in enumerate(constants):
         by_type.setdefault(c["type"], []).append(i)
     out = []
-    tools = [t for t in world_dict["tools"] if "READ" not in t["effects"]]
+    tools = [t for t in world_dict["tools"] if t["effects"]]
     for _ in range(n * 3):
         if len(out) >= n:
             break
@@ -229,6 +229,18 @@ def main() -> None:
     ap.add_argument("--holdout", action="store_true",
                     help="allow the reserved worlds (exam building, never a "
                          "corpus)")
+    ap.add_argument("--require-collisions", type=float, default=50,
+                    metavar="PCT",
+                    help="fail (and write nothing) if more than PCT%% of "
+                         "reference CALLs name a tool whose signature no "
+                         "sibling shares (data.gen's ceiling, applied here "
+                         "too). Default 50; see --allow-signature-unique.")
+    ap.add_argument("--allow-signature-unique", action="store_true",
+                    help="disable the ceiling above and stamp every row's "
+                         "provenance with signature_unique_allowed — a "
+                         "decision world with only a handful of tools (a "
+                         "move is every tool there is) may need this for a "
+                         "structural reason, not an accident.")
     args = ap.parse_args()
 
     if args.world == "all":
@@ -255,6 +267,8 @@ def main() -> None:
                     illegal_share=args.illegal)
                 wins[world] += bool(outcome["won"])
                 for row in rows:
+                    if args.allow_signature_unique:
+                        row["provenance"]["signature_unique_allowed"] = True
                     fh.write(json.dumps(row) + "\n")
                     written += 1
                 if (i + 1) % 20 == 0:
@@ -268,6 +282,9 @@ def main() -> None:
         print(f"  {world}: {wins[world]}/{args.episodes} episodes finished "
               f"(off-path detours make a clean finish the exception, not the "
               f"target)")
+    from data.gen.__main__ import report_signature_uniqueness
+    report_signature_uniqueness(out, args.require_collisions,
+                                args.allow_signature_unique)
 
 
 if __name__ == "__main__":

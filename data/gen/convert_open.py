@@ -45,17 +45,18 @@ from harness.context import build_context, sandbox_from_context, serialize_conte
 from harness.run import run_sandbox  # noqa: E402
 
 EFFECT_BY_VERB = [
-    (re.compile(r"^(get|list|search|find|fetch|retrieve|check|lookup|look_up|calculate|compute|convert|translate|generate|analy[sz]e|query|read|view|show|count|estimate|predict|recommend|suggest|validate|verify)", re.I), "READ"),
-    (re.compile(r"^(send|email|notify|message|post|publish|share|invite|alert|text|sms)", re.I), "SEND"),
-    (re.compile(r"^(delete|remove|drop|purge|erase|cancel)", re.I), "DELETE"),
-    (re.compile(r"^(pay|charge|refund|transfer|purchase|buy|order|book|reserve|donate|withdraw|deposit)", re.I), "PAY"),
+    (re.compile(r"^(get|list|search|find|fetch|retrieve|check|lookup|look_up|calculate|compute|convert|translate|generate|analy[sz]e|query|read|view|show|count|estimate|predict|recommend|suggest|validate|verify)", re.I), []),
+    (re.compile(r"^(send|email|notify|message|post|publish|share|invite|alert|text|sms)", re.I), ["irreversible", "external"]),
+    (re.compile(r"^(delete|remove|drop|purge|erase|cancel)", re.I), ["mutates", "irreversible"]),
+    (re.compile(r"^(pay|charge|refund|transfer|purchase|buy|order|book|reserve|donate|withdraw|deposit)", re.I), ["mutates", "irreversible", "external"]),
 ]
 REFUSAL = re.compile(r"(don't|do not|cannot|can't|unable to)[^.]{0,80}(capability|ability|perform|assist with|help with|book|order)", re.I)
 
 
-def effect_for(name: str, desc: str = "") -> str:
-    """Effect from the tool's name, else from the first verb of its description
-    ("Retrieve detailed information…" is a READ even if the name is a noun)."""
+def effect_for(name: str, desc: str = "") -> list:
+    """Properties from the tool's name, else from the first verb of its
+    description ("Retrieve detailed information..." is a pure read even if
+    the name is a noun)."""
     for rx, eff in EFFECT_BY_VERB:
         if rx.search(name):
             return eff
@@ -65,8 +66,8 @@ def effect_for(name: str, desc: str = "") -> str:
         if rx.search(first):
             return eff
     if re.match(r"^(returns?|provides?|gives?|shows?|displays?|fetches|reads?)", desc.strip(), re.I):
-        return "READ"
-    return "WRITE"
+        return []
+    return ["mutates"]
 
 
 def ir_type(schema: dict, value=None):
@@ -273,7 +274,7 @@ def to_world_and_program(tools, request, calls, refusal, rng):
             "name": norm(t["name"]),
             "desc": str(t.get("description") or t["name"])[:300],
             "params": params, "returns": None,
-            "effects": [effect_for(t["name"], str(t.get("description") or ""))],
+            "effects": effect_for(t["name"], str(t.get("description") or "")),
             "impl": {"op": "external", "kind": norm(t["name"])},
         })
     if refusal:

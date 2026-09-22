@@ -1,18 +1,14 @@
 """Static effect analysis (spec §7).
 
-program_effects(program, ctx) -> set of effect names: the union of declared
-effects of every tool appearing in a CALL, reachable or not.
-
-check_effects(program, ctx) -> [Diagnostic]: EFFECT_UNDECLARED for each
-computed effect missing from an EFFECTS header (no header = no check).
+program_effects(program, ctx) -> set of consequence properties (spec 0.7.0:
+a subset of "mutates"/"irreversible"/"external"): the union of declared
+properties of every tool appearing in a CALL, reachable or not.
 """
 from __future__ import annotations
 
-from typing import List, Set
+from typing import Set
 
-from . import diagnostics as dg
-from .ir import (DESTRUCTIVE_EFFECTS, Call, Foreach, If, Parallel, Program,
-                 TaskContext, Try)
+from .ir import Call, Foreach, If, Parallel, Program, TaskContext, Try
 
 
 def _walk_calls(body: list):
@@ -38,15 +34,3 @@ def program_effects(program: Program, ctx: TaskContext) -> Set[str]:
         if tool is not None:
             effects.update(tool.effects)
     return effects
-
-
-def destructive_effects(program: Program, ctx: TaskContext) -> Set[str]:
-    return program_effects(program, ctx) & set(DESTRUCTIVE_EFFECTS)
-
-
-def check_effects(program: Program, ctx: TaskContext) -> List[dg.Diagnostic]:
-    if program.effects_decl is None:
-        return []
-    computed = program_effects(program, ctx)
-    declared = set(program.effects_decl)
-    return [dg.effect_undeclared(e) for e in sorted(computed - declared)]

@@ -33,11 +33,10 @@ sym       ::= tool | field | const
 indent    ::= "  " | "    " | "      " | "        "
 nl        ::= "\n"
 
-instr     ::= let | get | set | call | formatin | filterin | mapin | countin | sortin | mostin | selectin | firstin | foreachin | ifin | "ELSE" | "PARALLEL" | tryin
+instr     ::= let | get | call | formatin | filterin | mapin | countin | sortin | mostin | selectin | firstin | foreachin | ifin | "ELSE" | "PARALLEL" | tryin
 
 let       ::= "LET " operand arrow
 get       ::= "GET " reg "." field arrow
-set       ::= "SET " reg " " field " " operand arrow
 call      ::= "CALL " tool (" " operand)* (arrow)?
 formatin  ::= "FORMAT " const (" " operand)* arrow
 filterin  ::= "FILTER " reg " " pred arrow

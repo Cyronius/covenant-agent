@@ -32,7 +32,7 @@ def test_v2_tools_have_the_real_shapes(theme_name):
     assert [p["type"] for p in upd["params"]][:2] == ["ID:segment", "ID:segment_note"]
     assert upd["params"][-1]["required"] is False            # optional trailing title
     assert tools["create_segment"]["params"][-1]["required"] is False
-    ext = [t for t in tools.values() if t["effects"] == ["EXTERNAL"]]
+    ext = [t for t in tools.values() if t["effects"] == ["external"]]
     assert {t["returns"] for t in ext} == {"STR"} and len(ext) == 2
     assert "segment_note" in world["entities"] and world["entities"]["segment"]["image"] == "STR"
 

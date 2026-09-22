@@ -15,14 +15,19 @@
 #   bash results/logs/gen_s3.sh
 set -e
 cd /c/code/covenant-agent
+# --decoys 0 --allow-signature-unique (1f, 2026-09-21): predates the
+# mandatory collision ceiling; reproduces this plain (undecoyed) record
+# exactly, with the escape stamped into every row's provenance.
 LEVELS="0:5,1:5,2:5,3:5,4:5,5:5,6:5,7:5,8:5,9:5,10:5,11:5,12:5.7,13:5.7,14:5.7,15:5.7,16:5.7,17:5.7,18:5.8"
 mkdir -p data/s3_shards
 for i in 0 1 2 3 4 5 6 7; do
   python -m data.gen --levels "$LEVELS" --n 3750 --seed $((20260905 + i*10000000)) --drop-noops \
+      --decoys 0 --allow-signature-unique \
       --domains data/gen/themes --out data/s3_shards/plain_$i.jsonl > results/logs/gen_s3_plain_$i.log 2>&1 &
 done
 for i in 0 1 2 3 4 5 6 7; do
   python -m data.gen --levels "$LEVELS" --n 3250 --seed $((20260906 + i*10000000)) --drop-noops \
+      --decoys 0 --allow-signature-unique \
       --domains data/gen/themes --crowd 15:60 --out data/s3_shards/crowded_$i.jsonl > results/logs/gen_s3_crowded_$i.log 2>&1 &
 done
 wait

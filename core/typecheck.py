@@ -17,10 +17,10 @@ from typing import Dict, List, Optional
 from . import diagnostics as dg
 from .ir import (ABORT_REF_KINDS, CONST_LETTERS, EMPTY, Abort, Format, Call, Clause, Const, Count, ElemField, Filter, First, Foreach, Get, If,
                  IntLit, Let, MapF, Most, Now, Null, Parallel, Pause, Pred, Program,
-                 Reg, RegField, Return, Select, SetF, Sort, Stop, TaskContext,
+                 Reg, RegField, Return, Select, Sort, Stop, TaskContext,
                  Try, Type, format_type)
 
-NUMERIC = ("INT", "TIME")
+NUMERIC = ("INT", "FLOAT", "TIME")
 
 
 @dataclass
@@ -180,22 +180,6 @@ class _Checker:
             t = self._operand_type(RegField(instr.src.n, instr.field), env, ln)
             if t is not None:
                 env[instr.dst.n] = t
-            return False
-        if isinstance(instr, SetF):
-            base = env.get(instr.src.n)
-            if base is None:
-                self.diags.append(dg.unbound(ln, str(instr.src)))
-                return False
-            if base[0] != "OBJ":
-                self.diags.append(dg.type_error(
-                    ln, "OBJ:<entity>", format_type(base)))
-                return False
-            f = self._field_decl(instr.field, base[1], ln, str(instr.src))
-            vt = self._operand_type(instr.op, env, ln)
-            if f and vt and not self._compatible(f.type, vt):
-                self.diags.append(dg.type_error(
-                    ln, format_type(f.type), format_type(vt)))
-            env[instr.dst.n] = base
             return False
         if isinstance(instr, Call):
             self._check_call(instr, env)

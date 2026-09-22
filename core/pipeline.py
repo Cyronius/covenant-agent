@@ -10,7 +10,7 @@ from typing import List, Optional
 
 from . import diagnostics as dg
 from .compile import compile_program
-from .effects import check_effects, program_effects
+from .effects import program_effects
 from .ir import Program, TaskContext
 from .parser import parse
 from .typecheck import check
@@ -19,7 +19,7 @@ from .typecheck import check
 @dataclass
 class BuildResult:
     parse_ok: bool
-    compile_ok: bool           # parse + typecheck + effect check all clean
+    compile_ok: bool           # parse + typecheck clean
     diagnostics: List[dg.Diagnostic] = field(default_factory=list)
     program: Optional[Program] = None
     js: Optional[str] = None
@@ -38,8 +38,7 @@ def build(text: str, ctx: TaskContext) -> BuildResult:
     if program is None:
         return BuildResult(parse_ok=False, compile_ok=False, diagnostics=pdiags)
     tc = check(program, ctx)
-    ediags = check_effects(program, ctx)
-    diags = list(tc.diagnostics) + ediags
+    diags = list(tc.diagnostics)
     effects = sorted(program_effects(program, ctx))
     if diags:
         return BuildResult(parse_ok=True, compile_ok=False, diagnostics=diags,

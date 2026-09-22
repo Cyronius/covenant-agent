@@ -36,7 +36,7 @@ TOOLS = [
         "params": [{"name": "screen", "type": "ID:screen",
                     "desc": "the screen to open", "field": ["screen", "id"]}],
         "returns": "OBJ:screen",
-        "effects": ["WRITE"],
+        "effects": ["mutates"],
         "impl": {"op": "engine", "module": "page", "fn": "open"},
     },
     {
@@ -48,7 +48,7 @@ TOOLS = [
                     "desc": "the control to click",
                     "field": ["element", "id"]}],
         "returns": "OBJ:element",
-        "effects": ["WRITE"],
+        "effects": ["mutates"],
         "impl": {"op": "engine", "module": "page", "fn": "click"},
     },
     {
@@ -60,7 +60,7 @@ TOOLS = [
                    {"name": "value", "type": "STR",
                     "desc": "what to put in it"}],
         "returns": "OBJ:element",
-        "effects": ["WRITE"],
+        "effects": ["mutates"],
         "impl": {"op": "engine", "module": "page", "fn": "fill"},
     },
     {
@@ -71,7 +71,7 @@ TOOLS = [
                     "desc": "the form's save button",
                     "field": ["element", "id"]}],
         "returns": "OBJ:element",
-        "effects": ["WRITE"],
+        "effects": ["mutates"],
         "impl": {"op": "engine", "module": "page", "fn": "submit"},
     },
     {
@@ -82,7 +82,7 @@ TOOLS = [
                     "desc": "the element to read",
                     "field": ["element", "id"]}],
         "returns": "STR",
-        "effects": ["READ"],
+        "effects": [],
         "impl": {"op": "engine", "module": "page", "fn": "read"},
     },
 ]

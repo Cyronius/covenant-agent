@@ -140,7 +140,7 @@ def grammar_for_task(task: dict, base: Optional[str] = None,
     """`task` as the suites store it: task['context'] holds the symbol table.
     `typed` adds the per-tool typed-slot CALL rules (PLAN.md §5 C4);
     `stdlib=False` removes the 0.4.0 instructions (MOST/LEAST/EMPTY);
-    `kinds` (spec 0.4.0 §2.2, implies typed) makes FILTER clauses, SET and
+    `kinds` (spec 0.4.0 §2.2, implies typed) makes FILTER clauses and
     CALL slots kind-aware: an enum field admits only its enum constants and
     a plain STR slot admits no enum constant."""
     ctx = task["context"]
@@ -153,8 +153,8 @@ def grammar_for_task(task: dict, base: Optional[str] = None,
         call_rhs, extra = typed_call_rules(task, kinds=kinds)
         out = _replace_rules(out, {"call": call_rhs}) + "\n" + extra
     if kinds:
-        clause_rhs, set_rhs, extra = kind_field_rules(task)
-        out = _replace_rules(out, {"clause": clause_rhs, "set": set_rhs}) + "\n" + extra
+        clause_rhs, extra = kind_field_rules(task)
+        out = _replace_rules(out, {"clause": clause_rhs}) + "\n" + extra
     if not stdlib:
         out = without_stdlib(out)
     return out
@@ -390,16 +390,16 @@ def typed_call_rules(task: dict, kinds: bool = False) -> tuple:
 
 
 def kind_field_rules(task: dict) -> tuple:
-    """(rhs for `clause`, rhs for `set`, extra rules): one FILTER clause and
-    one SET form per field, each admitting only the operands its kind
-    allows (spec 0.4.0 §2.2). Non-STR fields keep type-compatible operands."""
+    """(rhs for `clause`, extra rules): one FILTER clause per field, each
+    admitting only the operands its kind allows (spec 0.4.0 §2.2). Non-STR
+    fields keep type-compatible operands."""
     ctx = task["context"]
     consts = [(c["sym"], parse_type(c["type"])) for c in ctx.get("constants", [])]
     fields = [(f["sym"], parse_type(f["type"])) for f in ctx.get("fields", [])]
     entity_of = {f["sym"]: f.get("entity") for f in ctx.get("fields", [])}
     enum_fields = _enum_fields(ctx)
     op_rules: Dict[str, str] = {}
-    clause_alts, set_alts = [], []
+    clause_alts = []
     for fsym, ftype in fields:
         tag = f"f{fsym[1:]}"
         rhs = _operand_alts(ftype, fields, consts, fsym, enum_fields, True,
@@ -416,13 +416,10 @@ def kind_field_rules(task: dict) -> tuple:
             rhs = f"{rhs} | sf-{tag}"
         clause_alts.append(f'"{fsym} " cmp " " ({rhs})' if siblings else
                            f'"{fsym} " cmp " " opf-{tag}')
-        set_alts.append(f'"{fsym} " opf-{tag}')
     lines = [f"{n} ::= {r}" for n, r in op_rules.items()]
     clause = '("NOT ")? (%s)' % " | ".join(clause_alts) if clause_alts else \
         '("NOT ")? field " " cmp " " (operand | field)'
-    setr = '"SET " reg " " (%s) arrow' % " | ".join(set_alts) if set_alts else \
-        '"SET " reg " " field " " operand arrow'
-    return clause, setr, "\n".join(lines)
+    return clause, "\n".join(lines)
 
 
 def typed_signature(task: dict) -> tuple:

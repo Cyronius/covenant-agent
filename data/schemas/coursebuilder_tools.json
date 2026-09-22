@@ -10,9 +10,7 @@
    "desc": "List every module (lesson or quiz) in the course, in order.",
    "params": [],
    "returns": "LIST OBJ:module",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "list",
     "entity": "module"
@@ -34,9 +32,7 @@
     }
    ],
    "returns": "OBJ:module",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "get",
     "entity": "module",
@@ -59,9 +55,7 @@
     }
    ],
    "returns": "LIST OBJ:element",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "list",
     "entity": "element"
@@ -93,9 +87,7 @@
     }
    ],
    "returns": "OBJ:element",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "get",
     "entity": "element",
@@ -128,9 +120,7 @@
     }
    ],
    "returns": "LIST OBJ:sub_item",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "list",
     "entity": "sub_item"
@@ -141,9 +131,7 @@
    "desc": "Read the course's styling so new or transformed elements match it instead of falling back to generic defaults.",
    "params": [],
    "returns": "STR",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "external",
     "kind": "get_course_theme"
@@ -154,9 +142,7 @@
    "desc": "Returns the fonts available in this course builder as { displayName, fontFamily }.",
    "params": [],
    "returns": "STR",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "external",
     "kind": "get_available_fonts"
@@ -174,9 +160,7 @@
     }
    ],
    "returns": "STR",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "external",
     "kind": "get_element_schema"
@@ -187,9 +171,7 @@
    "desc": "Read the current course-level metadata (title, cover image URL, description).",
    "params": [],
    "returns": "OBJ:course",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "external",
     "kind": "get_course_metadata"
@@ -211,9 +193,7 @@
     }
    ],
    "returns": "LIST OBJ:module",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "external",
     "kind": "get_course_outline"
@@ -231,9 +211,7 @@
     }
    ],
    "returns": "LIST OBJ:course",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "external",
     "kind": "find_courses"
@@ -251,9 +229,7 @@
     }
    ],
    "returns": "STR",
-   "effects": [
-    "READ"
-   ],
+   "effects": [],
    "impl": {
     "op": "external",
     "kind": "search_help"
@@ -283,9 +259,7 @@
     }
    ],
    "returns": "OBJ:module",
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "create",
     "entity": "module",
@@ -323,9 +297,7 @@
     }
    ],
    "returns": "OBJ:module",
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "update",
     "entity": "module",
@@ -351,9 +323,7 @@
     }
    ],
    "returns": null,
-   "effects": [
-    "DELETE"
-   ],
+   "effects": ["mutates", "irreversible"],
    "impl": {
     "op": "delete",
     "entity": "module",
@@ -438,9 +408,7 @@
     }
    ],
    "returns": "OBJ:element",
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "create",
     "entity": "element",
@@ -549,9 +517,7 @@
     }
    ],
    "returns": "OBJ:element",
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "update",
     "entity": "element",
@@ -598,9 +564,7 @@
     }
    ],
    "returns": null,
-   "effects": [
-    "DELETE"
-   ],
+   "effects": ["mutates", "irreversible"],
    "impl": {
     "op": "delete",
     "entity": "element",
@@ -639,9 +603,7 @@
     }
    ],
    "returns": "OBJ:element",
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "update",
     "entity": "element",
@@ -675,9 +637,7 @@
     }
    ],
    "returns": "OBJ:element",
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "external",
     "kind": "duplicate_element"
@@ -765,9 +725,7 @@
     }
    ],
    "returns": "OBJ:element",
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "update",
     "entity": "element",
@@ -845,9 +803,7 @@
     }
    ],
    "returns": "OBJ:sub_item",
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "create",
     "entity": "sub_item",
@@ -937,9 +893,7 @@
     }
    ],
    "returns": "OBJ:sub_item",
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "update",
     "entity": "sub_item",
@@ -992,9 +946,7 @@
     }
    ],
    "returns": null,
-   "effects": [
-    "DELETE"
-   ],
+   "effects": ["mutates", "irreversible"],
    "impl": {
     "op": "delete",
     "entity": "sub_item",
@@ -1025,9 +977,7 @@
     }
    ],
    "returns": "OBJ:course",
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "external",
     "kind": "update_course_metadata"
@@ -1063,9 +1013,7 @@
     }
    ],
    "returns": null,
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "external",
     "kind": "update_course_styles"
@@ -1093,9 +1041,7 @@
     }
    ],
    "returns": null,
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "external",
     "kind": "apply_to_lessons"
@@ -1123,9 +1069,7 @@
     }
    ],
    "returns": null,
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "external",
     "kind": "generate_lesson_content"
@@ -1143,9 +1087,7 @@
     }
    ],
    "returns": null,
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "external",
     "kind": "add_course_to_curriculum"
@@ -1163,9 +1105,7 @@
     }
    ],
    "returns": null,
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "external",
     "kind": "course_search_and_create"
@@ -1176,9 +1116,7 @@
    "desc": "Invoke this tool when the user approves course outline(s) and wants to proceed to signup.",
    "params": [],
    "returns": null,
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "external",
     "kind": "start_free_trial"
@@ -1220,9 +1158,7 @@
     }
    ],
    "returns": null,
-   "effects": [
-    "SEND"
-   ],
+   "effects": ["irreversible", "external"],
    "impl": {
     "op": "send",
     "channel": "contact",
@@ -1265,9 +1201,7 @@
     }
    ],
    "returns": "STR",
-   "effects": [
-    "WRITE"
-   ],
+   "effects": ["mutates"],
    "impl": {
     "op": "external",
     "kind": "export_document"
@@ -1297,9 +1231,7 @@
     }
    ],
    "returns": "STR",
-   "effects": [
-    "EXTERNAL"
-   ],
+   "effects": ["external"],
    "impl": {
     "op": "external",
     "kind": "generate_image"
@@ -1323,9 +1255,7 @@
     }
    ],
    "returns": "STR",
-   "effects": [
-    "EXTERNAL"
-   ],
+   "effects": ["external"],
    "impl": {
     "op": "external",
     "kind": "edit_image"
@@ -1349,9 +1279,7 @@
     }
    ],
    "returns": "STR",
-   "effects": [
-    "EXTERNAL"
-   ],
+   "effects": ["external"],
    "impl": {
     "op": "external",
     "kind": "write_text"

@@ -5,14 +5,14 @@ code contains no free identifiers besides `rt`; tool/field/constant symbols
 are resolved by the runtime, so the JS is independent of the task context.
 
 Emitted runtime surface: rt.call, rt.pause, rt.ret, rt.stop, rt.initial,
-rt.constant, rt.now, rt.cmp, rt.fld, rt.setF, rt.mapF, rt.count, rt.sortBy,
+rt.constant, rt.now, rt.cmp, rt.fld, rt.mapF, rt.count, rt.sortBy,
 rt.select, rt.first, rt.isToolError.
 """
 from __future__ import annotations
 
 from .ir import (EMPTY, Abort, Format, Call, Const, Count, ElemField, Filter, First, Foreach, Get, If, IntLit,
                  Let, MapF, Most, Now, Null, Parallel, Pause, Pred, Program, Reg,
-                 RegField, Return, Select, SetF, Sort, Stop, TaskContext, Try)
+                 RegField, Return, Select, Sort, Stop, TaskContext, Try)
 
 
 def _collect_regs(body: list, regs: set):
@@ -33,8 +33,6 @@ def _collect_regs(body: list, regs: set):
             if isinstance(v, Reg):
                 regs.add(v.n)
         if isinstance(instr, Let):
-            op_regs(instr.op)
-        elif isinstance(instr, SetF):
             op_regs(instr.op)
         elif isinstance(instr, Call):
             for a in instr.args:
@@ -134,8 +132,6 @@ class _Emitter:
             self.out(depth, f"{self._assign(instr.dst)}{self.operand(instr.op)};")
         elif isinstance(instr, Get):
             self.out(depth, f'{self._assign(instr.dst)}rt.fld(r{instr.src.n}, "{instr.field}");')
-        elif isinstance(instr, SetF):
-            self.out(depth, f'{self._assign(instr.dst)}rt.setF(r{instr.src.n}, "{instr.field}", {self.operand(instr.op)});')
         elif isinstance(instr, Call):
             prefix = self._assign(instr.dst) if instr.dst is not None else ""
             self.out(depth, f"{prefix}await {self.call_expr(instr)};")

@@ -33,6 +33,13 @@ def _child_fields(theme: dict) -> dict:
         fields[b["field"]] = "BOOL"
     for t in c["times"]:
         fields[t["field"]] = "TIME"
+    if c.get("number"):
+        # The one INT field a theme may declare, so a themed world has
+        # something the compute tools (`sum`/`avg`/`max`/`min`, spec 0.7.0
+        # §6) can be called on. Before this, every themed field was
+        # STR/BOOL/TIME/ID and the aggregate arm of L21 fired on 1.7% of
+        # themed rows (`results/REFLEX.md` §6).
+        fields[c["number"]["field"]] = "INT"
     fields[c["ref_field"]] = f"ID:{theme['parent']['entity']}"
     fields["image"] = "STR"
     return fields
@@ -84,21 +91,27 @@ def _v2_tools(theme: dict) -> list:
         defaults[b["field"]] = False
     for t in c["times"]:
         defaults[t["field"]] = "$now"
+    if c.get("number"):
+        # created records carry the midpoint, so a create inside a task does
+        # not move an average much; no tool sets this field (see
+        # THEME_SCHEMA.md's `number`)
+        num = c["number"]
+        defaults[num["field"]] = (num["min"] + num["max"]) // 2
     return [
         {"name": n["create"], "desc": f"Create a new {noun} for a {p['noun'][0]}.",
-         "params": create_params, "returns": f"OBJ:{child}", "effects": ["WRITE"],
+         "params": create_params, "returns": f"OBJ:{child}", "effects": ["mutates"],
          "impl": {"op": "create", "entity": child, "param_fields": create_fields,
                   "defaults": defaults}},
         {"name": n["list_notes"], "desc": f"List the notes attached to one {noun}.",
          "params": [idp(child, f"the {noun}")],
-         "returns": f"LIST OBJ:{note}", "effects": ["READ"],
+         "returns": f"LIST OBJ:{note}", "effects": [],
          "impl": {"op": "list_by", "entity": note, "field": child, "id_param": 0}},
         {"name": n["add_note"], "desc": f"Attach a note to a {noun}.",
          "params": [idp(child, f"the {noun}"),
                     {"name": "text", "type": "STR", "desc": "note text", "field": [note, "text"]},
                     {"name": "title", "type": "STR", "desc": "note title", "required": False,
                      "field": [note, "title"]}],
-         "returns": f"OBJ:{note}", "effects": ["WRITE"],
+         "returns": f"OBJ:{note}", "effects": ["mutates"],
          "impl": {"op": "create", "entity": note, "param_fields": [child, "text", "title"],
                   "defaults": {"title": "Note", "text": ""}}},
         {"name": n["update_note"], "desc": f"Change the text (and optionally the title) of one of a {noun}'s notes.",
@@ -106,31 +119,31 @@ def _v2_tools(theme: dict) -> list:
                     {"name": "text", "type": "STR", "desc": "new text", "field": [note, "text"]},
                     {"name": "title", "type": "STR", "desc": "new title", "required": False,
                      "field": [note, "title"]}],
-         "returns": f"OBJ:{note}", "effects": ["WRITE"],
+         "returns": f"OBJ:{note}", "effects": ["mutates"],
          "impl": {"op": "update", "entity": note, "id_param": 1,
                   "set_from_params": {"text": 2, "title": 3}}},
         {"name": n["delete_note"], "desc": f"Remove a note from a {noun}.",
          "params": [idp(child, f"the {noun}"), idp(note, "the note to remove", "note")],
-         "returns": None, "effects": ["DELETE"],
+         "returns": None, "effects": ["mutates", "irreversible"],
          "impl": {"op": "delete", "entity": note, "id_param": 1}},
         {"name": n["set_image"], "desc": f"Set the image shown on a {noun}.",
          "params": [idp(child, f"the {noun}"),
                     {"name": "image", "type": "STR", "desc": "image URL", "field": [child, "image"]}],
-         "returns": f"OBJ:{child}", "effects": ["WRITE"],
+         "returns": f"OBJ:{child}", "effects": ["mutates"],
          "impl": {"op": "update", "entity": child, "id_param": 0, "set_from_params": {"image": 1}}},
         {"name": n["writer"], "desc": "Write a short message from a brief (what to say, in the requester's words) and the records it should mention. Returns the text.",
          "params": [{"name": "brief", "type": "STR", "desc": "what to write"},
                     {"name": "data", "type": f"LIST OBJ:{child}", "desc": f"{c['noun'][1]} the message is about"}],
-         "returns": "STR", "effects": ["EXTERNAL"],
+         "returns": "STR", "effects": ["external"],
          "impl": {"op": "external", "kind": "write_text"}},
         {"name": n["image"], "desc": "Generate an image from a prompt and return its URL.",
          "params": [{"name": "prompt", "type": "STR", "desc": "what the image shows"},
                     {"name": "style", "type": "STR", "desc": "visual style", "required": False}],
-         "returns": "STR", "effects": ["EXTERNAL"],
+         "returns": "STR", "effects": ["external"],
          "impl": {"op": "external", "kind": "generate_image"}},
         {"name": n["search"], "desc": "Search the help docs and knowledge base with a question; returns the best passage.",
          "params": [{"name": "query", "type": "STR", "desc": "the question"}],
-         "returns": "STR", "effects": ["READ"],
+         "returns": "STR", "effects": [],
          "impl": {"op": "external", "kind": "search_docs"}},
     ]
 
@@ -156,33 +169,33 @@ def build_world(theme: dict) -> dict:
 
     world_tools = [
         {"name": tools["list_child"]["name"], "desc": tools["list_child"]["desc"],
-         "params": [], "returns": f"LIST OBJ:{child}", "effects": ["READ"],
+         "params": [], "returns": f"LIST OBJ:{child}", "effects": [],
          "impl": {"op": "list", "entity": child}},
         {"name": tools["get_child"]["name"], "desc": tools["get_child"]["desc"],
          "params": [idp(child, f"the {c['noun'][0]} to fetch")],
-         "returns": f"OBJ:{child}", "effects": ["READ"],
+         "returns": f"OBJ:{child}", "effects": [],
          "impl": {"op": "get", "entity": child, "id_param": 0}},
         {"name": tools["list_parent"]["name"], "desc": tools["list_parent"]["desc"],
-         "params": [], "returns": f"LIST OBJ:{parent}", "effects": ["READ"],
+         "params": [], "returns": f"LIST OBJ:{parent}", "effects": [],
          "impl": {"op": "list", "entity": parent}},
         {"name": tools["get_parent"]["name"], "desc": tools["get_parent"]["desc"],
          "params": [idp(parent, f"the {p['noun'][0]} to fetch")],
-         "returns": f"OBJ:{parent}", "effects": ["READ"],
+         "returns": f"OBJ:{parent}", "effects": [],
          "impl": {"op": "get", "entity": parent, "id_param": 0}},
         {"name": tools["delete_child"]["name"], "desc": tools["delete_child"]["desc"],
          "params": [idp(child, f"{c['noun'][0]} to delete")],
-         "returns": None, "effects": ["DELETE"],
+         "returns": None, "effects": ["mutates", "irreversible"],
          "impl": {"op": "delete", "entity": child, "id_param": 0}},
         {"name": tools["set_enum"]["name"], "desc": tools["set_enum"]["desc"],
          "params": [idp(child, f"the {c['noun'][0]}"),
                     {"name": enum_f, "type": "STR", "desc": f"new {enum_f}",
                      "field": [child, enum_f]}],
-         "returns": f"OBJ:{child}", "effects": ["WRITE"],
+         "returns": f"OBJ:{child}", "effects": ["mutates"],
          "impl": {"op": "update", "entity": child, "id_param": 0,
                   "set_from_params": {enum_f: 1}}},
         {"name": sb["name"], "desc": sb["desc"],
          "params": [idp(child, f"the {c['noun'][0]}")],
-         "returns": f"OBJ:{child}", "effects": ["WRITE"],
+         "returns": f"OBJ:{child}", "effects": ["mutates"],
          "impl": {"op": "update", "entity": child, "id_param": 0,
                   "set_const": {bool_f: sb["value"]}}},
         {"name": tools["set_ref"]["name"], "desc": tools["set_ref"]["desc"],
@@ -190,13 +203,13 @@ def build_world(theme: dict) -> dict:
                     {"name": parent, "type": f"ID:{parent}",
                      "desc": f"new {p['noun'][0]}",
                      "field": [child, c["ref_field"]]}],
-         "returns": f"OBJ:{child}", "effects": ["WRITE"],
+         "returns": f"OBJ:{child}", "effects": ["mutates"],
          "impl": {"op": "update", "entity": child, "id_param": 0,
                   "set_from_params": {c["ref_field"]: 1}}},
         {"name": tools["send"]["name"], "desc": tools["send"]["desc"],
          "params": [idp(parent, "recipient"),
                     {"name": "text", "type": "STR", "desc": "message text"}],
-         "returns": None, "effects": ["SEND"],
+         "returns": None, "effects": ["irreversible", "external"],
          "impl": {"op": "send", "channel": "message",
                   "param_map": ["to", "text"]}},
     ]
@@ -315,6 +328,12 @@ def build_profile(theme: dict) -> dict:
             "ref_word": f"{c['noun'][0]} {{n}}",
             "filters": filters,
             "actions": actions,
+            # {INT field -> how a request says it}. The aggregate arm of
+            # L21 asks "what is the total {phrase} across the {plural}",
+            # and a field name read literally ("page count minutes") is not
+            # English. Absent for a theme with no `number`.
+            "measures": ({c["number"]["field"]: c["number"]["noun"]}
+                         if c.get("number") else {}),
         }},
         "direct_send": {"tool": tools["send"]["name"],
                         "target": {"const_ref": {"entity": parent,
@@ -399,6 +418,9 @@ def make_state_gen(theme: dict):
                     rec[t["field"]] = now + rng.randint(-20, 20) * DAY
                 else:
                     rec[t["field"]] = now - rng.randint(5, 300) * DAY
+            if c.get("number"):
+                num = c["number"]
+                rec[num["field"]] = rng.randint(num["min"], num["max"])
             rec[c["ref_field"]] = rng.choice(parents)["id"]
             rec["image"] = "" if rng.random() < 0.7 else \
                 f"https://cdn.{theme['domain']}.test/img/{i + 1}.jpg"
@@ -436,6 +458,21 @@ def validate_theme(theme: dict) -> None:
     assert kinds.count("time_now") <= 1 and kinds.count("time_cutoff") <= 1
     if c.get("name_field"):
         assert len(c["titles"]) >= 12, "need >=12 titles"
+    if c.get("number"):
+        num = c["number"]
+        assert set(num) <= {"field", "noun", "min", "max"}, \
+            "number takes field/noun/min/max only"
+        assert num["field"] and num["noun"], "number needs a field and a noun"
+        assert isinstance(num["min"], int) and isinstance(num["max"], int), \
+            "number bounds must be integers (the field is INT)"
+        assert 0 <= num["min"] < num["max"], "number needs min < max, min >= 0"
+        # against the field set the theme would have without it: a collision
+        # here is silent otherwise, because `_child_fields` just overwrites
+        # the other field's type with INT
+        bare = {k: v for k, v in c.items() if k != "number"}
+        taken = set(_child_fields({**theme, "child": bare}))
+        assert num["field"] not in taken, \
+            f"number field {num['field']!r} collides with another child field"
     st = theme["sort"]
     assert 0 <= st["time_index"] < len(c["times"]), "sort.time_index invalid"
     sb = theme["tools"]["set_bool"]

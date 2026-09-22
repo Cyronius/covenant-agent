@@ -61,12 +61,9 @@ def main():
         ctx = TaskContext.from_json(row["context"])
         stats["n"] += 1
 
-        # The reference has no EFFECTS header; ours is derived and prepended.
-        # Compare against the reference with that line removed.
+        # Target is the reference verbatim (spec 0.7.0: no derived header).
         original = row["reference"]["segments"][0]
-        body = "\n".join(l for l in text.splitlines()
-                         if not l.startswith("EFFECTS")) + "\n"
-        stats["matches_reference"] += body.strip() == original.strip()
+        stats["matches_reference"] += text.strip() == original.strip()
 
         res = build(text, ctx)
         stats["parse"] += bool(res.parse_ok)

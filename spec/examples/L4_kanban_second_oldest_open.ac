@@ -1,0 +1,11 @@
+# L4_kanban_second_oldest_open  (level 4, world kanban)
+# request: Assign the second-oldest open card to Dana.
+# $0: STR = 'todo' — the open status
+# $1: ID:user = 'user_2' — Dana
+
+CALL @list_cards -> r0
+FILTER r0 @card.status EQ $0 -> r1
+SORT r1 @card.created ASC -> r2
+SELECT r2 1 -> r3
+CALL @assign_card r3.@card.id $1 -> r4
+STOP

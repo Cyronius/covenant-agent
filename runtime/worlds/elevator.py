@@ -35,7 +35,7 @@ WORLD = {
                         "desc": "the floor to travel to",
                         "field": ["car", "floor"]}],
             "returns": "OBJ:car",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "elevator", "fn": "go_to"},
         },
         {
@@ -46,7 +46,7 @@ WORLD = {
                     "is there.",
             "params": [],
             "returns": "OBJ:car",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "elevator", "fn": "open_doors"},
         },
         {
@@ -56,7 +56,7 @@ WORLD = {
                     "button on this floor.",
             "params": [],
             "returns": "OBJ:car",
-            "effects": ["WRITE"],
+            "effects": ["mutates"],
             "impl": {"op": "engine", "module": "elevator", "fn": "hold"},
         },
     ],

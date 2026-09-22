@@ -8,7 +8,7 @@ thing that separates them.
 
 `decoy_world` gives every tool in a world one to four siblings with the *same
 signature* and a neighbouring description: `archive_card` beside `snooze_card`
-and `escalate_card`, all `(ID:card) -> OBJ:card [WRITE]`. Only the description
+and `escalate_card`, all `(ID:card) -> OBJ:card [M]`. Only the description
 says which one the request means. On a slice of them the names are adversarial
 (`foo17`, `operation_93`, R5's own), so the name cannot carry the choice at
 all.
@@ -55,14 +55,14 @@ import copy
 import random
 from typing import List, Optional, Tuple
 
-MUTATING = {"WRITE", "DELETE", "SEND", "PAY"}
+MUTATING = {"mutates", "irreversible"}
 
-# verb -> what a tool by that name would actually do. Banked by effect: a
-# decoy whose description is a copy operation while its effect line says SEND
-# is a tell, and the point of the family is that the description is the only
-# thing that separates the tools.
+# verb -> what a tool by that name would actually do. Banked by property
+# (spec 0.7.0 §7): a decoy whose description is a copy operation while its
+# properties say external+irreversible is a tell, and the point of the
+# family is that the description is the only thing that separates the tools.
 DECOY_OPS = {
-    "WRITE": {
+    "mutates": {
         "snooze": "Hide {a_noun} until a date you set, then bring it back to "
                   "the list unchanged.",
         "escalate": "Pass {a_noun} up to the next tier and mark it as needing "
@@ -89,7 +89,7 @@ DECOY_OPS = {
         "recheck": "Run the validation rules over {a_noun} again and record "
                    "the result.",
     },
-    "DELETE": {
+    "irreversible+mutates": {
         "purge": "Strip the attachments and history off {a_noun}, leaving "
                  "the record itself in place.",
         "expire": "End {a_noun}'s current term now; it stays on file as "
@@ -103,7 +103,7 @@ DECOY_OPS = {
         "discard_draft": "Throw away the unsaved draft of {a_noun}; the "
                          "saved one is untouched.",
     },
-    "SEND": {
+    "external+irreversible": {
         "remind": "Send a reminder about {a_noun} to whoever it is assigned "
                   "to.",
         "nudge": "Send a short chase-up about {a_noun} on the quiet channel.",
@@ -114,17 +114,19 @@ DECOY_OPS = {
                        "{a_noun}.",
         "escalate_to": "Page the on-call about {a_noun}.",
     },
-    "PAY": {
+    "external+irreversible+mutates": {
         "authorize": "Put a hold on the funds for {a_noun} without taking "
                      "them yet.",
         "refund": "Return an earlier payment on {a_noun}.",
         "void": "Cancel an authorization on {a_noun} before it settles.",
     },
-    # READ is banked by return shape as well as effect, because "list every"
-    # and "fetch the one" are not interchangeable descriptions and a decoy
-    # whose description does not fit its own return type is a tell. The key
-    # is `READ:LIST` / `READ:OBJ` / `READ:STR` -- see `_bank_key`.
-    "READ:LIST": {
+    # A tool with neither `mutates` nor `irreversible` (a pure read, or a
+    # harmless external call) is banked by return shape as well, because
+    # "list every" and "fetch the one" are not interchangeable descriptions
+    # and a decoy whose description does not fit its own return type is a
+    # tell. The key is `none:LIST` / `none:OBJ` / `none:STR` / `external:STR`
+    # -- see `_bank_key`.
+    "none:LIST": {
         "archived": "List the archived {noun} records -- the ones taken out "
                     "of use, not the live set.",
         "stale": "List the {noun} records nobody has touched since the last "
@@ -141,7 +143,7 @@ DECOY_OPS = {
                   "before they go live.",
         "sampled": "List a random sample of {noun} records for spot-checking.",
     },
-    "READ:OBJ": {
+    "none:OBJ": {
         "archived_copy": "Fetch the archived copy of {a_noun}, as it stood "
                          "when it was retired.",
         "snapshot": "Fetch {a_noun} as it stood at the last audit, not as it "
@@ -154,7 +156,7 @@ DECOY_OPS = {
                     "ours.",
     },
     # no entity behind these, so they are named by verb alone
-    "READ:STR": {
+    "none:STR": {
         "glossary": "Look a term up in the internal glossary rather than in "
                     "the documentation.",
         "changelog": "Look a term up in the change history rather than in "
@@ -162,7 +164,7 @@ DECOY_OPS = {
         "faq": "Look a term up in the customer-facing FAQ.",
         "archived_docs": "Look a term up in last year's documentation set.",
     },
-    "EXTERNAL:STR": {
+    "external:STR": {
         "outline_only": "Produce a heading outline of the text rather than "
                         "the text itself.",
         "summarize": "Produce a one-line summary of the material rather than "
@@ -214,21 +216,22 @@ def _return_shape(tool: dict) -> Optional[str]:
 def _bank_key(tool: dict) -> Optional[str]:
     """Which description bank a sibling of this tool draws from.
 
-    The strongest effect the tool declares picks it, so a decoy never
-    describes a copy while its effect line says SEND. READ and EXTERNAL are
-    keyed by return shape too: "list every" and "fetch the one" are not
+    The tool's full property set picks it (spec 0.7.0 §7's `mutates`/
+    `irreversible`/`external`), so a decoy never describes a copy while its
+    properties say external+irreversible. A tool with neither `mutates` nor
+    `irreversible` (a pure read, or a harmless external call) is keyed by
+    return shape too: "list every" and "fetch the one" are not
     interchangeable, and a description that does not fit its own return type
     is a tell.
     """
-    for effect in ("PAY", "SEND", "DELETE", "WRITE"):
-        if effect in tool["effects"]:
-            return effect
-    for effect in ("EXTERNAL", "READ"):
-        if effect in tool["effects"]:
-            shape = _return_shape(tool)
-            key = f"{effect}:{shape}" if shape else None
-            return key if key in DECOY_OPS else None
-    return None
+    props = set(tool["effects"])
+    if props & {"mutates", "irreversible"}:
+        key = "+".join(sorted(props))
+        return key if key in DECOY_OPS else None
+    shape = _return_shape(tool)
+    prefix = "external" if "external" in props else "none"
+    key = f"{prefix}:{shape}" if shape else None
+    return key if key in DECOY_OPS else None
 
 
 def decoy_world(world: dict, rng: random.Random,
@@ -250,7 +253,7 @@ def decoy_world(world: dict, rng: random.Random,
         verbs = rng.sample(sorted(bank), min(len(bank),
                                              rng.randint(*per_tool)))
         for verb in verbs:
-            # a READ:STR or EXTERNAL:STR tool has no entity behind it, so the
+            # a none:STR or external:STR tool has no entity behind it, so the
             # verb stands alone rather than dragging `_record` along
             name = (rng.choice(NONSENSE_NAMES) if rng.random() < nonsense
                     else (f"{verb}_{entity}" if entity else verb))
@@ -281,8 +284,9 @@ def decoy_world(world: dict, rng: random.Random,
                                  "entity": decoy["params"][id_param]["field"][0],
                                  "id_param": id_param}
             elif not mutating:
-                # a READ decoy must not return the real record -- that would
-                # make it *work*, and the collision would teach nothing. It
+                # a non-mutating decoy must not return the real record --
+                # that would make it *work*, and the collision would teach
+                # nothing. It
                 # hands back the empty value of its declared type instead,
                 # or NOT_FOUND where there is no empty value (module docstring)
                 decoy["impl"] = {"op": "noop", "empty": _return_shape(tool)}

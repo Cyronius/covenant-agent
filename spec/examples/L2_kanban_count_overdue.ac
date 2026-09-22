@@ -1,0 +1,7 @@
+# L2_kanban_count_overdue  (level 2, world kanban)
+# request: How many cards are overdue?
+
+CALL @list_cards -> r0
+FILTER r0 @card.due LT NOW -> r1
+COUNT r1 -> r2
+RETURN r2
