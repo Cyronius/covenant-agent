@@ -1,8 +1,8 @@
 # SECOND TURN — the tiny model can take one now
 
 **Date:** 2026-09-22 · **Plan:** `.claude/plans/agent-loop-and-ir-review.md`
-step 4 · **Cost:** none, CPU only · **Gate 1: met. Gate 2 needs a pod and has
-not been run.**
+step 4 · **Cost:** none, CPU only · **Gate 1: met. Gate 2 not met at CPU scale
+and not yet run properly — §3 prices it at ~$0.37.**
 
 The loop already existed in three places (`agent-loop-and-ir-review.md` §1a),
 and for the 0.8B and the 27B the owner's claim was already false — they do get
@@ -88,16 +88,76 @@ region that says `r1` holds four cards.
 The plan's second gate is: on the same 42-world holdout R9 scored (control arm
 70.4% plain, 46.0% decoyed), goal success on two-segment tasks within five
 points of one-segment tasks of the same level. That is a trained-model
-measurement on a real corpus — one pod run, and it should ride with step 6's
-single rebuild, because the register region is new weights and a new cache like
-1b, 1e and 1g before it.
+measurement on a real corpus.
 
-Two things are known about the cost already, from R9: the current model takes
-18.9 GB at batch 64 on a 4090, and `pod.md` has been wrong in the optimistic
-direction twice, so the extra region is a measurement rather than an
-assumption.
+**It costs about a dollar, not the retrain.** R9's own receipts: 6.5
+GPU-hours for both arms x three seeds, 12 epochs, batch 64, on a RunPod
+community 4090 at $0.34/hr — **$2.21 for six runs**, so one arm-seed is ~1.08
+hours and **~$0.37** (double it if it falls through to a secure pod). An
+arm-seed is 4,812 steps over ~25k rows at the real model size: not a degraded
+run, but exactly the run R9 read 70.4% / 46.0% off.
 
-## 4. What this does not say
+| | what it buys | cost |
+|---|---|---|
+| CPU | does the mechanism hold on unseen worlds at all (§2 and below) | free |
+| one arm-seed + the register region | **gate 2**, plus the real VRAM figure for the new region | **~$0.37** |
+| R9's full shape (2 arms x 3 seeds) | only if the region interacts with the arm comparison | ~$2.21 |
+| step 6's retrain over the 62.8k-row family corpus | everything deferred into one rebuild | the ~$16-32 estimate |
+
+So the $16-32 figure the plan quotes is the *last* row. Gate 2 does not have
+to wait for it, and the region's VRAM cost should be measured before it does:
+R9 found the current model at 18.9 GB of 24 at batch 64, and `pod.md` has been
+wrong in the optimistic direction twice.
+
+Before any of that there is ~20 minutes of free laptop work: the corpus has to
+be rebuilt with continuation rows (`prep.py`'s replay costs 2m17 per 3k rows),
+and the episode shards regenerated if step 3a's aimed detours are wanted in
+the same measurement.
+
+## 4. The free tier, run: unseen worlds, real loop
+
+Before spending the $0.37, the same question on CPU. A 3,000-row themed
+corpus generated for this (26.2% of its rows two-segment: L5 156/437, L7
+64/327, L10 437/437, L11 128/436), six worlds carved out, a 0.9M model, and
+`play.py` driving the real loop over the **170 tasks of the six worlds the
+model never saw** — 55 of them paused.
+
+Scored at epoch 3 of 14, which is why the absolute numbers are low (R9's full
+run reads 70.4% on unseen worlds; this is a fifth the width and a quarter of
+the schedule):
+
+| | goal |
+|---|---|
+| one-segment tasks | 32/115 = **27.8%** |
+| two-segment tasks | 13/55 = **23.6%** |
+| *conditioned on a compilable first program* | one-segment 32/41 = **78.0%**, two-segment 10/21 = **47.6%** |
+
+**The mechanism holds on worlds the model has never seen.** 21 of 55 paused
+tasks got a second segment, and the continuations are real programs written
+against the register region, not memorized text — this one is from a world
+carved out of training:
+
+```
+seg0: CALL T6 -> r0 ; FILTER r0 F23 EQ C0 -> r1 ; PAUSE
+seg1: ABORT NOT_FOUND C0
+```
+
+It looked, saw nothing matched, and declined.
+
+**The gate-2 comparison does not pass at this scale, and the 4.2-point
+unconditional gap should not be quoted as if it did.** Both arms are near the
+floor, which flatters the difference; conditioned on getting a compilable
+first program the two-segment tasks are ~30 points worse. Per level, the gap
+is concentrated exactly where the decision is real: L11's one-shot form (`IF
+EMPTY` → abort or act, writable blind) scores 92.9%, its two-segment form
+(look, then decide) 40.0%. L5 is level: 12.5% one-shot against 14.3%
+two-segment.
+
+That is the honest read of a weak model, and it is the argument for the
+$0.37: a real-size, full-schedule arm-seed is what tells you whether
+two-segment tasks are harder *for a trained planner* or only for this one.
+
+## 5. What this does not say
 
 - **Nothing about accuracy.** A 0.9M model memorizing 41 examples says the
   data path and the architecture work. It says nothing about whether a trained
