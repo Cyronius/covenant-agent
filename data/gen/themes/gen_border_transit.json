@@ -31,7 +31,8 @@
       {"field": "entry_date", "kind": "time_now",
        "lt_phrase": ["already past", "post"],
        "gt_phrase": ["still ahead", "post"]}
-    ]
+    ],
+    "number": {"field": "interview_minutes", "noun": "interview length in minutes", "min": 5, "max": 90}
   },
   "tools": {
     "list_child": {"name": "listCases",

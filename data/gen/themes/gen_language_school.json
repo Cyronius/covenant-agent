@@ -39,7 +39,8 @@
        "gt_phrase": ["not yet begun", "post"]},
       {"field": "placed_on", "kind": "time_cutoff",
        "phrase": "placed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "weekly_hours", "noun": "weekly contact time in hours", "min": 2, "max": 20}
   },
   "tools": {
     "list_child": {"name": "listPlacements",

@@ -30,7 +30,8 @@
     "times": [
       {"field": "set_on", "kind": "time_cutoff",
        "phrase": "set more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "route_height_m", "noun": "route height in metres", "min": 4, "max": 25}
   },
   "tools": {
     "list_child": {"name": "listRoutes",

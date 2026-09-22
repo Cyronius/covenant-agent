@@ -34,7 +34,8 @@
        "gt_phrase": ["not yet due", "post"]},
       {"field": "planted_on", "kind": "time_cutoff",
        "phrase": "planted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "acres", "noun": "acreage", "min": 1, "max": 120}
   },
   "tools": {
     "list_child": {"name": "list_plantings",

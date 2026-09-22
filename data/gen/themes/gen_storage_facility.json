@@ -35,7 +35,8 @@
       {"field": "rent_due", "kind": "time_now",
        "lt_phrase": ["already past due", "post"],
        "gt_phrase": ["not due yet", "post"]}
-    ]
+    ],
+    "number": {"field": "monthly_rate", "noun": "monthly rate", "min": 40, "max": 500}
   },
   "tools": {
     "list_child": {"name": "listUnitRentals", "desc": "list all the unit rentals we got"},

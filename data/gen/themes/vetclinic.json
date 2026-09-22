@@ -33,7 +33,8 @@
        "gt_phrase": ["still ahead", "post"]},
       {"field": "booked", "kind": "time_cutoff",
        "phrase": "booked more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "duration_minutes", "noun": "appointment length in minutes", "min": 10, "max": 90}
   },
   "tools": {
     "list_child": {"name": "list_appointments",

@@ -34,7 +34,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "filed", "kind": "time_cutoff",
        "phrase": "filed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "billable_hours", "noun": "billable time in hours", "min": 1, "max": 300}
   },
   "tools": {
     "list_child": {"name": "listMatters",

@@ -38,7 +38,8 @@
       {"field": "next_review", "kind": "time_now",
        "lt_phrase": ["review already past", "post"],
        "gt_phrase": ["review still ahead", "post"]}
-    ]
+    ],
+    "number": {"field": "stay_days", "noun": "length of stay in days", "min": 1, "max": 30}
   },
   "tools": {
     "list_child": {"name": "lsAdm",

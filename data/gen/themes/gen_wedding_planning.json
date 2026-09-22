@@ -37,7 +37,8 @@
        "gt_phrase": ["still ahead", "post"]},
       {"field": "inquired_on", "kind": "time_cutoff",
        "phrase": "inquired more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "vendor_fee", "noun": "vendor fee", "min": 200, "max": 9000}
   },
   "tools": {
     "list_child": {"name": "list_vendor_bookings",

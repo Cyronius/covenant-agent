@@ -37,7 +37,8 @@
        "gt_phrase": ["not yet due", "post"]},
       {"field": "opened_on", "kind": "time_cutoff",
        "phrase": "opened more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "downtime_minutes", "noun": "downtime in minutes", "min": 15, "max": 480}
   },
   "tools": {
     "list_child": {"name": "listwo",

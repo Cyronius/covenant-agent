@@ -38,7 +38,8 @@
        "gt_phrase": ["not yet due for bottling", "post"]},
       {"field": "pressed_on", "kind": "time_cutoff",
        "phrase": "pressed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "barrel_count", "noun": "barrel count", "min": 1, "max": 60}
   },
   "tools": {
     "list_child": {"name": "ls_lots",

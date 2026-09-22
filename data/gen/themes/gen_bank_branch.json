@@ -34,7 +34,8 @@
        "gt_phrase": ["not yet due", "post"]},
       {"field": "submitted_on", "kind": "time_cutoff",
        "phrase": "submitted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "requested_amount", "noun": "requested amount", "min": 2000, "max": 90000}
   },
   "tools": {
     "list_child": {"name": "listLoanApps",

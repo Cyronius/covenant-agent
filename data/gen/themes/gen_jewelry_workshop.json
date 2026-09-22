@@ -34,7 +34,8 @@
       {"field": "due", "kind": "time_now",
        "lt_phrase": ["past due", "post"],
        "gt_phrase": ["not yet due", "post"]}
-    ]
+    ],
+    "number": {"field": "bench_hours", "noun": "bench time in hours", "min": 2, "max": 80}
   },
   "tools": {
     "list_child": {"name": "listCommissions",

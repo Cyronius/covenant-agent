@@ -36,7 +36,8 @@
       {"field": "reset_date", "kind": "time_now",
        "lt_phrase": ["already done", "post"],
        "gt_phrase": ["still upcoming", "post"]}
-    ]
+    ],
+    "number": {"field": "shelf_feet", "noun": "shelf space in feet", "min": 4, "max": 80}
   },
   "tools": {
     "list_child": {"name": "lst_rsts",

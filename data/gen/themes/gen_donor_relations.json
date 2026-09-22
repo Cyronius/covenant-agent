@@ -36,7 +36,8 @@
        "gt_phrase": ["not yet due", "post"]},
       {"field": "pledged_at", "kind": "time_cutoff",
        "phrase": "pledged more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "pledge_amount", "noun": "pledge amount", "min": 25, "max": 20000}
   },
   "tools": {
     "list_child": {"name": "list_pledges",

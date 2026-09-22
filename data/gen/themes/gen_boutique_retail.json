@@ -34,7 +34,8 @@
       {"field": "needed_by", "kind": "time_now",
        "lt_phrase": ["overdue", "post"],
        "gt_phrase": ["not yet due", "post"]}
-    ]
+    ],
+    "number": {"field": "units", "noun": "unit count", "min": 2, "max": 120}
   },
   "tools": {
     "list_child": {"name": "list_replenishments",

@@ -39,7 +39,8 @@
        "gt_phrase": ["not yet due to publish", "post"]},
       {"field": "last_edited", "kind": "time_cutoff",
        "phrase": "not edited in more than {d} days"}
-    ]
+    ],
+    "number": {"field": "estimated_minutes", "noun": "lesson length in minutes", "min": 5, "max": 60}
   },
   "tools": {
     "list_child": {"name": "list_lessons",

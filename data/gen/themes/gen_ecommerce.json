@@ -33,7 +33,8 @@
        "gt_phrase": ["still open", "post"]},
       {"field": "filed", "kind": "time_cutoff",
        "phrase": "filed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "refund_amount", "noun": "refund amount", "min": 5, "max": 900}
   },
   "tools": {
     "list_child": {"name": "listReturns",

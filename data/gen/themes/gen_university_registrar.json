@@ -36,7 +36,8 @@
        "gt_phrase": ["not yet started", "post"]},
       {"field": "registered_on", "kind": "time_cutoff",
        "phrase": "registered more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "credit_hours", "noun": "credit load in hours", "min": 1, "max": 6}
   },
   "tools": {
     "list_child": {"name": "list_enrollments",

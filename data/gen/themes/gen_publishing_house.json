@@ -34,7 +34,8 @@
     "times": [
       {"field": "submitted_on", "kind": "time_cutoff",
        "phrase": "submitted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "word_count", "noun": "word count", "min": 20000, "max": 180000}
   },
   "tools": {
     "list_child": {"name": "listManuscripts",

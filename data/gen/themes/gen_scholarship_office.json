@@ -38,7 +38,8 @@
        "gt_phrase": ["still before deadline", "post"]},
       {"field": "submitted_on", "kind": "time_cutoff",
        "phrase": "submitted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "award_amount", "noun": "award amount", "min": 500, "max": 25000}
   },
   "tools": {
     "list_child": {"name": "listApplications",

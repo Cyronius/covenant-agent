@@ -40,7 +40,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "itinerary_submitted", "kind": "time_cutoff",
        "phrase": "submitted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "dose_count", "noun": "dose count", "min": 1, "max": 6}
   },
   "tools": {
     "list_child": {"name": "lstViz",

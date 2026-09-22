@@ -35,7 +35,8 @@
       {"field": "showtime", "kind": "time_now",
        "lt_phrase": ["already screened", "post"],
        "gt_phrase": ["not yet screened", "post"]}
-    ]
+    ],
+    "number": {"field": "seats_sold", "noun": "seat count", "min": 5, "max": 240}
   },
   "tools": {
     "list_child": {"name": "list_screenings",

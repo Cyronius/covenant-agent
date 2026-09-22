@@ -36,7 +36,8 @@
       {"field": "table_time", "kind": "time_now",
        "lt_phrase": ["already past their table time", "post"],
        "gt_phrase": ["not yet at their table time", "post"]}
-    ]
+    ],
+    "number": {"field": "party_size", "noun": "party size", "min": 2, "max": 12}
   },
   "tools": {
     "list_child": {"name": "list_reservations",

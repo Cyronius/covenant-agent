@@ -42,7 +42,8 @@
     "times": [
       {"field": "submitted_on", "kind": "time_cutoff",
        "phrase": "submitted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "page_count", "noun": "page count", "min": 4, "max": 40}
   },
   "tools": {
     "list_child": {"name": "listSubmissions", "desc": "list all the paper submissions on file, every status"},

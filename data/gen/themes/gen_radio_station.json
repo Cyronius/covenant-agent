@@ -37,7 +37,8 @@
        "gt_phrase": ["not yet aired", "post"]},
       {"field": "booked_on", "kind": "time_cutoff",
        "phrase": "booked more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "spot_seconds", "noun": "spot length in seconds", "min": 10, "max": 60}
   },
   "tools": {
     "list_child": {"name": "listSpots",

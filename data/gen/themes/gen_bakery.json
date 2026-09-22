@@ -32,7 +32,8 @@
       {"field": "due_by", "kind": "time_now",
        "lt_phrase": ["already late", "post"],
        "gt_phrase": ["not due yet", "post"]}
-    ]
+    ],
+    "number": {"field": "unit_count", "noun": "unit count", "min": 12, "max": 600}
   },
   "tools": {
     "list_child": {"name": "list_orders",

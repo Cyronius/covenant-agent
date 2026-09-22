@@ -36,7 +36,8 @@
        "gt_phrase": ["still valid", "post"]},
       {"field": "issued", "kind": "time_cutoff",
        "phrase": "issued more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "permit_fee", "noun": "permit fee", "min": 15, "max": 600}
   },
   "tools": {
     "list_child": {"name": "listPermits",

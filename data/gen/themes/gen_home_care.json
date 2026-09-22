@@ -36,7 +36,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "care_plan_updated", "kind": "time_cutoff",
        "phrase": "care plan updated more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "visit_minutes", "noun": "visit length in minutes", "min": 20, "max": 180}
   },
   "tools": {
     "list_child": {"name": "listVisits", "desc": "list all the care visits, everything on file"},

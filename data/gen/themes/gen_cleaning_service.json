@@ -40,7 +40,8 @@
        "gt_phrase": ["still ahead", "post"]},
       {"field": "requested_on", "kind": "time_cutoff",
        "phrase": "requested more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "visit_minutes", "noun": "visit length in minutes", "min": 30, "max": 300}
   },
   "tools": {
     "list_child": {"name": "list_cleaning_visits",

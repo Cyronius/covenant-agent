@@ -34,7 +34,8 @@
        "gt_phrase": ["still to come", "post"]},
       {"field": "opened", "kind": "time_cutoff",
        "phrase": "opened more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "performance_count", "noun": "performance count", "min": 4, "max": 60}
   },
   "tools": {
     "list_child": {"name": "lsRuns",

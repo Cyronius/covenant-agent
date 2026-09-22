@@ -34,7 +34,8 @@
     "times": [
       {"field": "issued_on", "kind": "time_cutoff",
        "phrase": "issued more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "fine_amount", "noun": "fine amount", "min": 50, "max": 5000}
   },
   "tools": {
     "list_child": {"name": "list_citations",

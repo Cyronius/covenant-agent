@@ -34,7 +34,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "submitted", "kind": "time_cutoff",
        "phrase": "submitted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "years_experience", "noun": "years of experience", "min": 0, "max": 25}
   },
   "tools": {
     "list_child": {"name": "list_applications",

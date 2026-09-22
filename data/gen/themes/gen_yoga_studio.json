@@ -31,7 +31,8 @@
       {"field": "start_time", "kind": "time_now",
        "lt_phrase": ["already started", "post"],
        "gt_phrase": ["not started yet", "post"]}
-    ]
+    ],
+    "number": {"field": "spots_booked", "noun": "booking size", "min": 1, "max": 30}
   },
   "tools": {
     "list_child": {"name": "lstsess",

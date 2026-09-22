@@ -33,7 +33,8 @@
       {"field": "scheduled_visit", "kind": "time_now",
        "lt_phrase": ["already passed", "post"],
        "gt_phrase": ["still upcoming", "post"]}
-    ]
+    ],
+    "number": {"field": "labour_minutes", "noun": "labour time in minutes", "min": 15, "max": 240}
   },
   "tools": {
     "list_child": {"name": "list_repair_requests",

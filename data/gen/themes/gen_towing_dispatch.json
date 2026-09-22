@@ -36,7 +36,8 @@
        "gt_phrase": ["just called in", "post"]},
       {"field": "dispatched_at", "kind": "time_cutoff",
        "phrase": "dispatched more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "tow_miles", "noun": "tow distance in miles", "min": 2, "max": 90}
   },
   "tools": {
     "list_child": {"name": "listCalls", "desc": "list all tow calls, whatevers open"},

@@ -37,7 +37,8 @@
       {"field": "collected_at", "kind": "time_now",
        "lt_phrase": ["already collected", "post"],
        "gt_phrase": ["not yet collected", "post"]}
-    ]
+    ],
+    "number": {"field": "specimen_count", "noun": "specimen count", "min": 4, "max": 120}
   },
   "tools": {
     "list_child": {"name": "list_batches", "desc": "list specimen batches"},

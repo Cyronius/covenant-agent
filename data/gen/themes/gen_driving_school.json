@@ -33,7 +33,8 @@
       {"field": "slot", "kind": "time_now",
        "lt_phrase": ["already passed", "post"],
        "gt_phrase": ["still upcoming", "post"]}
-    ]
+    ],
+    "number": {"field": "lesson_minutes", "noun": "lesson length in minutes", "min": 45, "max": 180}
   },
   "tools": {
     "list_child": {"name": "lst_lsns", "desc": "list all lessons"},

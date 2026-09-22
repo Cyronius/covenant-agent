@@ -42,7 +42,8 @@
       {"field": "deadline", "kind": "time_now",
        "lt_phrase": ["past deadline", "post"],
        "gt_phrase": ["not due yet", "post"]}
-    ]
+    ],
+    "number": {"field": "word_count", "noun": "word count", "min": 200, "max": 3000}
   },
   "tools": {
     "list_child": {"name": "listAssignments",

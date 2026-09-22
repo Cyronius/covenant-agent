@@ -35,7 +35,8 @@
       {"field": "block_start", "kind": "time_now",
        "lt_phrase": ["already underway", "post"],
        "gt_phrase": ["still upcoming", "post"]}
-    ]
+    ],
+    "number": {"field": "block_minutes", "noun": "block length in minutes", "min": 60, "max": 300}
   },
   "tools": {
     "list_child": {"name": "listScrimBlocks",

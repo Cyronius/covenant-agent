@@ -34,7 +34,8 @@
       {"field": "showing_time", "kind": "time_now",
        "lt_phrase": ["already showed", "post"],
        "gt_phrase": ["not yet shown", "post"]}
-    ]
+    ],
+    "number": {"field": "list_price", "noun": "list price", "min": 90000, "max": 1500000}
   },
   "tools": {
     "list_child": {"name": "listListings",

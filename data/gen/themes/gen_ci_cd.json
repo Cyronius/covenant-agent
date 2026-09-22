@@ -39,7 +39,8 @@
        "gt_phrase": ["not started yet", "post"]},
       {"field": "last_success", "kind": "time_cutoff",
        "phrase": "hasn't passed in over {d} days"}
-    ]
+    ],
+    "number": {"field": "build_seconds", "noun": "build time in seconds", "min": 30, "max": 1800}
   },
   "tools": {
     "list_child": {"name": "lsbuilds",

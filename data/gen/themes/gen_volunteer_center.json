@@ -36,7 +36,8 @@
       {"field": "shift_start", "kind": "time_now",
        "lt_phrase": ["already started", "post"],
        "gt_phrase": ["not started yet", "post"]}
-    ]
+    ],
+    "number": {"field": "shift_hours", "noun": "shift length in hours", "min": 2, "max": 10}
   },
   "tools": {
     "list_child": {"name": "ls_sup", "desc": "list signups"},

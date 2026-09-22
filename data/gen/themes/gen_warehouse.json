@@ -40,7 +40,8 @@
       {"field": "expires_at", "kind": "time_now",
        "lt_phrase": ["already expired", "post"],
        "gt_phrase": ["not yet expired", "post"]}
-    ]
+    ],
+    "number": {"field": "pallet_count", "noun": "pallet count", "min": 1, "max": 40}
   },
   "tools": {
     "list_child": {"name": "listLots",

@@ -31,7 +31,8 @@
     "times": [
       {"field": "dropped_off", "kind": "time_cutoff",
        "phrase": "dropped off more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "labour_hours", "noun": "labour time in hours", "min": 1, "max": 24}
   },
   "tools": {
     "list_child": {"name": "list_repair_orders",

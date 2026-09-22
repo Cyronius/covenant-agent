@@ -35,7 +35,8 @@
        "gt_phrase": ["not launched yet", "post"]},
       {"field": "last_patched", "kind": "time_cutoff",
        "phrase": "not patched in over {d} days"}
-    ]
+    ],
+    "number": {"field": "monthly_cost", "noun": "monthly cost", "min": 20, "max": 4000}
   },
   "tools": {
     "list_child": {"name": "list_instances",

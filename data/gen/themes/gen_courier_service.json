@@ -32,7 +32,8 @@
       {"field": "eta", "kind": "time_now",
        "lt_phrase": ["past due", "post"],
        "gt_phrase": ["still on time", "post"]}
-    ]
+    ],
+    "number": {"field": "parcel_weight_kg", "noun": "parcel weight in kilos", "min": 1, "max": 40}
   },
   "tools": {
     "list_child": {"name": "listDeliveries",

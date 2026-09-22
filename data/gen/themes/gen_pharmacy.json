@@ -31,7 +31,8 @@
     "times": [
       {"field": "received_at", "kind": "time_cutoff",
        "phrase": "received more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "pack_count", "noun": "pack count", "min": 1, "max": 24}
   },
   "tools": {
     "list_child": {"name": "list_orders",

@@ -37,7 +37,8 @@
        "gt_phrase": ["not yet due", "post"]},
       {"field": "dropped_off", "kind": "time_cutoff",
        "phrase": "dropped off more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "quoted_cost", "noun": "quoted cost", "min": 20, "max": 800}
   },
   "tools": {
     "list_child": {"name": "list_intakes",

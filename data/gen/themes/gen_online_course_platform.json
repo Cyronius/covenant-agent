@@ -37,7 +37,8 @@
       {"field": "due_date", "kind": "time_now",
        "lt_phrase": ["already overdue", "post"],
        "gt_phrase": ["not yet due", "post"]}
-    ]
+    ],
+    "number": {"field": "estimated_minutes", "noun": "module length in minutes", "min": 5, "max": 120}
   },
   "tools": {
     "list_child": {"name": "list_modules",

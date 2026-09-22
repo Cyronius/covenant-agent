@@ -39,7 +39,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "submitted", "kind": "time_cutoff",
        "phrase": "submitted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "wait_days", "noun": "wait in days", "min": 0, "max": 90}
   },
   "tools": {
     "list_child": {"name": "list_intakes",

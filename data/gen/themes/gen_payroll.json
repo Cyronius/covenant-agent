@@ -31,7 +31,8 @@
        "gt_phrase": ["still open", "post"]},
       {"field": "processed", "kind": "time_cutoff",
        "phrase": "processed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "employee_count", "noun": "employee count", "min": 5, "max": 500}
   },
   "tools": {
     "list_child": {"name": "listPayRuns",

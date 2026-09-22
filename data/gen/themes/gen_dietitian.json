@@ -39,7 +39,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "plan_created", "kind": "time_cutoff",
        "phrase": "built more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "daily_calories", "noun": "daily calorie target", "min": 1200, "max": 3200}
   },
   "tools": {
     "list_child": {"name": "listPlans", "desc": "list all the meal plans we got"},

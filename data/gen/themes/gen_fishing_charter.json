@@ -35,7 +35,8 @@
        "gt_phrase": ["still ahead of departure", "post"]},
       {"field": "booked_on", "kind": "time_cutoff",
        "phrase": "booked more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "trip_hours", "noun": "trip length in hours", "min": 3, "max": 12}
   },
   "tools": {
     "list_child": {"name": "list_charter_trips",

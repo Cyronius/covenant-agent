@@ -36,7 +36,8 @@
       {"field": "court_time", "kind": "time_now",
        "lt_phrase": ["already on court", "post"],
        "gt_phrase": ["not yet on court", "post"]}
-    ]
+    ],
+    "number": {"field": "court_minutes", "noun": "court time in minutes", "min": 45, "max": 180}
   },
   "tools": {
     "list_child": {"name": "list_sessions",

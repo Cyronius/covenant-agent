@@ -36,7 +36,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "order_placed", "kind": "time_cutoff",
        "phrase": "ordered more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "scan_minutes", "noun": "scan time in minutes", "min": 10, "max": 90}
   },
   "tools": {
     "list_child": {"name": "lstImg",

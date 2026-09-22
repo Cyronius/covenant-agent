@@ -40,7 +40,8 @@
        "gt_phrase": ["not yet voted on", "post"]},
       {"field": "introduced_on", "kind": "time_cutoff",
        "phrase": "introduced more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "speaker_count", "noun": "speaker count", "min": 0, "max": 25}
   },
   "tools": {
     "list_child": {"name": "lst_mtn",

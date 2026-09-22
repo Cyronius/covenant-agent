@@ -30,7 +30,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "submitted_on", "kind": "time_cutoff",
        "phrase": "submitted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "processing_minutes", "noun": "processing time in minutes", "min": 2, "max": 45}
   },
   "tools": {
     "list_child": {"name": "listRegistrations",

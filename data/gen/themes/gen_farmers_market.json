@@ -37,7 +37,8 @@
       {"field": "renewal_due", "kind": "time_now",
        "lt_phrase": ["past its renewal date", "post"],
        "gt_phrase": ["not yet due for renewal", "post"]}
-    ]
+    ],
+    "number": {"field": "stall_width_ft", "noun": "stall width in feet", "min": 6, "max": 24}
   },
   "tools": {
     "list_child": {"name": "ls_permits",

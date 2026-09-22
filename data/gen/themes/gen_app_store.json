@@ -34,7 +34,8 @@
        "gt_phrase": ["not submitted yet", "post"]},
       {"field": "last_updated", "kind": "time_cutoff",
        "phrase": "not updated in over {d} days"}
-    ]
+    ],
+    "number": {"field": "binary_size_mb", "noun": "binary size in megabytes", "min": 12, "max": 900}
   },
   "tools": {
     "list_child": {"name": "listSubmissions",

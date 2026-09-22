@@ -33,7 +33,8 @@
       {"field": "table_time", "kind": "time_now",
        "lt_phrase": ["already past", "post"],
        "gt_phrase": ["still upcoming", "post"]}
-    ]
+    ],
+    "number": {"field": "party_size", "noun": "party size", "min": 1, "max": 14}
   },
   "tools": {
     "list_child": {"name": "list_reservations",

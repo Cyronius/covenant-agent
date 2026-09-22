@@ -34,7 +34,8 @@
        "gt_phrase": ["not yet due", "post"]},
       {"field": "logged", "kind": "time_cutoff",
        "phrase": "logged more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "kwh_used", "noun": "usage in kilowatt-hours", "min": 50, "max": 3000}
   },
   "tools": {
     "list_child": {"name": "lsrdg", "desc": "list meter readings"},

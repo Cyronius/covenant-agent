@@ -379,6 +379,126 @@ def _sample_clauses(prof, entity, state, now, rng, alloc, n, force_neg):
     return clauses
 
 
+def _int_fields(world: str, entity: str) -> List[str]:
+    """INT fields of an entity, for the `MAP` + compute-tool arm (spec 0.7.0
+    §6). Among the hand-written worlds only `crm` has any —
+    `ticket.priority` and `invoice.amount`. Themed worlds had none at all
+    until a theme could declare one numeric field (`number` in
+    THEME_SCHEMA.md), which is what makes this arm reachable on a themed
+    corpus; before that it fired on 1.7% of themed rows
+    (`results/REFLEX.md` §6)."""
+    from runtime.worlds import get_world
+    try:
+        fields = get_world(world)["entities"].get(entity, {})
+    except KeyError:
+        return []
+    return [f for f, t in fields.items() if t == "INT"]
+
+
+def sample_lookup(world, profile, state, now, rng, alloc, holdout):
+    """Answering, not acting: list -> optional single filter -> one of
+    `COUNT` / `SORT`+`FIRST` / `MAP`+compute -> `RETURN`.
+
+    The shape the corpus has none of. 79% of training rows end in `STOP`
+    and 7.6% in `RETURN`, and no recipe lists things and hands them back
+    (`.claude/plans/general-agent-plan.md` Tier 1 item 2), so the planner
+    answers a question by acting on something. Every arm here ends in
+    `RETURN`, and a third of them skip the filter entirely — the corpus
+    never showed a program with that slot empty, which is what the padding
+    reflex is made of (`results/REFLEX.md`).
+
+    Scored by `return_match`, not by state equality: these rows change
+    nothing, so `goal_success` cannot fail on them (`harness/metrics.py`).
+    """
+    entity = rng.choice(sorted(profile["entities"]))
+    prof = profile["entities"][entity]
+    lt = prof.get("list_tool")
+    if not lt or lt in holdout:
+        raise SampleError("no visible list tool")
+    pool_all = _records(state, entity)
+    if len(pool_all) < 2:
+        raise SampleError("too few records to ask about")
+
+    ints = _int_fields(world, entity)
+    sortable = [s for s in profile.get("sorts", []) if s["entity"] == entity]
+    # Weighted, not uniform. Now that every theme declares one INT field
+    # (`number`, THEME_SCHEMA.md), a uniform pick over six arms makes half
+    # of this family aggregate questions — and the two shapes the family
+    # exists for are `count` and `list`, which are also the ones that carry
+    # the empty filter slot. Aggregates are the minority they are in real
+    # requests: 3/11 of the rows where an INT field exists.
+    arms = [("count", 3), ("list", 3)]
+    if sortable:
+        arms.append(("first", 2))
+    if ints:
+        arms += [("total", 1), ("average", 1), ("largest", 1)]
+    names, weights = zip(*arms)
+    arm = rng.choices(names, weights=weights)[0]
+
+    # A third of the rows carry no filter at all. That is the point of the
+    # family as much as the RETURN is: "list Bob's cards" has an empty slot
+    # and the corpus has never shown one (2.8% of rows list without
+    # filtering).
+    #
+    # The `first` arm never takes one: its question is the sort's own
+    # superlative phrase ("the oldest open ticket"), which already names
+    # the population, and a separate sampled clause would filter on
+    # something the question does not say — the padding this family exists
+    # to stop teaching. Caught by `report_filter_grounding` on the first
+    # generated batch, at 23.1%.
+    want_filter = arm != "first" and rng.random() < 0.65
+    clauses = []
+    if want_filter:
+        trial = alloc.clone()
+        try:
+            clauses = _sample_clauses(prof, entity, state, now, rng, trial,
+                                      1, False)
+        except SampleError:
+            clauses = []
+        else:
+            if matches(state, entity, clauses):
+                alloc.adopt(trial)
+            else:
+                clauses = []      # an empty answer is not a lookup
+    pool = matches(state, entity, clauses) if clauses else list(pool_all)
+
+    src = "r0"
+    lines = [f"CALL @{lt} -> r0"]
+    if clauses:
+        lines.append(f"FILTER r0 {clause_expr(clauses)} -> r1")
+        src = "r1"
+    frame = {"recipe": f"lookup_{arm}", "noun": prof["noun"],
+             "clauses": [{"phrase": c["phrase"], "neg": c.get("neg", False)}
+                         for c in clauses]}
+    tags = ["answering", f"answering:{arm}"]
+
+    if arm == "list":
+        lines.append(f"RETURN {src}")
+    elif arm == "count":
+        lines += [f"COUNT {src} -> r2", "RETURN r2"]
+    elif arm == "first":
+        sort = rng.choice(sortable)
+        if len(pool) < 2:
+            raise SampleError("sort pool too small")
+        lines += [f"SORT {src} @{entity}.{sort['field']} {sort['dir']} -> r2",
+                  "FIRST r2 -> r3", "RETURN r3"]
+        frame["np"] = sort["sup_phrase"]
+        tags.append("adv:ordinal")
+    else:
+        field = rng.choice(ints)
+        tool = {"total": "sum", "average": "avg", "largest": "max"}[arm]
+        lines += [f"MAP {src} @{entity}.{field} -> r2",
+                  f"CALL @{tool} r2 -> r3", "RETURN r3"]
+        # a themed world declares how a request says its number
+        # (`number.noun`, THEME_SCHEMA.md); the hand-written worlds have no
+        # such table and their two INT fields (`priority`, `amount`) read
+        # correctly as themselves
+        frame["measure"] = (prof.get("measures") or {}).get(
+            field, field.replace("_", " "))
+        tags.append("compute")
+    return GenSample(frame, ["\n".join(lines) + "\n"], alloc.items, tags=tags)
+
+
 def sample_filter_act(world, profile, state, now, rng, alloc, holdout,
                       n_clauses, force_neg):
     entity = rng.choice(sorted(profile["entities"]))
@@ -868,6 +988,10 @@ RECIPES = {
     9: [("ambiguous", lambda *a: sample_ambiguous(*a))],
     10: [("pause", lambda *a: sample_pause(*a))],
     11: [("abort", lambda *a: sample_abort(*a))],
+    # L21: answering, not acting (plan step 2b). 20 is the page-app episode
+    # level (data/gen/episodes.py LEVEL_PAGE) and 19 is v2's `parents_with`,
+    # so this takes the next free one rather than crowding either.
+    21: [("lookup", lambda *a: sample_lookup(*a))],
 }
 
 

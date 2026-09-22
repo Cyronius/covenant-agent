@@ -38,7 +38,8 @@
        "gt_phrase": ["recently met", "post"]},
       {"field": "started_at", "kind": "time_cutoff",
        "phrase": "started more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "contact_hours", "noun": "contact time in hours", "min": 1, "max": 60}
   },
   "tools": {
     "list_child": {"name": "list_matches",

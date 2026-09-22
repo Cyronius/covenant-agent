@@ -135,6 +135,42 @@ def render(frame: dict, rng: random.Random):
             (f"tell me which {frame['outer_noun'][0]} has {sup} {np}", "."),
         ])
         return core[0].upper() + core[1:] + ("" if style == "terse" else end), style
+    if r.startswith("lookup_"):
+        # Answering, not acting: every one of these is a question, so it
+        # skips _wrap's "Please" / "Can you" entirely.
+        np = _np(frame["noun"], frame["clauses"], rng)
+        plural = frame["noun"][1]
+        arm = r[len("lookup_"):]
+        if arm == "count":
+            core = rng.choice([f"how many {np} are there",
+                               f"how many {np} do we have",
+                               f"count the {np}"])
+        elif arm == "list":
+            core = rng.choice([f"which {np} do we have",
+                               f"show me the {np}",
+                               f"list the {np}",
+                               f"what {np} are there"])
+        elif arm == "first":
+            core = rng.choice([f"which is {frame['np']}",
+                               f"what is {frame['np']}",
+                               f"show me {frame['np']}"])
+        else:
+            measure = frame["measure"]
+            # "highest" alongside "largest": a themed measure is often a
+            # duration or a count ("the highest chair time in minutes"),
+            # where "largest" reads wrong
+            word = (rng.choice(["largest", "highest"]) if arm == "largest"
+                    else arm)
+            subject = np if frame["clauses"] else plural
+            core = rng.choice([
+                f"what is the {word} {measure} across the {subject}",
+                f"what's the {word} {measure} of the {subject}",
+                f"tell me the {word} {measure} for the {subject}",
+            ])
+        end = "?" if core.startswith(("how ", "which ", "what ", "what's ")) \
+            else "."
+        return core[0].upper() + core[1:] + ("" if style == "terse" else end), \
+            style
     if r == "extreme_sort":
         core = frame["action"]["verb"].format(obj=frame["np"])
         return _wrap(core, style, rng), style

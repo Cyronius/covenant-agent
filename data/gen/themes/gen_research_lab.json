@@ -40,7 +40,8 @@
        "gt_phrase": ["not yet started", "post"]},
       {"field": "logged_on", "kind": "time_cutoff",
        "phrase": "logged more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "sample_count", "noun": "sample count", "min": 3, "max": 96}
   },
   "tools": {
     "list_child": {"name": "list_runs",

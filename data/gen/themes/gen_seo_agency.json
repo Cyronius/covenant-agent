@@ -35,7 +35,8 @@
       {"field": "run_at", "kind": "time_now",
        "lt_phrase": ["already run", "post"],
        "gt_phrase": ["not yet run", "post"]}
-    ]
+    ],
+    "number": {"field": "pages_crawled", "noun": "page count", "min": 50, "max": 20000}
   },
   "tools": {
     "list_child": {"name": "list_audits", "desc": "list audits for a client"},

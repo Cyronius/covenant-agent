@@ -32,7 +32,8 @@
       {"field": "call_time", "kind": "time_now",
        "lt_phrase": ["already called", "post"],
        "gt_phrase": ["not yet called", "post"]}
-    ]
+    ],
+    "number": {"field": "shoot_days", "noun": "shoot length in days", "min": 1, "max": 20}
   },
   "tools": {
     "list_child": {"name": "lsShoots",

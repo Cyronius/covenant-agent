@@ -36,7 +36,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "prescription_issued", "kind": "time_cutoff",
        "phrase": "prescribed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "exam_minutes", "noun": "exam length in minutes", "min": 15, "max": 75}
   },
   "tools": {
     "list_child": {"name": "listEyeExams", "desc": "List every eye exam on record."},

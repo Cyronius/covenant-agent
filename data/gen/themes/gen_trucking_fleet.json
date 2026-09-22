@@ -32,7 +32,8 @@
       {"field": "pickup", "kind": "time_now",
        "lt_phrase": ["already picked up", "post"],
        "gt_phrase": ["not yet picked up", "post"]}
-    ]
+    ],
+    "number": {"field": "haul_miles", "noun": "haul distance in miles", "min": 50, "max": 2000}
   },
   "tools": {
     "list_child": {"name": "listHauls", "desc": "list all hauls"},

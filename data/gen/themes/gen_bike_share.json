@@ -38,7 +38,8 @@
        "gt_phrase": ["just reported", "post"]},
       {"field": "dispatched_at", "kind": "time_cutoff",
        "phrase": "dispatched more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "repair_minutes", "noun": "repair time in minutes", "min": 10, "max": 180}
   },
   "tools": {
     "list_child": {"name": "lsOrders", "desc": "list wo, all stations"},

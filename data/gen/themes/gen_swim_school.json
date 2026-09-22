@@ -37,7 +37,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "booked_on", "kind": "time_cutoff",
        "phrase": "booked more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "lane_minutes", "noun": "lane time in minutes", "min": 30, "max": 120}
   },
   "tools": {
     "list_child": {"name": "list_lane_bookings",

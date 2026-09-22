@@ -34,7 +34,8 @@
        "gt_phrase": ["still on schedule", "post"]},
       {"field": "placed", "kind": "time_cutoff",
        "phrase": "placed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "order_value", "noun": "order value", "min": 100, "max": 75000}
   },
   "tools": {
     "list_child": {"name": "list_po",

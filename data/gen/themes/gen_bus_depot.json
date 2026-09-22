@@ -36,7 +36,8 @@
        "gt_phrase": ["not yet departed", "post"]},
       {"field": "scheduled_at", "kind": "time_cutoff",
        "phrase": "scheduled more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "route_miles", "noun": "route distance in miles", "min": 4, "max": 60}
   },
   "tools": {
     "list_child": {"name": "list_runs", "desc": "list all runs"},

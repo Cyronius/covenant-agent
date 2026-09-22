@@ -38,7 +38,8 @@
        "gt_phrase": ["not yet departed", "post"]},
       {"field": "scheduled_at", "kind": "time_cutoff",
        "phrase": "scheduled more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "crate_count", "noun": "crate count", "min": 5, "max": 90}
   },
   "tools": {
     "list_child": {"name": "list_runs",

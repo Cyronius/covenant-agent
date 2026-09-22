@@ -36,7 +36,8 @@
       {"field": "pickup_time", "kind": "time_now",
        "lt_phrase": ["already gone by", "post"],
        "gt_phrase": ["still coming up", "post"]}
-    ]
+    ],
+    "number": {"field": "bin_count", "noun": "bin count", "min": 1, "max": 40}
   },
   "tools": {
     "list_child": {"name": "list_pickups",

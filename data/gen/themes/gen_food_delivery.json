@@ -37,7 +37,8 @@
        "gt_phrase": ["still within its eta", "post"]},
       {"field": "assigned_at", "kind": "time_cutoff",
        "phrase": "assigned more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "drop_count", "noun": "drop count", "min": 1, "max": 15}
   },
   "tools": {
     "list_child": {"name": "listDeliveryRuns",

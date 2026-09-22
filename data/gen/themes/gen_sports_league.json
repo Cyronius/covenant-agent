@@ -37,7 +37,8 @@
        "gt_phrase": ["still to come", "post"]},
       {"field": "rescheduled_at", "kind": "time_cutoff",
        "phrase": "rescheduled more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "attendance", "noun": "attendance", "min": 50, "max": 8000}
   },
   "tools": {
     "list_child": {"name": "list_fixtures",

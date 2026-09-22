@@ -37,7 +37,8 @@
       {"field": "visit_date", "kind": "time_now",
        "lt_phrase": ["already conducted", "post"],
        "gt_phrase": ["not yet conducted", "post"]}
-    ]
+    ],
+    "number": {"field": "violation_count", "noun": "violation count", "min": 0, "max": 15}
   },
   "tools": {
     "list_child": {"name": "lst_insp",

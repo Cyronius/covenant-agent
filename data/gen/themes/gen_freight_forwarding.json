@@ -36,7 +36,8 @@
        "gt_phrase": ["not yet departed", "post"]},
       {"field": "booked_at", "kind": "time_cutoff",
        "phrase": "booked more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "gross_weight_kg", "noun": "gross weight in kilos", "min": 50, "max": 20000}
   },
   "tools": {
     "list_child": {"name": "list_shipments",

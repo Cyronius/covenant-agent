@@ -32,7 +32,8 @@
       {"field": "departure", "kind": "time_now",
        "lt_phrase": ["already departed", "post"],
        "gt_phrase": ["not yet departed", "post"]}
-    ]
+    ],
+    "number": {"field": "vehicle_count", "noun": "vehicle count", "min": 0, "max": 120}
   },
   "tools": {
     "list_child": {"name": "lsCrossings",

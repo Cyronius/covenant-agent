@@ -38,7 +38,8 @@
        "gt_phrase": ["still to come", "post"]},
       {"field": "submitted_on", "kind": "time_cutoff",
        "phrase": "submitted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "talk_minutes", "noun": "talk length in minutes", "min": 15, "max": 90}
   },
   "tools": {
     "list_child": {"name": "lst_props", "desc": "List every talk proposal submitted to the conference."},

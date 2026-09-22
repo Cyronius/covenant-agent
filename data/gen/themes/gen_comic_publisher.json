@@ -34,7 +34,8 @@
        "gt_phrase": ["not yet shipped", "post"]},
       {"field": "scripted_on", "kind": "time_cutoff",
        "phrase": "scripted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "page_count", "noun": "page count", "min": 16, "max": 64}
   },
   "tools": {
     "list_child": {"name": "lsIssues",

@@ -36,7 +36,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "quoted_on", "kind": "time_cutoff",
        "phrase": "quoted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "crew_hours", "noun": "crew time in hours", "min": 3, "max": 40}
   },
   "tools": {
     "list_child": {"name": "lsjobs", "desc": "List every move job on the schedule."},

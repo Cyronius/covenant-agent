@@ -33,7 +33,8 @@
     "times": [
       {"field": "received_at", "kind": "time_cutoff",
        "phrase": "received more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "family_size", "noun": "family size", "min": 1, "max": 10}
   },
   "tools": {
     "list_child": {"name": "ls_ref", "desc": "list referrals"},

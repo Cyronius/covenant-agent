@@ -37,7 +37,8 @@
       {"field": "event_time", "kind": "time_now",
        "lt_phrase": ["already served", "post"],
        "gt_phrase": ["still upcoming", "post"]}
-    ]
+    ],
+    "number": {"field": "head_count", "noun": "head count", "min": 10, "max": 400}
   },
   "tools": {
     "list_child": {"name": "lst_ord",

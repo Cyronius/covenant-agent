@@ -36,7 +36,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "registered_on", "kind": "time_cutoff",
        "phrase": "registered more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "mat_hours", "noun": "mat time in hours", "min": 10, "max": 300}
   },
   "tools": {
     "list_child": {"name": "listGradings",

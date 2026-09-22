@@ -34,7 +34,8 @@
        "gt_phrase": ["still awaiting pickup", "post"]},
       {"field": "requested_at", "kind": "time_cutoff",
        "phrase": "requested more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "loan_months", "noun": "loan length in months", "min": 1, "max": 36}
   },
   "tools": {
     "list_child": {"name": "list_loans",

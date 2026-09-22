@@ -35,7 +35,8 @@
        "gt_phrase": ["not aired yet", "post"]},
       {"field": "recorded_on", "kind": "time_cutoff",
        "phrase": "recorded more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "runtime_minutes", "noun": "runtime in minutes", "min": 12, "max": 120}
   },
   "tools": {
     "list_child": {"name": "list_episodes",

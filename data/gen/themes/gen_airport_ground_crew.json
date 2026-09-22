@@ -38,7 +38,8 @@
        "gt_phrase": ["not yet started", "post"]},
       {"field": "due", "kind": "time_cutoff",
        "phrase": "due more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "crew_size", "noun": "crew size", "min": 1, "max": 8}
   },
   "tools": {
     "list_child": {"name": "lsTasks",

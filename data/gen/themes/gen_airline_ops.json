@@ -33,7 +33,8 @@
        "gt_phrase": ["not yet departed", "post"]},
       {"field": "scheduled_on", "kind": "time_cutoff",
        "phrase": "scheduled more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "block_minutes", "noun": "block time in minutes", "min": 45, "max": 480}
   },
   "tools": {
     "list_child": {"name": "lsSeg",

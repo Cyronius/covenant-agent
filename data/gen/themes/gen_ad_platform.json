@@ -35,7 +35,8 @@
        "gt_phrase": ["not live yet", "post"]},
       {"field": "last_optimized", "kind": "time_cutoff",
        "phrase": "not optimized in over {d} days"}
-    ]
+    ],
+    "number": {"field": "daily_impressions", "noun": "daily impressions", "min": 200, "max": 20000}
   },
   "tools": {
     "list_child": {"name": "ls_plc", "desc": "List every ad placement for an advertiser."},

@@ -34,7 +34,8 @@
       {"field": "slot", "kind": "time_now",
        "lt_phrase": ["already happened", "post"],
        "gt_phrase": ["still upcoming", "post"]}
-    ]
+    ],
+    "number": {"field": "tester_count", "noun": "tester count", "min": 2, "max": 24}
   },
   "tools": {
     "list_child": {"name": "ls_sess", "desc": "lists playtest sessions"},

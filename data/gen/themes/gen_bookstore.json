@@ -36,7 +36,8 @@
       {"field": "eta", "kind": "time_now",
        "lt_phrase": ["past eta", "post"],
        "gt_phrase": ["still on the way", "post"]}
-    ]
+    ],
+    "number": {"field": "copies", "noun": "copy count", "min": 1, "max": 30}
   },
   "tools": {
     "list_child": {"name": "lst_so",

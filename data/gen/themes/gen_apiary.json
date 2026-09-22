@@ -36,7 +36,8 @@
     "times": [
       {"field": "checked_on", "kind": "time_cutoff",
        "phrase": "inspected more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "frames_checked", "noun": "frame count", "min": 4, "max": 24}
   },
   "tools": {
     "list_child": {"name": "listInspections",

@@ -29,7 +29,8 @@
       {"field": "season_start", "kind": "time_now",
        "lt_phrase": ["season already started", "post"],
        "gt_phrase": ["season not started", "post"]}
-    ]
+    ],
+    "number": {"field": "plot_size_m2", "noun": "plot size in square metres", "min": 4, "max": 60}
   },
   "tools": {
     "list_child": {"name": "listPlots",

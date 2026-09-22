@@ -29,7 +29,8 @@
       {"field": "meet_time", "kind": "time_now",
        "lt_phrase": ["already happened", "post"],
        "gt_phrase": ["still coming up", "post"]}
-    ]
+    ],
+    "number": {"field": "learner_count", "noun": "attendance", "min": 1, "max": 20}
   },
   "tools": {
     "list_child": {"name": "list_sessions",

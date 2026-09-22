@@ -32,7 +32,8 @@
     "times": [
       {"field": "incident_date", "kind": "time_cutoff",
        "phrase": "from an incident more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "claim_amount", "noun": "claim amount", "min": 100, "max": 50000}
   },
   "tools": {
     "list_child": {"name": "list_claims",

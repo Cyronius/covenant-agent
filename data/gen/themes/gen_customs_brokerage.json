@@ -38,7 +38,8 @@
        "gt_phrase": ["not yet arrived", "post"]},
       {"field": "filed_on", "kind": "time_cutoff",
        "phrase": "filed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "declared_value", "noun": "declared value", "min": 200, "max": 60000}
   },
   "tools": {
     "list_child": {"name": "lst_decl",

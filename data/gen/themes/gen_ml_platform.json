@@ -32,7 +32,8 @@
       {"field": "started", "kind": "time_now",
        "lt_phrase": ["already started", "post"],
        "gt_phrase": ["not started yet", "post"]}
-    ]
+    ],
+    "number": {"field": "gpu_hours", "noun": "GPU time in hours", "min": 1, "max": 200}
   },
   "tools": {
     "list_child": {"name": "listJobs", "desc": "list training jobs"},

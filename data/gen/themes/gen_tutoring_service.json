@@ -34,7 +34,8 @@
       {"field": "slot", "kind": "time_now",
        "lt_phrase": ["already happened", "post"],
        "gt_phrase": ["still to come", "post"]}
-    ]
+    ],
+    "number": {"field": "session_minutes", "noun": "session length in minutes", "min": 30, "max": 120}
   },
   "tools": {
     "list_child": {"name": "list_sessions", "desc": "list all tutoring sesions on file"},

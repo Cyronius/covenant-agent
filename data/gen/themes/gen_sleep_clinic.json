@@ -34,7 +34,8 @@
       {"field": "study_night", "kind": "time_now",
        "lt_phrase": ["already recorded", "post"],
        "gt_phrase": ["still upcoming", "post"]}
-    ]
+    ],
+    "number": {"field": "recording_hours", "noun": "recording time in hours", "min": 4, "max": 12}
   },
   "tools": {
     "list_child": {"name": "list_studies", "desc": "list sleep studies"},

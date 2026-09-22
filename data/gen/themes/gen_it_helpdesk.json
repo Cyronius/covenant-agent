@@ -35,7 +35,8 @@
     "times": [
       {"field": "opened_at", "kind": "time_cutoff",
        "phrase": "opened more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "time_spent_minutes", "noun": "time spent in minutes", "min": 5, "max": 480}
   },
   "tools": {
     "list_child": {"name": "list_incidents",

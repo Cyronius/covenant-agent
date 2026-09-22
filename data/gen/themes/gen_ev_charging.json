@@ -33,7 +33,8 @@
        "gt_phrase": ["not yet started", "post"]},
       {"field": "plugged_in", "kind": "time_cutoff",
        "phrase": "plugged in more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "kwh_delivered", "noun": "energy in kilowatt-hours", "min": 3, "max": 90}
   },
   "tools": {
     "list_child": {"name": "list_sessions",

@@ -38,7 +38,8 @@
        "gt_phrase": ["not yet released", "post"]},
       {"field": "brewed_on", "kind": "time_cutoff",
        "phrase": "brewed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "batch_litres", "noun": "batch volume in litres", "min": 50, "max": 2000}
   },
   "tools": {
     "list_child": {"name": "ls_batches",

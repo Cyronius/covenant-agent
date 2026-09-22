@@ -34,7 +34,8 @@
       {"field": "return_due", "kind": "time_now",
        "lt_phrase": ["already overdue for return", "post"],
        "gt_phrase": ["not yet due back", "post"]}
-    ]
+    ],
+    "number": {"field": "rental_days", "noun": "rental length in days", "min": 1, "max": 30}
   },
   "tools": {
     "list_child": {"name": "list_agreements",

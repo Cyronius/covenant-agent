@@ -36,7 +36,8 @@
        "gt_phrase": ["never triggered", "post"]},
       {"field": "last_reviewed", "kind": "time_cutoff",
        "phrase": "not reviewed in over {d} days"}
-    ]
+    ],
+    "number": {"field": "fires_last_week", "noun": "alert count", "min": 0, "max": 60}
   },
   "tools": {
     "list_child": {"name": "ls_rules",

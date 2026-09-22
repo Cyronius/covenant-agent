@@ -37,7 +37,8 @@
       {"field": "drop_date", "kind": "time_now",
        "lt_phrase": ["already out", "post"],
        "gt_phrase": ["not out yet", "post"]}
-    ]
+    ],
+    "number": {"field": "track_count", "noun": "track count", "min": 1, "max": 18}
   },
   "tools": {
     "list_child": {"name": "lst_rls",

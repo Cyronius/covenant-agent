@@ -37,7 +37,8 @@
     "times": [
       {"field": "filed", "kind": "time_cutoff",
        "phrase": "filed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "valuation", "noun": "declared valuation", "min": 5000, "max": 400000}
   },
   "tools": {
     "list_child": {"name": "lspermits",

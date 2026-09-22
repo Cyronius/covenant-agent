@@ -37,7 +37,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "docketed_on", "kind": "time_cutoff",
        "phrase": "docketed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "page_count", "noun": "page count", "min": 2, "max": 200}
   },
   "tools": {
     "list_child": {"name": "list_filings",

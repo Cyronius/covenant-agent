@@ -39,7 +39,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "received_on", "kind": "time_cutoff",
        "phrase": "received more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "item_count", "noun": "item count", "min": 1, "max": 80}
   },
   "tools": {
     "list_child": {"name": "list_donations",

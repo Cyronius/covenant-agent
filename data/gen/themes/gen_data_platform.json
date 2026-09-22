@@ -36,7 +36,8 @@
        "gt_phrase": ["not started yet", "post"]},
       {"field": "last_success", "kind": "time_cutoff",
        "phrase": "hasn't succeeded in over {d} days"}
-    ]
+    ],
+    "number": {"field": "rows_processed", "noun": "row count", "min": 1000, "max": 900000}
   },
   "tools": {
     "list_child": {"name": "list_runs", "desc": "List every ETL run owned by a team."},

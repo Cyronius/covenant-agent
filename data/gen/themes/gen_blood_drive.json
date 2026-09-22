@@ -38,7 +38,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "booked_at", "kind": "time_cutoff",
        "phrase": "booked more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "units_collected", "noun": "unit count", "min": 1, "max": 4}
   },
   "tools": {
     "list_child": {"name": "listDonations",

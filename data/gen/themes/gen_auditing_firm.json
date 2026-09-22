@@ -34,7 +34,8 @@
        "gt_phrase": ["not yet due", "post"]},
       {"field": "kickoff", "kind": "time_cutoff",
        "phrase": "kicked off more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "budget_hours", "noun": "budget in hours", "min": 20, "max": 400}
   },
   "tools": {
     "list_child": {"name": "list_eng",

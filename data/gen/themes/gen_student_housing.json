@@ -33,7 +33,8 @@
       {"field": "move_in", "kind": "time_now",
        "lt_phrase": ["already moved in", "post"],
        "gt_phrase": ["not yet moved in", "post"]}
-    ]
+    ],
+    "number": {"field": "term_weeks", "noun": "term length in weeks", "min": 8, "max": 52}
   },
   "tools": {
     "list_child": {"name": "lst_asgn", "desc": "list all room assignments"},

@@ -37,7 +37,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "inquired_on", "kind": "time_cutoff",
        "phrase": "inquired more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "guest_count", "noun": "guest count", "min": 20, "max": 800}
   },
   "tools": {
     "list_child": {"name": "listBookings",

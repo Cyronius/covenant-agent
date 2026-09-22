@@ -31,7 +31,8 @@
     "times": [
       {"field": "submitted_on", "kind": "time_cutoff",
        "phrase": "submitted more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "claim_amount", "noun": "claim amount", "min": 8, "max": 4000}
   },
   "tools": {
     "list_child": {"name": "list_expense_claims",

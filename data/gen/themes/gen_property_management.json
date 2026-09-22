@@ -38,7 +38,8 @@
        "gt_phrase": ["not yet begun", "post"]},
       {"field": "signed", "kind": "time_cutoff",
        "phrase": "signed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "monthly_rent", "noun": "monthly rent", "min": 600, "max": 6000}
   },
   "tools": {
     "list_child": {"name": "listLeases",

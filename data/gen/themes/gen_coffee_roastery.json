@@ -35,7 +35,8 @@
       {"field": "ship_by", "kind": "time_now",
        "lt_phrase": ["already past its ship date", "post"],
        "gt_phrase": ["not yet due to ship", "post"]}
-    ]
+    ],
+    "number": {"field": "green_kilos", "noun": "green weight in kilos", "min": 5, "max": 120}
   },
   "tools": {
     "list_child": {"name": "list_roast_batches",

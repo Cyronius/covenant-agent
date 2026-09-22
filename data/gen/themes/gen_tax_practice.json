@@ -31,7 +31,8 @@
       {"field": "due_date", "kind": "time_now",
        "lt_phrase": ["already past due", "post"],
        "gt_phrase": ["not yet due", "post"]}
-    ]
+    ],
+    "number": {"field": "schedule_count", "noun": "schedule count", "min": 1, "max": 20}
   },
   "tools": {
     "list_child": {"name": "list_tax_filings",

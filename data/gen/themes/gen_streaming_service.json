@@ -38,7 +38,8 @@
        "gt_phrase": ["not yet live", "post"]},
       {"field": "signed_on", "kind": "time_cutoff",
        "phrase": "signed more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "license_months", "noun": "license term in months", "min": 3, "max": 60}
   },
   "tools": {
     "list_child": {"name": "list_licenses",

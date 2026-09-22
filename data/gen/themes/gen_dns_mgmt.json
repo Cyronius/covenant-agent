@@ -30,7 +30,8 @@
       {"field": "updated", "kind": "time_now",
        "lt_phrase": ["stale", "post"],
        "gt_phrase": ["just changed", "post"]}
-    ]
+    ],
+    "number": {"field": "ttl_seconds", "noun": "TTL in seconds", "min": 60, "max": 86400}
   },
   "tools": {
     "list_child": {"name": "listRecords", "desc": "list dns records in a zone"},

@@ -39,7 +39,8 @@
        "gt_phrase": ["still upcoming", "post"]},
       {"field": "applied", "kind": "time_cutoff",
        "phrase": "applied more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "days_in_care", "noun": "care duration in days", "min": 1, "max": 200}
   },
   "tools": {
     "list_child": {"name": "list_adoption_cases", "desc": "list open adoption cases"},

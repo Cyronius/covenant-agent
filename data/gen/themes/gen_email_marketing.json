@@ -34,7 +34,8 @@
       {"field": "scheduled_for", "kind": "time_now",
        "lt_phrase": ["overdue", "post"],
        "gt_phrase": ["not due yet", "post"]}
-    ]
+    ],
+    "number": {"field": "recipient_count", "noun": "recipient count", "min": 100, "max": 50000}
   },
   "tools": {
     "list_child": {"name": "list_sends", "desc": "list all sends for a campaing"},

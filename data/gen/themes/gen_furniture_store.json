@@ -38,7 +38,8 @@
        "gt_phrase": ["still ahead", "post"]},
       {"field": "ordered", "kind": "time_cutoff",
        "phrase": "ordered more than {d} days ago"}
-    ]
+    ],
+    "number": {"field": "install_minutes", "noun": "install time in minutes", "min": 30, "max": 360}
   },
   "tools": {
     "list_child": {"name": "lst_inst",

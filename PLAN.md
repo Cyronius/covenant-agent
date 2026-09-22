@@ -1027,3 +1027,28 @@ covenant-agent/
   five-colour badge system for a combinable three-property one is a visual
   design decision that deserves its own pass rather than a rushed
   substitution. Full suite green (366 passed) after the migration.
+
+- **2026-09-21 — every generated theme gains one numeric field, so the
+  compute tools have something to be called on (step 2b's follow-up in
+  `.claude/plans/agent-loop-and-ir-review.md`; `results/REFLEX.md` §6).**
+  1g made `sum`/`avg`/`max`/`min` tools present in every context, and L21's
+  aggregate arm needs a `LIST INT` to call them on. Every field of every
+  one of the 143 generated themes was `STR`/`BOOL`/`TIME`/`ID`, so that arm
+  fired on 1.7% of themed rows and step 6's totals-and-averages axis would
+  have trained on nothing. A theme may now declare **one** numeric field —
+  `child.number`: a field name, a `noun` (the words a request uses for it,
+  not the field name) and a `min`/`max` range — which the compiler types
+  `INT`, the state generator fills, and the profile exposes as the phrase
+  the question is built from. All 143 themes were given one, hand-authored
+  per domain. Aggregate rows among themed L21 rows go 1.7% → 26.3%
+  (79/300), references still 60/60 green with 60/60 `return_match`.
+  **The arms are weighted rather than uniform** (`count` 3, `list` 3,
+  `first` 2, each compute arm 1) because a uniform pick over six arms would
+  make half this family aggregate questions, crowding out the two shapes it
+  exists for — `count` and `list`, which are also the arms that carry the
+  empty filter slot the padding reflex is made of. **Deliberately not
+  included:** nothing writes the field (no tool takes it, created records
+  get the range midpoint) and no filter reads it — a numeric `FILTER` would
+  need a new filter kind, its own English and its own grounding check, and
+  is a separate change. This is a corpus-shape change, so it lands with the
+  one rebuild in step 6 like the rest of them.

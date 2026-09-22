@@ -35,7 +35,8 @@
       {"field": "due_date", "kind": "time_now",
        "lt_phrase": ["already overdue", "post"],
        "gt_phrase": ["not yet due", "post"]}
-    ]
+    ],
+    "number": {"field": "loan_days", "noun": "loan length in days", "min": 7, "max": 42}
   },
   "tools": {
     "list_child": {"name": "listLoans",
