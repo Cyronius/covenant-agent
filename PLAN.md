@@ -1107,3 +1107,29 @@ covenant-agent/
   it" without requiring the verb to differ from the one that failed read
   51.7% instead of 20.7%, because a world whose refusal echoes the verb it
   refused scores every retry as an answer.
+
+- **2026-09-22 — the corpus pauses where the decision depends on data, and
+  only there (step 3b of `.claude/plans/agent-loop-and-ir-review.md`;
+  `results/REACT.md` §4).** One recipe produced `PAUSE` — L10, a
+  filter-then-act program cut in half — so the corpus taught *pause when the
+  request says report back*, not *pause because you cannot know yet*.
+  Everywhere a decision genuinely depended on data, the reference decided in
+  one shot with `IF`, which is the habit `results/R4.md` measured: told in the
+  prompt to pause and look, the 27B wrote guesses about the data instead, at a
+  cost of 4 tasks in 25. Three levels now have a two-segment form whose second
+  half could not have been written before the first ran — L5's branch (the
+  second segment is only the branch the observed value calls for), L7's
+  notify-if-any (the message when something matched, a bare `STOP` when
+  nothing did), and L11's check-then-decline (`ABORT NOT_FOUND` or the
+  action). **A third of L11's rows now name a record that exists**, so a
+  paused first segment cannot be read as "this one aborts" — the same
+  context-not-words shortcut behind the demo's over-abstention
+  (`results/S2.md`). Measured with the new `report_segments` lint on one
+  240-row mix generated twice: **8.3% → 12.9%** of rows pause and decide, and
+  every reference still replays (240/240 `goal_success`). **The error levels
+  (8, 9) are not done on purpose:** their reactive form needs the harness's
+  error-feedback path, which R4 found never fired in 150 runs, so it is a
+  design question about that path rather than one more recipe — which is also
+  why this is 12.9% and not the third of the corpus
+  `reactive-execution.md` §6 sized. Levels with nothing to observe still do
+  not pause.

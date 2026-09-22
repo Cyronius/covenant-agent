@@ -687,17 +687,46 @@ def sample_branch(world, profile, state, now, rng, alloc, holdout):
     i2 = build_action(a2, entity, {"<v>": "r0"}, state, rng, alloc)
     cond_rhs = cond["expr"].split(" EQ ")[1] if " EQ " in cond["expr"] \
         else cond["expr"].split(" ")[-1]
+    frame = {"recipe": "branch", "entity": entity, "noun": prof["noun"],
+             "record": display, "cond_phrase": cond["phrase"],
+             "then": i1, "else": i2}
+    # Plan step 3b: a third of these observe first and decide after. `IF`
+    # writes both branches from a state the planner never looked at, which
+    # is the one-shot habit `results/R4.md` measured: told to pause and
+    # look, the 27B wrote guesses about the data instead. The two-segment
+    # form fetches the field, `PAUSE`s, and the second segment is only the
+    # branch the observed value calls for — so the corpus contains programs
+    # whose second half could not have been written before the first ran.
+    field = cond["sem"]["field"]
+    observed = _branch_taken(rec, cond["sem"])
+    if observed is not None and rng.random() < 0.34:
+        taken = i1 if observed else i2
+        seg1 = (f"CALL @{prof['get_tool']} {ref} -> r0\n"
+                f"GET r0.@{entity}.{field} -> r1\n"
+                "PAUSE\n")
+        seg2 = action_line(taken, "r2" if taken["dest"] else None) + "\nSTOP\n"
+        return GenSample(dict(frame, observed=observed), [seg1, seg2],
+                         alloc.items,
+                         tags=["adv:negation", "two_segment", "observe"])
     seg = (f"CALL @{prof['get_tool']} {ref} -> r0\n"
-           f"GET r0.@{entity}.{cond['sem']['field']} -> r1\n"
+           f"GET r0.@{entity}.{field} -> r1\n"
            f"IF r1 EQ {cond_rhs}\n"
            f"  {action_line(i1, 'r2' if i1['dest'] else None)}\n"
            f"ELSE\n"
            f"  {action_line(i2, 'r3' if i2['dest'] else None)}\n"
            "STOP\n")
-    frame = {"recipe": "branch", "entity": entity, "noun": prof["noun"],
-             "record": display, "cond_phrase": cond["phrase"],
-             "then": i1, "else": i2}
     return GenSample(frame, [seg], alloc.items, tags=["adv:negation"])
+
+
+def _branch_taken(record: dict, sem: dict):
+    """Which branch this record actually takes, or None when the condition
+    is not one a stored field settles (the two-segment form needs to know
+    the answer to write the second segment)."""
+    if record is None or sem.get("field") not in record:
+        return None
+    if sem.get("op") != "EQ":
+        return None
+    return record[sem["field"]] == sem["value"]
 
 
 def sample_nested(world, profile, state, now, rng, alloc, holdout):
@@ -784,12 +813,11 @@ def sample_parallel(world, profile, state, now, rng, alloc, holdout):
         tail = (f"IF NOT EMPTY r2\n"
                 f"  {action_line(info, None)}\n"
                 "STOP\n")
-    seg = (f"PARALLEL\n"
-           f"  CALL @{get_tool} {ref} -> r0\n"
-           f"  CALL @{inner_prof['list_tool']} -> r1\n"
-           f"FILTER r1 @{i}.{link} EQ {ref}"
-           f" AND {clause_expr(inner_clauses)} -> r2\n"
-           + tail)
+    head = (f"PARALLEL\n"
+            f"  CALL @{get_tool} {ref} -> r0\n"
+            f"  CALL @{inner_prof['list_tool']} -> r1\n"
+            f"FILTER r1 @{i}.{link} EQ {ref}"
+            f" AND {clause_expr(inner_clauses)} -> r2\n")
     frame = {"recipe": "parallel", "variant": variant, "name": name,
              "outer_noun": pair["outer_noun"],
              "inner_noun": inner_prof["noun"],
@@ -797,7 +825,19 @@ def sample_parallel(world, profile, state, now, rng, alloc, holdout):
                          for c in inner_clauses],
              "action": info}
     tags = ["adv:quantifier"] if variant == "count" else []
-    return GenSample(frame, [seg], alloc.items, tags=tags)
+    # Plan step 3b, the "tell them if there are any" shape: `IF NOT EMPTY`
+    # decides without looking. A third of these pause on the filter and the
+    # second segment is the message when something matched and a bare `STOP`
+    # when nothing did — including the rows where the honest ending is to do
+    # nothing at all, which no one-shot program in the corpus ever shows.
+    if variant == "count" and rng.random() < 0.34:
+        hits = [r for r in matches(state, i, inner_clauses)
+                if r.get(link) == rec["id"]]
+        seg2 = (action_line(info, None) + "\nSTOP\n") if hits else "STOP\n"
+        return GenSample(dict(frame, observed=bool(hits)),
+                         [head + "PAUSE\n", seg2], alloc.items,
+                         tags=tags + ["two_segment", "observe"])
+    return GenSample(frame, [head + tail], alloc.items, tags=tags)
 
 
 def sample_recovery(world, profile, state, now, rng, alloc, holdout):
@@ -929,7 +969,19 @@ def sample_abort(world, profile, state, now, rng, alloc, holdout):
         raise SampleError("no direct actions")
     act = rng.choice(acts)
     nf = prof.get("name_field")
-    if nf:
+    # Plan step 3b: a third of the checked rows name a record that *is*
+    # there. Otherwise every row whose first segment pauses on a filter ends
+    # in NOT_FOUND, and `PAUSE` becomes a tell: the model can answer "not
+    # found" from the shape of the program it just wrote rather than from
+    # the rows it got back. The sibling carries no `abort` tag, so
+    # `gen_one` marks it `expected_status: ok` and the second segment acts.
+    present = bool(nf) and prof.get("list_tool") and rng.random() < 0.34
+    if nf and present:
+        recs = [r for r in _records(state, entity) if r.get(nf)]
+        if not recs:
+            raise SampleError("no named record to find")
+        display = rng.choice(recs)[nf]
+    elif nf:
         existing = {r.get(nf) for r in _records(state, entity)}
         source = ABSENT_NAMES if nf == "name" else ABSENT_TITLES
         pool = [n for n in source if n not in existing]
@@ -951,14 +1003,27 @@ def sample_abort(world, profile, state, now, rng, alloc, holdout):
         info = build_action(act, entity, {"<v>": f"r2.@{entity}.id"},
                             state, rng, alloc)
         reg = "r3" if info["dest"] else None
-        seg = (f"CALL @{prof['list_tool']} -> r0\n"
-               f"FILTER r0 @{entity}.{nf} EQ {nref} -> r1\n"
-               f"IF EMPTY r1\n"
-               f"  ABORT NOT_FOUND {nref}\n"
-               f"FIRST r1 -> r2\n"
-               + action_line(info, reg) + "\nSTOP\n")
         frame = {"recipe": "direct", "entity": entity, "noun": prof["noun"],
                  "record": display, "action": info}
+        look = (f"CALL @{prof['list_tool']} -> r0\n"
+                f"FILTER r0 @{entity}.{nf} EQ {nref} -> r1\n")
+        act_lines = f"FIRST r1 -> r2\n" + action_line(info, reg) + "\nSTOP\n"
+        # observe, then decide: the first segment looks and pauses, and the
+        # second segment is whichever ending the rows it got back call for —
+        # a decline when nothing matched, the action when something did.
+        # `IF EMPTY` writes both endings without looking at either.
+        if rng.random() < 0.5:
+            tags = ["not_found", "two_segment", "observe", "checked"]
+            seg2 = f"ABORT NOT_FOUND {nref}\n" if not present else act_lines
+            return GenSample(frame, [look + "PAUSE\n", seg2], alloc.items,
+                             tags=tags + ([] if present else ["abort"]))
+        if present:
+            seg = look + act_lines
+            return GenSample(frame, [seg], alloc.items, tags=["checked"])
+        seg = (look
+               + f"IF EMPTY r1\n"
+               f"  ABORT NOT_FOUND {nref}\n"
+               + act_lines)
         return GenSample(frame, [seg], alloc.items,
                          tags=["abort", "not_found", "checked"])
     # build_action may still allocate the action's own constants (an enum

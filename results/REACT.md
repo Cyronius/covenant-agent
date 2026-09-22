@@ -1,8 +1,10 @@
-# REACT — making a failure worth learning from (step 3a)
+# REACT — making the observation matter (step 3)
 
 **Date:** 2026-09-22 · **Plan:** `.claude/plans/agent-loop-and-ir-review.md`
-step 3a · **Instrument:** `data/gen/episodes.py`'s `report_reaction`, printed
-with every episode file · **Cost:** none, no model was run
+steps 3a (§1-3, the episode corpus) and 3b (§4, the task corpus) ·
+**Instruments:** `report_reaction` in `data/gen/episodes.py` and
+`report_segments` in `data/gen/__main__.py`, both printed with every file they
+describe · **Cost:** none, no model was run
 
 In the dungeon the 0.8B is told `Last turn: failed:` every turn and repeats
 the failed move 103 times out of 105 (`.claude/plans/general-agent-plan.md`
@@ -78,7 +80,58 @@ would be answered the fallback is exactly the old behaviour. `--predictable
 Cost: 12 episodes × 7 worlds is 72 seconds with verification against about
 55 without.
 
-## 4. What this does not say
+## 4. Observe, then decide (step 3b)
+
+The other half of "make the observation matter" is on the task side, and it
+had the same shape of defect. One recipe produced `PAUSE` — L10, a
+filter-then-act program cut in half — so what the corpus taught was *pause
+when the request says report back*, not *pause because you cannot know yet*.
+Everywhere a decision genuinely depends on data, the reference decided
+anyway, in one shot, with `IF`.
+
+Three levels have a real data-dependent decision, and each now has a
+two-segment form whose second half could not have been written before the
+first ran:
+
+| level | one-shot form | two-segment form |
+|---|---|---|
+| 5, branch | `GET` the field, `IF r1 EQ v` then act else act | `GET` the field, `PAUSE`; the second segment is **only the branch the observed value calls for** |
+| 7, notify-if-any | `PARALLEL` read, `FILTER`, `IF NOT EMPTY` notify | `FILTER`, `PAUSE`; the message when something matched, a bare `STOP` when nothing did |
+| 11, check-then-decline | list, `FILTER`, `IF EMPTY` abort else act | list, `FILTER`, `PAUSE`; `ABORT NOT_FOUND` or `FIRST` + act, whichever the rows call for |
+
+Measured on the same 240-row mix over twelve levels, generated twice:
+
+| | rows that pause and decide |
+|---|---|
+| before | **20/240 (8.3%)** — all of them L10, the one recipe that always pauses |
+| after | **31/240 (12.9%)** — L5 6/20, L7 2/20, L11 3/20, L10 20/20 |
+
+Every reference still replays: **240/240 `goal_success`**, and the two-segment
+rows report exactly 2 segments through the harness.
+
+**The pause must not be a tell.** If every paused first segment ended in
+`ABORT NOT_FOUND`, a model could answer "not found" from the shape of the
+program it had just written rather than from the rows it got back — the same
+context-not-words shortcut `results/S2.md` found behind the demo's
+over-abstention. So a third of L11's rows now name a record that **is**
+there, in both the one-shot and the two-segment form, and the two-segment
+ones split roughly evenly between a decline and an action. The acting rows
+carry no `abort` tag, so `gen_one` marks them `expected_status: ok`.
+
+Ten tests in `tests/test_two_segment.py` pin this, including that the branch
+surviving in L5's second segment is the one the record's own field value
+calls for, and that both endings appear in L11's paused rows.
+
+**Not done, and it is the reason this is 12.9% rather than the third of the
+corpus `reactive-execution.md` §6 sized:** the error levels (8 and 9). Their
+reactive form is not a `PAUSE` at all — it needs the harness's
+error-feedback path, the one `results/R4.md` found never fired in 150 runs,
+so it is a design question about that path rather than another recipe. The
+levels that shouldn't pause still don't: a filter-then-act row (2, 3) and an
+argmax row (4) have nothing to observe, and teaching them to pause would be
+teaching the gratuitous pause R4 measured at −4.
+
+## 5. What this does not say
 
 - **No model was run.** This is a corpus property. The model-side gate —
   `repeat_after_failure` on the dungeon and house exams, 98% and 34% today —

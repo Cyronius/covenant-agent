@@ -328,6 +328,46 @@ def main():
     report_signature_uniqueness(out, args.require_collisions,
                                 args.allow_signature_unique)
     report_filter_grounding(out)
+    report_segments(out)
+
+
+def report_segments(out: Path, limit: int = 4000) -> None:
+    """How much of this file pauses to look before it decides?
+
+    Plan step 3b. One recipe used to produce `PAUSE` — a filter-then-act
+    program cut in half — which teaches "pause when the request says report
+    back", not "pause because you cannot know yet". The levels with a
+    data-dependent decision (5 branch, 7's notify-if-any, 11
+    check-then-decline) now emit a two-segment form whose second half could
+    not have been written before the first ran. Printed, not gated: the
+    right share per level is a judgment, and one-shot references stay
+    correct for every task with nothing to observe.
+    """
+    per_level: dict = {}
+    with out.open(encoding="utf-8") as fh:
+        for i, line in enumerate(fh):
+            if i >= limit:
+                break
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            segs = (row.get("reference") or {}).get("segments") or []
+            if not segs:
+                continue
+            level = row.get("level")
+            counts = per_level.setdefault(level, [0, 0])
+            counts[0] += 1
+            counts[1] += len(segs) > 1
+    multi = sum(c[1] for c in per_level.values())
+    total = sum(c[0] for c in per_level.values())
+    if not total:
+        return
+    shares = ", ".join(f"L{lvl} {c[1]}/{c[0]}"
+                       for lvl, c in sorted(per_level.items()) if c[1])
+    print(f"segments: {multi}/{total} rows ({multi / total:.1%}) pause and "
+          f"decide in a second segment"
+          + (f" - {shares}" if shares else ""))
 
 
 def report_filter_grounding(out: Path, limit: int = 2000) -> None:
