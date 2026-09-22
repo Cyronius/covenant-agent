@@ -49,9 +49,17 @@ mkdir -p data/${TAG}_shards results/logs/fam
 # structural reason, not an accident — a decision world has a handful of
 # tools and a move is every one of them. Documented exception per the 1f
 # decision, not a dedicated fake-tool device.
+# --predictable 1.0 (3a, 2026-09-22): each illegal detour first tries to be a
+# failure worth learning from — the right object with a verb that does not
+# apply to it yet — verified by playing it and checking that the oracle's next
+# move answers the refusal. Of turns that open with a failure, the share whose
+# label answers it goes 10.2% -> 40.0%, and every aimed failure is answered
+# (17 of 17): results/REACT.md. It is also the default now; passed explicitly
+# because the shards written before this date carry --predictable 0 behaviour.
 for i in 0 1 2 3 4 5 6 7; do
   python -m data.gen.episodes --world all --episodes 20 \
-      --seed $((SEED + i * 1000)) --offpath 0.25 --illegal 0.3 $SURFACE \
+      --seed $((SEED + i * 1000)) --offpath 0.25 --illegal 0.3 \
+      --predictable 1.0 $SURFACE \
       --allow-signature-unique \
       --out data/${TAG}_shards/episodes_$i.jsonl \
       > results/logs/fam/gen_${TAG}_episodes_$i.log 2>&1 &

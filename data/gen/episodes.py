@@ -97,18 +97,136 @@ def candidate_actions(world_dict: dict, constants: List[dict],
     return out
 
 
+def call_parts(program: str) -> tuple:
+    """('go', ('$0',)) for the first CALL of a one-call program."""
+    for line in program.strip().splitlines():
+        line = line.strip()
+        if not line.startswith("CALL "):
+            continue
+        parts = line.split()
+        return parts[1].lstrip("@"), tuple(parts[2:])
+    return "", ()
+
+
+def predictable_wrong(module, world_dict: dict, state: dict, want: str,
+                      constants: List[dict], rng: random.Random,
+                      verify=None) -> Optional[str]:
+    """The wrong move a planner would actually make, not a random one.
+
+    A random illegal move ("use the north way") teaches nothing about
+    reacting, because the failure it produces has nothing to do with what
+    the turn was trying to achieve — the oracle's next label is simply the
+    plan it already had. The mistakes a planner makes are aimed at the
+    right thing: the same verb on something that refuses it (walking
+    through a shut way), or the right object with the verb that does not
+    apply to it yet. The world then answers with a reason
+    (`failed: the north way is shut - open it first`) and the oracle's next
+    move is the one that reason calls for — so the row after the failure
+    teaches "do what it just told you", which is the habit the dungeon
+    shows the model has never been taught (`.claude/plans/
+    general-agent-plan.md` Tier 1 item 1).
+    """
+    legal = set(module.legal_actions(state))
+    verb, args = call_parts(want)
+    if not verb:
+        return None
+    by_type: dict = {}
+    for i, c in enumerate(constants):
+        by_type.setdefault(c["type"], []).append(f"${i}")
+    tools = {t["name"]: t for t in world_dict["tools"] if t["effects"]}
+
+    def build_call(tool: dict, argv) -> Optional[str]:
+        required = [p for p in tool["params"] if p.get("required", True)]
+        if len(required) != len(argv):
+            return None
+        for p, a in zip(required, argv):
+            if a not in by_type.get(p["type"], []):
+                return None
+        return f"CALL @{tool['name']}" + "".join(f" {a}" for a in argv) + \
+            "\nSTOP\n"
+
+    # the right object, the verb that does not apply to it yet ("walk
+    # through the way that is shut")
+    same_obj = [c for name, tool in sorted(tools.items()) if name != verb
+                for c in [build_call(tool, args)] if c and c not in legal]
+    # the right verb, aimed at something that refuses it
+    same_verb = []
+    if verb in tools:
+        tool = tools[verb]
+        required = [p for p in tool["params"] if p.get("required", True)]
+        if len(required) == 1:
+            for alt in by_type.get(required[0]["type"], []):
+                if alt in args:
+                    continue
+                call = build_call(tool, (alt,))
+                if call and call not in legal:
+                    same_verb.append(call)
+    # nothing aimed at the oracle's own move (a page app's first move opens
+    # the one screen there is): aim at something else the turn really offers
+    # — a verb that does not apply to an object the board actually has,
+    # which is still the mistake of a planner reading the screen rather than
+    # a call assembled out of nothing
+    on_board = []
+    for action in sorted(legal):
+        for arg in call_parts(action)[1]:
+            if not arg.startswith("$"):
+                continue
+            for name, tool in sorted(tools.items()):
+                call = build_call(tool, (arg,))
+                if call and call not in legal:
+                    on_board.append(call)
+    # order matters: measured over 38 failures, an aim at the right object
+    # with the wrong verb is answered by the next label 7 times out of 8, one
+    # aimed at any object the board offers 4 of 12, and the right verb at the
+    # wrong object 0 of 15 — the last teaches nothing, so it goes last and
+    # only survives when verification is off (`results/REACT.md`)
+    pools = [(name, p) for name, p in (("same_obj", same_obj),
+                                       ("on_board", on_board),
+                                       ("same_verb", same_verb)) if p]
+    if not pools:
+        return None
+    if verify is not None:
+        # A failure only teaches when the next label answers it, and whether
+        # it does is decidable here: play the candidate, read the oracle's
+        # move from the state it produced, and keep the candidate whose
+        # failure that move responds to. Three tries, then take the best
+        # unverified aim rather than fall back to a random one.
+        tried = 0
+        for name, pool in pools:
+            for cand in rng.sample(pool, len(pool)):
+                if tried >= 8:
+                    break
+                tried += 1
+                if verify(cand):
+                    return cand, name
+        # nothing aimed here would be answered: a random illegal move is no
+        # worse and does not pretend to teach a reaction
+        return None
+    name, pool = pools[0]
+    return rng.choice(pool), name
+
+
 def pick_detour(module, world_dict: dict, state: dict, want: str,
                 constants: List[dict], rng: random.Random,
-                illegal_share: float) -> Optional[str]:
-    """A move to execute instead of the oracle's, or None to stay on path."""
+                illegal_share: float,
+                predictable_share: float = 1.0, verify=None) -> tuple:
+    """(move to execute instead of the oracle's, which kind it is), or
+    (None, None) to stay on path. The kind is recorded on the row so a
+    failure's teaching value can be read against how it was produced."""
     legal = [a for a in module.legal_actions(state) if a != want]
     if rng.random() < illegal_share:
+        if rng.random() < predictable_share:
+            aimed = predictable_wrong(module, world_dict, state, want,
+                                      constants, rng, verify)
+            if aimed:
+                move, branch = aimed
+                return move, f"aimed:{branch}"
         legal_set = set(module.legal_actions(state))
         bad = [a for a in candidate_actions(world_dict, constants, rng)
                if a not in legal_set]
         if bad:
-            return rng.choice(bad)
-    return rng.choice(legal) if legal else None
+            return rng.choice(bad), "random_illegal"
+    return (rng.choice(legal), "legal") if legal else (None, None)
 
 
 # --------------------------------------------------------------- episodes
@@ -116,6 +234,7 @@ def pick_detour(module, world_dict: dict, state: dict, want: str,
 def run_episode(world: str, seed: int, rng: random.Random, *,
                 symbols: str, enums: bool, kinds: bool,
                 offpath: float, illegal_share: float,
+                predictable_share: float = 1.0,
                 max_turns: Optional[int] = None) -> tuple:
     """Play one episode; return (task rows, outcome)."""
     module = decision.world_module(world)
@@ -143,13 +262,49 @@ def run_episode(world: str, seed: int, rng: random.Random, *,
         if row is not None:
             rows.append(row)
 
-        detour = (pick_detour(module, world_dict, state, want, constants, rng,
-                              illegal_share)
-                  if rng.random() < offpath else None)
+        def answered(candidate: str, _state=state) -> bool:
+            """Would the oracle's next move answer this failure?
+
+            Played here, for real, before the detour is chosen: a failure
+            only earns its place in the corpus when the label that follows
+            it is a response — the verb the refusal names, or the same
+            object another way. Selecting for that is what makes the
+            observation matter (plan step 3a); without it, an aimed move
+            produces a failure the next label happens to ignore, which is
+            measurably most of them (`results/REACT.md`).
+            """
+            probe = _advance(copy.deepcopy(_state), candidate, ctx,
+                             sandbox_ctx, world_dict)
+            failure = " ".join(str(e) for e in probe.get("log") or []
+                               if str(e).startswith("failed:")).lower()
+            if not failure:
+                return False
+            plan = oracle.plan_turn(probe, budget=budget)
+            if plan.strip() == candidate.strip():
+                return False            # never teach repeating what failed
+            verb, args = call_parts(plan)
+            bad_verb, bad_args = call_parts(candidate)
+            stem, bad_stem = verb.split("_")[0], bad_verb.split("_")[0]
+            if not stem or stem == bad_stem:
+                return False
+            return stem in failure or bool(set(args) & set(bad_args))
+
+        detour, kind = (pick_detour(module, world_dict, state, want,
+                                    constants, rng, illegal_share,
+                                    predictable_share, verify=answered)
+                        if rng.random() < offpath else (None, None))
         played = detour or want
         state = _advance(state, played, ctx, sandbox_ctx, world_dict)
         if row is not None:
             row["provenance"]["off_path_move"] = bool(detour)
+            # what actually happened, so the next turn's label can be read
+            # against it (`report_reaction`): a corpus that answers a
+            # failure with the move that just failed teaches repeating it
+            row["provenance"]["played_move"] = played.strip().splitlines()[0]
+            row["provenance"]["detour_kind"] = kind or "on_path"
+            row["provenance"]["played_failed"] = any(
+                str(entry).startswith("failed:")
+                for entry in state.get("log") or [])
         turn_index += 1
     return rows, module.outcome(state)
 
@@ -222,6 +377,19 @@ def main() -> None:
     ap.add_argument("--illegal", type=float, default=0.3,
                     help="share of those detours that are illegal moves, so "
                          "the corpus carries turns that open with a failure")
+    ap.add_argument("--predictable", type=float, default=1.0,
+                    help="share of those illegal moves that try to be a "
+                         "failure worth learning from: the right object with "
+                         "the verb that does not apply to it yet, played "
+                         "here first to confirm the oracle's next move "
+                         "answers the refusal. Measured over 12 episodes a "
+                         "world, an aimed failure is answered by the next "
+                         "label 11 times out of 11 and a random one 1 time "
+                         "in 25, which is why the default tries every time "
+                         "and falls back to a random move only when no aim "
+                         "would be answered (plan step 3a, results/"
+                         "REACT.md). 0 reproduces the pre-2026-09-22 "
+                         "corpora.")
     ap.add_argument("--symbols", default="classic",
                     choices=["classic", "typed"])
     ap.add_argument("--enums", action="store_true")
@@ -264,7 +432,8 @@ def main() -> None:
                 rows, outcome = run_episode(
                     world, seed, rng, symbols=args.symbols, enums=args.enums,
                     kinds=args.kinds, offpath=args.offpath,
-                    illegal_share=args.illegal)
+                    illegal_share=args.illegal,
+                    predictable_share=args.predictable)
                 wins[world] += bool(outcome["won"])
                 for row in rows:
                     if args.allow_signature_unique:
@@ -285,6 +454,97 @@ def main() -> None:
     from data.gen.__main__ import report_signature_uniqueness
     report_signature_uniqueness(out, args.require_collisions,
                                 args.allow_signature_unique)
+    report_reaction(out)
+
+
+def report_reaction(out) -> Optional[dict]:
+    """After a failure, does the label do something else?
+
+    The dungeon exam has the model repeat a move it was just told failed,
+    103 turns out of 105 (`.claude/plans/general-agent-plan.md` Tier 1 item
+    1). The reason is here, not in the model: a turn that opens with
+    `Last turn: failed: ...` is labelled with the oracle's plan for a board
+    the failure did not change, and until step 3a that failure was a random
+    illegal move, so the label had no reason to answer it. This reads the
+    written file and says what it teaches — printed beside signature
+    uniqueness, not gated, because the right share is a judgment the
+    corpus's other numbers do not settle.
+    """
+    played: dict = {}
+    rows: list = []
+    with Path(out).open(encoding="utf-8") as fh:
+        for line in fh:
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            prov = row.get("provenance") or {}
+            key = (prov.get("world"), prov.get("seed"), prov.get("turn"))
+            if None in key:
+                continue
+            played[key] = prov
+            rows.append((key, prov.get("oracle_tool") or "",
+                         failure_text(row.get("request") or "")))
+    after = repeated = same_object = answered = 0
+    by_branch: dict = {}
+    for key, label, failure in rows:
+        if not failure:
+            continue
+        after += 1
+        prev = played.get((key[0], key[1], key[2] - 1)) or {}
+        branch = prev.get("detour_kind") or "on_path"
+        b = by_branch.setdefault(branch, {"n": 0, "answered": 0})
+        b["n"] += 1
+        failed = prev.get("played_move") or ""
+        verb, args = call_parts(label)
+        repeat = bool(failed) and call_parts(label) == call_parts(failed)
+        if repeat:
+            repeated += 1
+        elif failed and set(args) & set(call_parts(failed)[1]):
+            same_object += 1
+        # the reason the world gave names the verb the label uses: "the
+        # north way is shut - open it first" answered by `CALL @open`, "the
+        # screen is not open" answered by `CALL @open`. The page apps need
+        # this: there the answer acts on a *different* object (the screen)
+        # than the move that failed (an element on it).
+        stem = verb.split("_")[0]
+        failed_stem = call_parts(failed)[0].split("_")[0]
+        # "the north way is shut - open it first" after a failed `go`, then a
+        # label that opens it. The verb has to differ from the one that
+        # failed, or a world whose refusal echoes the verb it refused
+        # ("cannot drive to shelf 0") would score every retry as an answer.
+        named = bool(stem) and stem != failed_stem and stem in failure.lower()
+        same_thing = bool(failed) and set(args) & set(call_parts(failed)[1])             and stem != failed_stem
+        if not repeat and (named or same_thing):
+            answered += 1
+            b["answered"] += 1
+    if not after:
+        return None
+    stats = {"after_failure": after, "repeated": repeated,
+             "same_object": same_object, "answered": answered,
+             "by_branch": by_branch}
+    aimed = sum(b["n"] for name, b in by_branch.items()
+                if name.startswith("aimed:"))
+    stats["aimed"] = aimed
+    print(f"reaction: of {after} turns that open with a failure "
+          f"({aimed}, {aimed / after:.1%}, caused by an aimed move), "
+          f"{repeated} ({repeated / after:.1%}) are labelled with the move "
+          f"that just failed, {same_object} ({same_object / after:.1%}) act "
+          f"on the same thing another way, and {answered} "
+          f"({answered / after:.1%}) answer it - by name or on the same "
+          f"object")
+    for branch, b in sorted(by_branch.items()):
+        print(f"    {branch:22s} {b['n']:4d} failures, "
+              f"{b['answered']}/{b['n']} answered")
+    return stats
+
+
+def failure_text(request: str) -> str:
+    """The `Last turn:` line of an observation, when it reports a failure."""
+    for line in request.splitlines():
+        if line.startswith("Last turn:") and "failed:" in line:
+            return line[len("Last turn:"):].strip()
+    return ""
 
 
 if __name__ == "__main__":

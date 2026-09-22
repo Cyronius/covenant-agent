@@ -1081,3 +1081,29 @@ covenant-agent/
   *instead* becomes visible — is built and not run: it needs a pod, and the
   earlier "one or two pod hours" authorization for 2c was general, not a
   go-ahead for a specific spend.**
+
+- **2026-09-22 — a failure in the episode corpus is now one the next label
+  answers, and the premise this step started from was wrong (step 3a of
+  `.claude/plans/agent-loop-and-ir-review.md`; `results/REACT.md`).** The
+  dungeon exam has the 0.8B repeat a move it was just told failed 103 turns
+  of 105, and the cause was read as "the corpus labels a post-failure turn
+  with the move that failed". It does not: **0 of 114 post-failure labels**
+  is the move that just failed. What the corpus taught was indifference — the
+  label answered the failure **10.2%** of the time — because a failed move
+  leaves the board unchanged, so the oracle's next move is the plan it
+  already had, and the failure was a random illegal move unrelated to it.
+  The fix is an **aimed** wrong move (the right object with a verb that does
+  not apply to it yet), **verified by playing it**: the candidate runs through
+  the real engine on a copy, the oracle is asked what it would do from there,
+  and the candidate is kept only if that move answers the refusal. Result:
+  the answered share goes **10.2% → 40.0%**, and **every aimed failure is
+  answered, 17 of 17**, against 7 of 59 random ones. The branch intuition
+  suggests first — the right verb at the wrong object — teaches nothing
+  (**0 of 15**) and is now tried last. `--predictable` defaults to 1.0, `0`
+  reproduces the earlier corpora, and `report_reaction` prints the number
+  with every episode file. **Deferred to step 6:** the model-side gate
+  (`repeat_after_failure` on the dungeon and house exams) needs a GPU run and
+  that metric does not exist yet. One measurement lesson: scoring "answers
+  it" without requiring the verb to differ from the one that failed read
+  51.7% instead of 20.7%, because a world whose refusal echoes the verb it
+  refused scores every retry as an answer.
