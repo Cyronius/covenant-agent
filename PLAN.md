@@ -1052,3 +1052,32 @@ covenant-agent/
   need a new filter kind, its own English and its own grounding check, and
   is a separate change. This is a corpus-shape change, so it lands with the
   one rebuild in step 6 like the rest of them.
+
+- **2026-09-21 — the expressibility census, offline half: two of the four
+  candidate opcodes have no demand at all, and the demand that exists is not
+  for an opcode (step 2c of `.claude/plans/agent-loop-and-ir-review.md`;
+  `results/CENSUS.md`).** `harness/expressibility_census.py` answers the
+  admission rule's first test (`PLAN.md` §12, `spec/agent_core.md` §11) with
+  a number instead of an intuition, over the two sources on disk that are not
+  expressible by construction: 1,544 real mobi session requests and 6,893
+  imported human-phrased ones. `UNIQUE`: **zero** genuine matches in 8,437
+  requests. `TAKE`: **4 in 1,544 real requests (0.26%)**, and on the imported
+  corpus its apparent 1.5% is the tool's own limit argument in 24 of 26
+  sampled matches, so a `TAKE` opcode is not what would serve them; no
+  reference program in the tree hand-writes a prefix (0 of 2,132 segments).
+  Predicate grouping: zero. `GROUP`/`JOIN`: ~10 genuine imported requests
+  (0.15%) and a three-line workaround in use in 1.7% of training segments —
+  the only candidate anything pays for, and it stays parked because the
+  workaround is not failing. **Nothing is admitted; `results/R1.md`'s holding
+  pen now carries each candidate's census number**, which is the outcome the
+  admission rule asks for when a candidate does not clear it. Two findings
+  that are not about opcodes: 1.6% of real requests (23 typed rows) only make
+  sense against the previous turn — corrections and deictic references —
+  which is measured demand for step 5 and the resumable `ABORT`; and 7.2% of
+  imported requests want scalar arithmetic over constants (discounts, tips,
+  bill splits), which by §12's tool-first rule is a calculator tool, not
+  `sum`/`avg` over a field and not an opcode. **The census's third pass — the
+  27B writing its best program for each real request, so what it does
+  *instead* becomes visible — is built and not run: it needs a pod, and the
+  earlier "one or two pod hours" authorization for 2c was general, not a
+  go-ahead for a specific spend.**
