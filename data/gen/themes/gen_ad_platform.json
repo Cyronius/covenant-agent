@@ -39,27 +39,110 @@
     "number": {"field": "daily_impressions", "noun": "daily impressions", "min": 200, "max": 20000}
   },
   "tools": {
-    "list_child": {"name": "ls_plc", "desc": "List every ad placement for an advertiser."},
-    "get_child": {"name": "get_plc", "desc": "Fetch one ad placement by id."},
-    "list_parent": {"name": "ls_adv", "desc": "List all advertisers on the platform."},
-    "get_parent": {"name": "get_adv", "desc": "Fetch one advertiser by id."},
-    "delete_child": {"name": "rm_plc", "desc": "Permanently remove an ad placement. Not reversible.",
-                     "verbs": ["remove {obj}", "archive {obj} for good"]},
+    "list_child": {"name": "ls_plc_srv", "desc": "List every ad placement in the ad server.",
+                   "decoys": [
+                     {"name": "ls_plc_props", "desc": "List every ad placement in the media proposals."},
+                     {"name": "ls_plc_mkgd", "desc": "List every ad placement in the makegood backlog."},
+                     {"name": "ls_plc_tmpl", "desc": "List every ad placement in the template library."}]},
+    "get_child": {"name": "get_plc_srv", "desc": "Fetch one ad placement by id from the ad server.",
+                  "decoys": [
+                    {"name": "get_plc_props", "desc": "Fetch one ad placement by id from the media proposals."},
+                    {"name": "get_plc_mkgd", "desc": "Fetch one ad placement by id from the makegood backlog."},
+                    {"name": "get_plc_tmpl", "desc": "Fetch one ad placement by id from the template library."}]},
+    "list_parent": {"name": "ls_adv_acct", "desc": "List all advertisers with an account on the platform.",
+                    "decoys": [
+                      {"name": "ls_adv_prosp", "desc": "List all advertisers in the sales prospect pipeline."},
+                      {"name": "ls_adv_block", "desc": "List all advertisers on the brand safety blocklist."},
+                      {"name": "ls_adv_waitl", "desc": "List all advertisers on the self-serve waitlist."}]},
+    "get_parent": {"name": "get_adv_acct", "desc": "Fetch one advertiser's account record by id.",
+                   "decoys": [
+                     {"name": "get_adv_terms", "desc": "Fetch one advertiser's billing terms by id."},
+                     {"name": "get_adv_brand", "desc": "Fetch one advertiser's brand kit by id."},
+                     {"name": "get_adv_audience", "desc": "Fetch one advertiser's audience profile by id."}]},
+    "delete_child": {"name": "rm_plc_srv", "desc": "Permanently remove an ad placement from the ad server. Not reversible.",
+                     "verbs": ["remove {obj}", "archive {obj} for good"],
+                     "decoys": [
+                       {"name": "purge_plc_logs", "desc": "Permanently purge an ad placement's delivery logs from reporting. Not reversible.", "verbs": ["purge the delivery logs for {obj}", "wipe the delivery history on {obj}"]},
+                       {"name": "void_plc_io", "desc": "Permanently void the insertion order behind an ad placement. Not reversible.", "verbs": ["void the insertion order for {obj}", "cancel the IO behind {obj}"]},
+                       {"name": "rm_plc_creative", "desc": "Permanently remove an ad placement's creative from the asset library. Not reversible.", "verbs": ["delete the creative on {obj}", "scrap the creative assets for {obj}"]}]},
     "set_enum": {"name": "set_plc_status",
-                 "desc": "Change a placement's status (draft, live, paused, or archived).",
+                 "desc": "Change an ad placement's status to draft, live, paused, or archived.",
                  "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
                  "value_phrases": {"draft": "to draft", "live": "to live",
-                                   "paused": "to paused", "archived": "to archived"}},
+                                   "paused": "to paused", "archived": "to archived"},
+                 "decoys": [
+                   {"name": "sched_plc_status", "desc": "Schedule an ad placement's next status: draft, live, paused, or archived."},
+                   {"name": "req_plc_status", "desc": "Request sign-off on an ad placement's status: draft, live, paused, or archived."},
+                   {"name": "pin_plc_status", "desc": "Pin an ad placement's status at draft, live, paused, or archived."}]},
     "set_bool": {"name": "cap_plc", "bool_index": 1, "value": true,
                  "desc": "Apply a frequency cap to an ad placement.",
-                 "verbs": ["cap {obj}", "frequency-cap {obj}"]},
-    "set_ref": {"name": "mv_plc", "desc": "Move a placement to a different advertiser.",
+                 "verbs": ["cap {obj}", "frequency-cap {obj}"],
+                 "decoys": [
+                   {"name": "boost_plc", "desc": "Apply a bid boost to an ad placement.", "verbs": ["boost the bid on {obj}", "apply a bid boost to {obj}"]},
+                   {"name": "rotate_plc", "desc": "Apply creative rotation to an ad placement.", "verbs": ["turn on creative rotation for {obj}", "rotate the creatives on {obj}"]},
+                   {"name": "safe_plc", "desc": "Apply a brand safety filter to an ad placement.", "verbs": ["brand-safe {obj}", "apply the brand safety filter to {obj}"]}]},
+    "set_ref": {"name": "xfer_plc", "desc": "Transfer a placement's ownership to a different advertiser.",
                 "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
-                "to_template": "to {name}"},
+                "to_template": "to {name}",
+                "decoys": [
+                  {"name": "bill_plc", "desc": "Bill a placement's spend to a different advertiser.", "verbs": ["bill {obj} {to_name}", "charge the spend on {obj} {to_name}"]},
+                  {"name": "credit_plc", "desc": "Credit a placement's conversions to a different advertiser.", "verbs": ["credit the conversions on {obj} {to_name}", "attribute {obj} {to_name}"]},
+                  {"name": "share_plc", "desc": "Move a placement's report access to a different advertiser.", "verbs": ["move the report access on {obj} {to_name}", "hand the reports for {obj} over {to_name}"]}]},
     "send": {"name": "ping_adv", "desc": "Send an email to the advertiser's account contact.",
              "child_verbs": ["email the advertiser behind {obj}", "alert the advertiser behind {obj}"],
              "direct_verbs": ["email {name}", "notify {name}"],
-             "pair_verbs": ["email", "notify"]}
+             "pair_verbs": ["email", "notify"],
+             "decoys": [
+               {"name": "invoice_adv", "desc": "Send an invoice to the advertiser's billing contact.", "child_verbs": ["send an invoice to the advertiser behind {obj}", "invoice the advertiser behind {obj}"], "direct_verbs": ["invoice {name}", "send {name} an invoice"], "pair_verbs": ["invoice", "send an invoice to"]},
+               {"name": "report_adv", "desc": "Send a campaign report to the advertiser's account contact.", "child_verbs": ["send a campaign report to the advertiser behind {obj}", "report results to the advertiser behind {obj}"], "direct_verbs": ["send {name} a campaign report", "report results to {name}"], "pair_verbs": ["report to", "send a report to"]},
+               {"name": "invite_adv", "desc": "Send a meeting invite to the advertiser's account contact.", "child_verbs": ["send a meeting invite to the advertiser behind {obj}", "invite the advertiser behind {obj} to a meeting"], "direct_verbs": ["invite {name} to a meeting", "send {name} a meeting invite"], "pair_verbs": ["invite", "send an invite to"]}]}
+  },
+  "v2": {
+    "create": {"name": "new_plc", "desc": "Set up a new ad placement for an advertiser.",
+               "decoys": [
+                 {"name": "quote_plc", "desc": "Quote a new ad placement for an advertiser."},
+                 {"name": "hold_plc", "desc": "Reserve a new ad placement for an advertiser."},
+                 {"name": "prop_plc", "desc": "Propose a new ad placement to an advertiser."}]},
+    "list_notes": {"name": "ls_plc_notes", "desc": "List the ops notes on one ad placement.",
+                   "decoys": [
+                     {"name": "ls_handoff_notes", "desc": "List the handoff notes on one ad placement."},
+                     {"name": "ls_plc_proofs", "desc": "List the client proofs on one ad placement."},
+                     {"name": "ls_plc_chgreq", "desc": "List the change requests on one ad placement."}]},
+    "add_note": {"name": "add_plc_note", "desc": "Add an ops note to an ad placement.",
+                 "decoys": [
+                   {"name": "add_handoff_note", "desc": "Add a handoff note to an ad placement."},
+                   {"name": "add_plc_chgreq", "desc": "Add a change request to an ad placement."},
+                   {"name": "add_plc_query", "desc": "Add a client query to an ad placement."}]},
+    "update_note": {"name": "edit_plc_note", "desc": "Edit an ops note on an ad placement with new text and an optional title.",
+                    "decoys": [
+                      {"name": "resolve_plc_note", "desc": "Resolve an ops note on an ad placement with new text and an optional title."},
+                      {"name": "esc_plc_note", "desc": "Escalate an ops note on an ad placement with new text and an optional title."},
+                      {"name": "append_plc_note", "desc": "Append to an ops note on an ad placement with new text and an optional title."}]},
+    "delete_note": {"name": "rm_plc_note", "desc": "Remove an ops note from an ad placement.",
+                    "decoys": [
+                      {"name": "rm_handoff_note", "desc": "Remove a handoff note from an ad placement."},
+                      {"name": "rm_plc_chgreq", "desc": "Remove a change request from an ad placement."},
+                      {"name": "redact_plc_note", "desc": "Redact an ops note on an ad placement."}]},
+    "set_image": {"name": "set_plc_creative", "desc": "Set the creative image shown on an ad placement.",
+                  "decoys": [
+                    {"name": "set_plc_backup", "desc": "Set the backup image shown on an ad placement."},
+                    {"name": "set_plc_logo", "desc": "Set the brand logo shown on an ad placement."},
+                    {"name": "set_plc_thumb", "desc": "Set the preview thumbnail shown on an ad placement."}]},
+    "writer": {"name": "write_update", "desc": "Write a short update from a brief and the placements it should mention, and return the text.",
+               "decoys": [
+                 {"name": "write_recap", "desc": "Write a short pacing recap from a brief and the placements it should mention, and return the text."},
+                 {"name": "write_copy", "desc": "Write ad copy from a brief and the placements it should mention, and return the text."},
+                 {"name": "write_io", "desc": "Write insertion order terms from a brief and the placements it should mention, and return the text."}]},
+    "image": {"name": "gen_visual", "desc": "Generate an ad visual from a prompt and return its URL.",
+              "decoys": [
+                {"name": "gen_banner", "desc": "Generate a banner image from a prompt and return its URL."},
+                {"name": "gen_clip", "desc": "Generate a video clip from a prompt and return its URL."},
+                {"name": "gen_story", "desc": "Generate a storyboard frame from a prompt and return its URL."}]},
+    "search": {"name": "search_faq", "desc": "Search the platform help center and support articles with a question and return the best passage.",
+               "decoys": [
+                 {"name": "search_policy", "desc": "Search the ad policies and review guidelines with a question and return the best passage."},
+                 {"name": "search_api", "desc": "Search the API docs and developer guides with a question and return the best passage."},
+                 {"name": "search_bench", "desc": "Search the benchmark reports and case studies with a question and return the best passage."}]}
   },
   "sort": {
     "time_index": 0,

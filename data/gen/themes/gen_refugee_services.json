@@ -37,33 +37,116 @@
     "number": {"field": "family_size", "noun": "family size", "min": 1, "max": 10}
   },
   "tools": {
-    "list_child": {"name": "ls_ref", "desc": "list referrals"},
-    "get_child": {"name": "get_ref", "desc": "get one referral"},
-    "list_parent": {"name": "ls_agc", "desc": "list agencies"},
-    "get_parent": {"name": "get_agc", "desc": "get one agency"},
-    "delete_child": {"name": "rm_ref",
-                     "desc": "del referral rec",
-                     "verbs": ["rm {obj}", "purge {obj}"]},
+    "list_child": {"name": "ls_ref_log", "desc": "list referrals in case log",
+      "decoys": [
+        {"name": "ls_ref_wait", "desc": "list referrals in waitlist"},
+        {"name": "ls_ref_xfer", "desc": "list referrals in transfer list"},
+        {"name": "ls_ref_out", "desc": "list referrals in outreach roster"}]},
+    "get_child": {"name": "get_ref_file", "desc": "get referral case file",
+      "decoys": [
+        {"name": "get_ref_consent", "desc": "get referral consent form"},
+        {"name": "get_ref_assess", "desc": "get referral needs assessment"},
+        {"name": "get_ref_docs", "desc": "get referral travel docs"}]},
+    "list_parent": {"name": "ls_agc_dir", "desc": "list agencies in directory",
+      "decoys": [
+        {"name": "ls_agc_fund", "desc": "list agencies in funder list"},
+        {"name": "ls_agc_shelter", "desc": "list agencies in shelter network"},
+        {"name": "ls_agc_legal", "desc": "list agencies in legal aid panel"}]},
+    "get_parent": {"name": "get_agc_prof", "desc": "get agency profile",
+      "decoys": [
+        {"name": "get_agc_mou", "desc": "get agency MOU"},
+        {"name": "get_agc_cap", "desc": "get agency capacity"},
+        {"name": "get_agc_cont", "desc": "get agency contacts"}]},
+    "delete_child": {"name": "rm_ref_file",
+                     "desc": "del referral file",
+                     "verbs": ["rm {obj}", "purge {obj}"],
+                     "decoys": [
+                       {"name": "void_ref_vchr", "desc": "void referral voucher", "verbs": ["void the voucher on {obj}", "cancel the voucher for {obj}"]},
+                       {"name": "shred_ref_docs", "desc": "shred referral docs", "verbs": ["shred the docs on {obj}", "destroy the paper docs for {obj}"]},
+                       {"name": "purge_ref_bio", "desc": "purge referral biometrics", "verbs": ["purge the biometrics on {obj}", "wipe the fingerprints for {obj}"]}]},
     "set_enum": {"name": "set_ref_st",
-                 "desc": "set referral status",
+                 "desc": "set referral case status",
                  "verbs": ["set {obj} {to_value}", "mark {obj} {to_value}"],
                  "value_phrases": {"received": "back to received",
                                    "screening": "into screening",
                                    "placed": "as placed",
-                                   "closed": "as closed"}},
+                                   "closed": "as closed"},
+                 "decoys": [
+                   {"name": "set_hsg_st", "desc": "set referral housing status"},
+                   {"name": "set_job_st", "desc": "set referral job status"},
+                   {"name": "set_sch_st", "desc": "set referral school status"}]},
     "set_bool": {"name": "flag_urg",
                  "bool_index": 0, "value": true,
                  "desc": "flag referral urgent",
-                 "verbs": ["flag {obj} urgent", "mark {obj} urgent"]},
+                 "verbs": ["flag {obj} urgent", "mark {obj} urgent"],
+                 "decoys": [
+                   {"name": "flag_intp", "desc": "flag referral interp", "verbs": ["flag {obj} for an interpreter", "mark {obj} interp needed"]},
+                   {"name": "flag_minor", "desc": "flag referral minor", "verbs": ["flag {obj} as a minor", "mark {obj} minor"]},
+                   {"name": "flag_med", "desc": "flag referral medical", "verbs": ["flag {obj} medical", "mark {obj} as medical"]}]},
     "set_ref": {"name": "mv_ref_agc",
                 "desc": "move referral to diff agency",
                 "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
-                "to_template": "to {name}"},
+                "to_template": "to {name}",
+                "decoys": [
+                  {"name": "cc_ref_agc", "desc": "cc referral to diff agency", "verbs": ["cc {obj} {to_name}", "cc the file for {obj} {to_name}"]},
+                  {"name": "fund_ref_agc", "desc": "shift referral funding to diff agency", "verbs": ["shift the funding for {obj} {to_name}", "move funding of {obj} {to_name}"]},
+                  {"name": "cons_ref_agc", "desc": "consult referral w diff agency", "verbs": ["send {obj} for consult {to_name}", "refer {obj} for a consult {to_name}"]}]},
     "send": {"name": "note_agc",
              "desc": "log note to agency",
              "child_verbs": ["send a note to the agency behind {obj}", "notify the agency behind {obj}"],
              "direct_verbs": ["notify {name}", "send {name} a note"],
-             "pair_verbs": ["notify", "log"]}
+             "pair_verbs": ["notify", "log"],
+             "decoys": [
+               {"name": "call_agc", "desc": "log call to agency", "child_verbs": ["call the agency behind {obj}", "phone the agency behind {obj}"], "direct_verbs": ["call {name}", "phone {name}"], "pair_verbs": ["call", "phone"]},
+               {"name": "visit_agc", "desc": "log visit to agency", "child_verbs": ["visit the agency behind {obj}", "drop in on the agency behind {obj}"], "direct_verbs": ["visit {name}", "drop in on {name}"], "pair_verbs": ["visit", "drop in on"]},
+               {"name": "req_agc", "desc": "log info req to agency", "child_verbs": ["request info from the agency behind {obj}", "ask the agency behind {obj} for info"], "direct_verbs": ["request info from {name}", "ask {name} for info"], "pair_verbs": ["request info from", "query"]}]}
+  },
+  "v2": {
+    "create": {"name": "new_ref", "desc": "new referral for agency",
+               "decoys": [
+                 {"name": "new_xfer", "desc": "new transfer for agency"},
+                 {"name": "new_spons", "desc": "new sponsorship for agency"},
+                 {"name": "new_waitl", "desc": "new waitlist slot for agency"}]},
+    "list_notes": {"name": "ls_ref_notes", "desc": "list case notes on referral",
+                   "decoys": [
+                     {"name": "ls_ref_visits", "desc": "list home visits on referral"},
+                     {"name": "ls_ref_plans", "desc": "list service plans on referral"},
+                     {"name": "ls_intp_notes", "desc": "list interpreter notes on referral"}]},
+    "add_note": {"name": "add_ref_note", "desc": "add case note to referral",
+                 "decoys": [
+                   {"name": "add_ref_visit", "desc": "add home visit to referral"},
+                   {"name": "add_ref_plan", "desc": "add service plan to referral"},
+                   {"name": "add_intp_note", "desc": "add interpreter note to referral"}]},
+    "update_note": {"name": "edit_ref_note", "desc": "edit note on referral, text/title",
+                    "decoys": [
+                      {"name": "reply_ref_note", "desc": "reply to note on referral, text/title"},
+                      {"name": "close_ref_note", "desc": "close note on referral, text/title"},
+                      {"name": "xlate_ref_note", "desc": "translate note on referral, text/title"}]},
+    "delete_note": {"name": "rm_ref_note", "desc": "del case note from referral",
+                    "decoys": [
+                      {"name": "rm_ref_visit", "desc": "del home visit from referral"},
+                      {"name": "rm_ref_plan", "desc": "del service plan from referral"},
+                      {"name": "rm_intp_note", "desc": "del interpreter note from referral"}]},
+    "set_image": {"name": "set_ref_photo", "desc": "set referral photo",
+                  "decoys": [
+                    {"name": "set_ref_idscan", "desc": "set referral id scan"},
+                    {"name": "set_ref_sig", "desc": "set referral signature"},
+                    {"name": "set_ref_map", "desc": "set referral site map"}]},
+    "writer": {"name": "write_reply", "desc": "write short reply from brief + referrals",
+               "decoys": [
+                 {"name": "write_summary", "desc": "write case summary from brief + referrals"},
+                 {"name": "write_letter", "desc": "write support letter from brief + referrals"},
+                 {"name": "write_report", "desc": "write funder report from brief + referrals"}]},
+    "image": {"name": "gen_pic", "desc": "gen info pic from prompt, ret url",
+              "decoys": [
+                {"name": "gen_map", "desc": "gen area map from prompt, ret url"},
+                {"name": "gen_flyer", "desc": "gen event flyer from prompt, ret url"},
+                {"name": "gen_pict", "desc": "gen pictogram from prompt, ret url"}]},
+    "search": {"name": "srch_kb", "desc": "search caseworker faq/kb w question, ret best passage",
+               "decoys": [
+                 {"name": "srch_law", "desc": "search asylum law w question, ret best passage"},
+                 {"name": "srch_svc", "desc": "search service directory/helplines w question, ret best passage"},
+                 {"name": "srch_lang", "desc": "search phrasebook w question, ret best passage"}]}
   },
   "sort": {
     "time_index": 0,

@@ -42,18 +42,70 @@ if _DOMAIN_SPLIT.exists():
 
 
 def gen_one(level: int, seed: int, holdout: bool, teacher: str,
+            *args, twin_roles: bool = False, world: str | None = None,
+            **kw) -> dict:
+    """One task. `twin_roles` draws, per flip slot of a themed world, which
+    of the tool and its authored siblings is the working one
+    (`domains.role_choice`), so the canonical action is not always the
+    answer; the row records the draw in `provenance.roles`."""
+    if not twin_roles:
+        return _gen_one(level, seed, holdout, teacher, *args, world=world, **kw)
+    from data.gen import domains
+    if world is None:
+        pool = ([w for w in RESERVED["worlds"] if w in programs.PROFILES]
+                if holdout else
+                sorted(set(programs.PROFILES) - set(RESERVED["worlds"])))
+        world = random.Random(seed).choice(pool)   # _gen_one's first draw
+    theme = domains.THEMES.get(world)
+    choice = (domains.role_choice(theme, random.Random(seed ^ 0x7015))
+              if theme else {})
+    swapped = {k: i for k, i in choice.items() if i}
+    if not swapped:
+        task = _gen_one(level, seed, holdout, teacher, *args, world=world, **kw)
+    else:
+        th = domains.swap_roles(theme, swapped)
+        domains.register_theme(th, record=False)
+        try:
+            task = _gen_one(level, seed, holdout, teacher, *args, world=world,
+                            **kw)
+        finally:
+            domains.register_theme(theme)
+        called = {c.get("name") for c in task["reference"]["call_log"]}
+        roles = {}
+        for slot in swapped:
+            spec = th["tools"][slot]
+            if spec["name"] in called:
+                if not domains.request_fits(task["request"], slot, spec):
+                    raise programs.SampleError(
+                        f"swapped {slot} called by a recipe with fixed wording")
+                roles[slot] = {"answer": spec["name"],
+                               "authored": theme["tools"][slot]["name"]}
+        if roles:
+            task["provenance"]["roles"] = roles
+            task["tags"] = sorted(set(task["tags"]) | {"swapped-roles"})
+    return task
+
+
+def _gen_one(level: int, seed: int, holdout: bool, teacher: str,
             crowd: tuple | None = None, symbols: str = "classic",
             enums: bool = False, kinds: bool = False,
             decoys: tuple | None = None, decoy_nonsense: float = 0.15,
-            inject_open: tuple | None = None) -> dict:
+            inject_open: tuple | None = None,
+            opaque_rate: float = 0.0, world: str | None = None) -> dict:
     rng = random.Random(seed)
     if holdout:
         pool = [w for w in RESERVED["worlds"] if w in programs.PROFILES]
         world_name = rng.choice(pool)
+        if world:
+            # a probe that needs one particular world (data/gen/flip_probe.py);
+            # drawn after the choice, so the rng stream is the same either way
+            world_name = world
         holdout_tools = set()
     else:
         world_names = sorted(set(programs.PROFILES) - set(RESERVED["worlds"]))
         world_name = rng.choice(world_names)
+        if world:
+            world_name = world
         holdout_tools = set(RESERVED["tools"].get(world_name, []))
     world = get_world(world_name)
     decoy_names: list = []
@@ -153,6 +205,31 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
         task["provenance"]["decoys"] = decoy_names
     if n_injected:
         task["provenance"]["open_distractors"] = n_injected
+    from data.gen import domains as _domains
+    theme = _domains.THEMES.get(world_name)
+    if theme:
+        # every tool of a flip slot in this row, the working one and its
+        # siblings (a role swap permutes them, so the authored theme's union
+        # is the swapped one's): the twin decisions whose answer is drawn
+        # uniformly under --twin-roles, the only ones a grounding claim can
+        # rest on (harness/decoy_audit.py --flip-only). Before the opaque
+        # draw, which renames them with everything else.
+        present = {t["name"] for t in task["context"]["tools"]}
+        slot_names = set()
+        for slot in _domains.FLIP_VERBS:
+            spec = theme["tools"][slot]
+            slot_names |= {spec["name"]} | {d["name"] for d in spec.get("decoys") or []}
+        task["provenance"]["flip_slot_tools"] = sorted(slot_names & present)
+    if opaque_rate and random.Random(seed ^ 0x0A0E).random() < opaque_rate:
+        # every tool renamed to something that says nothing
+        # (harness/decoys.py `opaque_names`); its own RNG like --decoys, so
+        # the rest of the row is the one the run without it draws. The
+        # renamed tools cannot be looked up in the world by name any more,
+        # so the row carries its own sandbox payload.
+        from harness.decoys import opaque_names
+        task.setdefault("sandbox", sandbox_ctx)
+        opaque_names(task, random.Random(seed ^ 0x0A0F))
+        task["tags"] = sorted(set(task["tags"]) | {"opaque-names"})
 
     # training-pair extras
     task["input_text"] = serialize_context(request, ctx)
@@ -246,6 +323,20 @@ def main():
     ap.add_argument("--decoy-nonsense", type=float, default=0.15,
                     help="share of decoys named foo17 / operation_93, so the "
                          "name cannot carry the choice at all")
+    ap.add_argument("--opaque-names", type=float, default=0.0,
+                    metavar="RATE",
+                    help="share of rows on which every tool, real and decoy "
+                         "alike, gets a name that says nothing (foo17, "
+                         "op_93), so reading the description stays "
+                         "measurable once names are model input (spec "
+                         "0.8.0). Tagged `opaque-names`.")
+    ap.add_argument("--twin-roles", action="store_true",
+                    help="per row, wire up a uniformly drawn sibling of each "
+                         "flip slot (delete, flag, re-parent, send) as the "
+                         "working tool, the authored one included, so a "
+                         "decoy's text is as likely to be the answer as the "
+                         "authored tool's (data/gen/domains.py role_choice). "
+                         "Needs themes that author decoys.")
     ap.add_argument("--require-collisions", type=float, default=50,
                     metavar="PCT",
                     help="fail (and write nothing) if more than PCT%% of "
@@ -302,7 +393,9 @@ def main():
                                         enums=args.enums, kinds=args.kinds,
                                         decoys=decoys,
                                         decoy_nonsense=args.decoy_nonsense,
-                                        inject_open=inject_open)
+                                        inject_open=inject_open,
+                                        opaque_rate=args.opaque_names,
+                                        twin_roles=args.twin_roles)
                 except (programs.SampleError, ReferenceError):
                     failures += 1
                     continue

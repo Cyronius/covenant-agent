@@ -43,3 +43,6 @@ models/tiny/*.log
 # NPU tooling (models/npu): build output and the driver link library we
 # reconstruct from the installed driver. Vendored headers and the shim are tracked.
 models/npu/build/
+
+# decoy-audit corpora (harness/decoy_audit.py): regenerable
+data/audit*/

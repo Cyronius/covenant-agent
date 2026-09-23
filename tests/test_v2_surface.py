@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from data.gen import english, programs
-from data.gen.domains import load_theme, register_theme
+from data.gen.domains import _v2_names, load_theme, register_theme
 from data.gen.worldgen import gen_state
 from harness.authoring import resolve
 from harness.context import build_context
@@ -28,10 +28,13 @@ def test_v2_tools_have_the_real_shapes(theme_name):
     world = get_world(theme_name)
     tools = {t["name"]: t for t in world["tools"]}
     assert len(tools) == 18
-    upd = tools["update_segment_note"]
+    # the theme may name its generic tools in its own style (THEME_SCHEMA.md
+    # "Decoys"), so look them up by role
+    names = _v2_names(load_theme(THEME))
+    upd = tools[names["update_note"]]
     assert [p["type"] for p in upd["params"]][:2] == ["ID:segment", "ID:segment_note"]
     assert upd["params"][-1]["required"] is False            # optional trailing title
-    assert tools["create_segment"]["params"][-1]["required"] is False
+    assert tools[names["create"]]["params"][-1]["required"] is False
     ext = [t for t in tools.values() if t["effects"] == ["external"]]
     assert {t["returns"] for t in ext} == {"STR"} and len(ext) == 2
     assert "segment_note" in world["entities"] and world["entities"]["segment"]["image"] == "STR"

@@ -162,3 +162,125 @@ and a **child** (the work item acted on), linked by a reference field.
   would use, not the field name. No tool takes it as an argument and no
   filter reads it, so a theme without one loses only the aggregate
   questions.
+
+## Decoys and the generic tools (optional, 2026-09-23)
+
+Two optional blocks make a theme's decoyed exam honest. Before them, decoys
+came from one template bank (`harness/decoys.py` `DECOY_OPS`) in one voice
+whatever the theme's `desc_style`, and the nine generic tools every world gets
+(create, notes, image, writer, search) carried one template description in
+every world. A classifier reading **only the description text** told real
+tools from decoys at AUC 1.000 on worlds it had never seen
+(`results/R10.md` §8). An exam passable that way cannot show that a model
+reads the request. `harness/decoy_audit.py` is the gate: AUC ≤ 0.60 on
+descriptions, on names and on teacher embeddings.
+
+### `decoys` on every tool slot
+
+Each of the nine `tools` slots may carry `"decoys"`: 2–4 siblings, each a
+`name` and a `desc`. A decoy is a tool **with exactly the real tool's
+arguments and return type** (the compiler copies them) that does something
+**different** to the same record, something a request in this domain could
+plausibly ask for instead. Only the description says which one the request
+means. Decoys are never the right answer in normal generation. The flip probe
+swaps one in as the answer (see below).
+
+```jsonc
+"delete_child": {"name": "delSeg", "desc": "del seg rec, no undo",
+                 "verbs": ["delete {obj}", "wipe {obj} from the schedule"],
+                 "decoys": [
+                   {"name": "voidSegFare", "desc": "void all fares on seg, no undo",
+                    "verbs": ["void the fares on {obj}", "kill fares for {obj}"]},
+                   {"name": "purgeSegPax", "desc": "wipe pax list off seg, no undo",
+                    "verbs": ["purge the pax list on {obj}", "clear pax off {obj}"]}
+                 ]}
+```
+
+What each slot's decoys must fit (the signature is fixed; the action is not):
+
+| slot | takes → returns, properties | a decoy is… |
+|---|---|---|
+| list_child | () → every child record, read-only | another read-only listing of the child records (e.g. "list segments with open fault reports") |
+| get_child | (child id) → that child record, read-only | another read-only fetch of one child record |
+| list_parent / get_parent | the same, for the parent | the same, for the parent |
+| delete_child | (child id) → nothing, mutates, irreversible | another irreversible destructive action on the child |
+| set_enum | (child id, a value of the enum field) → the child, mutates | another mutation that takes a value of **that same field** |
+| set_bool | (child id) → the child, mutates | another one-argument change to the child |
+| set_ref | (child id, parent id) → the child, mutates | another action linking the child to a parent |
+| send | (parent id, message text) → nothing, external, irreversible | another outbound message or contact to the parent |
+
+**Request templates on flip slots.** Decoys of `delete_child` and `set_bool`
+carry `verbs` (≥2, each with `{obj}`); `set_ref` decoys carry `verbs` with
+`{obj}` and `{to_name}` (the slot's `to_template` is reused); `send` decoys
+carry `child_verbs` (with `{obj}`), `direct_verbs` (with `{name}`) and
+`pair_verbs` (bare verbs), ≥2 each. They are how the flip probe writes a
+request for the decoy's action.
+
+### `v2`: the nine generic tools, in the theme's own voice
+
+```jsonc
+"v2": {
+  "create":      {"name": ..., "desc": ..., "decoys": [...]},  // (parent id, [title], [enum value]) -> new child, mutates
+  "list_notes":  {...},   // (child id) -> the notes on that child, read-only
+  "add_note":    {...},   // (child id, text, [title]) -> the new note, mutates
+  "update_note": {...},   // (child id, note id, text, [title]) -> the note, mutates
+  "delete_note": {...},   // (child id, note id) -> nothing, mutates, irreversible
+  "set_image":   {...},   // (child id, image URL) -> the child, mutates
+  "writer":      {...},   // (brief, list of children) -> generated text, external
+  "image":       {...},   // (prompt, [style]) -> an image URL, external
+  "search":      {...}    // (question) -> a passage of text, read-only
+}
+```
+
+All nine keys, or none. Each `desc` says what the default one says, in this
+theme's `desc_style`. Each `name` is in the theme's naming style. The block
+also takes `decoys` (2–4, `name` + `desc`, no request templates), subject to
+the table's rule: same arguments and return, different action.
+
+### Rules for decoy authors
+
+- **Same granularity: change *what*, never *how much*.** The pilot
+  (2026-09-23, four themes) failed the audit at description AUC 0.75 and
+  name AUC 0.90 for one reason: every real tool was the plain canonical
+  action (`listSubmissions`, "list all the submissions") and every decoy a
+  specialisation of it (`listOverdueReviews`, "list the submissions with
+  overdue reports"). An extra qualifier, an extra word in the name, a
+  narrower object — each is a "decoy" feature on its own. So a decoy
+  swaps the content of the real line and keeps its shape. Same
+  number of words in the name. The same sentence frame, with the key noun
+  phrase or verb exchanged for a sibling one of the same breadth: a parallel
+  collection, source, record part or action ("list every lesson in the
+  course library" / "… in the template gallery" / "… in the review
+  queue"). Nothing narrower.
+- **You may re-word the real line** (its `name` and `desc`, never its
+  `verbs`) so the set reads as interchangeable, as long as it still says
+  exactly what the tool does. Names have never been model input before spec
+  0.8.0, so renaming a real tool changes no stored result. The test: shuffle
+  the real line in with its decoys and give them to someone who knows the
+  domain's words but not which tool the compiler wires up. If the real one
+  is the plainest, shortest or most general, rewrite it or the decoys until
+  nothing gives it away.
+- **Same voice as the real line.** A decoy's `desc` is in the theme's
+  `desc_style` and within about a third of the length of the real description
+  it sits beside. Its `name` follows the real names' style (case, word
+  order, abbreviations). If a classifier can tell the two apart by voice,
+  length or naming habit, the exam measures style and not reading.
+- **No contrast words.** Never "rather than", "instead of", "without",
+  "only", "not the", "copy of", "leaving … in place". A decoy says what it
+  does, as the real description does. It never says what it does not do or
+  which tool it is not.
+- **Domain-native.** Use the vocabulary the real descriptions use. Nothing
+  generic ("reindex", "audit queue", "featured set") unless the domain
+  really has it.
+- **A different action.** No synonym of the real tool, and nothing another
+  real tool in the theme already does. A request for the real action must not
+  also fit the decoy, and the reverse.
+- **Consistent with the properties.** A decoy of an irreversible slot is
+  irreversible, a read-only slot's decoy only reads, and a `send` decoy
+  contacts someone.
+- **Names unique** across the theme: real names, the `v2` names, every
+  decoy, and not `sum`/`avg`/`max`/`min`.
+
+`python -m data.gen.domains --validate DIR` checks structure (counts,
+uniqueness, request-template placeholders). `harness/decoy_audit.py` checks
+style, across worlds.

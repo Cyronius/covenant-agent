@@ -53,7 +53,8 @@ from __future__ import annotations
 
 import copy
 import random
-from typing import List, Optional, Tuple
+import warnings
+from typing import Dict, List, Optional, Tuple
 
 MUTATING = {"mutates", "irreversible"}
 
@@ -234,6 +235,23 @@ def _bank_key(tool: dict) -> Optional[str]:
     return key if key in DECOY_OPS else None
 
 
+_BANK_WARNED: set = set()
+
+
+def _warn_bank(world: dict, tool: dict) -> None:
+    """Once per tool: this sibling set comes from the fixed bank, whose
+    style a description-only classifier separates from real descriptions at
+    AUC 1.000 (results/R10.md section 8). Loud, because an exam built on it
+    cannot carry a reading claim."""
+    key = (world.get("name"), tool["name"])
+    if key in _BANK_WARNED:
+        return
+    _BANK_WARNED.add(key)
+    warnings.warn(f"decoys for {key[0]}.{key[1]} drawn from the template "
+                  "bank: the theme authors none (harness/decoy_audit.py "
+                  "will flag the style)", stacklevel=3)
+
+
 def decoy_world(world: dict, rng: random.Random,
                 per_tool: Tuple[int, int] = (2, 4),
                 nonsense: float = 0.15) -> Tuple[dict, List[str]]:
@@ -245,24 +263,39 @@ def decoy_world(world: dict, rng: random.Random,
     added: List[str] = []
 
     targets = [(t, k) for t in world["tools"]
-               if (k := _bank_key(t)) is not None]
+               if (k := _bank_key(t)) is not None or t.get("authored_decoys")]
     for tool, bank_key in targets:
         noun, entity = _noun_for(tool, world)
         mutating = bool(MUTATING & set(tool["effects"]))
-        bank = DECOY_OPS[bank_key]
-        verbs = rng.sample(sorted(bank), min(len(bank),
-                                             rng.randint(*per_tool)))
-        for verb in verbs:
-            # a none:STR or external:STR tool has no entity behind it, so the
-            # verb stands alone rather than dragging `_record` along
-            name = (rng.choice(NONSENSE_NAMES) if rng.random() < nonsense
-                    else (f"{verb}_{entity}" if entity else verb))
+        authored = tool.get("authored_decoys")
+        if authored:
+            # the theme's own siblings, written in its desc_style and naming
+            # style (THEME_SCHEMA.md, "Decoys"), so neither the description
+            # nor the name says which side of the twin decision is real.
+            # Opaque names are a row-level draw (`opaque_names`), never a
+            # per-decoy one: a nonsense name only decoys carry is a tell.
+            picks = rng.sample(range(len(authored)),
+                               min(len(authored), rng.randint(*per_tool)))
+            drawn = [(authored[i]["name"], authored[i]["desc"])
+                     for i in sorted(picks)]
+        else:
+            _warn_bank(world, tool)
+            bank = DECOY_OPS[bank_key]
+            verbs = rng.sample(sorted(bank), min(len(bank),
+                                                 rng.randint(*per_tool)))
+            # a none:STR or external:STR tool has no entity behind it, so
+            # the verb stands alone rather than dragging `_record` along
+            drawn = [((rng.choice(NONSENSE_NAMES) if rng.random() < nonsense
+                       else (f"{verb}_{entity}" if entity else verb)),
+                      bank[verb].format(a_noun=_article(noun), noun=noun))
+                     for verb in verbs]
+        for name, desc in drawn:
             if name in taken:
                 continue
             taken.add(name)
             decoy = {
                 "name": name,
-                "desc": bank[verb].format(a_noun=_article(noun), noun=noun),
+                "desc": desc,
                 "params": copy.deepcopy(tool["params"]),
                 "returns": tool.get("returns"),
                 "effects": list(tool["effects"]),
@@ -293,3 +326,57 @@ def decoy_world(world: dict, rng: random.Random,
             merged["tools"].append(decoy)
             added.append(name)
     return merged, added
+
+
+# Row-level opaque names (.claude/plans/description-reading.md step 1): on a
+# drawn share of rows *every* tool -- real, decoy and compute block alike --
+# is renamed to something that says nothing, so description reading stays
+# measurable on its own once names are model input (spec 0.8.0). Per-decoy
+# nonsense names (`NONSENSE_NAMES` above) only ever landed on decoys, which
+# made "has a nonsense name" a decoy tell.
+OPAQUE_STEMS = ("foo", "op_", "fn_", "x_op_", "handler_", "proc_", "task_",
+                "bar_", "do_thing_", "act_", "cmd_", "step_", "routine_",
+                "job_", "call_")
+
+
+def opaque_names(task: dict, rng: random.Random) -> Dict[str, str]:
+    """Rename every tool in a built task, in place, everywhere a tool *name*
+    is stored (context, sandbox, call log, error injection, provenance).
+    Sandbox `impl` fields are left alone: `kind`/`fn` there name an engine
+    function, not a tool. Returns the old -> new map."""
+    names = [t["name"] for t in task["context"]["tools"]]
+    new, taken = {}, set()
+    for n in names:
+        while True:
+            cand = f"{rng.choice(OPAQUE_STEMS)}{rng.randint(1, 999)}"
+            if cand not in taken:
+                break
+        taken.add(cand)
+        new[n] = cand
+    for t in task["context"]["tools"]:
+        t["name"] = new[t["name"]]
+    for t in (task.get("sandbox") or {}).get("tools", []):
+        t["name"] = new.get(t["name"], t["name"])
+    for c in (task.get("reference") or {}).get("call_log", []):
+        if c.get("name") in new:
+            c["name"] = new[c["name"]]
+    for e in task.get("error_injection") or []:
+        if isinstance(e, dict) and e.get("name") in new:
+            e["name"] = new[e["name"]]
+    prov = task.get("provenance") or {}
+    for key in ("decoys", "flip_slot_tools"):
+        if prov.get(key):
+            prov[key] = [new.get(n, n) for n in prov[key]]
+
+    def walk(o):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if k == "tool" and isinstance(v, str) and v in new:
+                    o[k] = new[v]
+                else:
+                    walk(v)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v)
+    walk(prov.get("frame"))
+    return new

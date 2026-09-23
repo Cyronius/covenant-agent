@@ -38,32 +38,115 @@
     "number": {"field": "kwh_used", "noun": "usage in kilowatt-hours", "min": 50, "max": 3000}
   },
   "tools": {
-    "list_child": {"name": "lsrdg", "desc": "list meter readings"},
-    "get_child": {"name": "getrdg", "desc": "fetch one reading by id"},
-    "list_parent": {"name": "lsacct", "desc": "list all accounts"},
-    "get_parent": {"name": "getacct", "desc": "fetch one account by id"},
-    "delete_child": {"name": "delrdg", "desc": "delete a reading rec, no undo",
-                     "verbs": ["delete {obj}", "wipe {obj} from the log"]},
+    "list_child": {"name": "lsrdgmdm", "desc": "list meter readings in MDM",
+      "decoys": [
+        {"name": "lsrdgami", "desc": "list meter readings in AMI headend"},
+        {"name": "lsrdgroute", "desc": "list meter readings in route book"},
+        {"name": "lsrdgapp", "desc": "list meter readings in customer app"}]},
+    "get_child": {"name": "getrdgrec", "desc": "fetch reading entry by id",
+      "decoys": [
+        {"name": "getrdgintv", "desc": "fetch reading intervals by id"},
+        {"name": "getrdgaudit", "desc": "fetch reading audit trail by id"},
+        {"name": "getrdgmtr", "desc": "fetch reading meter spec by id"}]},
+    "list_parent": {"name": "lsacctcis", "desc": "list all accounts in CIS",
+      "decoys": [
+        {"name": "lsacctsolar", "desc": "list all accounts in solar program"},
+        {"name": "lsacctbudget", "desc": "list all accounts in budget billing"},
+        {"name": "lsacctshut", "desc": "list all accounts in shutoff list"}]},
+    "get_parent": {"name": "getacctprof", "desc": "fetch account profile by id",
+      "decoys": [
+        {"name": "getacctbal", "desc": "fetch account balance by id"},
+        {"name": "getacctsvc", "desc": "fetch account service address by id"},
+        {"name": "getacctpay", "desc": "fetch account payment plan by id"}]},
+    "delete_child": {"name": "delrdg", "desc": "delete a reading entry, no undo",
+                     "verbs": ["delete {obj}", "wipe {obj} from the log"],
+                     "decoys": [
+                       {"name": "purgeintv", "desc": "purge a reading's intervals, no undo", "verbs": ["purge the intervals on {obj}", "wipe interval data for {obj}"]},
+                       {"name": "delphoto", "desc": "delete a reading's meter photo, no undo", "verbs": ["delete the meter photo on {obj}", "trash the photo for {obj}"]},
+                       {"name": "voidwo", "desc": "void a reading's reread order, no undo", "verbs": ["void the reread order for {obj}", "cancel the reread on {obj}"]}]},
     "set_enum": {"name": "setrdgstate",
-                 "desc": "set reading state: pending/verified/disputed",
+                 "desc": "set reading review state: pending/verified/disputed",
                  "verbs": ["mark {obj} {to_value}", "set {obj} {to_value}"],
                  "value_phrases": {"pending": "back to pending",
                                    "verified": "as verified",
-                                   "disputed": "as disputed"}},
+                                   "disputed": "as disputed"},
+                 "decoys": [
+                   {"name": "setveestate", "desc": "set reading VEE state: pending/verified/disputed"},
+                   {"name": "setrereadstate", "desc": "set reading reread state: pending/verified/disputed"},
+                   {"name": "setphotostate", "desc": "set reading photo state: pending/verified/disputed"}]},
     "set_bool": {"name": "flaganom",
                  "bool_index": 1, "value": true,
                  "desc": "flag a reading as anomalous",
-                 "verbs": ["flag {obj} as anomalous", "mark {obj} anomalous"]},
+                 "verbs": ["flag {obj} as anomalous", "mark {obj} anomalous"],
+                 "decoys": [
+                   {"name": "flagtamper", "desc": "flag a reading as tampered", "verbs": ["flag {obj} as tampered", "mark {obj} tampered"]},
+                   {"name": "flagroll", "desc": "flag a reading as rollover", "verbs": ["flag {obj} as a rollover", "mark {obj} rollover"]},
+                   {"name": "flagaccess", "desc": "flag a reading as access issue", "verbs": ["flag {obj} as an access issue", "mark {obj} access issue"]}]},
     "set_ref": {"name": "movacct",
                 "desc": "move a reading to a diff account",
                 "verbs": ["move {obj} {to_name}", "reassign {obj} {to_name}"],
-                "to_template": "to {name}"},
+                "to_template": "to {name}",
+                "decoys": [
+                  {"name": "netacct", "desc": "net-meter a reading to a diff account", "verbs": ["net-meter {obj} {to_name}", "net the export on {obj} {to_name}"]},
+                  {"name": "splitacct", "desc": "split a reading to a diff account", "verbs": ["split {obj} {to_name}", "split the usage on {obj} {to_name}"]},
+                  {"name": "subacct", "desc": "submeter a reading to a diff account", "verbs": ["submeter {obj} {to_name}", "route the submeter usage on {obj} {to_name}"]}]},
     "send": {"name": "txtacct",
              "desc": "text an account holder",
              "child_verbs": ["text the account behind {obj}",
                              "notify the account tied to {obj}"],
              "direct_verbs": ["text {name}", "send {name} a text"],
-             "pair_verbs": ["text", "notify"]}
+             "pair_verbs": ["text", "notify"],
+             "decoys": [
+               {"name": "callacct", "desc": "call an account holder", "child_verbs": ["call the account behind {obj}", "phone the account tied to {obj}"], "direct_verbs": ["call {name}", "phone {name}"], "pair_verbs": ["call", "phone"]},
+               {"name": "mailacct", "desc": "mail an account holder", "child_verbs": ["mail the account behind {obj}", "send a letter to the account tied to {obj}"], "direct_verbs": ["mail {name}", "send {name} a letter"], "pair_verbs": ["mail", "send a letter to"]},
+               {"name": "tagacct", "desc": "door-tag an account holder", "child_verbs": ["door-tag the account behind {obj}", "leave a door hanger for the account tied to {obj}"], "direct_verbs": ["door-tag {name}", "leave {name} a door hanger"], "pair_verbs": ["door-tag", "leave a door hanger for"]}]}
+  },
+  "v2": {
+    "create": {"name": "newrdg", "desc": "new reading for account",
+               "decoys": [
+                 {"name": "newreread", "desc": "new reread for account"},
+                 {"name": "newself", "desc": "new self-read for account"},
+                 {"name": "newfinal", "desc": "new final read for account"}]},
+    "list_notes": {"name": "lsrdgnotes", "desc": "list office notes on a reading",
+                   "decoys": [
+                     {"name": "lsrdgaccess", "desc": "list access notes on a reading"},
+                     {"name": "lsrdgcmts", "desc": "list reader comments on a reading"},
+                     {"name": "lsrdgwo", "desc": "list work orders on a reading"}]},
+    "add_note": {"name": "addrdgnote", "desc": "add office note to a reading",
+                 "decoys": [
+                   {"name": "addrdgaccess", "desc": "add access note to a reading"},
+                   {"name": "addrdgcmt", "desc": "add reader comment to a reading"},
+                   {"name": "addrdgwo", "desc": "add work order to a reading"}]},
+    "update_note": {"name": "chgrdgnote", "desc": "chg note on a reading, text/title",
+                    "decoys": [
+                      {"name": "ackrdgnote", "desc": "ack note on a reading, text/title"},
+                      {"name": "closerdgnote", "desc": "close note on a reading, text/title"},
+                      {"name": "fwdrdgnote", "desc": "fwd note on a reading, text/title"}]},
+    "delete_note": {"name": "delrdgnote", "desc": "del office note from a reading",
+                    "decoys": [
+                      {"name": "delrdgaccess", "desc": "del access note from a reading"},
+                      {"name": "delrdgwo", "desc": "del work order from a reading"},
+                      {"name": "delrdgcmt", "desc": "del reader comment from a reading"}]},
+    "set_image": {"name": "setrdgdial", "desc": "set dial image on a reading",
+                  "decoys": [
+                    {"name": "setrdgseal", "desc": "set seal photo on a reading"},
+                    {"name": "setrdgsite", "desc": "set site photo on a reading"},
+                    {"name": "setrdgtag", "desc": "set door tag photo on a reading"}]},
+    "writer": {"name": "drafttxt", "desc": "draft short msg from brief + readings",
+               "decoys": [
+                 {"name": "draftusage", "desc": "draft usage explainer from brief + readings"},
+                 {"name": "draftticket", "desc": "draft field ticket from brief + readings"},
+                 {"name": "draftoutage", "desc": "draft outage notice from brief + readings"}]},
+    "image": {"name": "genpic", "desc": "gen promo pic from prompt, ret url",
+              "decoys": [
+                {"name": "gensketch", "desc": "gen meter sketch from prompt, ret url"},
+                {"name": "gengraph", "desc": "gen usage graph from prompt, ret url"},
+                {"name": "genhanger", "desc": "gen door hanger from prompt, ret url"}]},
+    "search": {"name": "srchkb", "desc": "search CIS faq/kb w question, ret best passage",
+               "decoys": [
+                 {"name": "srchtariff", "desc": "search tariff book w question, ret best passage"},
+                 {"name": "srchregs", "desc": "search PUC rules w question, ret best passage"},
+                 {"name": "srchmtr", "desc": "search meter manuals w question, ret best passage"}]}
   },
   "sort": {
     "time_index": 0,

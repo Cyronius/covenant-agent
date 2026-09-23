@@ -51,7 +51,7 @@ def _v2_names(theme: dict) -> dict:
     the corpus sees a few spellings of the same role."""
     child = theme["child"]["entity"]
     h = sum(ord(ch) for ch in theme["domain"])
-    return {
+    names = {
         "create": f"create_{child}",
         "list_notes": f"list_{child}_notes", "add_note": f"add_{child}_note",
         "update_note": f"update_{child}_note", "delete_note": f"delete_{child}_note",
@@ -60,6 +60,38 @@ def _v2_names(theme: dict) -> dict:
         "image": ["generate_image", "make_image", "render_image"][(h // 3) % 3],
         "search": ["search_docs", "search_help", "lookup_docs"][(h // 9) % 3],
     }
+    # a theme's own `v2` block renames them in its naming style (see
+    # `_v2_text`)
+    for slot, over in (theme.get("v2") or {}).items():
+        names[slot] = over["name"]
+    return names
+
+
+# The compiler's nine generic tools, in `_v2_tools` order.
+V2_SLOTS = ("create", "list_notes", "add_note", "update_note", "delete_note",
+            "set_image", "writer", "image", "search")
+
+
+def _v2_text(theme: dict, slot: str, default: str) -> str:
+    """A generic tool's description: the theme's own, when it authors one.
+
+    The defaults are one template per slot across every world, so a
+    description-only classifier learns `Attach a note to a` as "real" from
+    the training worlds and carries it to any unseen one -- the same
+    familiarity shortcut the bank decoys handed it the other way
+    (results/R10.md section 8). A theme that authors its decoys authors
+    these too, in its own desc_style, so neither side of a twin decision is
+    recognisable as a template.
+    """
+    over = (theme.get("v2") or {}).get(slot)
+    return over["desc"] if over else default
+
+
+def _authored(slot_spec: dict | None) -> dict:
+    """The authored decoys of one tool slot, carried on the world tool so
+    `harness.decoys.decoy_world` can draw them (empty when there are none)."""
+    ds = (slot_spec or {}).get("decoys")
+    return {"authored_decoys": [dict(d) for d in ds]} if ds else {}
 
 
 def _v2_tools(theme: dict) -> list:
@@ -97,16 +129,16 @@ def _v2_tools(theme: dict) -> list:
         # THEME_SCHEMA.md's `number`)
         num = c["number"]
         defaults[num["field"]] = (num["min"] + num["max"]) // 2
-    return [
-        {"name": n["create"], "desc": f"Create a new {noun} for a {p['noun'][0]}.",
+    tools = [
+        {"name": n["create"], "desc": _v2_text(theme, "create", f"Create a new {noun} for a {p['noun'][0]}."),
          "params": create_params, "returns": f"OBJ:{child}", "effects": ["mutates"],
          "impl": {"op": "create", "entity": child, "param_fields": create_fields,
                   "defaults": defaults}},
-        {"name": n["list_notes"], "desc": f"List the notes attached to one {noun}.",
+        {"name": n["list_notes"], "desc": _v2_text(theme, "list_notes", f"List the notes attached to one {noun}."),
          "params": [idp(child, f"the {noun}")],
          "returns": f"LIST OBJ:{note}", "effects": [],
          "impl": {"op": "list_by", "entity": note, "field": child, "id_param": 0}},
-        {"name": n["add_note"], "desc": f"Attach a note to a {noun}.",
+        {"name": n["add_note"], "desc": _v2_text(theme, "add_note", f"Attach a note to a {noun}."),
          "params": [idp(child, f"the {noun}"),
                     {"name": "text", "type": "STR", "desc": "note text", "field": [note, "text"]},
                     {"name": "title", "type": "STR", "desc": "note title", "required": False,
@@ -114,7 +146,7 @@ def _v2_tools(theme: dict) -> list:
          "returns": f"OBJ:{note}", "effects": ["mutates"],
          "impl": {"op": "create", "entity": note, "param_fields": [child, "text", "title"],
                   "defaults": {"title": "Note", "text": ""}}},
-        {"name": n["update_note"], "desc": f"Change the text (and optionally the title) of one of a {noun}'s notes.",
+        {"name": n["update_note"], "desc": _v2_text(theme, "update_note", f"Change the text (and optionally the title) of one of a {noun}'s notes."),
          "params": [idp(child, f"the {noun}"), idp(note, "the note", "note"),
                     {"name": "text", "type": "STR", "desc": "new text", "field": [note, "text"]},
                     {"name": "title", "type": "STR", "desc": "new title", "required": False,
@@ -122,30 +154,33 @@ def _v2_tools(theme: dict) -> list:
          "returns": f"OBJ:{note}", "effects": ["mutates"],
          "impl": {"op": "update", "entity": note, "id_param": 1,
                   "set_from_params": {"text": 2, "title": 3}}},
-        {"name": n["delete_note"], "desc": f"Remove a note from a {noun}.",
+        {"name": n["delete_note"], "desc": _v2_text(theme, "delete_note", f"Remove a note from a {noun}."),
          "params": [idp(child, f"the {noun}"), idp(note, "the note to remove", "note")],
          "returns": None, "effects": ["mutates", "irreversible"],
          "impl": {"op": "delete", "entity": note, "id_param": 1}},
-        {"name": n["set_image"], "desc": f"Set the image shown on a {noun}.",
+        {"name": n["set_image"], "desc": _v2_text(theme, "set_image", f"Set the image shown on a {noun}."),
          "params": [idp(child, f"the {noun}"),
                     {"name": "image", "type": "STR", "desc": "image URL", "field": [child, "image"]}],
          "returns": f"OBJ:{child}", "effects": ["mutates"],
          "impl": {"op": "update", "entity": child, "id_param": 0, "set_from_params": {"image": 1}}},
-        {"name": n["writer"], "desc": "Write a short message from a brief (what to say, in the requester's words) and the records it should mention. Returns the text.",
+        {"name": n["writer"], "desc": _v2_text(theme, "writer", "Write a short message from a brief (what to say, in the requester's words) and the records it should mention. Returns the text."),
          "params": [{"name": "brief", "type": "STR", "desc": "what to write"},
                     {"name": "data", "type": f"LIST OBJ:{child}", "desc": f"{c['noun'][1]} the message is about"}],
          "returns": "STR", "effects": ["external"],
          "impl": {"op": "external", "kind": "write_text"}},
-        {"name": n["image"], "desc": "Generate an image from a prompt and return its URL.",
+        {"name": n["image"], "desc": _v2_text(theme, "image", "Generate an image from a prompt and return its URL."),
          "params": [{"name": "prompt", "type": "STR", "desc": "what the image shows"},
                     {"name": "style", "type": "STR", "desc": "visual style", "required": False}],
          "returns": "STR", "effects": ["external"],
          "impl": {"op": "external", "kind": "generate_image"}},
-        {"name": n["search"], "desc": "Search the help docs and knowledge base with a question; returns the best passage.",
+        {"name": n["search"], "desc": _v2_text(theme, "search", "Search the help docs and knowledge base with a question; returns the best passage."),
          "params": [{"name": "query", "type": "STR", "desc": "the question"}],
          "returns": "STR", "effects": [],
          "impl": {"op": "external", "kind": "search_docs"}},
     ]
+    v2 = theme.get("v2") or {}
+    return [dict(t, **_authored(v2.get(slot)))
+            for slot, t in zip(V2_SLOTS, tools)]
 
 
 def _parent_fields(theme: dict) -> dict:
@@ -154,6 +189,11 @@ def _parent_fields(theme: dict) -> dict:
     if p.get("contact_field"):
         fields[p["contact_field"]] = "STR"
     return fields
+
+
+# The theme's nine authored tool slots, in `build_world` order.
+THEME_SLOTS = ("list_child", "get_child", "list_parent", "get_parent",
+               "delete_child", "set_enum", "set_bool", "set_ref", "send")
 
 
 def build_world(theme: dict) -> dict:
@@ -213,6 +253,8 @@ def build_world(theme: dict) -> dict:
          "impl": {"op": "send", "channel": "message",
                   "param_map": ["to", "text"]}},
     ]
+    world_tools = [dict(t, **_authored(tools[slot]))
+                   for slot, t in zip(THEME_SLOTS, world_tools)]
     note = f"{child}_note"
     return {
         "name": theme["domain"], "now": NOW,
@@ -487,10 +529,127 @@ def validate_theme(theme: dict) -> None:
     assert len(names) == len(set(names)), "duplicate tool names"
     v2 = set(_v2_names(theme).values())
     assert not (v2 & set(names)), f"theme tool names collide with v2 surface: {v2 & set(names)}"
+    _validate_authored(theme)
 
 
-def register_theme(theme: dict) -> str:
+# Which slots a flip probe can swap a decoy into (data/gen/flip_probe.py),
+# and the request templates such a decoy must carry to be swappable: the
+# keys the profile reads for that slot, each template carrying the
+# placeholders the real slot's do.
+FLIP_VERBS = {
+    "delete_child": {"verbs": ("{obj}",)},
+    "set_bool": {"verbs": ("{obj}",)},
+    "set_ref": {"verbs": ("{obj}", "{to_name}")},
+    "send": {"child_verbs": ("{obj}",), "direct_verbs": ("{name}",),
+             "pair_verbs": ()},
+}
+_RESERVED_NAMES = {"sum", "avg", "max", "min"}
+
+
+def swap_roles(theme: dict, choice: dict) -> dict:
+    """The theme with, per flip slot in `choice`, sibling `choice[slot]`
+    wired up as the working tool: 0 is the tool as authored, i > 0 its
+    decoy i-1. The working tool takes the sibling's name, description and
+    request templates; every other sibling, the authored tool included,
+    becomes that slot's decoys. Structure and sandbox impl stay the slot's,
+    so a program calling the working tool is the right program for a request
+    written with its templates."""
+    t = json.loads(json.dumps(theme))
+    for slot, i in choice.items():
+        real = t["tools"][slot]
+        sibs = [{"name": real["name"], "desc": real["desc"],
+                 **{k: real[k] for k in FLIP_VERBS[slot]}}] + real["decoys"]
+        ans = sibs[i]
+        t["tools"][slot] = {**real, "name": ans["name"], "desc": ans["desc"],
+                            **{k: list(ans[k]) for k in FLIP_VERBS[slot]},
+                            "decoys": [dict(x) for j, x in enumerate(sibs)
+                                       if j != i]}
+    return t
+
+
+def role_choice(theme: dict, rng: random.Random) -> dict:
+    """Uniform twin roles: each flip slot's working tool drawn uniformly
+    from its siblings, the authored one included, so across a corpus no
+    sibling's text is likelier to be the answer than another's
+    (harness/decoy_audit.py). {} when the theme authors no flip decoys."""
+    out = {}
+    for slot in FLIP_VERBS:
+        ds = theme["tools"][slot].get("decoys") or []
+        if ds:
+            out[slot] = rng.randrange(len(ds) + 1)
+    return out
+
+
+def request_fits(request: str, slot: str, spec: dict) -> bool:
+    """Does the request carry one of this slot's request templates? Its
+    longest literal chunk, case-insensitive; a bare pair verb must appear as
+    a word. A recipe with its own fixed phrasing for the slot (the vague L9
+    requests, the fallback "let {name} know") fails this for a swapped-in
+    sibling, and the row is resampled rather than taught."""
+    import re
+    req = request.lower()
+    for key in FLIP_VERBS[slot]:
+        for tpl in spec.get(key) or []:
+            if key == "pair_verbs":
+                if re.search(rf"{re.escape(tpl.lower())}", req):
+                    return True
+                continue
+            chunks = [c.strip() for c in re.split(r"\{[a-z_]+\}", tpl.lower())]
+            lit = max(chunks, key=len) if chunks else ""
+            if lit and lit in req:
+                return True
+    return False
+
+
+def _validate_authored(theme: dict) -> None:
+    """The optional authored-decoy blocks (THEME_SCHEMA.md, "Decoys")."""
+    v2 = theme.get("v2")
+    if v2 is not None:
+        assert set(v2) == set(V2_SLOTS), \
+            f"v2 block must cover exactly {V2_SLOTS}, got {sorted(v2)}"
+        for slot, over in v2.items():
+            assert over.get("name") and over.get("desc"), \
+                f"v2.{slot} needs a name and a desc"
+    specs = [(f"tools.{k}", v) for k, v in theme["tools"].items()]
+    specs += [(f"v2.{k}", v) for k, v in (v2 or {}).items()]
+    taken = set(_v2_names(theme).values()) | {
+        v["name"] for v in theme["tools"].values()}
+    assert len(taken) == len(theme["tools"]) + len(V2_SLOTS), \
+        "v2 names collide with each other or with the theme's tools"
+    assert not (taken & _RESERVED_NAMES), \
+        f"tool names collide with the compute block: {taken & _RESERVED_NAMES}"
+    for where, spec in specs:
+        ds = spec.get("decoys")
+        if ds is None:
+            continue
+        assert 2 <= len(ds) <= 4, f"{where}: 2-4 decoys, got {len(ds)}"
+        slot = where.split(".", 1)[1]
+        for d in ds:
+            assert d.get("name") and d.get("desc"), \
+                f"{where}: every decoy needs a name and a desc"
+            assert d["name"] not in taken | _RESERVED_NAMES, \
+                f"{where}: decoy name {d['name']!r} is taken"
+            taken.add(d["name"])
+            if where.startswith("tools.") and slot in FLIP_VERBS:
+                for key, holes in FLIP_VERBS[slot].items():
+                    vs = d.get(key)
+                    assert vs and len(vs) >= 2, \
+                        f"{where}: decoy {d['name']!r} needs >=2 {key}"
+                    for v in vs:
+                        for h in holes:
+                            assert h in v, \
+                                f"{where}: {d['name']!r} {key} {v!r} lacks {h}"
+
+
+# domain -> the theme as authored, for anything that re-registers a variant of
+# it (`role_theme`, data/gen/flip_probe.py) and has to put it back
+THEMES: dict = {}
+
+
+def register_theme(theme: dict, record: bool = True) -> str:
     name = theme["domain"]
+    if record:
+        THEMES[name] = theme
     existing = worlds_registry.WORLDS.get(name)
     if existing is not None and existing.get("post_hook"):
         # a CRUD theme cannot stand in for a world whose rules live in an
@@ -578,7 +737,26 @@ def main():
                     help="register every theme in DIR and smoke-test all "
                          "11 levels per domain")
     ap.add_argument("--attempts", type=int, default=80)
+    ap.add_argument("--check", nargs="+", metavar="FILE",
+                    help="load, validate and compile these theme files only "
+                         "(no smoke test): the quick check for authoring")
     args = ap.parse_args()
+    if args.check:
+        bad = 0
+        for f in args.check:
+            try:
+                theme = load_theme(Path(f))
+                build_world(theme)
+                build_profile(theme)
+                n = sum(len(v.get("decoys") or []) for v in
+                        list(theme["tools"].values())
+                        + list((theme.get("v2") or {}).values()))
+                print(f"OK     {f}: {n} decoys, v2 "
+                      f"{'authored' if theme.get('v2') else 'default'}")
+            except Exception as e:  # noqa: BLE001
+                bad += 1
+                print(f"REJECT {f}: {e}")
+        raise SystemExit(1 if bad else 0)
     if not args.validate:
         ap.error("--validate DIR required")
     passed, failed = [], []
