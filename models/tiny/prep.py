@@ -21,6 +21,7 @@ import json
 import pickle
 import random
 import re
+from collections import Counter
 from pathlib import Path
 
 import torch
@@ -460,6 +461,22 @@ def main():
         ho = load(Path(args.holdout_corpus),
                   limit=args.holdout_limit or args.limit)
         ho_worlds = sorted({e.world for e in ho})
+        # A combined holdout is the plain and decoyed halves of the SAME
+        # tasks, so the decoyed half has to be re-identified on the way in
+        # (`+decoy`, results/R9.md §7). Assembling it with a plain `cat`
+        # leaves every id twice, and nothing downstream notices: the cached
+        # row and the row a scorer looks up by that id are then different
+        # tasks with different tool counts, which reads as a broken encoder
+        # rather than a broken corpus. Cost of finding this the slow way:
+        # one cache rebuild.
+        dupes = Counter(e.task_id for e in ho)
+        repeated = [i for i, n in dupes.items() if n > 1]
+        if repeated:
+            raise SystemExit(
+                f"--holdout-corpus has {len(repeated)} ids more than once, "
+                f"e.g. {repeated[:3]}. A combined plain+decoyed holdout must "
+                "suffix the decoyed half's ids (`+decoy`) -- see "
+                "results/R9.md section 7 for the assembly.")
         overlap = sorted({e.world for e in ex} & set(ho_worlds))
         if overlap:
             raise SystemExit(

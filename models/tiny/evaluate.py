@@ -238,11 +238,31 @@ def score(args):
     calls = Counter()
     passes = []
     results = []
+    from corpus import _replay
     for g in gen:
-        row = by_id.get(g["task_id"])
+        # A paused task is cached as one row per segment, `<id>#s<k>` (plan
+        # step 4), while rows.pkl is keyed by the whole task. Looking the
+        # segment id up directly misses, and this used to `continue` with no
+        # counter: every continuation in the ho42_reg run -- 183 paused tasks,
+        # 366 rows -- scored as nothing, and the holdout number silently
+        # became single-segment-only. Which is the measurement the cache was
+        # rebuilt to make.
+        base_id, _, seg_part = g["task_id"].partition("#s")
+        seg_idx = int(seg_part) if seg_part else 0
+        row = by_id.get(base_id)
         if row is None:
+            stats["unscorable"] += 1
             continue
+        segments = row["reference"]["segments"]
         ctx = TaskContext.from_json(row["context"])
+        if seg_idx:
+            # a continuation compiles against the context its PAUSE left
+            # behind, registers and all
+            starts = _replay(row, segments)
+            if starts is None:
+                stats["sandbox_error"] += 1
+                continue
+            ctx = starts[seg_idx][0]
         res = build(g["program"], ctx)
         stats["n"] += 1
         stats["parse"] += bool(res.parse_ok)
@@ -260,7 +280,15 @@ def score(args):
         goal = False
         if res.compile_ok:
             try:
-                m = run_task(row, lambda *a, **k: g["program"])
+                # the whole task, with this segment's generation in its own
+                # place and the reference in the others
+                def planner(request, pctx, k, registers, _t=g["program"],
+                            _segs=segments, _at=seg_idx):
+                    if k >= len(_segs):
+                        return None
+                    return _t if k == _at else _segs[k]
+
+                m = run_task(row, planner)
                 goal = bool(m.get("goal_success"))
                 # Family B: `goal` cannot see a decoy on an abstain task --
                 # the decoy's empty return is the same observation the real
@@ -287,6 +315,14 @@ def score(args):
     print(f"  exact    {stats['exact']/n:6.1%}")
     if stats["sandbox_error"]:
         print(f"  sandbox errors {stats['sandbox_error']} (not model failures)")
+    if stats["unscorable"]:
+        print(f"  unscorable {stats['unscorable']} (generated rows whose task "
+              f"is not in this split's rows.pkl -- counted, never dropped "
+              f"quietly)")
+    segs = sum(1 for g in gen if "#s" in g["task_id"])
+    if segs:
+        print(f"  of the {stats['n']} scored, {segs} are segments of a paused "
+              f"task")
     if stats["decoyed"]:
         print(f"  decoy called {stats['decoy_called']/stats['decoyed']:6.1%} "
               f"of {stats['decoyed']} decoyed tasks  (a signature-identical "
