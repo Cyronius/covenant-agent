@@ -56,7 +56,7 @@ The plan's first gate is the three L10 curriculum tasks passing end to end,
 "does the continuation work, not accuracy" — they were filtered out of this
 model's training and evaluation entirely.
 
-A 0.9M-parameter model (d=128, 2+2 layers), trained on CPU for 400 epochs over
+A 1.2M-parameter model (d=128, 2+2 layers; 1,214,774 per its config), trained on CPU for 400 epochs over
 the 48-task curriculum, which is **memorization, not generalization** — the
 point is the mechanism:
 
@@ -118,13 +118,13 @@ the same measurement.
 
 Before spending the $0.37, the same question on CPU. A 3,000-row themed
 corpus generated for this (26.2% of its rows two-segment: L5 156/437, L7
-64/327, L10 437/437, L11 128/436), six worlds carved out, a 0.9M model, and
+64/327, L10 437/437, L11 128/436), six worlds carved out, a 1.6M model, and
 `play.py` driving the real loop over the **170 tasks of the six worlds the
 model never saw** — 55 of them paused.
 
 Scored at epoch 3 of 14, which is why the absolute numbers are low (R9's full
-run reads 70.4% on unseen worlds; this is a fifth the width and a quarter of
-the schedule):
+run reads 70.4% on unseen worlds; this is half the width, a sixth of the
+parameters and a quarter of the schedule):
 
 | | goal |
 |---|---|
@@ -159,7 +159,7 @@ two-segment tasks are harder *for a trained planner* or only for this one.
 
 ## 5. What this does not say
 
-- **Nothing about accuracy.** A 0.9M model memorizing 41 examples says the
+- **Nothing about accuracy.** A 1.2M model memorizing 41 examples says the
   data path and the architecture work. It says nothing about whether a trained
   planner uses the register region well, which is gate 2.
 - The register rendering is a **choice**, not a measurement: ids and a count
@@ -170,3 +170,75 @@ two-segment tasks are harder *for a trained planner* or only for this one.
   with more rather than truncating.
 - Nothing about the browser. Latency doubles per pause, which the plan sizes
   at a second or two for the 0.8B and less for this model, unmeasured here.
+
+## 6. The same CPU run at epoch 10 (2026-09-22, free)
+
+§4 scored this run's checkpoint at epoch 3; the session that ran it ended at
+epoch 10 of 14 with `best.pt` saved, and this section scores that. Same corpus,
+same six held-out worlds, same 170 tasks. R10 (`results/R10.md`) has since run
+the real-size model on the 42-world holdout; read this as the small model's
+side of that comparison.
+
+Gate 2 still needs a pod. What a laptop can say ahead of it: train the same
+architecture on a **themed** corpus rather than the 48-task curriculum, hold
+six worlds out, and score the held-out tasks through the real loop. That is
+generalisation rather than memorisation, at a size where generalisation is
+not expected to be good — the point is the shape of the failure, not the
+level.
+
+**The run.** 3,000 themed rows -> 3,785 examples (785 two-segment), 104
+worlds, six held out; `ar` arm, seed 0, batch 16, 1.64M parameters. The
+session that launched it died at **epoch 10 of 14** with `val_loss` still
+falling (0.0559 -> 0.0540 -> 0.0495), so every number below is a floor.
+Scored with `play.py` over 170 held-out-world tasks, 55 of which pause.
+No crashes; parse 165/170, compile 126/170.
+
+| | tasks | goal |
+|---|---|---|
+| one-segment | 115 | **60.0%** |
+| two-segment | 55 | **47.3%** |
+
+**The aggregate gap understates it, and gate 2's own wording says why** —
+"within five points of one-segment tasks *of the same level*". L3 is
+one-segment-only and scores 2/22, dragging the one-segment side down; L10 is
+two-segment-only and has no comparator. Within a level:
+
+| level | one-segment | two-segment | gap |
+|---|---|---|---|
+| L5 | 56.2% | 28.6% | -27.6 |
+| L7 | 68.8% | 50.0% | -18.8 |
+| L11 | 100% | 50.0% | -50.0 |
+
+**The finding is underneath that number: the model mostly does not pause.**
+Of 55 paused tasks, 23 got a second segment, and **21 of those 23 are L10**.
+On the three levels 3b added, it pauses 2 times out of 28 — L5 0/14, L7 1/4,
+L11 1/10. L10 is the pre-3b recipe (`sample_pause`, `programs.py:767`), where
+the pause is structural: cut a filter-then-act program after the filter. The
+data-dependent pause — observe the value, *then* choose the branch — is what
+does not survive to an unseen world here.
+
+Splitting the two-segment column by whether it actually paused:
+
+| | count |
+|---|---|
+| paused and reached the goal | **16** |
+| paused, missed the goal | 7 |
+| never paused, reached the goal anyway | **10** |
+| never paused, missed the goal | 22 |
+
+So 10 of the 26 two-segment "passes" are one-shot programs that skipped the
+observation and were right anyway — the L11 shortcut, on a row where the
+record happened to exist. The mechanism carried 16 of 55.
+
+**What it does establish.** Sixteen tasks on worlds the model had never seen
+went through the whole loop: wrote a first segment, paused, had the sandbox
+bind real registers, read them back out of the register region, and wrote a
+correct continuation. Gate 1 was three memorised curriculum tasks. This is
+the same mechanism surviving to unseen worlds, which is more than gate 1
+claimed.
+
+**What it does not.** Whether 2-of-28 on the 3b levels is a size problem or a
+corpus problem. In this 3,000-row corpus 26.2% of rows pause and 56% of those
+(437 of 785) are L10, so "the model rarely pauses" and "the corpus rarely asks
+it to, except in one shape" are not separated by this run. R10 §3 reads 35 of
+96 at 9.38M parameters on 27,000 rows — size and data moved together there too.
