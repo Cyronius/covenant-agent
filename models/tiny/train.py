@@ -32,7 +32,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 import quant
 from model import Config, build_model, mask_canvas
-from prep import STRUCT_KEYS
+from prep import STRUCT_KEYS, cache_keys
 from tok import OutVocab
 
 MASK_ID, PAD_ID = 1, 0
@@ -64,19 +64,23 @@ def load_split(cache: Path, name: str, binding: str, limit: int | None = None) -
         empty = {"reg_tok": torch.zeros((n, 0, d["tool_tok"].size(2)),
                                         dtype=d["tool_tok"].dtype),
                  "n_reg_bound": torch.zeros(n, dtype=d["n_tool"].dtype)}
-        cols = tuple(d[k] if k in d else empty[k] for k in STRUCT_KEYS)
+        # a split cache (description-reading step 2) carries more columns
+        keys = cache_keys(d)
+        cols = tuple(d[k] if k in d else empty[k] for k in keys)
     if limit:
         cols = tuple(t[:limit].clone() for t in cols)
-    return TensorDataset(*cols)
+    ds = TensorDataset(*cols)
+    ds.keys = STRUCT_KEYS if binding == "flat" else keys
+    return ds
 
 
-def unpack(batch, binding: str, out_vocab: int):
+def unpack(batch, binding: str, out_vocab: int, keys=STRUCT_KEYS):
     """A batch from the loader -> (inputs dict, target canvas)."""
     if binding == "flat":
         src, pad, tgt, sym = batch
         sym = sym if sym.size(1) == out_vocab else None
         return {"src": src, "pad": pad, "sym": sym}, tgt
-    inputs = dict(zip(STRUCT_KEYS, batch))
+    inputs = dict(zip(keys, batch))
     tgt = inputs.pop("tgt").long()
     return inputs, tgt
 
@@ -106,16 +110,66 @@ def shift_right(tgt: torch.Tensor, bos: int) -> torch.Tensor:
     return torch.cat([torch.full_like(tgt[:, :1], bos), tgt[:, :-1]], dim=1)
 
 
+def called_tools(tgt: torch.Tensor, n_kw: int, max_tool: int) -> torch.Tensor:
+    """(B, max_tool) bool: which of the row's tools its reference calls --
+    the positives of the contrastive loss, straight from the canvas."""
+    t = tgt.long() - n_kw
+    ok = (t >= 0) & (t < max_tool)
+    out = torch.zeros(tgt.size(0), max_tool, dtype=torch.bool, device=tgt.device)
+    rows = torch.arange(tgt.size(0), device=tgt.device).unsqueeze(1).expand_as(t)
+    out[rows[ok], t[ok]] = True
+    return out
+
+
+def stage_losses(model, mem, inputs, tgt, teacher=None) -> dict:
+    """The two losses kept on from pretraining (plan §3), for the
+    description and name stages: contrastive (the request toward the tools
+    its reference calls, away from every other tool of the task, twins
+    included) and relational distillation (the stage's cosines among the
+    request and the task's tools matched to the teacher's)."""
+    from stages import multi_positive_nce, relational_loss
+    c = model.c
+    st = mem.stage
+    live = torch.arange(c.max_tool, device=tgt.device)[None] < inputs["n_tool"].long()[:, None]
+    pos = called_tools(tgt, c.n_kw, c.max_tool)
+    out = {}
+    s = model.stage_scale.exp().clamp(max=100)
+    for part in ("desc", "name"):
+        q = F.normalize(st[f"q_{part}"], dim=-1)
+        k = F.normalize(st[part], dim=-1)
+        out[f"nce_{part}"] = multi_positive_nce(s * torch.einsum("bw,bmw->bm", q, k),
+                                                pos, live)
+        if teacher is not None and f"t_{part}" in inputs:
+            idx = inputs[f"t_{part}"].long()
+            ridx = inputs["t_req"].long()
+            tv = teacher[idx.clamp(min=0)]
+            tq = teacher[ridx.clamp(min=0)].unsqueeze(1)
+            vec = torch.cat([st[f"q_{part}"].unsqueeze(1), st[part]], 1)
+            tt = torch.cat([tq, tv], 1)
+            lv = torch.cat([(ridx >= 0).unsqueeze(1), live & (idx >= 0)], 1)
+            out[f"rel_{part}"] = relational_loss(vec, tt, lv)
+    return out
+
+
 def batch_loss(model, inputs, tgt, arm: str, generator=None, pad_weight: float = 1.0,
-               loops: int | None = None):
+               loops: int | None = None, aux: dict | None = None):
     """Returns (loss, n_predicted, logits, scored_mask).
 
     `loops` overrides the configured loop count for this batch, which is how
     `--rand-loops` trains one checkpoint to serve every effort setting.
+    `aux` ({"nce": w, "rel": w, "teacher": table}) adds the split encoder's
+    stage losses to the program loss; the parts land in aux["last"].
     """
+    mem = None
+    extra = 0.0
+    if aux and getattr(model.c, "split", False) and (aux.get("nce") or aux.get("rel")):
+        mem = model.encode_inputs(inputs)
+        parts = stage_losses(model, mem, inputs, tgt, aux.get("teacher"))
+        extra = sum(aux.get(k.split("_")[0], 0.0) * v for k, v in parts.items())
+        aux["last"] = {k: float(v) for k, v in parts.items()}
     if arm == "diffusion":
         canvas, loss_mask, _ = mask_canvas(tgt, MASK_ID, generator)
-        logits = model.decode(inputs, canvas, loops=loops)
+        logits = model.decode(inputs, canvas, loops=loops, mem=mem)
         # Loss only on the slots that were hidden. The visible ones are free
         # and scoring them would let the model earn reward for copying.
         y = tgt[loss_mask]
@@ -130,8 +184,8 @@ def batch_loss(model, inputs, tgt, arm: str, generator=None, pad_weight: float =
             loss = (per * w).sum() / w.sum().clamp(min=1e-6)
         else:
             loss = per.mean()
-        return loss, int(loss_mask.sum()), logits, loss_mask
-    logits = model.decode(inputs, shift_right(tgt, bos=MASK_ID), loops=loops)
+        return loss + extra, int(loss_mask.sum()), logits, loss_mask
+    logits = model.decode(inputs, shift_right(tgt, bos=MASK_ID), loops=loops, mem=mem)
     # Padding slots after the program end carry no information; scoring
     # them would reward predicting PAD forever. The diffusion arm keeps
     # them because knowing where a program stops is part of its job, so
@@ -139,14 +193,14 @@ def batch_loss(model, inputs, tgt, arm: str, generator=None, pad_weight: float =
     keep = tgt != PAD_ID
     keep[:, 1:] |= (tgt[:, :-1] != PAD_ID) & (tgt[:, 1:] == PAD_ID)
     loss = F.cross_entropy(logits[keep], tgt[keep])
-    return loss, int(keep.sum()), logits, keep
+    return loss + extra, int(keep.sum()), logits, keep
 
 
 # -- evaluation -----------------------------------------------------------
 
 @torch.no_grad()
 def evaluate(model, loader, arm, binding, kind_of, device, out_vocab, seed=1234,
-             pad_weight=1.0) -> dict:
+             pad_weight=1.0, keys=STRUCT_KEYS) -> dict:
     """Validation loss plus per-slot-kind accuracy.
 
     `kind_of(ids)` maps a tensor of canvas ids to kind indices 0..4.
@@ -164,7 +218,7 @@ def evaluate(model, loader, arm, binding, kind_of, device, out_vocab, seed=1234,
     chance = defaultdict(float)
     for batch in loader:
         batch = [t.to(device) for t in batch]
-        inputs, tgt = unpack(batch, binding, out_vocab)
+        inputs, tgt = unpack(batch, binding, out_vocab, keys)
         loss, k, logits, scored = batch_loss(model, inputs, tgt, arm, g, pad_weight)
         tot += loss.item() * k
         n += k
@@ -255,6 +309,33 @@ def main():
     ap.add_argument("--pointer", action="store_true",
                     help="flat only: decide symbol slots by pointing at the input")
     ap.add_argument("--dropout", type=float, default=0.1)
+    # description-reading plan step 2 / step 4
+    ap.add_argument("--pack", action="store_true",
+                    help="run only occupied line slots, bucketed by length "
+                         "(output-identical; saves the 88%% padding)")
+    ap.add_argument("--split", action="store_true",
+                    help="the split encoder: signature, description and name "
+                         "stages, gated at the pointer. Needs a --split cache")
+    ap.add_argument("--sig-w", type=int, default=128)
+    ap.add_argument("--sig-layers", type=int, default=2)
+    ap.add_argument("--desc-w", type=int, default=256)
+    ap.add_argument("--desc-layers", type=int, default=4)
+    ap.add_argument("--name-w", type=int, default=128)
+    ap.add_argument("--name-layers", type=int, default=2)
+    ap.add_argument("--stage-pool", choices=["cls", "mean"], default="cls")
+    ap.add_argument("--stages-from", default=None, metavar="PT",
+                    help="description and name stage weights from "
+                         "stage_pretrain.py")
+    ap.add_argument("--freeze-stages", action="store_true",
+                    help="keep the loaded stages fixed (arm SPf)")
+    ap.add_argument("--stage-lr-mult", type=float, default=1.0,
+                    help="learning-rate multiplier on the description and "
+                         "name stages (arm SPt uses < 1)")
+    ap.add_argument("--lam-nce", type=float, default=0.0,
+                    help="weight of the stages' contrastive loss")
+    ap.add_argument("--lam-rel", type=float, default=0.0,
+                    help="weight of the stages' relational distillation loss "
+                         "(needs teacher.pt in the cache)")
     ap.add_argument("--pad-weight", type=float, default=1.0,
                     help="weight on padding slots in the diffusion loss")
     ap.add_argument("--limit-train", type=int, default=None,
@@ -312,7 +393,15 @@ def main():
             in_pad=meta["in_pad"], max_line=meta["max_line"], max_req=meta["max_req"],
             n_kw=layout.n_kw, max_tool=layout.max_tool, max_field=layout.max_field,
             max_const=layout.max_const, n_reg=layout.n_reg,
+            pack=args.pack, split=args.split,
+            sig_w=args.sig_w, sig_layers=args.sig_layers, desc_w=args.desc_w,
+            desc_layers=args.desc_layers, name_w=args.name_w,
+            name_layers=args.name_layers, stage_pool=args.stage_pool,
+            max_sig=meta.get("max_sig", 48), max_desc=meta.get("max_desc", 64),
+            max_name=meta.get("max_name", 16),
         )
+        if args.split and not meta.get("split"):
+            raise SystemExit("--split needs a cache built with prep.py --split")
         kind_of = layout.kind_tensor
         if args.pointer:
             raise SystemExit("--pointer is the flat binding's head; structural always points")
@@ -321,7 +410,20 @@ def main():
     if binding == "flat" and args.pointer:
         model.set_symbol_ids([i for i, t in enumerate(ov.itos)
                               if re.fullmatch(r"[TFCSNBDI]\d+", t)])
+    if args.split and args.stages_from:
+        from stage_pretrain import load_stages
+        load_stages(model, args.stages_from)
+    if args.freeze_stages:
+        for p_ in model.stage_params():
+            p_.requires_grad_(False)
+        model.frozen_stages = True
     model = model.to(device)
+    aux = None
+    if args.split and (args.lam_nce or args.lam_rel):
+        teacher = None
+        if args.lam_rel:
+            teacher = torch.load(cache / "teacher.pt")["table"].float().to(device)
+        aux = {"nce": args.lam_nce, "rel": args.lam_rel, "teacher": teacher}
 
     train_ds = load_split(cache, "train", binding, args.limit_train)
     val_ds = load_split(cache, "val", binding, args.limit_val)
@@ -329,7 +431,16 @@ def main():
     val_dl = DataLoader(val_ds, batch_size=args.batch)
 
     steps = len(train_dl) * args.epochs
-    opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01,
+    if args.split:
+        stage_ids = {id(p_) for p_ in model.stage_params()}
+        groups = [{"params": [p_ for p_ in model.parameters()
+                              if id(p_) not in stage_ids and p_.requires_grad]},
+                  {"params": [p_ for p_ in model.stage_params() if p_.requires_grad],
+                   "lr": args.lr * args.stage_lr_mult}]
+        groups = [g_ for g_ in groups if g_["params"]]
+    else:
+        groups = model.parameters()
+    opt = torch.optim.AdamW(groups, lr=args.lr, weight_decay=0.01,
                             betas=(0.9, 0.95))
 
     def lr_at(step):
@@ -366,7 +477,9 @@ def main():
 
     def eval_and_log(step, epoch, t0):
         rec = evaluate(model, val_dl, args.arm, binding, kind_of, device, out_vocab,
-                       pad_weight=args.pad_weight)
+                       pad_weight=args.pad_weight, keys=val_ds.keys)
+        if aux and aux.get("last"):
+            rec.update({f"train_{k}": v for k, v in aux["last"].items()})
         rec = {"step": step, "epoch": epoch, **rec, "secs": time.time() - t0}
         log.write(json.dumps(rec) + "\n")
         log.flush()
@@ -380,11 +493,12 @@ def main():
     for epoch in range(args.epochs):
         for batch in train_dl:
             batch = [t.to(device) for t in batch]
-            inputs, tgt = unpack(batch, binding, out_vocab)
+            inputs, tgt = unpack(batch, binding, out_vocab, train_ds.keys)
             loops = (int(torch.randint(1, args.rand_loops + 1, (1,)).item())
                      if args.rand_loops else None)
             loss, k, _, _ = batch_loss(model, inputs, tgt, args.arm,
-                                       pad_weight=args.pad_weight, loops=loops)
+                                       pad_weight=args.pad_weight, loops=loops,
+                                       aux=aux)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()

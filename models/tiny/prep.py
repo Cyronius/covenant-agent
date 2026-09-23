@@ -34,17 +34,51 @@ CACHE = Path(__file__).parent / "data_cache"
 # Column order of the structural tensors, as train.py's TensorDataset sees them.
 STRUCT_KEYS = ("tool_tok", "field_tok", "const_tok", "reg_tok", "req_tok",
                "n_tool", "n_field", "n_const", "n_reg_bound", "adj", "tgt")
+# The split encoder's extra columns (.claude/plans/description-reading.md
+# step 2), present only in a cache built with --split: each tool line's
+# signature, description and name as separate token rows, and indices into
+# the teacher's embedding table (teacher.pt) for the two extra losses.
+SPLIT_KEYS = ("tool_sig_tok", "tool_desc_tok", "tool_name_tok", "sig_group",
+              "t_desc", "t_name", "t_req")
+
+
+def cache_keys(d: dict) -> tuple:
+    """The column order a cache split loads in: the structural columns, then
+    whichever split columns it carries."""
+    return STRUCT_KEYS + tuple(k for k in SPLIT_KEYS if k in d)
+
+
+def compact_desc(desc: str, desc_chars: int = 60) -> str:
+    """A description's first sentence, then a cap at a word boundary."""
+    desc = desc.split(". ")[0]
+    if len(desc) > desc_chars:
+        desc = desc[:desc_chars].rsplit(" ", 1)[0]
+    return desc
 
 
 def compact_line(line: str, desc_chars: int = 60) -> str:
-    """Trim a schema line's description to its first sentence, then to a cap."""
+    """Trim a schema line's description to its first sentence, then to a cap.
+
+    60 characters is R3-R10's cap. It cuts a verbose theme's line to its
+    boilerplate ("This tool returns every turnaround task currently") and
+    the part that tells twins apart goes with it, so a cache built for the
+    description-reading arms raises it (`--desc-chars`), for every arm."""
     if " :: " in line:
         head, desc = line.split(" :: ", 1)
-        desc = desc.split(". ")[0]
-        if len(desc) > desc_chars:
-            desc = desc[:desc_chars].rsplit(" ", 1)[0]
-        line = f"{head} :: {desc}"
+        line = f"{head} :: {compact_desc(desc, desc_chars)}"
     return line
+
+
+def split_tool_line(line: str) -> tuple[str, str, str]:
+    """(signature, name, description) of one compacted tool line. The
+    signature keeps the symbol and drops the name, so it is the pre-0.8.0
+    head exactly; the name is empty when the serializer omitted it."""
+    head, _, desc = line.partition(" :: ")
+    sym, _, rest = head.partition(" ")
+    name = ""
+    if rest and not rest.startswith("("):
+        name, _, rest = rest.partition(" ")
+    return f"{sym} {rest}", name, desc
 
 
 def compact(src: str, desc_chars: int = 60) -> str:
@@ -124,7 +158,7 @@ _FIELD_REF = re.compile(r"=(F\d+)\b")
 class Lines:
     """One task's serialized context, split into the lines region A is made of."""
 
-    def __init__(self, source: str):
+    def __init__(self, source: str, desc_chars: int = 60):
         self.request = None
         self.tools: list[tuple[str, str]] = []      # (sym, line text)
         self.fields: list[tuple[str, str]] = []
@@ -153,13 +187,15 @@ class Lines:
                 raise SystemExit(f"unrecognized context line: {line!r}")
             sym = m.group(1)
             dest = {"TOOLS": self.tools, "FIELDS": self.fields, "CONSTANTS": self.consts}[section]
-            dest.append((sym, compact_line(line)))
+            dest.append((sym, compact_line(line, desc_chars)))
         if self.request is None:
             raise SystemExit("context has no REQUEST line")
 
     def edges(self) -> list[tuple[int, int]]:
         """Undirected edges over [tools..., fields...]: a tool to every field
-        its signature names, and fields of one entity to each other."""
+        its signature names, and fields of one entity to each other. Indices
+        are compact (field j is `len(tools) + j`); `layout_edges` places them
+        in the padded tensor."""
         n_t = len(self.tools)
         fid = {s: i for i, (s, _) in enumerate(self.fields)}
         out = []
@@ -181,6 +217,23 @@ class Lines:
         return out
 
 
+def layout_edges(ln: "Lines", max_tool: int) -> list[tuple[int, int]]:
+    """`ln.edges()` in the adjacency tensor's own layout, where the tool rows
+    fill `max_tool` slots and field j sits at `max_tool + j`.
+
+    Before 2026-09-23 the compact indices went into the tensor as they were,
+    which is right only when a task has exactly `max_tool` tools. It did when
+    every task had 18 (R3-R8). Since the compute block (22 tools) and the
+    decoyed holdouts (max_tool 50, then 82), a tool's edges to its fields
+    landed on *padded tool rows*, and a field's edges to its entity on tool
+    rows too: the schema graph pass of R9 and R10 linked no tool to any
+    field. Found by the packed-line equivalence check, which is the first
+    thing to notice a live row reading a padded one."""
+    n_t = len(ln.tools)
+    at = lambda k: k if k < n_t else max_tool + (k - n_t)   # noqa: E731
+    return [(at(i), at(j)) for i, j in ln.edges()]
+
+
 def _pad_ids(ids: list[int], length: int, pad: int) -> list[int]:
     return ids + [pad] * (length - len(ids))
 
@@ -196,6 +249,17 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
     N = len(examples)
 
     MR = dims["max_reg"]
+    split = bool(dims.get("split"))
+    SL, DL, NL = dims.get("max_sig", TL), dims.get("max_desc", TL), dims.get("max_name", 16)
+    if split:
+        sig_tok = torch.full((N, MT, SL), pad_id, dtype=torch.int16)
+        desc_tok = torch.full((N, MT, DL), pad_id, dtype=torch.int16)
+        name_tok = torch.full((N, MT, NL), pad_id, dtype=torch.int16)
+        # which tools of a row share a signature (the symbol aside): twins
+        # carry the same id, -1 on padding. What the twin benchmark and the
+        # contrastive loss's "twins first" read.
+        sig_group = torch.full((N, MT), -1, dtype=torch.int16)
+    teacher_texts = []                    # per kept row: (request, descs, names)
     tool_tok = torch.full((N, MT, TL), pad_id, dtype=torch.int16)
     field_tok = torch.full((N, MF, TL), pad_id, dtype=torch.int16)
     const_tok = torch.full((N, MC, TL), pad_id, dtype=torch.int16)
@@ -214,14 +278,18 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
     # Tokenize every line of every task in one batch call.
     all_lines: list[str] = []
     per_task: list[Lines] = []
+    desc_chars = dims.get("desc_chars", 60)
     for e in examples:
-        ln = Lines(e.source)
+        ln = Lines(e.source, desc_chars)
         per_task.append(ln)
         all_lines.append(ln.request)
         all_lines.extend(t for _, t in ln.tools)
         all_lines.extend(t for _, t in ln.fields)
         all_lines.extend(t for _, t in ln.consts)
         all_lines.extend(t for _, t in ln.regs)
+        if split:
+            for _, t in ln.tools:
+                all_lines.extend(split_tool_line(t))
     encs = tk.encode_batch(all_lines)
     cursor = 0
 
@@ -241,6 +309,11 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
                       len(ln.regs)):
             groups.append([enc.ids for enc in encs[cursor:cursor + count]])
             cursor += count
+        parts = []
+        if split:
+            for _, t in ln.tools:
+                parts.append(tuple(enc.ids for enc in encs[cursor:cursor + 3]))
+                cursor += 3
         if len(ln.regs) > MR:
             raise SystemExit(f"{e.task_id}: {len(ln.regs)} bound registers, "
                              f"cap is {MR}; raise --max-reg")
@@ -257,6 +330,26 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
                     raise SystemExit(f"{e.task_id}: a schema line is {len(ids)} tokens, cap is "
                                      f"{TL}; raise --max-line (prep refuses to truncate)")
 
+        for sig_ids, name_ids, desc_ids in parts:
+            for ids, cap, what in ((sig_ids, SL, "signature"), (desc_ids, DL, "description"),
+                                   (name_ids, NL, "name")):
+                if len(ids) > cap:
+                    raise SystemExit(f"{e.task_id}: a tool {what} is {len(ids)} tokens, "
+                                     f"cap is {cap}; raise --max-{what[:4]} (prep refuses "
+                                     "to truncate)")
+        for i, (sig_ids, name_ids, desc_ids) in enumerate(parts):
+            sig_tok[n, i, :len(sig_ids)] = torch.tensor(sig_ids, dtype=torch.int16)
+            desc_tok[n, i, :len(desc_ids)] = torch.tensor(desc_ids, dtype=torch.int16)
+            name_tok[n, i, :len(name_ids)] = torch.tensor(name_ids, dtype=torch.int16)
+        if split:
+            tri = [split_tool_line(t) for _, t in ln.tools]
+            gid: dict[str, int] = {}
+            for i, (sg, _, _) in enumerate(tri):
+                sig_group[n, i] = gid.setdefault(sg.split(" ", 1)[1], len(gid))
+            teacher_texts.append((ln.request, [d for _, _, d in tri],
+                                  [nm for _, nm, _ in tri]))
+        else:
+            teacher_texts.append(None)
         req_tok[n, :len(req)] = torch.tensor(req, dtype=torch.int16)
         for dest, g in zip((tool_tok, field_tok, const_tok, reg_tok), groups):
             for i, ids in enumerate(g):
@@ -264,22 +357,28 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
         n_tool[n], n_field[n], n_const[n] = len(ln.tools), len(ln.fields), len(ln.consts)
         n_reg_bound[n] = len(ln.regs)
 
-        L = len(ln.tools) + len(ln.fields)
         a = adj[n]
         a[torch.arange(MT + MF), torch.arange(MT + MF)] = True     # self, pad rows included
-        for i, j in ln.edges():
+        for i, j in layout_edges(ln, MT):
             a[i, j] = True
             a[j, i] = True
-        assert not a[:L, L:].any(), "a live line must not attend to a padded one"
+        live = torch.zeros(MT + MF, dtype=torch.bool)
+        live[:len(ln.tools)] = True
+        live[MT:MT + len(ln.fields)] = True
+        assert not a[live][:, ~live].any(), "a live line must not attend to a padded one"
 
         ids = codec.encode(e.target)          # verifies render(encode) == text
         max_len = max(max_len, len(ids))
         if len(ids) > canvas:
             # Excluded, not truncated, like MAX_PROGRAM_TOKENS. Reported by the caller.
             meta.append(None)
+            teacher_texts[-1] = None
             continue
         tgt[n, :len(ids)] = torch.tensor(ids, dtype=torch.int16)
-        meta.append({"task_id": e.task_id, "level": e.level, "world": e.world, "syms": syms})
+        meta.append({"task_id": e.task_id, "level": e.level, "world": e.world, "syms": syms,
+                     **({"opaque": "opaque-names" in (e.row.get("tags") or []),
+                         "swapped": bool((e.row.get("provenance") or {}).get("roles"))}
+                        if split else {})})
 
     keep = [i for i, m in enumerate(meta) if m is not None]
     excluded = N - len(keep)
@@ -289,14 +388,22 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
             t[idx] for t in (tool_tok, field_tok, const_tok, reg_tok, req_tok))
         n_tool, n_field, n_const, n_reg_bound, adj, tgt = (
             t[idx] for t in (n_tool, n_field, n_const, n_reg_bound, adj, tgt))
+        if split:
+            sig_tok, desc_tok, name_tok, sig_group = (
+                t[idx] for t in (sig_tok, desc_tok, name_tok, sig_group))
+        teacher_texts = [teacher_texts[i] for i in keep]
         meta = [m for m in meta if m is not None]
     d = {"tool_tok": tool_tok, "field_tok": field_tok, "const_tok": const_tok,
          "reg_tok": reg_tok, "req_tok": req_tok,
          "n_tool": n_tool, "n_field": n_field, "n_const": n_const,
          "n_reg_bound": n_reg_bound, "adj": adj, "tgt": tgt,
          "meta": meta,
+         "teacher_texts": teacher_texts,
          "stats": {"max_slots": max_len, "excluded": excluded, "kept": [examples[i] for i in keep],
                    "max_line_seen": max_line_seen, "max_req_seen": max_req_seen}}
+    if split:
+        d.update({"tool_sig_tok": sig_tok, "tool_desc_tok": desc_tok,
+                  "tool_name_tok": name_tok, "sig_group": sig_group})
     return d
 
 
@@ -314,7 +421,7 @@ def encode_one(source: str, syms: dict, tk, layout, dims: dict,
     pad_id = tk.token_to_id("<pad>")
     TL, RL, MR = dims["max_line"], dims["max_req"], dims.get("max_reg", 8)
     MT, MF, MC = layout.max_tool, layout.max_field, layout.max_const
-    ln = Lines(source)
+    ln = Lines(source, dims.get("desc_chars", 60))
     if [s for s, _ in ln.tools] != syms["tools"] \
             or [s for s, _ in ln.fields] != syms["fields"] \
             or [s for s, _ in ln.consts] != syms["consts"]:
@@ -347,13 +454,76 @@ def encode_one(source: str, syms: dict, tk, layout, dims: dict,
 
     adj = torch.zeros((1, MT + MF, MT + MF), dtype=torch.bool)
     adj[0, torch.arange(MT + MF), torch.arange(MT + MF)] = True
-    for i, j in ln.edges():
+    for i, j in layout_edges(ln, MT):
         adj[0, i, j] = True
         adj[0, j, i] = True
     out["adj"] = adj
+    if dims.get("split"):
+        caps = {"tool_sig_tok": dims["max_sig"], "tool_desc_tok": dims["max_desc"],
+                "tool_name_tok": dims["max_name"]}
+        tri = [split_tool_line(t) for _, t in ln.tools][:MT]
+        for key, j in (("tool_sig_tok", 0), ("tool_name_tok", 1), ("tool_desc_tok", 2)):
+            t = torch.full((1, MT, caps[key]), pad_id, dtype=torch.int16)
+            for i, e in enumerate(tk.encode_batch([x[j] for x in tri])):
+                ids = e.ids[:caps[key]]
+                t[0, i, :len(ids)] = torch.tensor(ids, dtype=torch.int16)
+            out[key] = t
     if device is not None:
         out = {k: v.to(device) for k, v in out.items()}
     return out
+
+
+QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
+
+
+def teacher_name(name: str) -> str:
+    """A tool name as words, for the teacher: `listSubmissions` and
+    `list_submissions` both read `list submissions`."""
+    name = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", name)
+    return " ".join(name.replace("_", " ").split()).lower()
+
+
+def teacher_tables(encoded: dict, model: str, out: Path) -> None:
+    """Embed every distinct description, name and request once with the
+    teacher (bge's CLS pooling, unit length) and give each split index
+    columns into the table: t_desc/t_name (N, max_tool), -1 on padding, and
+    t_req (N,). The table ships as teacher.pt, float16. Requests get bge's
+    query instruction, descriptions and names do not, the way the encoder
+    was trained to be used."""
+    from transformers import AutoModel, AutoTokenizer
+    texts: dict[str, int] = {}
+
+    def tid(t: str) -> int:
+        if t not in texts:
+            texts[t] = len(texts)
+        return texts[t]
+
+    for d in encoded.values():
+        N, MT = d["tool_tok"].shape[:2]
+        td = torch.full((N, MT), -1, dtype=torch.int32)
+        tn = torch.full((N, MT), -1, dtype=torch.int32)
+        tr = torch.full((N,), -1, dtype=torch.int32)
+        for n, tt in enumerate(d["teacher_texts"]):
+            if tt is None:
+                continue
+            req, descs, names = tt
+            tr[n] = tid(QUERY_PREFIX + req)
+            for i, (ds, nm) in enumerate(zip(descs, names)):
+                td[n, i] = tid(ds)
+                tn[n, i] = tid(teacher_name(nm) if nm else ds)
+        d.update({"t_desc": td, "t_name": tn, "t_req": tr})
+    order = sorted(texts, key=texts.get)
+    print(f"  teacher: embedding {len(order)} distinct texts with {model} ...", flush=True)
+    tok = AutoTokenizer.from_pretrained(model)
+    enc = AutoModel.from_pretrained(model).eval()
+    rows = []
+    with torch.no_grad():
+        for i in range(0, len(order), 128):
+            b = tok(order[i:i + 128], padding=True, truncation=True, max_length=128,
+                    return_tensors="pt")
+            rows.append(torch.nn.functional.normalize(
+                enc(**b).last_hidden_state[:, 0], dim=-1).half())
+    torch.save({"table": torch.cat(rows), "model": model}, out / "teacher.pt")
 
 
 def pick_holdout_worlds(counts: dict[str, int], n: int,
@@ -396,6 +566,23 @@ def main():
                          "program left bound; 8 covers every reference in "
                          "the tree.")
     ap.add_argument("--canvas", type=int, default=64)
+    ap.add_argument("--names", action="store_true",
+                    help="render each tool's declared name on its line "
+                         "(spec 0.8.0). Off reproduces every earlier cache")
+    ap.add_argument("--desc-chars", type=int, default=60,
+                    help="description cap after the first sentence; 60 is "
+                         "R3-R10's, which cuts verbose themes to boilerplate")
+    ap.add_argument("--split", action="store_true",
+                    help="also store each tool line's signature, description "
+                         "and name as separate token rows, for the split "
+                         "encoder (description-reading plan step 2)")
+    ap.add_argument("--max-sig", type=int, default=48)
+    ap.add_argument("--max-desc", type=int, default=64)
+    ap.add_argument("--max-name", type=int, default=16)
+    ap.add_argument("--teacher", default=None, metavar="MODEL",
+                    help="with --split: embed every distinct description, name "
+                         "and request with this encoder (unsloth/bge-small-en-"
+                         "v1.5) into teacher.pt, for the relational loss")
     ap.add_argument("--holdout-corpus", default=None, metavar="PATH",
                     help="take the holdout split from a SECOND corpus, "
                          "generated over the reserved eval worlds "
@@ -430,7 +617,7 @@ def main():
     # raises and the continuation rows vanish silently
     from sandbox import register_themes
     register_themes()
-    ex = load(Path(args.corpus), limit=args.limit)
+    ex = load(Path(args.corpus), limit=args.limit, names=args.names)
     from corpus import DROPPED_REPLAY
     if DROPPED_REPLAY:
         print("  paused tasks dropped (no honest register state): "
@@ -449,6 +636,11 @@ def main():
 
     config = {"corpus": Path(args.corpus).name, "limit": args.limit,
               "binding": args.binding, "canvas": args.canvas}
+    if args.names or args.desc_chars != 60 or args.split:
+        # recorded only when set, so a cache built without them writes the
+        # config it always wrote
+        config.update({"names": args.names, "desc_chars": args.desc_chars,
+                       "split": args.split})
 
     if args.holdout_corpus:
         # The reserved eval worlds are already unseen by construction
@@ -459,7 +651,7 @@ def main():
         # out of --corpus costs 1% per world and gave R7 and R8 an n=1
         # estimate of a claim that is about variance.
         ho = load(Path(args.holdout_corpus),
-                  limit=args.holdout_limit or args.limit)
+                  limit=args.holdout_limit or args.limit, names=args.names)
         ho_worlds = sorted({e.world for e in ho})
         # A combined holdout is the plain and decoyed halves of the SAME
         # tasks, so the decoyed half has to be re-identified on the way in
@@ -558,7 +750,7 @@ def main():
         print("training input tokenizer on schema lines and requests ...")
         texts = []
         for e in tr[:8000]:
-            ln = Lines(e.source)
+            ln = Lines(e.source, args.desc_chars)
             texts.append(ln.request)
             texts.extend(t for _, t in ln.tools + ln.fields + ln.consts
                          + ln.regs)
@@ -568,15 +760,24 @@ def main():
         tk.save(str(out / "in_tok.json"))
         dims = {"max_line": args.max_line, "max_req": args.max_req,
                 "max_reg": args.max_reg}
+        if args.split or args.desc_chars != 60:
+            dims.update({"desc_chars": args.desc_chars, "split": args.split})
+        if args.split:
+            dims.update({"max_sig": args.max_sig, "max_desc": args.max_desc,
+                         "max_name": args.max_name})
         config.update({"in_vocab": tk.get_vocab_size(), "in_pad": tk.token_to_id("<pad>"),
                        "layout": layout.to_dict(), **dims})
 
         parts = {}
         max_slots = 0
+        encoded = {}
         for name, part in (("train", tr), ("val", va), ("test", te), ("holdout", ho)):
-            if not part:
-                continue
-            d = encode_structural(part, tk, kws, layout, dims, args.canvas)
+            if part:
+                encoded[name] = encode_structural(part, tk, kws, layout, dims, args.canvas)
+        if args.split and args.teacher:
+            teacher_tables(encoded, args.teacher, out)
+        for name, d in encoded.items():
+            d.pop("teacher_texts", None)
             st = d.pop("stats")
             max_slots = max(max_slots, st["max_slots"])
             torch.save({k: v for k, v in d.items() if k != "meta"}, out / f"{name}.pt")

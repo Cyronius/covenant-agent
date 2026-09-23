@@ -59,7 +59,8 @@ class ModelPlanner:
     def __call__(self, request, ctx, seg_idx, registers):
         if seg_idx >= self.max_segments:
             return None
-        source = serialize_context(self.request, ctx, registers)
+        source = serialize_context(self.request, ctx, registers,
+                                   names=bool(self.dims.get("names")))
         self.inputs.append(source)
         inputs = encode_one(source, self.syms, self.tk, self.layout,
                             self.dims, self.device)
@@ -111,7 +112,10 @@ def main() -> int:
     keywords = load_keywords(cache / "keywords.json")
     layout = Layout.from_dict(cfg["layout"])
     dims = {"max_line": cfg["max_line"], "max_req": cfg["max_req"],
-            "max_reg": cfg.get("max_reg", 8)}
+            "max_reg": cfg.get("max_reg", 8),
+            # a split / named cache re-serializes and re-encodes the same way
+            **{k: cfg[k] for k in ("names", "split", "desc_chars", "max_sig",
+                                   "max_desc", "max_name") if k in cfg}}
     model = load_model(Path(args.ckpt), device)
 
     rows = []

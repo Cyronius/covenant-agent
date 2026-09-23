@@ -359,14 +359,27 @@ def render_register(sym: str, type_, value) -> str:
     return f"{head} {text}"
 
 
+def render_name(name: str) -> str:
+    """A declared tool name as it appears on the tool line (spec 0.8.0 §6):
+    whitespace becomes `_`, so the name stays one field of the line."""
+    return "_".join(name.split())
+
+
 def serialize_context(request: str, ctx: TaskContext,
-                      registers: dict | None = None) -> str:
+                      registers: dict | None = None,
+                      names: bool = False) -> str:
     """The model-facing input: request, then schemas, all symbolic.
 
     `registers` are the values a continuation starts from (`harness/run.py`
     hands them back after a `PAUSE`). Without them the REGISTERS section
     still lists what is bound and its type, which is what a one-shot task
     with seeded registers needs.
+
+    `names` (spec 0.8.0) renders each tool's declared name between its
+    symbol and its parameters: `T4 archive_card (I:card=F0) -> ...`. Off by
+    default, so every stored corpus and every prompt built before 0.8.0 is
+    unchanged. A name is input text only: it never binds and never appears
+    in a program -- the symbol does.
     """
     typed = is_typed(ctx)
     lines = [f"REQUEST: {request}", "TOOLS:"]
@@ -379,7 +392,8 @@ def serialize_context(request: str, ctx: TaskContext,
                 for p in t.params)
         ret = format_type(t.returns) if t.returns else "-"
         eff = effect_code(t.effects)
-        lines.append(f"{t.sym} ({ps}) -> {ret} [{eff}] :: {t.desc}")
+        nm = f" {render_name(t.name)}" if names and t.name.strip() else ""
+        lines.append(f"{t.sym}{nm} ({ps}) -> {ret} [{eff}] :: {t.desc}")
     lines.append("FIELDS:")
     for f in sorted(ctx.fields.values(), key=lambda f: int(f.sym[1:])):
         ent = f.entity or "-"

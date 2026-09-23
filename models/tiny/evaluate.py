@@ -32,7 +32,7 @@ from pathlib import Path
 import torch
 
 from model import Config, build_model
-from prep import STRUCT_KEYS
+from prep import STRUCT_KEYS, cache_keys
 from sample import Trace, ar_sample, diffusion_sample, repair, to_text
 from tok import OutVocab
 
@@ -86,7 +86,7 @@ class Split:
             if "sym" in d and getattr(model.c, "pointer", False):
                 out["sym"] = d["sym"][i:i + 1].to(self.device)
             return out
-        return {k: d[k][i:i + 1].to(self.device) for k in STRUCT_KEYS if k != "tgt"}
+        return {k: d[k][i:i + 1].to(self.device) for k in cache_keys(d) if k != "tgt"}
 
     def target(self, i: int) -> torch.Tensor:
         return self.d["tgt"][i:i + 1].long()

@@ -134,7 +134,7 @@ def detokenize(tokens: list[str]) -> str:
 
 def load(path: Path, limit: int | None = None,
          max_tokens: int = MAX_PROGRAM_TOKENS,
-         segments: bool = True) -> list[Example]:
+         segments: bool = True, names: bool = False) -> list[Example]:
     """One example per segment. A paused task becomes two rows, and the second
     one's input carries the registers it starts from (plan step 4).
 
@@ -153,6 +153,10 @@ def load(path: Path, limit: int | None = None,
 
     `max_tokens` is checked on the count that actually occupies canvas slots,
     with `r0.F6` already split into two.
+
+    `names` renders each tool's declared name on its line (spec 0.8.0); the
+    cache records it, and everything that re-serializes a context for that
+    cache (play.py) has to pass the same value.
     """
     out: list[Example] = []
     with open(path, encoding="utf-8") as fh:
@@ -171,7 +175,8 @@ def load(path: Path, limit: int | None = None,
                     task_id=row["id"],
                     level=row.get("level", -1),
                     world=row.get("world", "?"),
-                    source=serialize_context(row["request"], ctx),
+                    source=serialize_context(row["request"], ctx,
+                                             names=names),
                     target=segs[0],
                     row=row,
                 ))
@@ -184,7 +189,8 @@ def load(path: Path, limit: int | None = None,
                     task_id=f"{row['id']}#s{i}",
                     level=row.get("level", -1),
                     world=row.get("world", "?"),
-                    source=serialize_context(row["request"], ctx, registers),
+                    source=serialize_context(row["request"], ctx, registers,
+                                             names=names),
                     target=segs[i],
                     row=row,
                 ))

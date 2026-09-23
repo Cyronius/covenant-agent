@@ -156,7 +156,7 @@ PARALLEL TRY RETRY RETURN STOP PAUSE
 **Design rules:**
 
 - Numbered registers `r0 … r15`, never generated variable names.
-- Tools and fields are **dynamic runtime symbols** (`T0 T1 …`, `F0 F1 …`) assigned per request. Tool names are never tokenized permanently. Descriptions are supplied separately in the input.
+- Tools and fields are **dynamic runtime symbols** (`T0 T1 …`, `F0 F1 …`) assigned per request. Tool names are never tokenized permanently and never bind; since spec 0.8.0 a declared name may appear in the input as text beside its symbol, with the description, and the meaning must stay recoverable without it.
 - Every tool declares an effect set from `{READ, WRITE, DELETE, SEND, PAY, EXTERNAL}`. A program's effect set is computable statically before execution.
 - `PAUSE` is a first-class execution boundary. The runtime executes up to `PAUSE`, returns register contents, and the planner resumes. This is the default execution model, not an ablation.
 - Constants are referenced symbolically (`C0 C1 …`) with values held by the runtime.

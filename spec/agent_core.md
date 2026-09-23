@@ -1,6 +1,6 @@
 # Agent Core IR — Specification (F1)
 
-**Version:** 0.7.0 (0.7.0, 2026-09-21: `SET` retired — no tool ever took a whole record as an argument, so nothing could act on what it produced, §1/§3/§4/§12; `FLOAT` added for the standard compute block's `avg`, §2; `sum`/`avg`/`max`/`min` are always-present tools, not opcodes, backed by `runtime/engines/compute.js`, §6; the admission test gains a first question, "can this be a tool?", §12; the optional `EFFECTS` header removed from the grammar — nothing ever read it, §1/§3; the closed six-word effect list (`READ`/`WRITE`/`DELETE`/`SEND`/`PAY`/`EXTERNAL`) retired for three composable consequence properties (`mutates`/`irreversible`/`external`) any tool in any domain can declare, gate behaviour unchanged, §6/§7; 0.6.0, 2026-09-12: `IN` - membership with the list on the right, legal in a `FILTER` clause; `CONTAINS` is substring only, §2/§3/§4/§12; 0.5.0, 2026-09-11: a `FILTER` clause may compare against a second field of the element, §3/§4/§12; 0.4.0, 2026-09-08: `MOST`/`LEAST`, `EMPTY`, normalized STR comparison, §2/§3/§4/§12; typed constant letters and constant kinds, §1/§6 — landing in the same series; 0.3.1, 2026-09-08: runtime errors as a segment boundary, §4/§9; 0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
+**Version:** 0.8.0 (0.8.0, 2026-09-23: tool names as input text — a declared name is rendered on the model-facing tool line and never binds, §1/§6; 0.7.0, 2026-09-21: `SET` retired — no tool ever took a whole record as an argument, so nothing could act on what it produced, §1/§3/§4/§12; `FLOAT` added for the standard compute block's `avg`, §2; `sum`/`avg`/`max`/`min` are always-present tools, not opcodes, backed by `runtime/engines/compute.js`, §6; the admission test gains a first question, "can this be a tool?", §12; the optional `EFFECTS` header removed from the grammar — nothing ever read it, §1/§3; the closed six-word effect list (`READ`/`WRITE`/`DELETE`/`SEND`/`PAY`/`EXTERNAL`) retired for three composable consequence properties (`mutates`/`irreversible`/`external`) any tool in any domain can declare, gate behaviour unchanged, §6/§7; 0.6.0, 2026-09-12: `IN` - membership with the list on the right, legal in a `FILTER` clause; `CONTAINS` is substring only, §2/§3/§4/§12; 0.5.0, 2026-09-11: a `FILTER` clause may compare against a second field of the element, §3/§4/§12; 0.4.0, 2026-09-08: `MOST`/`LEAST`, `EMPTY`, normalized STR comparison, §2/§3/§4/§12; typed constant letters and constant kinds, §1/§6 — landing in the same series; 0.3.1, 2026-09-08: runtime errors as a segment boundary, §4/§9; 0.3.0, 2026-09-07: `ABORT` referents, §3/§4/§9; 0.2.0, 2026-09-02: `ABORT` terminator and `FORMAT`, §3/§4/§8)
 **Status:** Foundation draft. Every change to this document must land in the same
 commit as the matching changes to `core/` (parser, typechecker, effects, compiler),
 `data/gen/`, and `spec/examples/`, with round-trip tests passing.
@@ -24,7 +24,7 @@ job is tool orchestration, not programming.
 | Form | Meaning |
 |------|---------|
 | `r0` … `r15` | Registers. Fixed set of 16. Never generated variable names. |
-| `T0`, `T1`, … | Tool symbols. Assigned **per request** by the input serializer. Tool names are never tokenized permanently; the tool's meaning is carried by its description and schema in the input context. |
+| `T0`, `T1`, … | Tool symbols. Assigned **per request** by the input serializer. A tool's declared name is input text the planner may read (§6). It is never a symbol: it is not tokenized permanently, never appears in a program, and never binds — the symbol does. A tool's meaning is carried by its name, description and schema together, and must stay recoverable from the description and schema alone, because a task may carry opaque names (`foo17`). |
 | `F0`, `F1`, … | Field symbols. Assigned per request to `(entity, field)` pairs. Tool parameters reference field symbols where the parameter corresponds to an entity field, and fresh `F` symbols otherwise. |
 | `S0`, `N0`, `B0`, `D0`, `I0`, … | Constant symbols (0.4.0). The letter is the base type — `S` STR, `N` INT, `B` BOOL, `D` TIME, `I` ID (the entity is in the declaration) — numbered per letter in declaration order. Values are held by the runtime binding supplied with the task input (extracted from the request by the serializer; exact in synthetic data). An `S` declaration carries a **kind**: `name` (a lookup key), `text` (content passed along), or `enum <entity>.<field>` (one of that field's declared values; the serializer emits every enum value of every entity the visible tools touch, whether or not the request spells it). Kinds are declaration metadata, not types: the typechecker ignores them; the per-task grammar and the corpus use them. `C0`, `C1`, … is the 0.3.x form, still parsed. |
 | `NOW` | The current time, bound by the runtime. Type `TIME`. |
@@ -216,6 +216,7 @@ Each tool in the task input declares:
 ```json
 {
   "sym": "T4",
+  "name": "archive_card",
   "desc": "Archive a card on the board",
   "params": [ { "sym": "F0", "type": "ID:card", "required": true, "desc": "card id" } ],
   "returns": "OBJ:card",
@@ -230,6 +231,10 @@ Each tool in the task input declares:
   `[M]`, `[M!]`, `[!X]`, `[M!X]`, `[X]`, `[]` in place of the old
   `[WRITE]`…`[EXTERNAL]` — one letter per property in fixed order
   (`mutates`=`M`, `irreversible`=`!`, `external`=`X`), no separator.
+- `name` (0.8.0, optional) renders between the symbol and the parameters:
+  `T4 archive_card (I:card=F0) -> OBJ:card [M] :: Archive a card on the
+  board`. Whitespace in a declared name renders as `_`. A serializer may
+  omit names; a program never refers to one.
 - Positional `CALL` arguments map to `params` in order. Missing required
   parameter → `MISSING_ARG`; wrong type → `TYPE_ERROR`. An explicit `NULL`
   in a required slot is the absence of a value, so it is also

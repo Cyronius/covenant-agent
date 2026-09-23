@@ -61,6 +61,11 @@ def main():
     ap.add_argument("--out", default="pod_bundle.tar.gz")
     ap.add_argument("--no-cache", action="store_true",
                     help="code only, for when the cache is already uploaded")
+    ap.add_argument("--with", dest="extra", action="append", default=[],
+                    metavar="PATH",
+                    help="ship another file under tiny/, at the same relative "
+                         "path (e.g. pretrained stage weights, "
+                         "runs/stages_d256/stages.pt)")
     args = ap.parse_args()
 
     cache = HERE / args.cache
@@ -74,11 +79,18 @@ def main():
             add(tar, py, f"tiny/{py.name}")
             n += 1
         for extra in ("README.md", "pod.md", "run_phase1.sh", "run_step1.sh",
-                      "run_step2.sh", "run_step3.sh", "selftest.sh"):
+                      "run_step2.sh", "run_step3.sh", "run_step4.sh", "selftest.sh"):
             p = HERE / extra
             if p.exists():
                 add(tar, p, f"tiny/{extra}")
                 n += 1
+
+        for extra in args.extra:
+            p = HERE / extra
+            if not p.exists():
+                raise SystemExit(f"--with {extra}: no such file under {HERE}")
+            add(tar, p, f"tiny/{Path(extra).as_posix()}")
+            n += 1
 
         # The compiler, so repair runs on the pod.
         for py in sorted((COVENANT / "core").glob("*.py")):

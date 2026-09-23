@@ -73,6 +73,22 @@ class Config:
     max_field: int = 23
     max_const: int = 10
     n_reg: int = 32             # r0..r15 then r0...r15. (canvas.Layout)
+    # line packing (description-reading plan step 2): run only occupied line
+    # slots, bucketed by length. Output-identical; off is R10's code path.
+    pack: bool = False
+    # the split encoder (plan §3). Off builds nothing new, so every earlier
+    # checkpoint loads and every flags-off forward pass is R10's.
+    split: bool = False
+    sig_w: int = 128
+    sig_layers: int = 2
+    desc_w: int = 256
+    desc_layers: int = 4
+    name_w: int = 128
+    name_layers: int = 2
+    stage_pool: str = "cls"     # cls | mean
+    max_sig: int = 48
+    max_desc: int = 64
+    max_name: int = 16
 
 
 def sinusoids(n: int, d: int) -> torch.Tensor:
@@ -305,12 +321,78 @@ class StructuralModel(nn.Module):
             self.causal_mask = None
         self.apply(_init)
         nn.init.normal_(self.cls, std=0.02)
+        if c.split:
+            self._build_split(c)
+
+    def _build_split(self, c: Config) -> None:
+        """Three stages per tool line, one vector each, combined late
+        (plan §3). Built after everything else, so the modules above draw
+        the same initial weights with the flag on or off."""
+        from stages import TextStage
+        d = c.d
+        mk = lambda w, n, ln: TextStage(c.in_vocab, w, n, ln, c.in_pad,  # noqa: E731
+                                        dropout=c.dropout, pool=c.stage_pool)
+        self.sig_stage = mk(c.sig_w, c.sig_layers, c.max_sig)
+        self.desc_stage = mk(c.desc_w, c.desc_layers, max(c.max_desc, c.max_req))
+        self.name_stage = mk(c.name_w, c.name_layers, max(c.max_name, c.max_req))
+        # region A: the three concatenated, projected to the model width;
+        # the request read by the description and name stages, as two more
+        # REQUEST-tagged vectors
+        self.tool_proj = nn.Linear(c.sig_w + c.desc_w + c.name_w, d)
+        self.qd_proj = nn.Linear(c.desc_w, d)
+        self.qn_proj = nn.Linear(c.name_w, d)
+        # the pointer: each stage scores a tool against its own projection
+        # of the program state, and a gate from the same state weighs them
+        self.pq_desc = nn.Linear(d, c.desc_w)
+        self.pq_name = nn.Linear(d, c.name_w)
+        self.gate = nn.Linear(d, 3)
+        # the contrastive loss's learned temperature (train.stage_losses)
+        self.stage_scale = nn.Parameter(torch.tensor(math.log(1 / 0.05)))
+        for m in (self.tool_proj, self.qd_proj, self.qn_proj, self.pq_desc,
+                  self.pq_name, self.gate):
+            _init(m)
+        self.frozen_stages = False
+
+    def stage_params(self):
+        """The description and name stages: what stage_pretrain.py trains
+        and what --freeze-stages / --stage-lr act on."""
+        return [p for m in (self.desc_stage, self.name_stage) for p in m.parameters()]
+
+    def encode_split_tools(self, inputs: dict):
+        """(tool vectors (B, MT, d), stage outputs) for a split cache."""
+        c = self.c
+        sig = self.sig_stage(inputs["tool_sig_tok"], packed=c.pack)
+        frozen = self.frozen_stages
+        with torch.set_grad_enabled(torch.is_grad_enabled() and not frozen):
+            desc = self.desc_stage(inputs["tool_desc_tok"], packed=c.pack)
+            name = self.name_stage(inputs["tool_name_tok"], packed=c.pack)
+            q_desc = self.desc_stage(inputs["req_tok"], query=True)
+            q_name = self.name_stage(inputs["req_tok"], query=True)
+        tv = self.tool_proj(torch.cat([sig, desc, name], -1))
+        return tv, {"desc": desc, "name": name, "q_desc": q_desc, "q_name": q_name}
 
     # -- per-world: cacheable per decision 6 -----------------------------
+
+    def _line_run(self, rows: torch.Tensor, pad: torch.Tensor, tag: int) -> torch.Tensor:
+        """(n, t) token rows -> (n, d): encode_lines' body on already-flat,
+        possibly trimmed rows (the packed path)."""
+        n, t = rows.shape
+        x = self.in_emb(rows.long()) * math.sqrt(self.c.d) + self.line_pos[1:t + 1]
+        cls = (self.cls + self.line_pos[0] + self.tag_emb.weight[tag]).expand(n, 1, -1)
+        x = torch.cat([cls, x], 1)
+        pad = torch.cat([torch.zeros(n, 1, dtype=torch.bool, device=pad.device), pad], 1)
+        x = self.drop(x)
+        for layer in self.line_enc:
+            x = layer(x, pad)
+        return self.line_norm(x[:, 0])
 
     def encode_lines(self, tok: torch.Tensor, tag: int) -> torch.Tensor:
         """(B, L, T) token ids -> (B, L, d): one vector per line, from a CLS
         token that attends over the line's tokens."""
+        if self.c.pack:
+            from stages import packed_encode
+            return packed_encode(tok, self.c.in_pad,
+                                 lambda r, p: self._line_run(r, p, tag))
         B, L, T = tok.shape
         flat = tok.reshape(B * L, T).long()
         pad = flat == self.c.in_pad
@@ -323,11 +405,13 @@ class StructuralModel(nn.Module):
             x = layer(x, pad)
         return self.line_norm(x[:, 0]).reshape(B, L, -1)
 
-    def encode_world(self, tool_tok, field_tok, adj):
+    def encode_world(self, tool_tok, field_tok, adj, tool_vecs=None):
         """Line vectors for every tool and field, then the sparse graph pass.
         Depends only on the world's schema, so it can be computed once per
-        world and shipped as data; nothing here reads the request."""
-        tv = self.encode_lines(tool_tok, TAG_TOOL)
+        world and shipped as data; nothing here reads the request.
+        `tool_vecs`: the split encoder's tool vectors, in place of the line
+        encoder's."""
+        tv = self.encode_lines(tool_tok, TAG_TOOL) if tool_vecs is None else tool_vecs
         fv = self.encode_lines(field_tok, TAG_FIELD)
         x = torch.cat([tv, fv], 1)                                   # (B, MT+MF, d)
         B, L, _ = x.shape
@@ -344,7 +428,7 @@ class StructuralModel(nn.Module):
 
     def encode_turn(self, tool_vecs, field_vecs, const_tok, req_tok,
                     n_tool, n_field, n_const, reg_tok=None,
-                    n_reg_bound=None) -> Memory:
+                    n_reg_bound=None, stage=None) -> Memory:
         """Region A: tools, fields, constants, the registers a continuation
         starts from, and the request tokens, each tagged.
 
@@ -377,20 +461,32 @@ class StructuralModel(nn.Module):
                      else n_reg_bound)
             masks.append(torch.arange(rv.size(1), device=dev)[None]
                          >= bound.long()[:, None])
+        if stage is not None:
+            # the request as the description and name stages read it
+            qv = torch.stack([self.qd_proj(stage["q_desc"]),
+                              self.qn_proj(stage["q_name"])], 1)
+            parts.append(qv + self.tag_emb.weight[TAG_REQUEST])
+            masks.append(torch.zeros(qv.shape[:2], dtype=torch.bool, device=dev))
         parts.append(rq)
         masks.append(req == c.in_pad)
         x = self.drop(torch.cat(parts, 1))
         pad = torch.cat(masks, 1)
         for layer in self.turn:
             x = layer(x, pad)
-        return Memory(self.enc_norm(x), pad, n_ptr)
+        mem = Memory(self.enc_norm(x), pad, n_ptr)
+        mem.stage = stage
+        return mem
 
     def encode_inputs(self, inputs: dict) -> Memory:
-        tv, fv = self.encode_world(inputs["tool_tok"], inputs["field_tok"], inputs["adj"])
+        stage = split_tv = None
+        if self.c.split:
+            split_tv, stage = self.encode_split_tools(inputs)
+        tv, fv = self.encode_world(inputs["tool_tok"], inputs["field_tok"], inputs["adj"],
+                                   tool_vecs=split_tv)
         return self.encode_turn(tv, fv, inputs["const_tok"], inputs["req_tok"],
                                 inputs["n_tool"], inputs["n_field"],
                                 inputs["n_const"], inputs.get("reg_tok"),
-                                inputs.get("n_reg_bound"))
+                                inputs.get("n_reg_bound"), stage=stage)
 
     # -- the canvas ------------------------------------------------------
 
@@ -443,9 +539,27 @@ class StructuralModel(nn.Module):
         kw_logits = self.kw_head(h)                                      # (B, C, K)
         keys = self.k(table[:, c.n_kw:])                                 # (B, J-K, d)
         ptr_logits = torch.einsum("bcd,bjd->bcj", self.q(h), keys) / math.sqrt(c.d)
+        if c.split:
+            ptr_logits = self._split_tool_logits(h, ptr_logits, mem.stage)
         logits = torch.cat([kw_logits, ptr_logits], -1)
         present = self.present_mask(inputs, logits.device)
         return logits.masked_fill(~present.unsqueeze(1), float("-inf"))
+
+    def _split_tool_logits(self, h, ptr_logits, stage):
+        """The tool half of the pointer, per stage and gated (plan §3). The
+        signature score is the usual pointer over the turn-encoded tool
+        vectors; the description and name scores read the stages' own
+        vectors, which never saw a type shape. Twins tie on the first by
+        construction, so every twin decision goes through the other two."""
+        c = self.c
+        MT = c.max_tool
+        s_sig = ptr_logits[..., :MT]
+        s_desc = torch.einsum("bcw,bjw->bcj", self.pq_desc(h), stage["desc"]) / math.sqrt(c.desc_w)
+        s_name = torch.einsum("bcw,bjw->bcj", self.pq_name(h), stage["name"]) / math.sqrt(c.name_w)
+        g = torch.softmax(self.gate(h), -1)                              # (B, C, 3)
+        self.last_gate = g.detach()
+        tools = g[..., :1] * s_sig + g[..., 1:2] * s_desc + g[..., 2:] * s_name
+        return torch.cat([tools, ptr_logits[..., MT:]], -1)
 
     def forward(self, inputs: dict, canvas, loops=None, mem=None):
         return self.decode(inputs, canvas, mem=mem, loops=loops)
