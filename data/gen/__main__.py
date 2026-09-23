@@ -67,7 +67,7 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
         domains.register_theme(th, record=False)
         try:
             task = _gen_one(level, seed, holdout, teacher, *args, world=world,
-                            **kw)
+                            store_sandbox=True, **kw)
         finally:
             domains.register_theme(theme)
         called = {c.get("name") for c in task["reference"]["call_log"]}
@@ -91,7 +91,8 @@ def _gen_one(level: int, seed: int, holdout: bool, teacher: str,
             enums: bool = False, kinds: bool = False,
             decoys: tuple | None = None, decoy_nonsense: float = 0.15,
             inject_open: tuple | None = None,
-            opaque_rate: float = 0.0, world: str | None = None) -> dict:
+            opaque_rate: float = 0.0, world: str | None = None,
+            store_sandbox: bool = False) -> dict:
     rng = random.Random(seed)
     if holdout:
         pool = [w for w in RESERVED["worlds"] if w in programs.PROFILES]
@@ -192,6 +193,11 @@ def _gen_one(level: int, seed: int, holdout: bool, teacher: str,
             "style": style, "frame": sample.frame,
         },
         prebuilt=(ctx, sandbox_ctx))
+    if store_sandbox:
+        # a swapped-roles world: its tools' names and impls are the swapped
+        # theme's, which the registry no longer holds once it is restored,
+        # so harness/run.py could not rebuild the sandbox by name
+        task["sandbox"] = sandbox_ctx
     if crowd or decoy_names or n_injected:
         # crowded, decoyed and injected contexts contain tools the native
         # world cannot rebuild a sandbox for — store the payload with the

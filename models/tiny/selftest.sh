@@ -11,6 +11,9 @@
 # The binding is read from the cache; every step below runs under either.
 set -euo pipefail
 CACHE="${1:-data_cache_struct}"
+# extra train.py flags for steps 3 and 5, e.g. the split encoder:
+#   TRAIN_FLAGS="--pack --split --desc-w 32 --desc-layers 1 --name-w 16 #     --name-layers 1 --sig-w 32 --sig-layers 1 --lam-nce 0.5 --lam-rel 0.5"
+TRAIN_FLAGS="${TRAIN_FLAGS:-}"
 BINDING=$(python -c "import json,sys; print(json.load(open(sys.argv[1]+'/config.json')).get('binding','flat'))" "$CACHE")
 echo "cache $CACHE  binding $BINDING"
 
@@ -77,7 +80,7 @@ echo "=== 3. does each arm train, sample and score end to end ==="
 for arm in diffusion ar; do
   python train.py --arm "$arm" --cache "$CACHE" --epochs 1 --limit-train 32 \
     --limit-val 16 --batch 4 --d 64 --enc-layers 1 --dec-layers 1 \
-    --eval-every 8 --out "runs/_selftest_$arm"
+    --eval-every 8 --out "runs/_selftest_$arm" $TRAIN_FLAGS
   grep -q '"acc_tool"' "runs/_selftest_$arm/log.jsonl" || { echo "log has no per-slot accuracy"; exit 1; }
   extra=""
   [ "$arm" = diffusion ] && extra="--steps 2 --repair-rounds 1"
@@ -101,7 +104,7 @@ echo "=== 5. does a looped, ternary run train, generate and score ==="
 python train.py --arm diffusion --cache "$CACHE" --epochs 1 --limit-train 32 \
   --limit-val 16 --batch 4 --d 64 --enc-layers 1 --dec-layers 1 \
   --dec-loops 4 --loop-emb --rand-loops 4 --weights tern \
-  --eval-every 8 --out runs/_selftest_q
+  --eval-every 8 --out runs/_selftest_q $TRAIN_FLAGS
 grep -q '"acc_tool"' runs/_selftest_q/log.jsonl || { echo "log has no per-slot accuracy"; exit 1; }
 python -c "import json; c = json.load(open('runs/_selftest_q/config.json')); assert c['weights'] == 'tern' and c['resident_bytes'] > 0, c; print('  block', c['loop_body_params'], 'params ->', c['resident_bytes'], 'resident bytes')"
 python evaluate.py --ckpt runs/_selftest_q/best.pt --cache "$CACHE" --split val \

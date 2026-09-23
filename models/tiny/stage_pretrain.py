@@ -41,7 +41,7 @@ from stages import ReadHead, TextStage, multi_positive_nce, participation_ratio,
 from train import called_tools
 
 COLS = ("tool_desc_tok", "tool_name_tok", "req_tok", "n_tool", "tgt",
-        "sig_group", "t_desc", "t_name", "t_req")
+        "sig_group", "flip_tool", "t_desc", "t_name", "t_req")
 
 
 def load_part(cache: Path, name: str, limit: int | None = None) -> dict:
@@ -212,9 +212,12 @@ def twin_eval(head, part, pad, n_kw, max_tool, teacher=None, bs=64) -> dict:
     has signature twins, the candidate with the highest score among the
     twins. Also the teacher's picks on the same decisions."""
     head.eval()
-    tally = {k: [0, 0] for k in ("comb", "desc", "name", "t_desc", "t_name",
-                                 "comb_opaque", "comb_named", "desc_opaque")}
-    chance = 0.0
+    keys = ("comb", "desc", "name", "t_desc", "t_name")
+    tally = {k: [0, 0] for k in keys + ("comb_opaque", "comb_named", "desc_opaque")}
+    # the same picks on flip-slot decisions only: the population the audit
+    # passes, and the one a grounding number is quoted on
+    tally.update({f"flip_{k}": [0, 0] for k in keys})
+    chance = chance_flip = 0.0
     gates = {"opaque": [], "named": []}
     vecs = []
     N = part["tgt"].size(0)
@@ -232,6 +235,8 @@ def twin_eval(head, part, pad, n_kw, max_tool, teacher=None, bs=64) -> dict:
                 if len(members) < 2:
                     continue
                 chance += 1 / len(members)
+                flip = "flip_tool" in b and bool(b["flip_tool"][r, t])
+                chance_flip += (1 / len(members)) if flip else 0.0
                 picks = {"comb": comb[r, members], "desc": sd[r, members],
                          "name": sn[r, members]}
                 if teacher is not None and "t_desc" in b:
@@ -242,6 +247,9 @@ def twin_eval(head, part, pad, n_kw, max_tool, teacher=None, bs=64) -> dict:
                     hit = int(members[int(sc.argmax())]) == t
                     tally[k][0] += hit
                     tally[k][1] += 1
+                    if flip:
+                        tally[f"flip_{k}"][0] += hit
+                        tally[f"flip_{k}"][1] += 1
                     if k == "comb":
                         tally["comb_opaque" if opaque else "comb_named"][0] += hit
                         tally["comb_opaque" if opaque else "comb_named"][1] += 1
@@ -255,6 +263,8 @@ def twin_eval(head, part, pad, n_kw, max_tool, teacher=None, bs=64) -> dict:
     res = {f"acc_{k}": (v[0] / v[1] if v[1] else None) for k, v in tally.items()}
     res["n_decisions"] = n
     res["chance"] = chance / max(n, 1)
+    res["n_flip"] = tally["flip_comb"][1]
+    res["chance_flip"] = chance_flip / max(res["n_flip"], 1)
     res["gate_desc_opaque"] = sum(gates["opaque"]) / len(gates["opaque"]) if gates["opaque"] else None
     res["gate_desc_named"] = sum(gates["named"]) / len(gates["named"]) if gates["named"] else None
     V = torch.cat(vecs)[:5000]
@@ -284,6 +294,10 @@ def main():
     ap.add_argument("--eval-every", type=int, default=300)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--threads", type=int, default=os.cpu_count())
+    ap.add_argument("--weights", choices=["fp", "int8", "u4"], default="fp",
+                    help="train the stages in this format from the start "
+                         "(step 5, when post-training rounding costs more "
+                         "than a point; stage_quant.py measures that)")
     args = ap.parse_args()
     torch.set_num_threads(args.threads)
     torch.manual_seed(args.seed)
@@ -301,6 +315,10 @@ def main():
            "max_name": meta["max_name"], "max_req": meta["max_req"]}
     head = build_head(cfg, meta["in_vocab"], pad)
     n_params = sum(p.numel() for p in head.parameters())
+    if args.weights != "fp":
+        from stage_quant import quantize_head
+        quantize_head(head, args.weights)
+        cfg["weights"] = args.weights
     teacher = None
     if (cache / "teacher.pt").exists():
         teacher = torch.load(cache / "teacher.pt")["table"].float()
@@ -339,6 +357,10 @@ def main():
               f"teacher desc {f('acc_t_desc')} name {f('acc_t_name')}  chance "
               f"{res['chance']:.1%}  n={res['n_decisions']}  PR {res['participation_ratio_desc']:.1f}  "
               f"gate->desc opaque {res['gate_desc_opaque']} named {res['gate_desc_named']}",
+              flush=True)
+        print(f"     flip slots: twins {f('acc_flip_comb')} (desc {f('acc_flip_desc')}, name "
+              f"{f('acc_flip_name')}) teacher desc {f('acc_flip_t_desc')} name "
+              f"{f('acc_flip_t_name')}  chance {res['chance_flip']:.1%}  n={res['n_flip']}",
               flush=True)
         return res
 
@@ -379,8 +401,9 @@ def main():
                   + f"  {el/step:.2f}s/step", flush=True)
         if step % args.eval_every == 0 or step == steps:
             res = evaluate(step)
-            if (res["acc_comb"] or 0) > best:
-                best = res["acc_comb"] or 0
+            score = res.get("acc_flip_comb") or res["acc_comb"] or 0
+            if score > best:
+                best = score
                 torch.save({"cfg": cfg, "head": head.state_dict(), "step": step,
                             "eval": res, "n_params": n_params}, out / "stages.pt")
     torch.save({"cfg": cfg, "head": head.state_dict(), "step": step,

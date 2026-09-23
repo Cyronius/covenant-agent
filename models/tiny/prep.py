@@ -38,7 +38,7 @@ STRUCT_KEYS = ("tool_tok", "field_tok", "const_tok", "reg_tok", "req_tok",
 # step 2), present only in a cache built with --split: each tool line's
 # signature, description and name as separate token rows, and indices into
 # the teacher's embedding table (teacher.pt) for the two extra losses.
-SPLIT_KEYS = ("tool_sig_tok", "tool_desc_tok", "tool_name_tok", "sig_group",
+SPLIT_KEYS = ("tool_sig_tok", "tool_desc_tok", "tool_name_tok", "sig_group", "flip_tool",
               "t_desc", "t_name", "t_req")
 
 
@@ -259,6 +259,10 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
         # carry the same id, -1 on padding. What the twin benchmark and the
         # contrastive loss's "twins first" read.
         sig_group = torch.full((N, MT), -1, dtype=torch.int16)
+        # tools of a flip slot (provenance.flip_slot_tools): the twin
+        # decisions whose answer is drawn uniformly (data.gen --twin-roles),
+        # the population a grounding number is quoted on
+        flip_tool = torch.zeros((N, MT), dtype=torch.bool)
     teacher_texts = []                    # per kept row: (request, descs, names)
     tool_tok = torch.full((N, MT, TL), pad_id, dtype=torch.int16)
     field_tok = torch.full((N, MF, TL), pad_id, dtype=torch.int16)
@@ -346,6 +350,11 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
             gid: dict[str, int] = {}
             for i, (sg, _, _) in enumerate(tri):
                 sig_group[n, i] = gid.setdefault(sg.split(" ", 1)[1], len(gid))
+            fl = set((e.row.get("provenance") or {}).get("flip_slot_tools") or [])
+            if fl:
+                name_of = {t["sym"]: t["name"] for t in e.row["context"]["tools"]}
+                for i, (sym, _) in enumerate(ln.tools):
+                    flip_tool[n, i] = name_of.get(sym) in fl
             teacher_texts.append((ln.request, [d for _, _, d in tri],
                                   [nm for _, nm, _ in tri]))
         else:
@@ -389,8 +398,8 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
         n_tool, n_field, n_const, n_reg_bound, adj, tgt = (
             t[idx] for t in (n_tool, n_field, n_const, n_reg_bound, adj, tgt))
         if split:
-            sig_tok, desc_tok, name_tok, sig_group = (
-                t[idx] for t in (sig_tok, desc_tok, name_tok, sig_group))
+            sig_tok, desc_tok, name_tok, sig_group, flip_tool = (
+                t[idx] for t in (sig_tok, desc_tok, name_tok, sig_group, flip_tool))
         teacher_texts = [teacher_texts[i] for i in keep]
         meta = [m for m in meta if m is not None]
     d = {"tool_tok": tool_tok, "field_tok": field_tok, "const_tok": const_tok,
@@ -403,7 +412,8 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
                    "max_line_seen": max_line_seen, "max_req_seen": max_req_seen}}
     if split:
         d.update({"tool_sig_tok": sig_tok, "tool_desc_tok": desc_tok,
-                  "tool_name_tok": name_tok, "sig_group": sig_group})
+                  "tool_name_tok": name_tok, "sig_group": sig_group,
+                  "flip_tool": flip_tool})
     return d
 
 

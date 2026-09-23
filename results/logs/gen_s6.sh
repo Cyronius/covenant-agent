@@ -37,10 +37,17 @@ for i in 0 1 2 3 4 5 6 7; do
       $COMMON --decoys 1:2 \
       --out data/s6_shards/train_$i.jsonl > results/logs/gen_s6_train_$i.log 2>&1 &
 done
+# Waves of 8, not all 25 at once: with every generator started together this
+# laptop sat at 27% CPU with each process at 7 rows/min (2026-09-23), against
+# 60 rows/min each for 8 at a time.
+wait
 for i in 0 1 2 3 4 5 6 7; do
   python -W ignore -m data.gen --levels "$LEVELS" --n 500 --seed $((20260924 + i*10000000)) \
       --holdout $COMMON --decoys 0 --allow-signature-unique \
       --out data/s6_shards/holdout_$i.jsonl > results/logs/gen_s6_holdout_$i.log 2>&1 &
+done
+wait
+for i in 0 1 2 3 4 5 6 7; do
   python -W ignore -m data.gen --levels "$LEVELS" --n 500 --seed $((20260924 + i*10000000)) \
       --holdout $COMMON --decoys 1:2 \
       --out data/s6_shards/holdout_decoy_$i.jsonl > results/logs/gen_s6_holdout_decoy_$i.log 2>&1 &
