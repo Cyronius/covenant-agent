@@ -223,8 +223,8 @@ def layout_edges(ln: "Lines", max_tool: int) -> list[tuple[int, int]]:
 
     Before 2026-09-23 the compact indices went into the tensor as they were,
     which is right only when a task has exactly `max_tool` tools. It did when
-    every task had 18 (R3-R8). Since the compute block (22 tools) and the
-    decoyed holdouts (max_tool 50, then 82), a tool's edges to its fields
+    every task had 18 (R3-R8). In R9's cache (14-18 tools, max_tool 50) and
+    R10's (22 tools, max_tool 54) it held on no training row: a tool's edges to its fields
     landed on *padded tool rows*, and a field's edges to its entity on tool
     rows too: the schema graph pass of R9 and R10 linked no tool to any
     field. Found by the packed-line equivalence check, which is the first

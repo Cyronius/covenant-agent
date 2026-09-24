@@ -26,7 +26,11 @@ EPOCHS="${EPOCHS:-12}"
 BATCH="${BATCH:-64}"
 PAR="${PAR:-1}"
 HOLDOUT_LIMIT="${HOLDOUT_LIMIT:-2000}"
-WIDTH="--desc-w ${DESC_W:-256} --desc-layers ${DESC_LAYERS:-4} --stage-pool ${POOL:-cls}"
+# step 3's recipe (results/R11.md §3): mean pooling -- a summary token left
+# flip-slot decisions at chance -- and a relational weight that matters (the
+# MSE between cosine matrices is ~0.02, so 0.5 contributed nothing)
+WIDTH="--desc-w ${DESC_W:-128} --desc-layers ${DESC_LAYERS:-4} --stage-pool ${POOL:-mean}"
+LOSSES="${LOSSES:---lam-nce 0.5 --lam-rel 20}"
 mkdir -p out
 
 python -c "import torch; assert torch.cuda.is_available(), 'no CUDA'; x=torch.randn(2048,2048,device='cuda'); print('cuda ok', float((x@x).sum()))"
@@ -34,9 +38,9 @@ python -c "import torch; assert torch.cuda.is_available(), 'no CUDA'; x=torch.ra
 arm_flags() {
   case "$1" in
     A0)  echo "--pack" ;;
-    S1)  echo "--pack --split $WIDTH --lam-nce 0.5 --lam-rel 0.5" ;;
+    S1)  echo "--pack --split $WIDTH $LOSSES" ;;
     SPf) echo "--pack --split $WIDTH --stages-from $STAGES --freeze-stages" ;;
-    SPt) echo "--pack --split $WIDTH --stages-from $STAGES --stage-lr-mult 0.1 --lam-nce 0.5 --lam-rel 0.5" ;;
+    SPt) echo "--pack --split $WIDTH --stages-from $STAGES --stage-lr-mult 0.1 $LOSSES" ;;
     *) echo "unknown arm $1" >&2; exit 2 ;;
   esac
 }
