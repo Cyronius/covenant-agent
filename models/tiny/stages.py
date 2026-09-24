@@ -179,16 +179,39 @@ class ReadHead(nn.Module):
 # ---------------------------------------------------------------- losses
 def multi_positive_nce(logits: torch.Tensor, pos: torch.Tensor,
                        live: torch.Tensor) -> torch.Tensor:
-    """-log( sum_pos exp / sum_live exp ) per row, mean over rows that have
-    a positive. logits, pos, live: (B, M); pos/live bool."""
+    """Per-positive InfoNCE: every positive against every live negative,
+    -log( exp s_p / (exp s_p + sum_neg exp s_n) ), mean over positives.
+
+    Not -log(sum_pos / sum_all): that is satisfied as soon as ANY called
+    tool scores high, and every row calls an easy generic tool (the list),
+    so the action tool -- where every twin decision is -- never had to beat
+    its twins. The first stage runs trained that way sat at chance on flip
+    slots. logits, pos, live: (B, M); pos/live bool."""
     neg_inf = torch.finfo(logits.dtype).min
-    lg = logits.masked_fill(~live, neg_inf)
-    has = (pos & live).any(1)
-    if not has.any():
+    p = pos & live
+    if not p.any():
         return logits.sum() * 0.0
-    num = torch.logsumexp(lg.masked_fill(~pos, neg_inf), 1)
-    den = torch.logsumexp(lg, 1)
-    return (den - num)[has].mean()
+    neg = torch.logsumexp(logits.masked_fill(~live | pos, neg_inf), 1, keepdim=True)
+    per = torch.logaddexp(logits, neg.expand_as(logits)) - logits
+    return per[p].mean()
+
+
+def twin_nce(logits: torch.Tensor, pos: torch.Tensor, live: torch.Tensor,
+             group: torch.Tensor) -> torch.Tensor:
+    """Twins first: each positive against the tools that share its signature
+    (`sig_group`), and nothing else -- the one decision a pointer cannot make
+    from type shape. Rows whose positives have no twin contribute nothing."""
+    neg_inf = torch.finfo(logits.dtype).min
+    same = (group.unsqueeze(2) == group.unsqueeze(1)) & live.unsqueeze(1) & live.unsqueeze(2)
+    sizes = same.sum(2)
+    p = pos & live & (sizes >= 2)
+    if not p.any():
+        return logits.sum() * 0.0
+    # other positives in the group are not negatives
+    cand = same & ~(pos.unsqueeze(1) & ~torch.eye(same.size(1), dtype=torch.bool,
+                                                  device=same.device))
+    lse = torch.logsumexp(logits.unsqueeze(1).expand_as(cand).masked_fill(~cand, neg_inf), 2)
+    return (lse - logits)[p].mean()
 
 
 def relational_loss(vecs: torch.Tensor, teacher: torch.Tensor,

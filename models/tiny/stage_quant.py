@@ -49,7 +49,7 @@ def main():
     meta = json.loads((cache / "config.json").read_text(encoding="utf-8"))
     lay = meta["layout"]
     ck = torch.load(args.stages, map_location="cpu")
-    exam = load_part(cache, "holdout", args.limit_eval)
+    exam = load_part(cache, "holdout", args.limit_eval, ids=("+decoy", "+flip"))
     teacher = None
     if (cache / "teacher.pt").exists():
         teacher = torch.load(cache / "teacher.pt")["table"].float()

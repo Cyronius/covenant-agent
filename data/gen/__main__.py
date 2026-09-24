@@ -62,6 +62,13 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
     swapped = {k: i for k, i in choice.items() if i}
     if not swapped:
         task = _gen_one(level, seed, holdout, teacher, *args, world=world, **kw)
+        called = {c.get("name") for c in task["reference"]["call_log"]}
+        for slot in choice:
+            spec = theme["tools"][slot]
+            if spec["name"] in called and not domains.request_fits(
+                    task["request"], slot, spec):
+                raise programs.SampleError(
+                    f"{slot} called by a recipe with fixed wording")
     else:
         th = domains.swap_roles(theme, swapped)
         domains.register_theme(th, record=False)
@@ -72,12 +79,20 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
             domains.register_theme(theme)
         called = {c.get("name") for c in task["reference"]["call_log"]}
         roles = {}
-        for slot in swapped:
+        for slot in choice:
+            # every flip-slot tool a reference calls must be named by its own
+            # request templates, the authored one included: a recipe with
+            # fixed wording ("send it to {name}") leaves three siblings
+            # equally right, and a row whose answer is then always the
+            # authored tool teaches a default nobody can read (R11 §3: 14% of
+            # S6's flip-slot calls, before this check covered the authored
+            # role)
             spec = th["tools"][slot]
-            if spec["name"] in called:
-                if not domains.request_fits(task["request"], slot, spec):
-                    raise programs.SampleError(
-                        f"swapped {slot} called by a recipe with fixed wording")
+            if spec["name"] in called and not domains.request_fits(
+                    task["request"], slot, spec):
+                raise programs.SampleError(
+                    f"{slot} called by a recipe with fixed wording")
+            if slot in swapped and spec["name"] in called:
                 roles[slot] = {"answer": spec["name"],
                                "authored": theme["tools"][slot]["name"]}
         if roles:

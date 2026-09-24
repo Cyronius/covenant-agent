@@ -127,7 +127,7 @@ def stage_losses(model, mem, inputs, tgt, teacher=None) -> dict:
     its reference calls, away from every other tool of the task, twins
     included) and relational distillation (the stage's cosines among the
     request and the task's tools matched to the teacher's)."""
-    from stages import multi_positive_nce, relational_loss
+    from stages import multi_positive_nce, relational_loss, twin_nce
     c = model.c
     st = mem.stage
     live = torch.arange(c.max_tool, device=tgt.device)[None] < inputs["n_tool"].long()[:, None]
@@ -137,8 +137,10 @@ def stage_losses(model, mem, inputs, tgt, teacher=None) -> dict:
     for part in ("desc", "name"):
         q = F.normalize(st[f"q_{part}"], dim=-1)
         k = F.normalize(st[part], dim=-1)
-        out[f"nce_{part}"] = multi_positive_nce(s * torch.einsum("bw,bmw->bm", q, k),
-                                                pos, live)
+        lg = s * torch.einsum("bw,bmw->bm", q, k)
+        out[f"nce_{part}"] = multi_positive_nce(lg, pos, live)
+        if "sig_group" in inputs:
+            out[f"nce_twin_{part}"] = twin_nce(lg, pos, live, inputs["sig_group"].long())
         if teacher is not None and f"t_{part}" in inputs:
             idx = inputs[f"t_{part}"].long()
             ridx = inputs["t_req"].long()

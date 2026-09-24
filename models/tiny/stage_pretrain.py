@@ -37,18 +37,59 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 
-from stages import ReadHead, TextStage, multi_positive_nce, participation_ratio, relational_loss
+from stages import (ReadHead, TextStage, multi_positive_nce, participation_ratio,
+                    relational_loss, twin_nce)
 from train import called_tools
 
 COLS = ("tool_desc_tok", "tool_name_tok", "req_tok", "n_tool", "tgt",
         "sig_group", "flip_tool", "t_desc", "t_name", "t_req")
 
 
-def load_part(cache: Path, name: str, limit: int | None = None) -> dict:
+def load_part(cache: Path, name: str, limit: int | None = None,
+              ids: tuple[str, ...] | None = None) -> dict:
+    """A cached split's columns. `ids`: keep only rows whose task id contains
+    one of these (the exam's decoyed and flip halves -- the plain half has
+    no twins to decide between), then the first `limit`."""
     d = torch.load(cache / f"{name}.pt", mmap=True)
-    out = {k: (d[k][:limit] if limit else d[k]) for k in COLS if k in d}
     meta = json.loads((cache / f"{name}_meta.json").read_text(encoding="utf-8"))
-    out["opaque"] = torch.tensor([bool(m.get("opaque")) for m in meta][:len(out["tgt"])])
+    keep = [i for i, m in enumerate(meta)
+            if ids is None or any(x in m["task_id"] for x in ids)]
+    keep = keep[:limit] if limit else keep
+    idx = torch.tensor(keep, dtype=torch.long)
+    out = {k: d[k][idx] for k in COLS if k in d}
+    out["opaque"] = torch.tensor([bool(meta[i].get("opaque")) for i in keep])
+    if "flip_tool" in out and ids is not None:
+        out["flip_tool"] = out["flip_tool"] & readable(cache, name, keep,
+                                                       out["flip_tool"].shape[1])
+    return out
+
+
+def readable(cache: Path, split: str, keep: list[int], max_tool: int) -> torch.Tensor:
+    """(len(keep), max_tool): flip-slot tools whose own request templates the
+    row's request carries (`domains.request_fits`). A flip-slot call the
+    request never names -- "send it to {name}" beside notify / invite /
+    email -- has three right answers, and S6 has 14% of them (R11 §3); a
+    grounding number counts only the decisions a reader could get right.
+    Matched by description, which opaque-name rows keep."""
+    import pickle
+    from corpus import COVENANT  # noqa: F401 -- checkout on sys.path
+    from data.gen import domains
+    rows = pickle.load(open(cache / "rows.pkl", "rb"))[split]
+    specs = {}
+    for path in sorted((COVENANT / "data/gen/themes").glob("*.json")):
+        th = json.loads(path.read_text(encoding="utf-8"))
+        for slot in domains.FLIP_VERBS:
+            real = th["tools"][slot]
+            for sp in [real] + list(real.get("decoys") or []):
+                specs[(th["domain"], sp["desc"])] = (slot, sp)
+    out = torch.zeros(len(keep), max_tool, dtype=torch.bool)
+    for n, i in enumerate(keep):
+        r = rows[i]
+        tools = sorted(r["context"]["tools"], key=lambda t: int(t["sym"][1:]))
+        for j, t in enumerate(tools[:max_tool]):
+            hit = specs.get((r["world"], t["desc"]))
+            if hit and domains.request_fits(r["request"], hit[0], hit[1]):
+                out[n, j] = True
     return out
 
 
@@ -78,6 +119,36 @@ def load_stages(model, path) -> None:
                                if k.startswith(prefix)})
     with torch.no_grad():
         model.stage_scale.copy_(sd["scale"])
+
+
+def teacher_token_init(tk, model: str, width: int) -> tuple[torch.Tensor, torch.Tensor]:
+    """Model2Vec-style static embeddings for our BPE vocabulary, from the
+    teacher's input table: each token's text, re-tokenized by the teacher,
+    averaged over its word-piece rows, projected onto the top `width`
+    principal components and scaled to the stage's init. Returns (table,
+    covered mask). Unseen-world words fragment more under our BPE (84% vs
+    92% one-token, R10 §8), so the pieces arriving with some meaning
+    already is the point."""
+    from transformers import AutoModel, AutoTokenizer
+    btok = AutoTokenizer.from_pretrained(model)
+    E = AutoModel.from_pretrained(model).embeddings.word_embeddings.weight.detach()
+    vocab = tk.get_vocab()
+    V = torch.zeros(len(vocab), E.size(1))
+    ok = torch.zeros(len(vocab), dtype=torch.bool)
+    for piece, i in vocab.items():
+        text = piece.replace("Ġ", " ").replace("Ċ", " ").strip()
+        if not text or text.startswith("<"):
+            continue
+        ids = btok(text, add_special_tokens=False)["input_ids"]
+        if ids:
+            V[i] = E[ids].mean(0)
+            ok[i] = True
+    X = V[ok] - V[ok].mean(0)
+    comps = torch.linalg.svd(X, full_matrices=False)[2][:width].T     # (384, w)
+    P = torch.zeros(len(vocab), width)
+    P[ok] = X @ comps
+    P[ok] = P[ok] / P[ok].std() * 0.02
+    return P, ok
 
 
 def encode_unique(stage: TextStage, tok: torch.Tensor, query: bool = False) -> torch.Tensor:
@@ -116,13 +187,22 @@ def forward(head: ReadHead, b: dict, pad: int):
     return comb, sd, sn, g, enc, M
 
 
-def batch_losses(head, b, pad, n_kw, max_tool, teacher, lam_rel):
+def batch_losses(head, b, pad, n_kw, max_tool, teacher, lam_rel, flip_weight=0.0):
     comb, sd, sn, g, enc, M = forward(head, b, pad)
     live = torch.arange(M)[None] < b["n_tool"].long()[:, None]
     pos = called_tools(b["tgt"], n_kw, max_tool)[:, :M]
+    grp = b["sig_group"][:, :M].long()
     out = {"nce": multi_positive_nce(comb, pos, live),
            "nce_desc": multi_positive_nce(sd, pos, live),
-           "nce_name": multi_positive_nce(sn, pos, live)}
+           "nce_name": multi_positive_nce(sn, pos, live),
+           "twin": twin_nce(comb, pos, live, grp),
+           "twin_desc": twin_nce(sd, pos, live, grp)}
+    if flip_weight and "flip_tool" in b:
+        # the flip slots' twins on their own: the decisions the rest of the
+        # twin loss is dominated away from (every other twin group is won by
+        # recognising the tool requests always ask for, R11 §3)
+        fpos = pos & b["flip_tool"][:, :M]
+        out["twin_flip"] = twin_nce(comb, fpos, live, grp)
     if lam_rel and teacher is not None and "t_desc" in b:
         ridx = b["t_req"].long()
         for part, key in (("desc", "t_desc"), ("name", "t_name")):
@@ -132,7 +212,8 @@ def batch_losses(head, b, pad, n_kw, max_tool, teacher, lam_rel):
                             teacher[idx.clamp(min=0)]], 1)
             lv = torch.cat([(ridx >= 0).unsqueeze(1), live & (idx >= 0)], 1)
             out[f"rel_{part}"] = relational_loss(vec, tt, lv)
-    total = out["nce"] + out["nce_desc"] + out["nce_name"] + lam_rel * sum(
+    total = (out["nce"] + out["nce_desc"] + out["nce_name"] + out["twin"]
+             + out["twin_desc"] + flip_weight * out.get("twin_flip", 0.0)) + lam_rel * sum(
         v for k, v in out.items() if k.startswith("rel_"))
     return total, out
 
@@ -285,6 +366,8 @@ def main():
     ap.add_argument("--batch", type=int, default=32)
     ap.add_argument("--lr", type=float, default=5e-4)
     ap.add_argument("--lam-rel", type=float, default=1.0)
+    ap.add_argument("--flip-weight", type=float, default=0.0,
+                    help="weight of a twin loss on flip-slot decisions alone")
     ap.add_argument("--open-pairs", action="store_true",
                     help="add data/open_pairs as extra request/tool text, one "
                          "open batch every --open-every corpus batches")
@@ -294,6 +377,10 @@ def main():
     ap.add_argument("--eval-every", type=int, default=300)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--threads", type=int, default=os.cpu_count())
+    ap.add_argument("--init-emb", choices=["random", "teacher"], default="random",
+                    help="initialise both stages' token tables from the "
+                         "teacher's (the plan's optional step-3 arm)")
+    ap.add_argument("--teacher-model", default="unsloth/bge-small-en-v1.5")
     ap.add_argument("--weights", choices=["fp", "int8", "u4"], default="fp",
                     help="train the stages in this format from the start "
                          "(step 5, when post-training rounding costs more "
@@ -315,6 +402,16 @@ def main():
            "max_name": meta["max_name"], "max_req": meta["max_req"]}
     head = build_head(cfg, meta["in_vocab"], pad)
     n_params = sum(p.numel() for p in head.parameters())
+    if args.init_emb == "teacher":
+        from tokenizers import Tokenizer
+        tk0 = Tokenizer.from_file(str(cache / "in_tok.json"))
+        for stage in (head.desc, head.name):
+            P, ok = teacher_token_init(tk0, args.teacher_model, stage.width)
+            with torch.no_grad():
+                stage.emb.weight[ok] = P[ok]
+        print(f"  token tables initialised from {args.teacher_model}: "
+              f"{int(ok.sum())} of {len(ok)} pieces", flush=True)
+        cfg["init_emb"] = "teacher"
     if args.weights != "fp":
         from stage_quant import quantize_head
         quantize_head(head, args.weights)
@@ -324,7 +421,7 @@ def main():
         teacher = torch.load(cache / "teacher.pt")["table"].float()
 
     train = load_part(cache, "train", args.limit_train)
-    exam = load_part(cache, "holdout", args.limit_eval)
+    exam = load_part(cache, "holdout", args.limit_eval, ids=("+decoy", "+flip"))
     opn = None
     if args.open_pairs:
         from tokenizers import Tokenizer
@@ -377,7 +474,8 @@ def main():
         idx = order[cursor:cursor + args.batch]
         cursor += args.batch
         b = {k: v[idx] for k, v in train.items()}
-        loss, parts = batch_losses(head, b, pad, n_kw, max_tool, teacher, args.lam_rel)
+        loss, parts = batch_losses(head, b, pad, n_kw, max_tool, teacher, args.lam_rel,
+                                   args.flip_weight)
         if opn is not None and step % args.open_every == 0:
             on = opn["n_tool"].size(0)
             oidx = torch.arange(ocursor, ocursor + args.batch) % on
