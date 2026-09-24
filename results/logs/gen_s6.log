@@ -1,0 +1,9 @@
+     28739 data/s6_train.jsonl
+      4000 data/s6_holdout.jsonl
+      4000 data/s6_holdout_decoy.jsonl
+       400 data/s6_flip.jsonl
+      8400 data/s6_holdout_both.jsonl
+     45539 total
+file                                    tasks   calls  tools    full  stripped  effect
+s6_holdout_decoy.jsonl                   4000    7361   48.6   0.0%     0.0%   0.0%
+=== gen_s6 done ===

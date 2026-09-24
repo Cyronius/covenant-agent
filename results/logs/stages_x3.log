@@ -1,0 +1,19 @@
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 6858.34it/s]
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 5491.55it/s]
+  token tables initialised from unsloth/bge-small-en-v1.5: 4091 of 4096 pieces
+stages: desc 128x4, name 128x2, pool mean: 2.26M params; 27000 train rows, 844 steps; open pairs off
+  step 20/844 nce 3.980 nce_desc 4.185 nce_name 4.066 twin 0.983 twin_desc 0.977 twin_flip 0.943 rel_desc 0.116 rel_name 0.058  2.84s/step
+  step 40/844 nce 3.772 nce_desc 4.000 nce_name 3.957 twin 0.933 twin_desc 0.962 twin_flip 0.935 rel_desc 0.059 rel_name 0.025  2.86s/step
+  step 60/844 nce 3.370 nce_desc 3.515 nce_name 3.752 twin 0.841 twin_desc 0.892 twin_flip 0.940 rel_desc 0.024 rel_name 0.014  2.86s/step
+  step 80/844 nce 3.122 nce_desc 3.263 nce_name 3.584 twin 0.764 twin_desc 0.835 twin_flip 0.962 rel_desc 0.020 rel_name 0.012  2.85s/step
+  step 100/844 nce 2.856 nce_desc 3.000 nce_name 3.428 twin 0.693 twin_desc 0.762 twin_flip 1.008 rel_desc 0.022 rel_name 0.012  2.85s/step
+  step 120/844 nce 2.610 nce_desc 2.722 nce_name 3.283 twin 0.589 twin_desc 0.642 twin_flip 0.900 rel_desc 0.021 rel_name 0.011  2.85s/step
+  step 140/844 nce 2.440 nce_desc 2.541 nce_name 3.148 twin 0.556 twin_desc 0.615 twin_flip 0.920 rel_desc 0.022 rel_name 0.010  2.86s/step
+  step 160/844 nce 2.303 nce_desc 2.369 nce_name 3.146 twin 0.541 twin_desc 0.595 twin_flip 0.940 rel_desc 0.019 rel_name 0.011  2.86s/step
+  step 180/844 nce 2.106 nce_desc 2.198 nce_name 2.909 twin 0.493 twin_desc 0.547 twin_flip 0.969 rel_desc 0.019 rel_name 0.011  2.86s/step
+  step 200/844 nce 2.009 nce_desc 2.124 nce_name 2.885 twin 0.480 twin_desc 0.528 twin_flip 0.878 rel_desc 0.019 rel_name 0.011  2.86s/step
+  step 220/844 nce 1.907 nce_desc 2.037 nce_name 2.672 twin 0.460 twin_desc 0.505 twin_flip 0.853 rel_desc 0.018 rel_name 0.012  2.86s/step
+  step 240/844 nce 1.852 nce_desc 2.013 nce_name 2.647 twin 0.450 twin_desc 0.505 twin_flip 0.862 rel_desc 0.019 rel_name 0.012  2.86s/step
+  == step 250: twins 70.1% (desc 69.9%, name 59.9%; opaque-name rows 66.0%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 7.4  gate->desc opaque 0.648265502151446 named 0.6451186112466112
+     flip slots: twins 55.3% (desc 54.7%, name 47.4%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 260/844 nce 1.838 nce_desc 1.965 nce_name 2.681 twin 0.438 twin_desc 0.488 twin_flip 0.882 rel_desc 0.019 rel_name 0.011  2.93s/step

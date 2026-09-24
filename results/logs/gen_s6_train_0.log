@@ -1,0 +1,14 @@
+FATAL: level 9 failed 25 consecutive attempts
+registered 143 generated domains
+200/3750 (resamples: 78, noops dropped: 42)
+400/3750 (resamples: 128, noops dropped: 79)
+600/3750 (resamples: 163, noops dropped: 105)
+800/3750 (resamples: 204, noops dropped: 129)
+1000/3750 (resamples: 253, noops dropped: 173)
+1200/3750 (resamples: 314, noops dropped: 210)
+1400/3750 (resamples: 360, noops dropped: 232)
+1600/3750 (resamples: 405, noops dropped: 269)
+1800/3750 (resamples: 466, noops dropped: 306)
+2000/3750 (resamples: 499, noops dropped: 334)
+2200/3750 (resamples: 556, noops dropped: 369)
+2400/3750 (resamples: 598, noops dropped: 394)

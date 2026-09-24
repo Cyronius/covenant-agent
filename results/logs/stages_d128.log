@@ -1,0 +1,35 @@
+stages: desc 128x4, name 128x2, pool cls: 2.26M params; 27000 train rows, 844 steps; open pairs off
+  step 20/844 nce 3.944 nce_desc 3.993 nce_name 4.062 twin 0.950 twin_desc 0.977 rel_desc 0.078 rel_name 0.067  2.90s/step
+  step 40/844 nce 3.876 nce_desc 3.900 nce_name 3.907 twin 0.907 twin_desc 0.915 rel_desc 0.117 rel_name 0.101  2.91s/step
+  step 60/844 nce 3.856 nce_desc 3.870 nce_name 3.870 twin 0.911 twin_desc 0.907 rel_desc 0.129 rel_name 0.114  2.92s/step
+  step 80/844 nce 3.730 nce_desc 3.828 nce_name 3.737 twin 0.894 twin_desc 0.904 rel_desc 0.114 rel_name 0.102  2.92s/step
+  step 100/844 nce 3.415 nce_desc 3.640 nce_name 3.508 twin 0.774 twin_desc 0.888 rel_desc 0.072 rel_name 0.084  2.92s/step
+  step 120/844 nce 3.120 nce_desc 3.327 nce_name 3.396 twin 0.624 twin_desc 0.700 rel_desc 0.064 rel_name 0.091  2.92s/step
+  step 140/844 nce 2.924 nce_desc 3.128 nce_name 3.214 twin 0.604 twin_desc 0.664 rel_desc 0.078 rel_name 0.094  2.92s/step
+  step 160/844 nce 2.891 nce_desc 3.040 nce_name 3.283 twin 0.575 twin_desc 0.619 rel_desc 0.080 rel_name 0.096  2.91s/step
+  step 180/844 nce 2.745 nce_desc 2.925 nce_name 3.086 twin 0.544 twin_desc 0.610 rel_desc 0.081 rel_name 0.099  2.91s/step
+  step 200/844 nce 2.625 nce_desc 2.780 nce_name 3.018 twin 0.550 twin_desc 0.610 rel_desc 0.082 rel_name 0.097  2.91s/step
+  step 220/844 nce 2.492 nce_desc 2.664 nce_name 2.934 twin 0.513 twin_desc 0.563 rel_desc 0.074 rel_name 0.089  2.91s/step
+  step 240/844 nce 2.400 nce_desc 2.622 nce_name 2.867 twin 0.488 twin_desc 0.565 rel_desc 0.060 rel_name 0.088  2.90s/step
+  == step 250: twins 65.6% (desc 65.7%, name 57.1%; opaque-name rows 65.0%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 1.6  gate->desc opaque 0.6121301943710983 named 0.5597940271055453
+     flip slots: twins 44.0% (desc 45.6%, name 45.0%) teacher desc 81.0% name 72.9%  chance 41.2%  n=1092
+  step 260/844 nce 2.469 nce_desc 2.599 nce_name 2.996 twin 0.486 twin_desc 0.550 rel_desc 0.059 rel_name 0.091  2.98s/step
+  step 280/844 nce 2.336 nce_desc 2.474 nce_name 2.935 twin 0.491 twin_desc 0.551 rel_desc 0.055 rel_name 0.085  2.98s/step
+  step 300/844 nce 2.147 nce_desc 2.302 nce_name 2.776 twin 0.455 twin_desc 0.494 rel_desc 0.053 rel_name 0.087  2.98s/step
+  step 320/844 nce 2.025 nce_desc 2.155 nce_name 2.728 twin 0.437 twin_desc 0.455 rel_desc 0.051 rel_name 0.086  2.98s/step
+  step 340/844 nce 2.055 nce_desc 2.210 nce_name 2.748 twin 0.408 twin_desc 0.444 rel_desc 0.053 rel_name 0.085  2.96s/step
+  step 360/844 nce 1.915 nce_desc 2.012 nce_name 2.710 twin 0.401 twin_desc 0.427 rel_desc 0.053 rel_name 0.083  2.96s/step
+  step 380/844 nce 1.930 nce_desc 2.020 nce_name 2.717 twin 0.429 twin_desc 0.460 rel_desc 0.055 rel_name 0.082  2.95s/step
+  step 400/844 nce 1.935 nce_desc 2.067 nce_name 2.658 twin 0.401 twin_desc 0.444 rel_desc 0.057 rel_name 0.080  2.95s/step
+  step 420/844 nce 1.785 nce_desc 1.900 nce_name 2.700 twin 0.401 twin_desc 0.429 rel_desc 0.057 rel_name 0.077  2.94s/step
+  step 440/844 nce 1.744 nce_desc 1.892 nce_name 2.493 twin 0.356 twin_desc 0.380 rel_desc 0.062 rel_name 0.074  2.94s/step
+  step 460/844 nce 1.722 nce_desc 1.844 nce_name 2.488 twin 0.403 twin_desc 0.436 rel_desc 0.061 rel_name 0.075  2.94s/step
+  step 480/844 nce 1.657 nce_desc 1.768 nce_name 2.501 twin 0.372 twin_desc 0.405 rel_desc 0.059 rel_name 0.072  2.93s/step
+  step 500/844 nce 1.686 nce_desc 1.804 nce_name 2.462 twin 0.371 twin_desc 0.394 rel_desc 0.061 rel_name 0.073  2.92s/step
+  == step 500: twins 67.7% (desc 67.2%, name 59.8%; opaque-name rows 68.7%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 2.3  gate->desc opaque 0.7246497834714151 named 0.6594558949074035
+     flip slots: twins 46.2% (desc 45.2%, name 44.6%) teacher desc 81.0% name 72.9%  chance 41.2%  n=1092
+  step 520/844 nce 1.647 nce_desc 1.745 nce_name 2.524 twin 0.360 twin_desc 0.383 rel_desc 0.063 rel_name 0.074  2.95s/step
+  step 540/844 nce 1.565 nce_desc 1.700 nce_name 2.325 twin 0.368 twin_desc 0.398 rel_desc 0.063 rel_name 0.072  2.95s/step
+  step 560/844 nce 1.602 nce_desc 1.712 nce_name 2.390 twin 0.359 twin_desc 0.372 rel_desc 0.063 rel_name 0.071  2.95s/step
+  step 580/844 nce 1.577 nce_desc 1.688 nce_name 2.457 twin 0.363 twin_desc 0.395 rel_desc 0.062 rel_name 0.071  2.94s/step
+  step 600/844 nce 1.543 nce_desc 1.645 nce_name 2.349 twin 0.365 twin_desc 0.392 rel_desc 0.063 rel_name 0.072  2.94s/step

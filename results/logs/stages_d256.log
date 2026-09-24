@@ -1,0 +1,9 @@
+stages: desc 256x4, name 128x2, pool cls: 5.16M params; 27000 train rows, 844 steps; open pairs off
+  step 20/844 nce 3.930 nce_desc 3.953 nce_name 4.044 twin 0.938 twin_desc 0.932 rel_desc 0.075 rel_name 0.069  5.73s/step
+  step 40/844 nce 3.866 nce_desc 3.875 nce_name 3.905 twin 0.918 twin_desc 0.921 rel_desc 0.104 rel_name 0.102  5.74s/step
+  step 60/844 nce 3.673 nce_desc 3.683 nce_name 3.853 twin 0.887 twin_desc 0.885 rel_desc 0.074 rel_name 0.113  5.76s/step
+  step 80/844 nce 3.336 nce_desc 3.351 nce_name 3.800 twin 0.794 twin_desc 0.797 rel_desc 0.064 rel_name 0.111  5.78s/step
+  step 100/844 nce 2.996 nce_desc 3.011 nce_name 3.659 twin 0.680 twin_desc 0.681 rel_desc 0.069 rel_name 0.089  5.77s/step
+  step 120/844 nce 2.722 nce_desc 2.779 nce_name 3.487 twin 0.597 twin_desc 0.629 rel_desc 0.068 rel_name 0.080  5.74s/step
+  step 140/844 nce 2.541 nce_desc 2.584 nce_name 3.411 twin 0.577 twin_desc 0.612 rel_desc 0.062 rel_name 0.079  5.75s/step
+  step 160/844 nce 2.356 nce_desc 2.411 nce_name 3.248 twin 0.504 twin_desc 0.533 rel_desc 0.053 rel_name 0.085  5.76s/step

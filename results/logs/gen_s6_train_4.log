@@ -1,0 +1,23 @@
+registered 143 generated domains
+200/3750 (resamples: 70, noops dropped: 56)
+400/3750 (resamples: 124, noops dropped: 79)
+600/3750 (resamples: 171, noops dropped: 116)
+800/3750 (resamples: 222, noops dropped: 140)
+1000/3750 (resamples: 276, noops dropped: 177)
+1200/3750 (resamples: 329, noops dropped: 195)
+1400/3750 (resamples: 371, noops dropped: 233)
+1600/3750 (resamples: 427, noops dropped: 261)
+1800/3750 (resamples: 460, noops dropped: 299)
+2000/3750 (resamples: 513, noops dropped: 332)
+2200/3750 (resamples: 554, noops dropped: 356)
+2400/3750 (resamples: 614, noops dropped: 393)
+2600/3750 (resamples: 698, noops dropped: 417)
+2800/3750 (resamples: 762, noops dropped: 474)
+3000/3750 (resamples: 800, noops dropped: 511)
+3200/3750 (resamples: 850, noops dropped: 539)
+3400/3750 (resamples: 896, noops dropped: 574)
+3600/3750 (resamples: 952, noops dropped: 619)
+wrote 3750 tasks -> data\s6_shards\train_4.jsonl (resamples: 976, noops dropped: 638)
+signature uniqueness: 0.0% full, 0.0% types-only, over 6928 reference CALLs (48.8 tools/task)
+filter grounding: 159/991 of rows with a FILTER (16.0%) filter on something the request never names, over 2000 rows read
+segments: 349/3750 rows (9.3%) pause and decide in a second segment - L5 74/179, L7 47/179, L10 179/179, L11 49/178
