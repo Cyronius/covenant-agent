@@ -1,0 +1,444 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 6013.01it/s]
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 4603.58it/s]
+  token tables initialised from unsloth/bge-small-en-v1.5: 8189 of 8192 pieces
+  unreadable flip-slot calls dropped from training: 2985
+  general English: 400000 texts, 200000 names, 63708 look-alike items (7077 held out)
+stages: desc 256x4, name 256x2, pool mean: 8.97M params; 27000 train rows, 8064 steps (3000 general first); open pairs off; general on; device cuda
+  step 20/8064 gen_desc 0.966 gen_desc_rel 0.078 gen_name 0.922 gen_name_rel 0.043  0.14s/step
+  step 40/8064 gen_desc 0.680 gen_desc_rel 0.027 gen_name 0.686 gen_name_rel 0.016  0.12s/step
+  step 60/8064 gen_desc 0.501 gen_desc_rel 0.011 gen_name 0.497 gen_name_rel 0.008  0.12s/step
+  step 80/8064 gen_desc 0.419 gen_desc_rel 0.008 gen_name 0.413 gen_name_rel 0.006  0.11s/step
+  step 100/8064 gen_desc 0.374 gen_desc_rel 0.007 gen_name 0.371 gen_name_rel 0.005  0.11s/step
+  step 120/8064 gen_desc 0.338 gen_desc_rel 0.006 gen_name 0.340 gen_name_rel 0.005  0.11s/step
+  step 140/8064 gen_desc 0.308 gen_desc_rel 0.006 gen_name 0.318 gen_name_rel 0.005  0.11s/step
+  step 160/8064 gen_desc 0.293 gen_desc_rel 0.008 gen_name 0.300 gen_name_rel 0.005  0.11s/step
+  step 180/8064 gen_desc 0.283 gen_desc_rel 0.008 gen_name 0.292 gen_name_rel 0.006  0.11s/step
+  step 200/8064 gen_desc 0.269 gen_desc_rel 0.007 gen_name 0.285 gen_name_rel 0.006  0.11s/step
+  step 220/8064 gen_desc 0.253 gen_desc_rel 0.006 gen_name 0.274 gen_name_rel 0.005  0.11s/step
+  step 240/8064 gen_desc 0.243 gen_desc_rel 0.005 gen_name 0.265 gen_name_rel 0.005  0.11s/step
+  step 260/8064 gen_desc 0.232 gen_desc_rel 0.005 gen_name 0.255 gen_name_rel 0.004  0.11s/step
+  step 280/8064 gen_desc 0.227 gen_desc_rel 0.006 gen_name 0.249 gen_name_rel 0.004  0.11s/step
+  step 300/8064 gen_desc 0.221 gen_desc_rel 0.005 gen_name 0.243 gen_name_rel 0.004  0.11s/step
+  step 320/8064 gen_desc 0.215 gen_desc_rel 0.004 gen_name 0.237 gen_name_rel 0.004  0.11s/step
+  step 340/8064 gen_desc 0.207 gen_desc_rel 0.004 gen_name 0.234 gen_name_rel 0.003  0.11s/step
+  step 360/8064 gen_desc 0.200 gen_desc_rel 0.004 gen_name 0.231 gen_name_rel 0.004  0.11s/step
+  step 380/8064 gen_desc 0.196 gen_desc_rel 0.004 gen_name 0.226 gen_name_rel 0.004  0.11s/step
+  step 400/8064 gen_desc 0.192 gen_desc_rel 0.004 gen_name 0.223 gen_name_rel 0.003  0.11s/step
+  step 420/8064 gen_desc 0.190 gen_desc_rel 0.003 gen_name 0.223 gen_name_rel 0.003  0.11s/step
+  step 440/8064 gen_desc 0.186 gen_desc_rel 0.003 gen_name 0.220 gen_name_rel 0.003  0.11s/step
+  step 460/8064 gen_desc 0.184 gen_desc_rel 0.003 gen_name 0.217 gen_name_rel 0.003  0.11s/step
+  step 480/8064 gen_desc 0.181 gen_desc_rel 0.003 gen_name 0.213 gen_name_rel 0.003  0.11s/step
+  step 500/8064 gen_desc 0.179 gen_desc_rel 0.003 gen_name 0.211 gen_name_rel 0.003  0.11s/step
+  step 520/8064 gen_desc 0.176 gen_desc_rel 0.003 gen_name 0.210 gen_name_rel 0.003  0.11s/step
+  step 540/8064 gen_desc 0.173 gen_desc_rel 0.003 gen_name 0.209 gen_name_rel 0.003  0.11s/step
+  step 560/8064 gen_desc 0.171 gen_desc_rel 0.003 gen_name 0.208 gen_name_rel 0.003  0.11s/step
+  step 580/8064 gen_desc 0.169 gen_desc_rel 0.003 gen_name 0.206 gen_name_rel 0.003  0.11s/step
+  step 600/8064 gen_desc 0.169 gen_desc_rel 0.003 gen_name 0.205 gen_name_rel 0.003  0.11s/step
+  step 620/8064 gen_desc 0.167 gen_desc_rel 0.003 gen_name 0.205 gen_name_rel 0.003  0.11s/step
+  step 640/8064 gen_desc 0.165 gen_desc_rel 0.003 gen_name 0.203 gen_name_rel 0.003  0.11s/step
+  step 660/8064 gen_desc 0.162 gen_desc_rel 0.003 gen_name 0.201 gen_name_rel 0.003  0.11s/step
+  step 680/8064 gen_desc 0.161 gen_desc_rel 0.003 gen_name 0.199 gen_name_rel 0.003  0.11s/step
+  step 700/8064 gen_desc 0.161 gen_desc_rel 0.003 gen_name 0.199 gen_name_rel 0.003  0.11s/step
+  step 720/8064 gen_desc 0.158 gen_desc_rel 0.003 gen_name 0.199 gen_name_rel 0.003  0.11s/step
+  step 740/8064 gen_desc 0.157 gen_desc_rel 0.003 gen_name 0.198 gen_name_rel 0.003  0.11s/step
+  step 760/8064 gen_desc 0.157 gen_desc_rel 0.003 gen_name 0.197 gen_name_rel 0.003  0.11s/step
+  step 780/8064 gen_desc 0.155 gen_desc_rel 0.003 gen_name 0.195 gen_name_rel 0.003  0.11s/step
+  step 800/8064 gen_desc 0.154 gen_desc_rel 0.003 gen_name 0.194 gen_name_rel 0.003  0.11s/step
+     dictionary look-alikes (held out): stage 34.9% teacher 53.3%  n=7077
+  == step 800: twins 61.2% (desc 59.1%, name 55.2%; opaque-name rows 52.7%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 32.5  gate->desc opaque 0.4965747698682634 named 0.4847659788762046
+     flip slots: twins 82.2% (desc 82.3%, name 66.4%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 820/8064 gen_desc 0.154 gen_desc_rel 0.003 gen_name 0.193 gen_name_rel 0.003  0.11s/step
+  step 840/8064 gen_desc 0.152 gen_desc_rel 0.003 gen_name 0.193 gen_name_rel 0.003  0.11s/step
+  step 860/8064 gen_desc 0.152 gen_desc_rel 0.003 gen_name 0.193 gen_name_rel 0.003  0.11s/step
+  step 880/8064 gen_desc 0.151 gen_desc_rel 0.003 gen_name 0.190 gen_name_rel 0.003  0.11s/step
+  step 900/8064 gen_desc 0.150 gen_desc_rel 0.003 gen_name 0.190 gen_name_rel 0.003  0.11s/step
+  step 920/8064 gen_desc 0.148 gen_desc_rel 0.002 gen_name 0.189 gen_name_rel 0.002  0.11s/step
+  step 940/8064 gen_desc 0.149 gen_desc_rel 0.002 gen_name 0.190 gen_name_rel 0.003  0.11s/step
+  step 960/8064 gen_desc 0.147 gen_desc_rel 0.002 gen_name 0.188 gen_name_rel 0.003  0.11s/step
+  step 980/8064 gen_desc 0.148 gen_desc_rel 0.002 gen_name 0.187 gen_name_rel 0.002  0.11s/step
+  step 1000/8064 gen_desc 0.145 gen_desc_rel 0.002 gen_name 0.188 gen_name_rel 0.003  0.11s/step
+  step 1020/8064 gen_desc 0.144 gen_desc_rel 0.002 gen_name 0.187 gen_name_rel 0.002  0.11s/step
+  step 1040/8064 gen_desc 0.143 gen_desc_rel 0.002 gen_name 0.186 gen_name_rel 0.002  0.11s/step
+  step 1060/8064 gen_desc 0.144 gen_desc_rel 0.002 gen_name 0.185 gen_name_rel 0.002  0.11s/step
+  step 1080/8064 gen_desc 0.142 gen_desc_rel 0.002 gen_name 0.184 gen_name_rel 0.002  0.11s/step
+  step 1100/8064 gen_desc 0.143 gen_desc_rel 0.002 gen_name 0.183 gen_name_rel 0.002  0.11s/step
+  step 1120/8064 gen_desc 0.141 gen_desc_rel 0.002 gen_name 0.182 gen_name_rel 0.002  0.11s/step
+  step 1140/8064 gen_desc 0.140 gen_desc_rel 0.002 gen_name 0.182 gen_name_rel 0.002  0.11s/step
+  step 1160/8064 gen_desc 0.139 gen_desc_rel 0.002 gen_name 0.182 gen_name_rel 0.002  0.11s/step
+  step 1180/8064 gen_desc 0.139 gen_desc_rel 0.002 gen_name 0.181 gen_name_rel 0.002  0.11s/step
+  step 1200/8064 gen_desc 0.138 gen_desc_rel 0.002 gen_name 0.180 gen_name_rel 0.002  0.11s/step
+  step 1220/8064 gen_desc 0.136 gen_desc_rel 0.002 gen_name 0.181 gen_name_rel 0.002  0.11s/step
+  step 1240/8064 gen_desc 0.137 gen_desc_rel 0.002 gen_name 0.182 gen_name_rel 0.002  0.11s/step
+  step 1260/8064 gen_desc 0.137 gen_desc_rel 0.002 gen_name 0.181 gen_name_rel 0.002  0.11s/step
+  step 1280/8064 gen_desc 0.136 gen_desc_rel 0.002 gen_name 0.179 gen_name_rel 0.002  0.11s/step
+  step 1300/8064 gen_desc 0.135 gen_desc_rel 0.002 gen_name 0.181 gen_name_rel 0.002  0.11s/step
+  step 1320/8064 gen_desc 0.136 gen_desc_rel 0.002 gen_name 0.178 gen_name_rel 0.002  0.11s/step
+  step 1340/8064 gen_desc 0.135 gen_desc_rel 0.002 gen_name 0.177 gen_name_rel 0.002  0.11s/step
+  step 1360/8064 gen_desc 0.135 gen_desc_rel 0.002 gen_name 0.178 gen_name_rel 0.002  0.11s/step
+  step 1380/8064 gen_desc 0.134 gen_desc_rel 0.002 gen_name 0.175 gen_name_rel 0.002  0.11s/step
+  step 1400/8064 gen_desc 0.133 gen_desc_rel 0.002 gen_name 0.176 gen_name_rel 0.002  0.11s/step
+  step 1420/8064 gen_desc 0.133 gen_desc_rel 0.002 gen_name 0.176 gen_name_rel 0.002  0.11s/step
+  step 1440/8064 gen_desc 0.132 gen_desc_rel 0.002 gen_name 0.177 gen_name_rel 0.002  0.11s/step
+  step 1460/8064 gen_desc 0.131 gen_desc_rel 0.002 gen_name 0.177 gen_name_rel 0.002  0.11s/step
+  step 1480/8064 gen_desc 0.130 gen_desc_rel 0.002 gen_name 0.176 gen_name_rel 0.002  0.11s/step
+  step 1500/8064 gen_desc 0.132 gen_desc_rel 0.002 gen_name 0.175 gen_name_rel 0.002  0.11s/step
+  step 1520/8064 gen_desc 0.130 gen_desc_rel 0.002 gen_name 0.172 gen_name_rel 0.002  0.11s/step
+  step 1540/8064 gen_desc 0.129 gen_desc_rel 0.002 gen_name 0.173 gen_name_rel 0.002  0.11s/step
+  step 1560/8064 gen_desc 0.129 gen_desc_rel 0.002 gen_name 0.173 gen_name_rel 0.002  0.11s/step
+  step 1580/8064 gen_desc 0.128 gen_desc_rel 0.002 gen_name 0.172 gen_name_rel 0.002  0.11s/step
+  step 1600/8064 gen_desc 0.128 gen_desc_rel 0.002 gen_name 0.174 gen_name_rel 0.002  0.11s/step
+     dictionary look-alikes (held out): stage 36.3% teacher 53.3%  n=7077
+  == step 1600: twins 63.2% (desc 61.3%, name 57.9%; opaque-name rows 53.3%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 34.4  gate->desc opaque 0.495654285147279 named 0.4807640164760889
+     flip slots: twins 81.6% (desc 82.9%, name 67.6%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 1620/8064 gen_desc 0.129 gen_desc_rel 0.002 gen_name 0.173 gen_name_rel 0.002  0.11s/step
+  step 1640/8064 gen_desc 0.128 gen_desc_rel 0.002 gen_name 0.172 gen_name_rel 0.002  0.11s/step
+  step 1660/8064 gen_desc 0.128 gen_desc_rel 0.002 gen_name 0.172 gen_name_rel 0.002  0.11s/step
+  step 1680/8064 gen_desc 0.128 gen_desc_rel 0.002 gen_name 0.173 gen_name_rel 0.002  0.11s/step
+  step 1700/8064 gen_desc 0.127 gen_desc_rel 0.002 gen_name 0.172 gen_name_rel 0.002  0.11s/step
+  step 1720/8064 gen_desc 0.126 gen_desc_rel 0.002 gen_name 0.173 gen_name_rel 0.002  0.11s/step
+  step 1740/8064 gen_desc 0.126 gen_desc_rel 0.002 gen_name 0.172 gen_name_rel 0.002  0.11s/step
+  step 1760/8064 gen_desc 0.125 gen_desc_rel 0.002 gen_name 0.173 gen_name_rel 0.002  0.11s/step
+  step 1780/8064 gen_desc 0.126 gen_desc_rel 0.002 gen_name 0.170 gen_name_rel 0.002  0.11s/step
+  step 1800/8064 gen_desc 0.125 gen_desc_rel 0.002 gen_name 0.171 gen_name_rel 0.002  0.11s/step
+  step 1820/8064 gen_desc 0.125 gen_desc_rel 0.002 gen_name 0.171 gen_name_rel 0.002  0.11s/step
+  step 1840/8064 gen_desc 0.126 gen_desc_rel 0.002 gen_name 0.168 gen_name_rel 0.002  0.11s/step
+  step 1860/8064 gen_desc 0.125 gen_desc_rel 0.002 gen_name 0.168 gen_name_rel 0.002  0.11s/step
+  step 1880/8064 gen_desc 0.125 gen_desc_rel 0.002 gen_name 0.171 gen_name_rel 0.002  0.11s/step
+  step 1900/8064 gen_desc 0.124 gen_desc_rel 0.002 gen_name 0.168 gen_name_rel 0.002  0.11s/step
+  step 1920/8064 gen_desc 0.124 gen_desc_rel 0.002 gen_name 0.169 gen_name_rel 0.002  0.11s/step
+  step 1940/8064 gen_desc 0.122 gen_desc_rel 0.002 gen_name 0.167 gen_name_rel 0.002  0.11s/step
+  step 1960/8064 gen_desc 0.123 gen_desc_rel 0.002 gen_name 0.168 gen_name_rel 0.002  0.11s/step
+  step 1980/8064 gen_desc 0.123 gen_desc_rel 0.002 gen_name 0.169 gen_name_rel 0.002  0.11s/step
+  step 2000/8064 gen_desc 0.122 gen_desc_rel 0.002 gen_name 0.169 gen_name_rel 0.002  0.11s/step
+  step 2020/8064 gen_desc 0.122 gen_desc_rel 0.002 gen_name 0.167 gen_name_rel 0.002  0.11s/step
+  step 2040/8064 gen_desc 0.121 gen_desc_rel 0.002 gen_name 0.166 gen_name_rel 0.002  0.11s/step
+  step 2060/8064 gen_desc 0.121 gen_desc_rel 0.002 gen_name 0.167 gen_name_rel 0.002  0.11s/step
+  step 2080/8064 gen_desc 0.120 gen_desc_rel 0.002 gen_name 0.164 gen_name_rel 0.002  0.11s/step
+  step 2100/8064 gen_desc 0.121 gen_desc_rel 0.002 gen_name 0.166 gen_name_rel 0.002  0.11s/step
+  step 2120/8064 gen_desc 0.120 gen_desc_rel 0.002 gen_name 0.166 gen_name_rel 0.002  0.11s/step
+  step 2140/8064 gen_desc 0.120 gen_desc_rel 0.002 gen_name 0.166 gen_name_rel 0.002  0.11s/step
+  step 2160/8064 gen_desc 0.118 gen_desc_rel 0.002 gen_name 0.166 gen_name_rel 0.002  0.11s/step
+  step 2180/8064 gen_desc 0.119 gen_desc_rel 0.002 gen_name 0.167 gen_name_rel 0.002  0.11s/step
+  step 2200/8064 gen_desc 0.120 gen_desc_rel 0.002 gen_name 0.165 gen_name_rel 0.002  0.11s/step
+  step 2220/8064 gen_desc 0.119 gen_desc_rel 0.002 gen_name 0.166 gen_name_rel 0.002  0.11s/step
+  step 2240/8064 gen_desc 0.119 gen_desc_rel 0.002 gen_name 0.165 gen_name_rel 0.002  0.11s/step
+  step 2260/8064 gen_desc 0.118 gen_desc_rel 0.002 gen_name 0.166 gen_name_rel 0.002  0.11s/step
+  step 2280/8064 gen_desc 0.118 gen_desc_rel 0.002 gen_name 0.164 gen_name_rel 0.002  0.11s/step
+  step 2300/8064 gen_desc 0.118 gen_desc_rel 0.002 gen_name 0.164 gen_name_rel 0.002  0.11s/step
+  step 2320/8064 gen_desc 0.118 gen_desc_rel 0.002 gen_name 0.164 gen_name_rel 0.002  0.11s/step
+  step 2340/8064 gen_desc 0.118 gen_desc_rel 0.002 gen_name 0.164 gen_name_rel 0.002  0.11s/step
+  step 2360/8064 gen_desc 0.116 gen_desc_rel 0.002 gen_name 0.163 gen_name_rel 0.002  0.11s/step
+  step 2380/8064 gen_desc 0.116 gen_desc_rel 0.002 gen_name 0.162 gen_name_rel 0.002  0.11s/step
+  step 2400/8064 gen_desc 0.117 gen_desc_rel 0.002 gen_name 0.164 gen_name_rel 0.002  0.11s/step
+     dictionary look-alikes (held out): stage 37.1% teacher 53.3%  n=7077
+  == step 2400: twins 64.0% (desc 62.3%, name 57.3%; opaque-name rows 55.1%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 35.9  gate->desc opaque 0.49902813428804593 named 0.48533401921787095
+     flip slots: twins 83.9% (desc 84.6%, name 70.8%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 2420/8064 gen_desc 0.117 gen_desc_rel 0.002 gen_name 0.163 gen_name_rel 0.002  0.11s/step
+  step 2440/8064 gen_desc 0.117 gen_desc_rel 0.002 gen_name 0.164 gen_name_rel 0.002  0.11s/step
+  step 2460/8064 gen_desc 0.117 gen_desc_rel 0.002 gen_name 0.163 gen_name_rel 0.002  0.11s/step
+  step 2480/8064 gen_desc 0.116 gen_desc_rel 0.002 gen_name 0.163 gen_name_rel 0.002  0.11s/step
+  step 2500/8064 gen_desc 0.116 gen_desc_rel 0.002 gen_name 0.161 gen_name_rel 0.002  0.11s/step
+  step 2520/8064 gen_desc 0.116 gen_desc_rel 0.002 gen_name 0.162 gen_name_rel 0.002  0.11s/step
+  step 2540/8064 gen_desc 0.114 gen_desc_rel 0.002 gen_name 0.162 gen_name_rel 0.002  0.11s/step
+  step 2560/8064 gen_desc 0.115 gen_desc_rel 0.002 gen_name 0.161 gen_name_rel 0.002  0.11s/step
+  step 2580/8064 gen_desc 0.115 gen_desc_rel 0.002 gen_name 0.160 gen_name_rel 0.002  0.11s/step
+  step 2600/8064 gen_desc 0.114 gen_desc_rel 0.002 gen_name 0.162 gen_name_rel 0.002  0.11s/step
+  step 2620/8064 gen_desc 0.113 gen_desc_rel 0.002 gen_name 0.163 gen_name_rel 0.002  0.11s/step
+  step 2640/8064 gen_desc 0.114 gen_desc_rel 0.002 gen_name 0.162 gen_name_rel 0.002  0.11s/step
+  step 2660/8064 gen_desc 0.114 gen_desc_rel 0.002 gen_name 0.162 gen_name_rel 0.002  0.11s/step
+  step 2680/8064 gen_desc 0.114 gen_desc_rel 0.002 gen_name 0.161 gen_name_rel 0.002  0.11s/step
+  step 2700/8064 gen_desc 0.113 gen_desc_rel 0.002 gen_name 0.161 gen_name_rel 0.002  0.11s/step
+  step 2720/8064 gen_desc 0.114 gen_desc_rel 0.002 gen_name 0.160 gen_name_rel 0.002  0.11s/step
+  step 2740/8064 gen_desc 0.114 gen_desc_rel 0.002 gen_name 0.162 gen_name_rel 0.002  0.11s/step
+  step 2760/8064 gen_desc 0.114 gen_desc_rel 0.002 gen_name 0.162 gen_name_rel 0.002  0.11s/step
+  step 2780/8064 gen_desc 0.113 gen_desc_rel 0.002 gen_name 0.162 gen_name_rel 0.002  0.11s/step
+  step 2800/8064 gen_desc 0.113 gen_desc_rel 0.002 gen_name 0.161 gen_name_rel 0.002  0.11s/step
+  step 2820/8064 gen_desc 0.113 gen_desc_rel 0.002 gen_name 0.160 gen_name_rel 0.002  0.11s/step
+  step 2840/8064 gen_desc 0.113 gen_desc_rel 0.002 gen_name 0.160 gen_name_rel 0.002  0.11s/step
+  step 2860/8064 gen_desc 0.112 gen_desc_rel 0.002 gen_name 0.160 gen_name_rel 0.002  0.11s/step
+  step 2880/8064 gen_desc 0.112 gen_desc_rel 0.002 gen_name 0.161 gen_name_rel 0.002  0.11s/step
+  step 2900/8064 gen_desc 0.112 gen_desc_rel 0.002 gen_name 0.161 gen_name_rel 0.002  0.11s/step
+  step 2920/8064 gen_desc 0.113 gen_desc_rel 0.002 gen_name 0.160 gen_name_rel 0.002  0.11s/step
+  step 2940/8064 gen_desc 0.112 gen_desc_rel 0.002 gen_name 0.159 gen_name_rel 0.002  0.11s/step
+  step 2960/8064 gen_desc 0.111 gen_desc_rel 0.002 gen_name 0.160 gen_name_rel 0.002  0.11s/step
+  step 2980/8064 gen_desc 0.112 gen_desc_rel 0.002 gen_name 0.157 gen_name_rel 0.002  0.11s/step
+  step 3000/8064 gen_desc 0.111 gen_desc_rel 0.002 gen_name 0.159 gen_name_rel 0.002  0.11s/step
+  step 3020/8064 gen_desc 0.144 gen_desc_rel 0.005 gen_name 0.167 gen_name_rel 0.003 nce 2.452 nce_desc 2.553 nce_name 3.124 twin 0.595 twin_desc 0.623 twin_flip 0.515 rel_desc 0.010 rel_name 0.005  0.11s/step
+  step 3040/8064 gen_desc 0.207 gen_desc_rel 0.011 gen_name 0.178 gen_name_rel 0.003 nce 1.846 nce_desc 2.114 nce_name 2.494 twin 0.453 twin_desc 0.523 twin_flip 0.418 rel_desc 0.013 rel_name 0.007  0.11s/step
+  step 3060/8064 gen_desc 0.238 gen_desc_rel 0.013 gen_name 0.187 gen_name_rel 0.004 nce 1.715 nce_desc 2.011 nce_name 2.403 twin 0.385 twin_desc 0.487 twin_flip 0.509 rel_desc 0.013 rel_name 0.007  0.11s/step
+  step 3080/8064 gen_desc 0.242 gen_desc_rel 0.013 gen_name 0.192 gen_name_rel 0.004 nce 1.434 nce_desc 1.715 nce_name 2.210 twin 0.318 twin_desc 0.400 twin_flip 0.390 rel_desc 0.014 rel_name 0.008  0.11s/step
+  step 3100/8064 gen_desc 0.246 gen_desc_rel 0.014 gen_name 0.195 gen_name_rel 0.005 nce 1.266 nce_desc 1.473 nce_name 2.088 twin 0.258 twin_desc 0.324 twin_flip 0.325 rel_desc 0.013 rel_name 0.008  0.11s/step
+  step 3120/8064 gen_desc 0.238 gen_desc_rel 0.014 gen_name 0.199 gen_name_rel 0.005 nce 1.231 nce_desc 1.463 nce_name 2.014 twin 0.234 twin_desc 0.288 twin_flip 0.384 rel_desc 0.012 rel_name 0.008  0.12s/step
+  step 3140/8064 gen_desc 0.231 gen_desc_rel 0.012 gen_name 0.197 gen_name_rel 0.005 nce 1.060 nce_desc 1.300 nce_name 1.879 twin 0.198 twin_desc 0.251 twin_flip 0.293 rel_desc 0.013 rel_name 0.008  0.12s/step
+  step 3160/8064 gen_desc 0.231 gen_desc_rel 0.012 gen_name 0.198 gen_name_rel 0.005 nce 1.013 nce_desc 1.281 nce_name 1.780 twin 0.190 twin_desc 0.251 twin_flip 0.304 rel_desc 0.012 rel_name 0.009  0.12s/step
+  step 3180/8064 gen_desc 0.228 gen_desc_rel 0.012 gen_name 0.198 gen_name_rel 0.005 nce 0.983 nce_desc 1.227 nce_name 1.724 twin 0.166 twin_desc 0.209 twin_flip 0.239 rel_desc 0.011 rel_name 0.008  0.12s/step
+  step 3200/8064 gen_desc 0.223 gen_desc_rel 0.011 gen_name 0.197 gen_name_rel 0.005 nce 0.940 nce_desc 1.134 nce_name 1.669 twin 0.165 twin_desc 0.200 twin_flip 0.317 rel_desc 0.012 rel_name 0.007  0.12s/step
+     dictionary look-alikes (held out): stage 27.6% teacher 53.3%  n=7077
+  == step 3200: twins 82.8% (desc 79.5%, name 74.6%; opaque-name rows 74.9%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 15.9  gate->desc opaque 0.7808127712391957 named 0.5687407805175029
+     flip slots: twins 88.9% (desc 84.6%, name 80.5%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 3220/8064 gen_desc 0.222 gen_desc_rel 0.012 gen_name 0.196 gen_name_rel 0.005 nce 0.871 nce_desc 1.137 nce_name 1.525 twin 0.152 twin_desc 0.207 twin_flip 0.299 rel_desc 0.012 rel_name 0.008  0.12s/step
+  step 3240/8064 gen_desc 0.224 gen_desc_rel 0.011 gen_name 0.197 gen_name_rel 0.005 nce 0.832 nce_desc 1.038 nce_name 1.611 twin 0.151 twin_desc 0.187 twin_flip 0.295 rel_desc 0.011 rel_name 0.008  0.13s/step
+  step 3260/8064 gen_desc 0.223 gen_desc_rel 0.011 gen_name 0.200 gen_name_rel 0.005 nce 0.688 nce_desc 0.907 nce_name 1.427 twin 0.106 twin_desc 0.145 twin_flip 0.182 rel_desc 0.011 rel_name 0.008  0.13s/step
+  step 3280/8064 gen_desc 0.220 gen_desc_rel 0.011 gen_name 0.198 gen_name_rel 0.005 nce 0.705 nce_desc 0.928 nce_name 1.381 twin 0.128 twin_desc 0.181 twin_flip 0.249 rel_desc 0.011 rel_name 0.008  0.13s/step
+  step 3300/8064 gen_desc 0.214 gen_desc_rel 0.010 gen_name 0.199 gen_name_rel 0.005 nce 0.686 nce_desc 0.899 nce_name 1.538 twin 0.110 twin_desc 0.153 twin_flip 0.219 rel_desc 0.010 rel_name 0.008  0.13s/step
+  step 3320/8064 gen_desc 0.215 gen_desc_rel 0.010 gen_name 0.198 gen_name_rel 0.005 nce 0.687 nce_desc 0.894 nce_name 1.438 twin 0.116 twin_desc 0.131 twin_flip 0.270 rel_desc 0.010 rel_name 0.008  0.13s/step
+  step 3340/8064 gen_desc 0.215 gen_desc_rel 0.010 gen_name 0.198 gen_name_rel 0.005 nce 0.594 nce_desc 0.775 nce_name 1.262 twin 0.095 twin_desc 0.131 twin_flip 0.195 rel_desc 0.011 rel_name 0.007  0.13s/step
+  step 3360/8064 gen_desc 0.216 gen_desc_rel 0.010 gen_name 0.199 gen_name_rel 0.005 nce 0.627 nce_desc 0.765 nce_name 1.354 twin 0.096 twin_desc 0.120 twin_flip 0.212 rel_desc 0.010 rel_name 0.008  0.13s/step
+  step 3380/8064 gen_desc 0.214 gen_desc_rel 0.010 gen_name 0.197 gen_name_rel 0.005 nce 0.639 nce_desc 0.826 nce_name 1.423 twin 0.100 twin_desc 0.138 twin_flip 0.223 rel_desc 0.009 rel_name 0.007  0.13s/step
+  step 3400/8064 gen_desc 0.212 gen_desc_rel 0.010 gen_name 0.196 gen_name_rel 0.005 nce 0.553 nce_desc 0.748 nce_name 1.376 twin 0.077 twin_desc 0.109 twin_flip 0.176 rel_desc 0.011 rel_name 0.008  0.13s/step
+  step 3420/8064 gen_desc 0.208 gen_desc_rel 0.009 gen_name 0.195 gen_name_rel 0.005 nce 0.537 nce_desc 0.733 nce_name 1.223 twin 0.081 twin_desc 0.123 twin_flip 0.194 rel_desc 0.009 rel_name 0.008  0.14s/step
+  step 3440/8064 gen_desc 0.205 gen_desc_rel 0.009 gen_name 0.194 gen_name_rel 0.005 nce 0.492 nce_desc 0.657 nce_name 1.270 twin 0.081 twin_desc 0.112 twin_flip 0.179 rel_desc 0.009 rel_name 0.007  0.14s/step
+  step 3460/8064 gen_desc 0.206 gen_desc_rel 0.009 gen_name 0.196 gen_name_rel 0.005 nce 0.455 nce_desc 0.585 nce_name 1.246 twin 0.070 twin_desc 0.093 twin_flip 0.166 rel_desc 0.010 rel_name 0.007  0.14s/step
+  step 3480/8064 gen_desc 0.207 gen_desc_rel 0.009 gen_name 0.195 gen_name_rel 0.005 nce 0.421 nce_desc 0.576 nce_name 1.200 twin 0.069 twin_desc 0.093 twin_flip 0.163 rel_desc 0.010 rel_name 0.007  0.14s/step
+  step 3500/8064 gen_desc 0.205 gen_desc_rel 0.009 gen_name 0.197 gen_name_rel 0.005 nce 0.469 nce_desc 0.631 nce_name 1.137 twin 0.070 twin_desc 0.096 twin_flip 0.168 rel_desc 0.009 rel_name 0.007  0.14s/step
+  step 3520/8064 gen_desc 0.204 gen_desc_rel 0.009 gen_name 0.197 gen_name_rel 0.005 nce 0.488 nce_desc 0.621 nce_name 1.254 twin 0.089 twin_desc 0.111 twin_flip 0.232 rel_desc 0.010 rel_name 0.006  0.14s/step
+  step 3540/8064 gen_desc 0.206 gen_desc_rel 0.009 gen_name 0.196 gen_name_rel 0.005 nce 0.438 nce_desc 0.569 nce_name 1.288 twin 0.073 twin_desc 0.096 twin_flip 0.184 rel_desc 0.009 rel_name 0.007  0.14s/step
+  step 3560/8064 gen_desc 0.204 gen_desc_rel 0.008 gen_name 0.196 gen_name_rel 0.005 nce 0.461 nce_desc 0.588 nce_name 1.262 twin 0.069 twin_desc 0.088 twin_flip 0.167 rel_desc 0.008 rel_name 0.006  0.14s/step
+  step 3580/8064 gen_desc 0.201 gen_desc_rel 0.008 gen_name 0.197 gen_name_rel 0.005 nce 0.375 nce_desc 0.533 nce_name 1.097 twin 0.046 twin_desc 0.074 twin_flip 0.108 rel_desc 0.009 rel_name 0.007  0.14s/step
+  step 3600/8064 gen_desc 0.200 gen_desc_rel 0.008 gen_name 0.195 gen_name_rel 0.005 nce 0.411 nce_desc 0.556 nce_name 1.189 twin 0.073 twin_desc 0.105 twin_flip 0.165 rel_desc 0.009 rel_name 0.007  0.14s/step
+  step 3620/8064 gen_desc 0.201 gen_desc_rel 0.008 gen_name 0.195 gen_name_rel 0.005 nce 0.436 nce_desc 0.584 nce_name 1.131 twin 0.068 twin_desc 0.100 twin_flip 0.174 rel_desc 0.008 rel_name 0.007  0.15s/step
+  step 3640/8064 gen_desc 0.201 gen_desc_rel 0.008 gen_name 0.194 gen_name_rel 0.004 nce 0.420 nce_desc 0.558 nce_name 1.150 twin 0.068 twin_desc 0.102 twin_flip 0.206 rel_desc 0.009 rel_name 0.007  0.15s/step
+  step 3660/8064 gen_desc 0.198 gen_desc_rel 0.008 gen_name 0.192 gen_name_rel 0.004 nce 0.424 nce_desc 0.548 nce_name 1.224 twin 0.052 twin_desc 0.075 twin_flip 0.138 rel_desc 0.008 rel_name 0.006  0.15s/step
+  step 3680/8064 gen_desc 0.197 gen_desc_rel 0.008 gen_name 0.192 gen_name_rel 0.004 nce 0.378 nce_desc 0.477 nce_name 1.270 twin 0.054 twin_desc 0.073 twin_flip 0.145 rel_desc 0.009 rel_name 0.006  0.15s/step
+  step 3700/8064 gen_desc 0.197 gen_desc_rel 0.008 gen_name 0.193 gen_name_rel 0.004 nce 0.407 nce_desc 0.504 nce_name 1.188 twin 0.056 twin_desc 0.071 twin_flip 0.145 rel_desc 0.008 rel_name 0.006  0.15s/step
+  step 3720/8064 gen_desc 0.197 gen_desc_rel 0.008 gen_name 0.194 gen_name_rel 0.004 nce 0.410 nce_desc 0.515 nce_name 1.246 twin 0.046 twin_desc 0.063 twin_flip 0.110 rel_desc 0.008 rel_name 0.006  0.15s/step
+  step 3740/8064 gen_desc 0.197 gen_desc_rel 0.007 gen_name 0.192 gen_name_rel 0.004 nce 0.384 nce_desc 0.529 nce_name 1.028 twin 0.037 twin_desc 0.058 twin_flip 0.091 rel_desc 0.008 rel_name 0.006  0.15s/step
+  step 3760/8064 gen_desc 0.196 gen_desc_rel 0.007 gen_name 0.191 gen_name_rel 0.004 nce 0.382 nce_desc 0.504 nce_name 1.103 twin 0.057 twin_desc 0.076 twin_flip 0.155 rel_desc 0.008 rel_name 0.006  0.15s/step
+  step 3780/8064 gen_desc 0.195 gen_desc_rel 0.007 gen_name 0.192 gen_name_rel 0.004 nce 0.358 nce_desc 0.450 nce_name 1.133 twin 0.052 twin_desc 0.066 twin_flip 0.135 rel_desc 0.007 rel_name 0.006  0.15s/step
+  step 3800/8064 gen_desc 0.194 gen_desc_rel 0.007 gen_name 0.192 gen_name_rel 0.004 nce 0.334 nce_desc 0.432 nce_name 1.069 twin 0.031 twin_desc 0.043 twin_flip 0.067 rel_desc 0.008 rel_name 0.006  0.15s/step
+  step 3820/8064 gen_desc 0.192 gen_desc_rel 0.007 gen_name 0.192 gen_name_rel 0.004 nce 0.332 nce_desc 0.429 nce_name 1.113 twin 0.042 twin_desc 0.059 twin_flip 0.142 rel_desc 0.008 rel_name 0.006  0.15s/step
+  step 3840/8064 gen_desc 0.192 gen_desc_rel 0.007 gen_name 0.190 gen_name_rel 0.004 nce 0.305 nce_desc 0.394 nce_name 1.136 twin 0.037 twin_desc 0.052 twin_flip 0.107 rel_desc 0.007 rel_name 0.005  0.16s/step
+  step 3860/8064 gen_desc 0.190 gen_desc_rel 0.007 gen_name 0.191 gen_name_rel 0.004 nce 0.252 nce_desc 0.333 nce_name 0.921 twin 0.022 twin_desc 0.033 twin_flip 0.056 rel_desc 0.007 rel_name 0.006  0.16s/step
+  step 3880/8064 gen_desc 0.188 gen_desc_rel 0.007 gen_name 0.191 gen_name_rel 0.004 nce 0.245 nce_desc 0.339 nce_name 0.915 twin 0.016 twin_desc 0.033 twin_flip 0.033 rel_desc 0.007 rel_name 0.006  0.16s/step
+  step 3900/8064 gen_desc 0.187 gen_desc_rel 0.006 gen_name 0.190 gen_name_rel 0.004 nce 0.231 nce_desc 0.319 nce_name 0.858 twin 0.019 twin_desc 0.035 twin_flip 0.038 rel_desc 0.007 rel_name 0.006  0.16s/step
+  step 3920/8064 gen_desc 0.185 gen_desc_rel 0.006 gen_name 0.189 gen_name_rel 0.004 nce 0.235 nce_desc 0.306 nce_name 0.934 twin 0.025 twin_desc 0.036 twin_flip 0.062 rel_desc 0.007 rel_name 0.005  0.16s/step
+  step 3940/8064 gen_desc 0.185 gen_desc_rel 0.006 gen_name 0.189 gen_name_rel 0.004 nce 0.245 nce_desc 0.331 nce_name 0.999 twin 0.022 twin_desc 0.035 twin_flip 0.040 rel_desc 0.007 rel_name 0.005  0.16s/step
+  step 3960/8064 gen_desc 0.183 gen_desc_rel 0.006 gen_name 0.189 gen_name_rel 0.004 nce 0.263 nce_desc 0.333 nce_name 1.005 twin 0.023 twin_desc 0.034 twin_flip 0.057 rel_desc 0.007 rel_name 0.005  0.16s/step
+  step 3980/8064 gen_desc 0.182 gen_desc_rel 0.006 gen_name 0.190 gen_name_rel 0.004 nce 0.249 nce_desc 0.321 nce_name 0.958 twin 0.021 twin_desc 0.027 twin_flip 0.055 rel_desc 0.006 rel_name 0.005  0.16s/step
+  step 4000/8064 gen_desc 0.181 gen_desc_rel 0.006 gen_name 0.188 gen_name_rel 0.004 nce 0.272 nce_desc 0.345 nce_name 1.098 twin 0.017 twin_desc 0.024 twin_flip 0.040 rel_desc 0.006 rel_name 0.005  0.16s/step
+     dictionary look-alikes (held out): stage 30.4% teacher 53.3%  n=7077
+  == step 4000: twins 84.6% (desc 81.8%, name 75.7%; opaque-name rows 80.2%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 24.2  gate->desc opaque 0.9673040260951755 named 0.5160123077289896
+     flip slots: twins 92.5% (desc 89.3%, name 83.2%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 4020/8064 gen_desc 0.181 gen_desc_rel 0.006 gen_name 0.186 gen_name_rel 0.004 nce 0.228 nce_desc 0.292 nce_name 0.953 twin 0.013 twin_desc 0.020 twin_flip 0.031 rel_desc 0.007 rel_name 0.005  0.16s/step
+  step 4040/8064 gen_desc 0.180 gen_desc_rel 0.006 gen_name 0.187 gen_name_rel 0.004 nce 0.218 nce_desc 0.289 nce_name 0.988 twin 0.014 twin_desc 0.023 twin_flip 0.034 rel_desc 0.006 rel_name 0.005  0.16s/step
+  step 4060/8064 gen_desc 0.180 gen_desc_rel 0.006 gen_name 0.187 gen_name_rel 0.004 nce 0.205 nce_desc 0.273 nce_name 1.005 twin 0.012 twin_desc 0.025 twin_flip 0.032 rel_desc 0.007 rel_name 0.005  0.17s/step
+  step 4080/8064 gen_desc 0.178 gen_desc_rel 0.006 gen_name 0.187 gen_name_rel 0.004 nce 0.234 nce_desc 0.291 nce_name 1.020 twin 0.017 twin_desc 0.024 twin_flip 0.040 rel_desc 0.006 rel_name 0.005  0.17s/step
+  step 4100/8064 gen_desc 0.178 gen_desc_rel 0.006 gen_name 0.187 gen_name_rel 0.004 nce 0.220 nce_desc 0.292 nce_name 0.894 twin 0.019 twin_desc 0.029 twin_flip 0.052 rel_desc 0.006 rel_name 0.005  0.17s/step
+  step 4120/8064 gen_desc 0.178 gen_desc_rel 0.006 gen_name 0.186 gen_name_rel 0.004 nce 0.202 nce_desc 0.255 nce_name 0.895 twin 0.018 twin_desc 0.025 twin_flip 0.054 rel_desc 0.006 rel_name 0.005  0.17s/step
+  step 4140/8064 gen_desc 0.176 gen_desc_rel 0.006 gen_name 0.187 gen_name_rel 0.004 nce 0.231 nce_desc 0.286 nce_name 1.019 twin 0.015 twin_desc 0.023 twin_flip 0.030 rel_desc 0.006 rel_name 0.005  0.17s/step
+  step 4160/8064 gen_desc 0.174 gen_desc_rel 0.006 gen_name 0.188 gen_name_rel 0.004 nce 0.294 nce_desc 0.355 nce_name 1.118 twin 0.022 twin_desc 0.030 twin_flip 0.056 rel_desc 0.006 rel_name 0.004  0.17s/step
+  step 4180/8064 gen_desc 0.173 gen_desc_rel 0.005 gen_name 0.187 gen_name_rel 0.004 nce 0.235 nce_desc 0.289 nce_name 1.034 twin 0.014 twin_desc 0.023 twin_flip 0.033 rel_desc 0.006 rel_name 0.005  0.17s/step
+  step 4200/8064 gen_desc 0.174 gen_desc_rel 0.005 gen_name 0.184 gen_name_rel 0.004 nce 0.229 nce_desc 0.291 nce_name 0.862 twin 0.013 twin_desc 0.022 twin_flip 0.033 rel_desc 0.006 rel_name 0.005  0.17s/step
+  step 4220/8064 gen_desc 0.175 gen_desc_rel 0.005 gen_name 0.187 gen_name_rel 0.004 nce 0.183 nce_desc 0.230 nce_name 1.047 twin 0.011 twin_desc 0.019 twin_flip 0.027 rel_desc 0.006 rel_name 0.005  0.17s/step
+  step 4240/8064 gen_desc 0.173 gen_desc_rel 0.005 gen_name 0.186 gen_name_rel 0.004 nce 0.222 nce_desc 0.279 nce_name 0.972 twin 0.013 twin_desc 0.024 twin_flip 0.034 rel_desc 0.006 rel_name 0.005  0.17s/step
+  step 4260/8064 gen_desc 0.174 gen_desc_rel 0.005 gen_name 0.185 gen_name_rel 0.004 nce 0.229 nce_desc 0.288 nce_name 0.931 twin 0.013 twin_desc 0.021 twin_flip 0.029 rel_desc 0.005 rel_name 0.005  0.17s/step
+  step 4280/8064 gen_desc 0.173 gen_desc_rel 0.005 gen_name 0.184 gen_name_rel 0.004 nce 0.230 nce_desc 0.292 nce_name 1.010 twin 0.011 twin_desc 0.019 twin_flip 0.029 rel_desc 0.006 rel_name 0.005  0.17s/step
+  step 4300/8064 gen_desc 0.172 gen_desc_rel 0.005 gen_name 0.184 gen_name_rel 0.004 nce 0.225 nce_desc 0.286 nce_name 0.883 twin 0.014 twin_desc 0.024 twin_flip 0.038 rel_desc 0.005 rel_name 0.005  0.17s/step
+  step 4320/8064 gen_desc 0.171 gen_desc_rel 0.005 gen_name 0.184 gen_name_rel 0.004 nce 0.197 nce_desc 0.235 nce_name 0.814 twin 0.013 twin_desc 0.020 twin_flip 0.037 rel_desc 0.005 rel_name 0.004  0.17s/step
+  step 4340/8064 gen_desc 0.170 gen_desc_rel 0.005 gen_name 0.185 gen_name_rel 0.004 nce 0.260 nce_desc 0.311 nce_name 1.041 twin 0.019 twin_desc 0.032 twin_flip 0.049 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4360/8064 gen_desc 0.170 gen_desc_rel 0.005 gen_name 0.187 gen_name_rel 0.004 nce 0.213 nce_desc 0.267 nce_name 0.934 twin 0.015 twin_desc 0.026 twin_flip 0.038 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4380/8064 gen_desc 0.171 gen_desc_rel 0.005 gen_name 0.185 gen_name_rel 0.004 nce 0.222 nce_desc 0.272 nce_name 0.895 twin 0.012 twin_desc 0.017 twin_flip 0.036 rel_desc 0.006 rel_name 0.004  0.18s/step
+  step 4400/8064 gen_desc 0.171 gen_desc_rel 0.005 gen_name 0.185 gen_name_rel 0.004 nce 0.177 nce_desc 0.225 nce_name 0.845 twin 0.009 twin_desc 0.014 twin_flip 0.025 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4420/8064 gen_desc 0.170 gen_desc_rel 0.005 gen_name 0.184 gen_name_rel 0.004 nce 0.211 nce_desc 0.261 nce_name 0.868 twin 0.012 twin_desc 0.019 twin_flip 0.034 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4440/8064 gen_desc 0.170 gen_desc_rel 0.005 gen_name 0.185 gen_name_rel 0.004 nce 0.189 nce_desc 0.234 nce_name 0.920 twin 0.010 twin_desc 0.013 twin_flip 0.024 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4460/8064 gen_desc 0.170 gen_desc_rel 0.005 gen_name 0.184 gen_name_rel 0.003 nce 0.204 nce_desc 0.258 nce_name 0.892 twin 0.013 twin_desc 0.017 twin_flip 0.034 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4480/8064 gen_desc 0.171 gen_desc_rel 0.005 gen_name 0.184 gen_name_rel 0.003 nce 0.225 nce_desc 0.273 nce_name 0.842 twin 0.015 twin_desc 0.024 twin_flip 0.042 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4500/8064 gen_desc 0.171 gen_desc_rel 0.005 gen_name 0.183 gen_name_rel 0.003 nce 0.253 nce_desc 0.308 nce_name 0.886 twin 0.020 twin_desc 0.032 twin_flip 0.051 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4520/8064 gen_desc 0.171 gen_desc_rel 0.005 gen_name 0.184 gen_name_rel 0.004 nce 0.221 nce_desc 0.269 nce_name 0.774 twin 0.013 twin_desc 0.017 twin_flip 0.037 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4540/8064 gen_desc 0.168 gen_desc_rel 0.005 gen_name 0.183 gen_name_rel 0.003 nce 0.198 nce_desc 0.242 nce_name 0.803 twin 0.009 twin_desc 0.013 twin_flip 0.021 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4560/8064 gen_desc 0.167 gen_desc_rel 0.005 gen_name 0.183 gen_name_rel 0.003 nce 0.204 nce_desc 0.247 nce_name 1.021 twin 0.008 twin_desc 0.013 twin_flip 0.019 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4580/8064 gen_desc 0.167 gen_desc_rel 0.005 gen_name 0.183 gen_name_rel 0.003 nce 0.187 nce_desc 0.219 nce_name 0.794 twin 0.012 twin_desc 0.016 twin_flip 0.029 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4600/8064 gen_desc 0.167 gen_desc_rel 0.005 gen_name 0.183 gen_name_rel 0.003 nce 0.200 nce_desc 0.240 nce_name 0.982 twin 0.013 twin_desc 0.018 twin_flip 0.033 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4620/8064 gen_desc 0.167 gen_desc_rel 0.005 gen_name 0.183 gen_name_rel 0.003 nce 0.205 nce_desc 0.241 nce_name 0.948 twin 0.010 twin_desc 0.015 twin_flip 0.023 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4640/8064 gen_desc 0.166 gen_desc_rel 0.005 gen_name 0.182 gen_name_rel 0.003 nce 0.224 nce_desc 0.276 nce_name 0.964 twin 0.011 twin_desc 0.018 twin_flip 0.027 rel_desc 0.005 rel_name 0.004  0.18s/step
+  step 4660/8064 gen_desc 0.166 gen_desc_rel 0.005 gen_name 0.183 gen_name_rel 0.003 nce 0.192 nce_desc 0.234 nce_name 1.005 twin 0.007 twin_desc 0.012 twin_flip 0.018 rel_desc 0.005 rel_name 0.004  0.19s/step
+  step 4680/8064 gen_desc 0.166 gen_desc_rel 0.005 gen_name 0.184 gen_name_rel 0.003 nce 0.205 nce_desc 0.253 nce_name 0.969 twin 0.012 twin_desc 0.020 twin_flip 0.030 rel_desc 0.005 rel_name 0.004  0.19s/step
+  step 4700/8064 gen_desc 0.166 gen_desc_rel 0.005 gen_name 0.185 gen_name_rel 0.003 nce 0.129 nce_desc 0.172 nce_name 0.850 twin 0.008 twin_desc 0.014 twin_flip 0.024 rel_desc 0.005 rel_name 0.004  0.19s/step
+  step 4720/8064 gen_desc 0.165 gen_desc_rel 0.005 gen_name 0.182 gen_name_rel 0.003 nce 0.134 nce_desc 0.174 nce_name 0.810 twin 0.005 twin_desc 0.010 twin_flip 0.011 rel_desc 0.005 rel_name 0.004  0.19s/step
+  step 4740/8064 gen_desc 0.164 gen_desc_rel 0.005 gen_name 0.181 gen_name_rel 0.003 nce 0.137 nce_desc 0.164 nce_name 0.793 twin 0.010 twin_desc 0.013 twin_flip 0.022 rel_desc 0.005 rel_name 0.004  0.19s/step
+  step 4760/8064 gen_desc 0.163 gen_desc_rel 0.005 gen_name 0.181 gen_name_rel 0.003 nce 0.130 nce_desc 0.160 nce_name 0.819 twin 0.006 twin_desc 0.007 twin_flip 0.013 rel_desc 0.005 rel_name 0.004  0.19s/step
+  step 4780/8064 gen_desc 0.163 gen_desc_rel 0.005 gen_name 0.181 gen_name_rel 0.003 nce 0.144 nce_desc 0.182 nce_name 0.743 twin 0.005 twin_desc 0.007 twin_flip 0.010 rel_desc 0.004 rel_name 0.004  0.19s/step
+  step 4800/8064 gen_desc 0.162 gen_desc_rel 0.005 gen_name 0.180 gen_name_rel 0.003 nce 0.152 nce_desc 0.204 nce_name 0.734 twin 0.007 twin_desc 0.011 twin_flip 0.016 rel_desc 0.004 rel_name 0.004  0.19s/step
+     dictionary look-alikes (held out): stage 32.0% teacher 53.3%  n=7077
+  == step 4800: twins 85.7% (desc 82.0%, name 76.1%; opaque-name rows 78.0%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 25.0  gate->desc opaque 0.9767109609693531 named 0.5237657232072677
+     flip slots: twins 93.1% (desc 90.6%, name 84.8%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 4820/8064 gen_desc 0.161 gen_desc_rel 0.005 gen_name 0.180 gen_name_rel 0.003 nce 0.132 nce_desc 0.176 nce_name 0.681 twin 0.005 twin_desc 0.010 twin_flip 0.014 rel_desc 0.004 rel_name 0.004  0.19s/step
+  step 4840/8064 gen_desc 0.160 gen_desc_rel 0.004 gen_name 0.181 gen_name_rel 0.003 nce 0.123 nce_desc 0.148 nce_name 0.754 twin 0.004 twin_desc 0.008 twin_flip 0.011 rel_desc 0.004 rel_name 0.004  0.19s/step
+  step 4860/8064 gen_desc 0.160 gen_desc_rel 0.004 gen_name 0.181 gen_name_rel 0.003 nce 0.163 nce_desc 0.194 nce_name 0.882 twin 0.004 twin_desc 0.007 twin_flip 0.008 rel_desc 0.004 rel_name 0.004  0.19s/step
+  step 4880/8064 gen_desc 0.160 gen_desc_rel 0.004 gen_name 0.180 gen_name_rel 0.003 nce 0.137 nce_desc 0.165 nce_name 0.838 twin 0.006 twin_desc 0.010 twin_flip 0.014 rel_desc 0.004 rel_name 0.004  0.19s/step
+  step 4900/8064 gen_desc 0.159 gen_desc_rel 0.004 gen_name 0.180 gen_name_rel 0.003 nce 0.151 nce_desc 0.170 nce_name 0.743 twin 0.007 twin_desc 0.011 twin_flip 0.017 rel_desc 0.004 rel_name 0.004  0.19s/step
+  step 4920/8064 gen_desc 0.158 gen_desc_rel 0.004 gen_name 0.180 gen_name_rel 0.003 nce 0.159 nce_desc 0.208 nce_name 0.722 twin 0.006 twin_desc 0.009 twin_flip 0.014 rel_desc 0.004 rel_name 0.004  0.19s/step
+  step 4940/8064 gen_desc 0.159 gen_desc_rel 0.004 gen_name 0.180 gen_name_rel 0.003 nce 0.131 nce_desc 0.165 nce_name 0.768 twin 0.005 twin_desc 0.010 twin_flip 0.014 rel_desc 0.004 rel_name 0.004  0.19s/step
+  step 4960/8064 gen_desc 0.158 gen_desc_rel 0.004 gen_name 0.180 gen_name_rel 0.003 nce 0.152 nce_desc 0.189 nce_name 0.649 twin 0.005 twin_desc 0.008 twin_flip 0.010 rel_desc 0.004 rel_name 0.004  0.19s/step
+  step 4980/8064 gen_desc 0.158 gen_desc_rel 0.004 gen_name 0.181 gen_name_rel 0.003 nce 0.148 nce_desc 0.170 nce_name 0.764 twin 0.004 twin_desc 0.006 twin_flip 0.006 rel_desc 0.004 rel_name 0.004  0.19s/step
+  step 5000/8064 gen_desc 0.159 gen_desc_rel 0.004 gen_name 0.179 gen_name_rel 0.003 nce 0.142 nce_desc 0.183 nce_name 0.738 twin 0.004 twin_desc 0.007 twin_flip 0.010 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5020/8064 gen_desc 0.158 gen_desc_rel 0.004 gen_name 0.180 gen_name_rel 0.003 nce 0.128 nce_desc 0.165 nce_name 0.642 twin 0.005 twin_desc 0.007 twin_flip 0.011 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5040/8064 gen_desc 0.159 gen_desc_rel 0.004 gen_name 0.181 gen_name_rel 0.003 nce 0.151 nce_desc 0.192 nce_name 0.818 twin 0.006 twin_desc 0.010 twin_flip 0.011 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5060/8064 gen_desc 0.159 gen_desc_rel 0.004 gen_name 0.179 gen_name_rel 0.003 nce 0.153 nce_desc 0.179 nce_name 0.723 twin 0.004 twin_desc 0.007 twin_flip 0.010 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5080/8064 gen_desc 0.159 gen_desc_rel 0.004 gen_name 0.179 gen_name_rel 0.003 nce 0.161 nce_desc 0.203 nce_name 0.749 twin 0.004 twin_desc 0.007 twin_flip 0.009 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5100/8064 gen_desc 0.157 gen_desc_rel 0.004 gen_name 0.180 gen_name_rel 0.003 nce 0.148 nce_desc 0.175 nce_name 0.782 twin 0.008 twin_desc 0.011 twin_flip 0.020 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5120/8064 gen_desc 0.157 gen_desc_rel 0.004 gen_name 0.180 gen_name_rel 0.003 nce 0.163 nce_desc 0.182 nce_name 0.806 twin 0.005 twin_desc 0.007 twin_flip 0.011 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5140/8064 gen_desc 0.158 gen_desc_rel 0.004 gen_name 0.179 gen_name_rel 0.003 nce 0.190 nce_desc 0.224 nce_name 0.719 twin 0.005 twin_desc 0.006 twin_flip 0.009 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5160/8064 gen_desc 0.157 gen_desc_rel 0.004 gen_name 0.180 gen_name_rel 0.003 nce 0.147 nce_desc 0.162 nce_name 0.856 twin 0.004 twin_desc 0.005 twin_flip 0.009 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5180/8064 gen_desc 0.157 gen_desc_rel 0.004 gen_name 0.180 gen_name_rel 0.003 nce 0.154 nce_desc 0.174 nce_name 0.852 twin 0.004 twin_desc 0.007 twin_flip 0.011 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5200/8064 gen_desc 0.156 gen_desc_rel 0.004 gen_name 0.180 gen_name_rel 0.003 nce 0.161 nce_desc 0.185 nce_name 0.837 twin 0.004 twin_desc 0.007 twin_flip 0.012 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5220/8064 gen_desc 0.156 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.164 nce_desc 0.205 nce_name 0.741 twin 0.006 twin_desc 0.012 twin_flip 0.015 rel_desc 0.004 rel_name 0.003  0.20s/step
+  step 5240/8064 gen_desc 0.156 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.158 nce_desc 0.181 nce_name 0.742 twin 0.004 twin_desc 0.006 twin_flip 0.008 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5260/8064 gen_desc 0.156 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.160 nce_desc 0.190 nce_name 0.733 twin 0.004 twin_desc 0.008 twin_flip 0.009 rel_desc 0.004 rel_name 0.004  0.20s/step
+  step 5280/8064 gen_desc 0.157 gen_desc_rel 0.004 gen_name 0.179 gen_name_rel 0.003 nce 0.180 nce_desc 0.207 nce_name 0.845 twin 0.003 twin_desc 0.006 twin_flip 0.007 rel_desc 0.004 rel_name 0.003  0.20s/step
+  step 5300/8064 gen_desc 0.155 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.158 nce_desc 0.191 nce_name 0.774 twin 0.005 twin_desc 0.006 twin_flip 0.011 rel_desc 0.004 rel_name 0.003  0.20s/step
+  step 5320/8064 gen_desc 0.156 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.181 nce_desc 0.213 nce_name 0.862 twin 0.003 twin_desc 0.005 twin_flip 0.009 rel_desc 0.004 rel_name 0.003  0.20s/step
+  step 5340/8064 gen_desc 0.155 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.138 nce_desc 0.155 nce_name 0.754 twin 0.004 twin_desc 0.005 twin_flip 0.008 rel_desc 0.004 rel_name 0.003  0.20s/step
+  step 5360/8064 gen_desc 0.155 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.126 nce_desc 0.145 nce_name 0.845 twin 0.005 twin_desc 0.009 twin_flip 0.016 rel_desc 0.004 rel_name 0.003  0.20s/step
+  step 5380/8064 gen_desc 0.155 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.130 nce_desc 0.158 nce_name 0.724 twin 0.003 twin_desc 0.004 twin_flip 0.006 rel_desc 0.004 rel_name 0.003  0.20s/step
+  step 5400/8064 gen_desc 0.153 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.125 nce_desc 0.153 nce_name 0.724 twin 0.003 twin_desc 0.007 twin_flip 0.007 rel_desc 0.004 rel_name 0.003  0.20s/step
+  step 5420/8064 gen_desc 0.154 gen_desc_rel 0.004 gen_name 0.179 gen_name_rel 0.003 nce 0.119 nce_desc 0.148 nce_name 0.698 twin 0.003 twin_desc 0.006 twin_flip 0.005 rel_desc 0.004 rel_name 0.003  0.20s/step
+  step 5440/8064 gen_desc 0.153 gen_desc_rel 0.004 gen_name 0.179 gen_name_rel 0.003 nce 0.122 nce_desc 0.143 nce_name 0.697 twin 0.006 twin_desc 0.007 twin_flip 0.017 rel_desc 0.004 rel_name 0.003  0.21s/step
+  step 5460/8064 gen_desc 0.153 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.171 nce_desc 0.187 nce_name 0.682 twin 0.003 twin_desc 0.005 twin_flip 0.007 rel_desc 0.004 rel_name 0.003  0.21s/step
+  step 5480/8064 gen_desc 0.153 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.143 nce_desc 0.167 nce_name 0.839 twin 0.002 twin_desc 0.005 twin_flip 0.006 rel_desc 0.004 rel_name 0.003  0.21s/step
+  step 5500/8064 gen_desc 0.152 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.160 nce_desc 0.185 nce_name 0.854 twin 0.003 twin_desc 0.006 twin_flip 0.006 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5520/8064 gen_desc 0.152 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.144 nce_desc 0.163 nce_name 0.811 twin 0.004 twin_desc 0.005 twin_flip 0.008 rel_desc 0.004 rel_name 0.003  0.21s/step
+  step 5540/8064 gen_desc 0.151 gen_desc_rel 0.004 gen_name 0.176 gen_name_rel 0.003 nce 0.122 nce_desc 0.143 nce_name 0.644 twin 0.003 twin_desc 0.005 twin_flip 0.005 rel_desc 0.004 rel_name 0.003  0.21s/step
+  step 5560/8064 gen_desc 0.152 gen_desc_rel 0.004 gen_name 0.176 gen_name_rel 0.003 nce 0.107 nce_desc 0.130 nce_name 0.746 twin 0.002 twin_desc 0.004 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5580/8064 gen_desc 0.151 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.085 nce_desc 0.108 nce_name 0.634 twin 0.002 twin_desc 0.005 twin_flip 0.005 rel_desc 0.004 rel_name 0.003  0.21s/step
+  step 5600/8064 gen_desc 0.152 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.124 nce_desc 0.149 nce_name 0.626 twin 0.002 twin_desc 0.007 twin_flip 0.004 rel_desc 0.003 rel_name 0.004  0.21s/step
+     dictionary look-alikes (held out): stage 32.5% teacher 53.3%  n=7077
+  == step 5600: twins 85.9% (desc 81.8%, name 75.9%; opaque-name rows 77.6%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 26.3  gate->desc opaque 0.9846855380739926 named 0.5398857113094808
+     flip slots: twins 93.8% (desc 90.2%, name 84.6%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 5620/8064 gen_desc 0.151 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.104 nce_desc 0.126 nce_name 0.685 twin 0.002 twin_desc 0.004 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5640/8064 gen_desc 0.151 gen_desc_rel 0.004 gen_name 0.176 gen_name_rel 0.003 nce 0.094 nce_desc 0.119 nce_name 0.642 twin 0.002 twin_desc 0.004 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5660/8064 gen_desc 0.150 gen_desc_rel 0.004 gen_name 0.176 gen_name_rel 0.003 nce 0.096 nce_desc 0.105 nce_name 0.660 twin 0.002 twin_desc 0.003 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5680/8064 gen_desc 0.150 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.136 nce_desc 0.158 nce_name 0.707 twin 0.002 twin_desc 0.004 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5700/8064 gen_desc 0.149 gen_desc_rel 0.004 gen_name 0.176 gen_name_rel 0.003 nce 0.113 nce_desc 0.127 nce_name 0.727 twin 0.002 twin_desc 0.003 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5720/8064 gen_desc 0.151 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.129 nce_desc 0.142 nce_name 0.734 twin 0.002 twin_desc 0.003 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5740/8064 gen_desc 0.150 gen_desc_rel 0.004 gen_name 0.175 gen_name_rel 0.003 nce 0.115 nce_desc 0.127 nce_name 0.794 twin 0.002 twin_desc 0.003 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5760/8064 gen_desc 0.149 gen_desc_rel 0.004 gen_name 0.175 gen_name_rel 0.003 nce 0.123 nce_desc 0.144 nce_name 0.713 twin 0.002 twin_desc 0.003 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5780/8064 gen_desc 0.149 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.106 nce_desc 0.125 nce_name 0.716 twin 0.002 twin_desc 0.004 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5800/8064 gen_desc 0.149 gen_desc_rel 0.004 gen_name 0.176 gen_name_rel 0.003 nce 0.143 nce_desc 0.160 nce_name 0.692 twin 0.002 twin_desc 0.004 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5820/8064 gen_desc 0.149 gen_desc_rel 0.004 gen_name 0.176 gen_name_rel 0.003 nce 0.160 nce_desc 0.176 nce_name 0.662 twin 0.002 twin_desc 0.003 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5840/8064 gen_desc 0.149 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.128 nce_desc 0.141 nce_name 0.649 twin 0.002 twin_desc 0.004 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5860/8064 gen_desc 0.149 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.134 nce_desc 0.155 nce_name 0.623 twin 0.002 twin_desc 0.004 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5880/8064 gen_desc 0.149 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.106 nce_desc 0.117 nce_name 0.599 twin 0.002 twin_desc 0.004 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5900/8064 gen_desc 0.149 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.101 nce_desc 0.116 nce_name 0.615 twin 0.002 twin_desc 0.003 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.21s/step
+  step 5920/8064 gen_desc 0.149 gen_desc_rel 0.004 gen_name 0.179 gen_name_rel 0.003 nce 0.117 nce_desc 0.128 nce_name 0.712 twin 0.002 twin_desc 0.004 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 5940/8064 gen_desc 0.150 gen_desc_rel 0.004 gen_name 0.175 gen_name_rel 0.003 nce 0.124 nce_desc 0.136 nce_name 0.721 twin 0.002 twin_desc 0.003 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 5960/8064 gen_desc 0.148 gen_desc_rel 0.004 gen_name 0.176 gen_name_rel 0.003 nce 0.121 nce_desc 0.140 nce_name 0.598 twin 0.002 twin_desc 0.003 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 5980/8064 gen_desc 0.148 gen_desc_rel 0.004 gen_name 0.176 gen_name_rel 0.003 nce 0.107 nce_desc 0.128 nce_name 0.592 twin 0.002 twin_desc 0.004 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6000/8064 gen_desc 0.148 gen_desc_rel 0.004 gen_name 0.178 gen_name_rel 0.003 nce 0.127 nce_desc 0.145 nce_name 0.629 twin 0.002 twin_desc 0.003 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6020/8064 gen_desc 0.148 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.129 nce_desc 0.156 nce_name 0.653 twin 0.002 twin_desc 0.006 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6040/8064 gen_desc 0.148 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.139 nce_desc 0.144 nce_name 0.695 twin 0.002 twin_desc 0.003 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6060/8064 gen_desc 0.148 gen_desc_rel 0.003 gen_name 0.177 gen_name_rel 0.003 nce 0.116 nce_desc 0.134 nce_name 0.590 twin 0.002 twin_desc 0.004 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6080/8064 gen_desc 0.148 gen_desc_rel 0.003 gen_name 0.177 gen_name_rel 0.003 nce 0.138 nce_desc 0.155 nce_name 0.623 twin 0.002 twin_desc 0.004 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6100/8064 gen_desc 0.149 gen_desc_rel 0.003 gen_name 0.177 gen_name_rel 0.003 nce 0.126 nce_desc 0.148 nce_name 0.669 twin 0.002 twin_desc 0.005 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6120/8064 gen_desc 0.149 gen_desc_rel 0.004 gen_name 0.177 gen_name_rel 0.003 nce 0.134 nce_desc 0.158 nce_name 0.688 twin 0.002 twin_desc 0.003 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6140/8064 gen_desc 0.148 gen_desc_rel 0.003 gen_name 0.177 gen_name_rel 0.003 nce 0.120 nce_desc 0.141 nce_name 0.632 twin 0.001 twin_desc 0.004 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6160/8064 gen_desc 0.147 gen_desc_rel 0.003 gen_name 0.178 gen_name_rel 0.003 nce 0.111 nce_desc 0.121 nce_name 0.677 twin 0.002 twin_desc 0.003 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6180/8064 gen_desc 0.146 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.120 nce_desc 0.130 nce_name 0.703 twin 0.002 twin_desc 0.002 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6200/8064 gen_desc 0.146 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.130 nce_desc 0.147 nce_name 0.774 twin 0.002 twin_desc 0.004 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6220/8064 gen_desc 0.147 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.137 nce_desc 0.147 nce_name 0.662 twin 0.002 twin_desc 0.004 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6240/8064 gen_desc 0.148 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.140 nce_desc 0.164 nce_name 0.670 twin 0.002 twin_desc 0.004 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6260/8064 gen_desc 0.148 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.115 nce_desc 0.141 nce_name 0.703 twin 0.001 twin_desc 0.003 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6280/8064 gen_desc 0.146 gen_desc_rel 0.003 gen_name 0.177 gen_name_rel 0.003 nce 0.132 nce_desc 0.156 nce_name 0.650 twin 0.002 twin_desc 0.004 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6300/8064 gen_desc 0.147 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.143 nce_desc 0.162 nce_name 0.665 twin 0.002 twin_desc 0.003 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6320/8064 gen_desc 0.147 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.159 nce_desc 0.176 nce_name 0.742 twin 0.002 twin_desc 0.004 twin_flip 0.006 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6340/8064 gen_desc 0.146 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.103 nce_desc 0.116 nce_name 0.733 twin 0.002 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6360/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.111 nce_desc 0.126 nce_name 0.682 twin 0.003 twin_desc 0.004 twin_flip 0.006 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6380/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.100 nce_desc 0.107 nce_name 0.663 twin 0.002 twin_desc 0.003 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6400/8064 gen_desc 0.146 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.089 nce_desc 0.100 nce_name 0.628 twin 0.002 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.22s/step
+     dictionary look-alikes (held out): stage 33.0% teacher 53.3%  n=7077
+  == step 6400: twins 85.6% (desc 81.7%, name 76.4%; opaque-name rows 77.1%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 26.4  gate->desc opaque 0.9838001797612714 named 0.5614017005515309
+     flip slots: twins 94.1% (desc 91.1%, name 85.6%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 6420/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.102 nce_desc 0.123 nce_name 0.626 twin 0.002 twin_desc 0.004 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6440/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.099 nce_desc 0.111 nce_name 0.612 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6460/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.098 nce_desc 0.102 nce_name 0.605 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6480/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.115 nce_desc 0.131 nce_name 0.548 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.22s/step
+  step 6500/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.132 nce_desc 0.146 nce_name 0.586 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6520/8064 gen_desc 0.146 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.107 nce_desc 0.120 nce_name 0.596 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6540/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.088 nce_desc 0.097 nce_name 0.619 twin 0.001 twin_desc 0.001 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6560/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.094 nce_desc 0.110 nce_name 0.598 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6580/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.092 nce_desc 0.106 nce_name 0.621 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6600/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.111 nce_desc 0.128 nce_name 0.491 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6620/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.095 nce_desc 0.114 nce_name 0.547 twin 0.001 twin_desc 0.003 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6640/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.110 nce_desc 0.126 nce_name 0.589 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6660/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.123 nce_desc 0.133 nce_name 0.634 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6680/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.111 nce_desc 0.122 nce_name 0.557 twin 0.001 twin_desc 0.002 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6700/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.122 nce_desc 0.135 nce_name 0.597 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6720/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.094 nce_desc 0.114 nce_name 0.568 twin 0.002 twin_desc 0.005 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6740/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.103 nce_desc 0.118 nce_name 0.611 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6760/8064 gen_desc 0.146 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.089 nce_desc 0.100 nce_name 0.647 twin 0.002 twin_desc 0.004 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6780/8064 gen_desc 0.146 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.088 nce_desc 0.102 nce_name 0.545 twin 0.002 twin_desc 0.003 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6800/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.102 nce_desc 0.115 nce_name 0.568 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6820/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.103 nce_desc 0.113 nce_name 0.606 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6840/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.091 nce_desc 0.098 nce_name 0.653 twin 0.002 twin_desc 0.003 twin_flip 0.006 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6860/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.098 nce_desc 0.104 nce_name 0.577 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6880/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.173 gen_name_rel 0.003 nce 0.084 nce_desc 0.094 nce_name 0.597 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6900/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.085 nce_desc 0.099 nce_name 0.580 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6920/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.092 nce_desc 0.102 nce_name 0.616 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6940/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.177 gen_name_rel 0.003 nce 0.118 nce_desc 0.141 nce_name 0.585 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6960/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.121 nce_desc 0.136 nce_name 0.593 twin 0.002 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 6980/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.102 nce_desc 0.117 nce_name 0.527 twin 0.002 twin_desc 0.003 twin_flip 0.005 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 7000/8064 gen_desc 0.145 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.101 nce_desc 0.114 nce_name 0.607 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 7020/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.173 gen_name_rel 0.003 nce 0.093 nce_desc 0.100 nce_name 0.598 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 7040/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.104 nce_desc 0.116 nce_name 0.609 twin 0.001 twin_desc 0.003 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 7060/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.096 nce_desc 0.107 nce_name 0.599 twin 0.002 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 7080/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.177 gen_name_rel 0.003 nce 0.087 nce_desc 0.101 nce_name 0.557 twin 0.002 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 7100/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.089 nce_desc 0.106 nce_name 0.559 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 7120/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.095 nce_desc 0.110 nce_name 0.646 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 7140/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.081 nce_desc 0.094 nce_name 0.582 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 7160/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.121 nce_desc 0.133 nce_name 0.638 twin 0.002 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 7180/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.101 nce_desc 0.116 nce_name 0.569 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.23s/step
+  step 7200/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.103 nce_desc 0.115 nce_name 0.617 twin 0.003 twin_desc 0.003 twin_flip 0.012 rel_desc 0.003 rel_name 0.003  0.23s/step
+     dictionary look-alikes (held out): stage 33.5% teacher 53.3%  n=7077
+  == step 7200: twins 86.2% (desc 81.8%, name 76.7%; opaque-name rows 77.1%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 26.6  gate->desc opaque 0.9852716577883864 named 0.5629620600634619
+     flip slots: twins 94.0% (desc 91.5%, name 84.9%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 7220/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.084 nce_desc 0.097 nce_name 0.582 twin 0.001 twin_desc 0.002 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7240/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.178 gen_name_rel 0.003 nce 0.086 nce_desc 0.097 nce_name 0.476 twin 0.001 twin_desc 0.002 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7260/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.178 gen_name_rel 0.003 nce 0.091 nce_desc 0.103 nce_name 0.533 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7280/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.080 nce_desc 0.085 nce_name 0.604 twin 0.001 twin_desc 0.001 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7300/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.093 nce_desc 0.104 nce_name 0.547 twin 0.001 twin_desc 0.003 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7320/8064 gen_desc 0.142 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.074 nce_desc 0.081 nce_name 0.577 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7340/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.077 nce_desc 0.088 nce_name 0.575 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7360/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.073 nce_desc 0.083 nce_name 0.542 twin 0.001 twin_desc 0.001 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7380/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.090 nce_desc 0.100 nce_name 0.649 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7400/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.080 nce_desc 0.091 nce_name 0.643 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7420/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.063 nce_desc 0.075 nce_name 0.600 twin 0.001 twin_desc 0.003 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7440/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.096 nce_desc 0.109 nce_name 0.557 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7460/8064 gen_desc 0.142 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.079 nce_desc 0.085 nce_name 0.498 twin 0.001 twin_desc 0.001 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7480/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.091 nce_desc 0.103 nce_name 0.432 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7500/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.086 nce_desc 0.096 nce_name 0.529 twin 0.002 twin_desc 0.003 twin_flip 0.004 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7520/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.096 nce_desc 0.109 nce_name 0.525 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7540/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.093 nce_desc 0.094 nce_name 0.607 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7560/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.083 nce_desc 0.088 nce_name 0.641 twin 0.001 twin_desc 0.001 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7580/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.177 gen_name_rel 0.003 nce 0.087 nce_desc 0.093 nce_name 0.523 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7600/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.109 nce_desc 0.117 nce_name 0.565 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7620/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.081 nce_desc 0.094 nce_name 0.540 twin 0.001 twin_desc 0.001 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7640/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.084 nce_desc 0.096 nce_name 0.588 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7660/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.091 nce_desc 0.102 nce_name 0.537 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7680/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.089 nce_desc 0.100 nce_name 0.548 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7700/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.074 nce_desc 0.082 nce_name 0.529 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7720/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.088 nce_desc 0.102 nce_name 0.498 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7740/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.091 nce_desc 0.105 nce_name 0.516 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7760/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.080 nce_desc 0.092 nce_name 0.537 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7780/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.088 nce_desc 0.101 nce_name 0.515 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7800/8064 gen_desc 0.142 gen_desc_rel 0.003 gen_name 0.177 gen_name_rel 0.003 nce 0.086 nce_desc 0.095 nce_name 0.481 twin 0.001 twin_desc 0.003 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7820/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.177 gen_name_rel 0.003 nce 0.089 nce_desc 0.093 nce_name 0.524 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7840/8064 gen_desc 0.142 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.103 nce_desc 0.116 nce_name 0.607 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7860/8064 gen_desc 0.142 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.098 nce_desc 0.112 nce_name 0.599 twin 0.001 twin_desc 0.003 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7880/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.173 gen_name_rel 0.003 nce 0.102 nce_desc 0.111 nce_name 0.506 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7900/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.173 gen_name_rel 0.003 nce 0.089 nce_desc 0.105 nce_name 0.544 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7920/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.101 nce_desc 0.110 nce_name 0.599 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7940/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.087 nce_desc 0.096 nce_name 0.603 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7960/8064 gen_desc 0.142 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.074 nce_desc 0.087 nce_name 0.578 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 7980/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.079 nce_desc 0.093 nce_name 0.531 twin 0.001 twin_desc 0.002 twin_flip 0.003 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 8000/8064 gen_desc 0.142 gen_desc_rel 0.003 gen_name 0.175 gen_name_rel 0.003 nce 0.069 nce_desc 0.079 nce_name 0.548 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+     dictionary look-alikes (held out): stage 33.5% teacher 53.3%  n=7077
+  == step 8000: twins 86.3% (desc 82.4%, name 76.5%; opaque-name rows 78.0%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 26.8  gate->desc opaque 0.9854933673597426 named 0.5720164755079071
+     flip slots: twins 94.0% (desc 91.5%, name 84.9%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 8020/8064 gen_desc 0.142 gen_desc_rel 0.003 gen_name 0.174 gen_name_rel 0.003 nce 0.079 nce_desc 0.082 nce_name 0.512 twin 0.001 twin_desc 0.001 twin_flip 0.001 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 8040/8064 gen_desc 0.143 gen_desc_rel 0.003 gen_name 0.176 gen_name_rel 0.003 nce 0.069 nce_desc 0.084 nce_name 0.463 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+  step 8060/8064 gen_desc 0.144 gen_desc_rel 0.003 gen_name 0.173 gen_name_rel 0.003 nce 0.099 nce_desc 0.106 nce_name 0.577 twin 0.001 twin_desc 0.002 twin_flip 0.002 rel_desc 0.003 rel_name 0.003  0.24s/step
+     dictionary look-alikes (held out): stage 33.5% teacher 53.3%  n=7077
+  == step 8064: twins 86.3% (desc 82.4%, name 76.5%; opaque-name rows 78.0%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 26.8  gate->desc opaque 0.9854943657616935 named 0.572020873603216
+     flip slots: twins 94.0% (desc 91.5%, name 84.9%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+done; best twin accuracy 94.1% -> runs/size/v8k_w256/stages.pt

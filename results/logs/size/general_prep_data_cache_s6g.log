@@ -1,0 +1,12 @@
+  400000 texts, 200000 names, 55866 definitions, 70785 look-alike items (7077 held out)
+  teacher: embedding 673018 new texts with unsloth/bge-small-en-v1.5 on cuda ...
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 6400.37it/s]
+    512/673018
+    102912/673018
+    205312/673018
+    307712/673018
+    410112/673018
+    512512/673018
+    614912/673018
+wrote data_cache_s6g/general.pt; 1.64 pieces per word on general text

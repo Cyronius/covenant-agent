@@ -99,7 +99,7 @@ def main():
             add(tar, py, f"tiny/{py.name}")
             n += 1
         for extra in ("README.md", "pod.md", "run_phase1.sh", "run_step1.sh",
-                      "run_step2.sh", "run_step3.sh", "run_step4.sh", "run_vocab.sh",
+                      "run_step2.sh", "run_step3.sh", "run_step4.sh", "run_vocab.sh", "run_size.sh",
                       "selftest.sh"):
             p = HERE / extra
             if p.exists():

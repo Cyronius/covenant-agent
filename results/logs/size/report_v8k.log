@@ -1,0 +1,3 @@
+  general English: 400000 texts, 200000 names, 63708 look-alike items (7077 held out)
+runs/size/v8k/stages_last.pt: all 93.5%  seen 94.4%  unseen 90.5%  dictionary 33.8%
+teacher: all 89.9%  seen 89.0%  unseen 92.8%  (n 2309: 1792 seen, 517 unseen)
