@@ -1,0 +1,16 @@
+loading 30000 from s6b_train.jsonl ...
+  1848 examples, 104 worlds; 294 of them segments of a paused task, 147 first and the rest continuations that start from bound registers
+  holdout corpus: 9246 examples over 42 unseen worlds, 0% of the training data
+  train 1663  val 92  test 93  holdout 9246
+  54 keyword rows
+  layout: 179 joint ids = 54 keywords + 56 tools + 28 fields + 9 consts + 32 registers
+training input tokenizer on schema lines and requests ...
+  teacher: embedding 39231 distinct texts with unsloth/bge-small-en-v1.5 ...
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 2274.51it/s]
+  train      1663  longest line 71/112  longest request 71/128  longest canvas 51/64
+  val          92  longest line 71/112  longest request 49/128  longest canvas 51/64
+  test         93  longest line 71/112  longest request 57/128  longest canvas 51/64
+  holdout    9246  longest line 79/112  longest request 73/128  longest canvas 51/64
+  longest program after splitting rN.Fk: 51 of 64 slots
+
+wrote data_cache_s6b

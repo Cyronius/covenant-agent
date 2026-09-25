@@ -72,9 +72,22 @@ def readable(cache: Path, split: str, keep: list[int], max_tool: int) -> torch.T
     grounding number counts only the decisions a reader could get right.
     Matched by description, which opaque-name rows keep."""
     import pickle
-    from corpus import COVENANT  # noqa: F401 -- checkout on sys.path
+    from corpus import COVENANT  # also puts the checkout on sys.path
     from data.gen import domains
-    rows = pickle.load(open(cache / "rows.pkl", "rb"))[split]
+    rows = pickle.load(open(cache / "rows.pkl", "rb")).get(split)
+    if rows is None:
+        # prep keeps no raw train rows; every segment of a paused task carries
+        # its task's row (corpus.load), so look them up in the corpus by id
+        meta = json.loads((cache / f"{split}_meta.json").read_text(encoding="utf-8"))
+        cfg = json.loads((cache / "config.json").read_text(encoding="utf-8"))
+        want = {meta[i]["task_id"].split("#")[0] for i in keep}
+        by_id = {}
+        with open(COVENANT / "data" / cfg["corpus"], encoding="utf-8") as fh:
+            for line in fh:
+                r = json.loads(line)
+                if r["id"] in want:
+                    by_id[r["id"]] = r
+        rows = {i: by_id[meta[i]["task_id"].split("#")[0]] for i in keep}
     specs = {}
     for path in sorted((COVENANT / "data/gen/themes").glob("*.json")):
         th = json.loads(path.read_text(encoding="utf-8"))
@@ -192,17 +205,24 @@ def batch_losses(head, b, pad, n_kw, max_tool, teacher, lam_rel, flip_weight=0.0
     live = torch.arange(M)[None] < b["n_tool"].long()[:, None]
     pos = called_tools(b["tgt"], n_kw, max_tool)[:, :M]
     grp = b["sig_group"][:, :M].long()
-    out = {"nce": multi_positive_nce(comb, pos, live),
-           "nce_desc": multi_positive_nce(sd, pos, live),
-           "nce_name": multi_positive_nce(sn, pos, live),
-           "twin": twin_nce(comb, pos, live, grp),
-           "twin_desc": twin_nce(sd, pos, live, grp)}
+    clive = live
+    if "unread" in b:
+        # a flip-slot call its request never names is neither right nor wrong
+        # to a reader: out of the positives AND the candidates, or it would
+        # teach "the authored tool loses" instead of "the authored tool wins"
+        u = b["unread"][:, :M]
+        pos, clive = pos & ~u, live & ~u
+    out = {"nce": multi_positive_nce(comb, pos, clive),
+           "nce_desc": multi_positive_nce(sd, pos, clive),
+           "nce_name": multi_positive_nce(sn, pos, clive),
+           "twin": twin_nce(comb, pos, clive, grp),
+           "twin_desc": twin_nce(sd, pos, clive, grp)}
     if flip_weight and "flip_tool" in b:
         # the flip slots' twins on their own: the decisions the rest of the
         # twin loss is dominated away from (every other twin group is won by
         # recognising the tool requests always ask for, R11 §3)
         fpos = pos & b["flip_tool"][:, :M]
-        out["twin_flip"] = twin_nce(comb, fpos, live, grp)
+        out["twin_flip"] = twin_nce(comb, fpos, clive, grp)
     if lam_rel and teacher is not None and "t_desc" in b:
         ridx = b["t_req"].long()
         for part, key in (("desc", "t_desc"), ("name", "t_name")):
@@ -372,6 +392,10 @@ def main():
                     help="add data/open_pairs as extra request/tool text, one "
                          "open batch every --open-every corpus batches")
     ap.add_argument("--open-every", type=int, default=4)
+    ap.add_argument("--drop-unreadable", action="store_true",
+                    help="leave training flip-slot calls whose request never "
+                         "names the tool (S6's L9 'ambiguous' rows, 14%%) out "
+                         "of every contrastive term; the exam already skips them")
     ap.add_argument("--limit-train", type=int, default=None)
     ap.add_argument("--limit-eval", type=int, default=3000)
     ap.add_argument("--eval-every", type=int, default=300)
@@ -421,6 +445,14 @@ def main():
         teacher = torch.load(cache / "teacher.pt")["table"].float()
 
     train = load_part(cache, "train", args.limit_train)
+    if args.drop_unreadable:
+        keep = list(range(train["tgt"].size(0)))
+        flip = train["flip_tool"] & called_tools(train["tgt"], n_kw, max_tool)[:, :max_tool]
+        # called ones only: an uncalled decoy never fits the request, and
+        # masking it would take the twin decision itself out of the loss
+        train["unread"] = flip & ~readable(cache, "train", keep, flip.shape[1])
+        print(f"  unreadable flip-slot calls dropped from training: "
+              f"{int(train['unread'].sum())} of {int(flip.sum())}", flush=True)
     exam = load_part(cache, "holdout", args.limit_eval, ids=("+decoy", "+flip"))
     opn = None
     if args.open_pairs:

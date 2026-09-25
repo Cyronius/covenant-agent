@@ -1,0 +1,15 @@
+      282 data/s6b_shards/train_0.jsonl
+      206 data/s6b_shards/train_1.jsonl
+      223 data/s6b_shards/train_2.jsonl
+       65 data/s6b_shards/train_3.jsonl
+      150 data/s6b_shards/train_4.jsonl
+       18 data/s6b_shards/train_5.jsonl
+      366 data/s6b_shards/train_6.jsonl
+      391 data/s6b_shards/train_7.jsonl
+     1701 data/s6b_train.jsonl
+     3402 total
+=== gen done Thu Sep 24 09:17:52 CDT 2026 ===
+=== prep done Thu Sep 24 09:27:09 CDT 2026 ===
+=== y1 done Thu Sep 24 09:37:25 CDT 2026 ===
+=== y2 done Thu Sep 24 10:19:58 CDT 2026 ===
+=== gen_s6b done ===

@@ -1,0 +1,146 @@
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 9940.88it/s]
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 8673.03it/s]
+  token tables initialised from unsloth/bge-small-en-v1.5: 4091 of 4096 pieces
+  unreadable flip-slot calls dropped from training: 2985 of 14742
+stages: desc 128x4, name 128x2, pool mean: 2.26M params; 27000 train rows, 2532 steps; open pairs off
+  step 20/2532 nce 4.043 nce_desc 4.297 nce_name 4.135 twin 1.014 twin_desc 1.003 twin_flip 0.940 rel_desc 0.113 rel_name 0.063  2.54s/step
+  step 40/2532 nce 3.855 nce_desc 4.013 nce_name 3.980 twin 0.963 twin_desc 0.948 twin_flip 0.901 rel_desc 0.108 rel_name 0.041  2.67s/step
+  step 60/2532 nce 3.707 nce_desc 3.916 nce_name 3.902 twin 0.921 twin_desc 0.960 twin_flip 0.957 rel_desc 0.046 rel_name 0.021  2.72s/step
+  step 80/2532 nce 3.504 nce_desc 3.657 nce_name 3.783 twin 0.879 twin_desc 0.938 twin_flip 0.971 rel_desc 0.023 rel_name 0.014  2.74s/step
+  step 100/2532 nce 3.191 nce_desc 3.320 nce_name 3.635 twin 0.799 twin_desc 0.877 twin_flip 0.969 rel_desc 0.018 rel_name 0.011  2.76s/step
+  step 120/2532 nce 3.027 nce_desc 3.132 nce_name 3.519 twin 0.738 twin_desc 0.815 twin_flip 0.926 rel_desc 0.018 rel_name 0.011  2.76s/step
+  step 140/2532 nce 2.778 nce_desc 2.848 nce_name 3.399 twin 0.662 twin_desc 0.736 twin_flip 0.954 rel_desc 0.017 rel_name 0.010  2.77s/step
+  step 160/2532 nce 2.686 nce_desc 2.776 nce_name 3.399 twin 0.614 twin_desc 0.687 twin_flip 0.925 rel_desc 0.017 rel_name 0.010  2.77s/step
+  step 180/2532 nce 2.395 nce_desc 2.503 nce_name 3.213 twin 0.544 twin_desc 0.605 twin_flip 0.991 rel_desc 0.017 rel_name 0.011  2.77s/step
+  step 200/2532 nce 2.326 nce_desc 2.377 nce_name 3.173 twin 0.555 twin_desc 0.593 twin_flip 0.934 rel_desc 0.019 rel_name 0.011  2.78s/step
+  step 220/2532 nce 2.150 nce_desc 2.231 nce_name 2.975 twin 0.498 twin_desc 0.535 twin_flip 0.909 rel_desc 0.019 rel_name 0.012  2.78s/step
+  step 240/2532 nce 2.111 nce_desc 2.231 nce_name 2.902 twin 0.495 twin_desc 0.547 twin_flip 0.900 rel_desc 0.021 rel_name 0.012  2.78s/step
+  step 260/2532 nce 2.042 nce_desc 2.152 nce_name 2.904 twin 0.471 twin_desc 0.524 twin_flip 0.990 rel_desc 0.021 rel_name 0.010  2.78s/step
+  step 280/2532 nce 2.015 nce_desc 2.112 nce_name 2.898 twin 0.459 twin_desc 0.500 twin_flip 0.873 rel_desc 0.022 rel_name 0.012  2.78s/step
+  step 300/2532 nce 1.794 nce_desc 1.944 nce_name 2.620 twin 0.404 twin_desc 0.455 twin_flip 0.830 rel_desc 0.020 rel_name 0.011  2.78s/step
+  step 320/2532 nce 1.658 nce_desc 1.776 nce_name 2.514 twin 0.364 twin_desc 0.403 twin_flip 0.750 rel_desc 0.020 rel_name 0.011  2.79s/step
+  step 340/2532 nce 1.648 nce_desc 1.767 nce_name 2.569 twin 0.323 twin_desc 0.352 twin_flip 0.681 rel_desc 0.020 rel_name 0.011  2.79s/step
+  step 360/2532 nce 1.600 nce_desc 1.767 nce_name 2.375 twin 0.336 twin_desc 0.387 twin_flip 0.742 rel_desc 0.018 rel_name 0.012  2.79s/step
+  step 380/2532 nce 1.579 nce_desc 1.734 nce_name 2.465 twin 0.330 twin_desc 0.375 twin_flip 0.703 rel_desc 0.020 rel_name 0.012  2.79s/step
+  step 400/2532 nce 1.443 nce_desc 1.623 nce_name 2.270 twin 0.273 twin_desc 0.323 twin_flip 0.598 rel_desc 0.019 rel_name 0.013  2.80s/step
+  == step 400: twins 74.6% (desc 74.4%, name 61.3%; opaque-name rows 70.2%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 8.4  gate->desc opaque 0.7409498547618933 named 0.675598261125144
+     flip slots: twins 72.1% (desc 74.1%, name 48.7%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 420/2532 nce 1.381 nce_desc 1.582 nce_name 2.276 twin 0.276 twin_desc 0.313 twin_flip 0.640 rel_desc 0.017 rel_name 0.011  2.83s/step
+  step 440/2532 nce 1.340 nce_desc 1.566 nce_name 2.139 twin 0.262 twin_desc 0.321 twin_flip 0.541 rel_desc 0.018 rel_name 0.011  2.83s/step
+  step 460/2532 nce 1.325 nce_desc 1.489 nce_name 2.136 twin 0.287 twin_desc 0.333 twin_flip 0.626 rel_desc 0.016 rel_name 0.012  2.83s/step
+  step 480/2532 nce 1.261 nce_desc 1.399 nce_name 2.197 twin 0.238 twin_desc 0.270 twin_flip 0.523 rel_desc 0.017 rel_name 0.013  2.83s/step
+  step 500/2532 nce 1.207 nce_desc 1.352 nce_name 2.141 twin 0.244 twin_desc 0.277 twin_flip 0.556 rel_desc 0.015 rel_name 0.011  2.83s/step
+  step 520/2532 nce 1.133 nce_desc 1.309 nce_name 2.045 twin 0.214 twin_desc 0.260 twin_flip 0.445 rel_desc 0.017 rel_name 0.011  2.83s/step
+  step 540/2532 nce 1.076 nce_desc 1.260 nce_name 2.006 twin 0.217 twin_desc 0.252 twin_flip 0.472 rel_desc 0.017 rel_name 0.011  2.83s/step
+  step 560/2532 nce 1.103 nce_desc 1.278 nce_name 1.944 twin 0.207 twin_desc 0.233 twin_flip 0.486 rel_desc 0.016 rel_name 0.011  2.83s/step
+  step 580/2532 nce 1.027 nce_desc 1.221 nce_name 1.950 twin 0.185 twin_desc 0.222 twin_flip 0.427 rel_desc 0.016 rel_name 0.011  2.82s/step
+  step 600/2532 nce 1.054 nce_desc 1.272 nce_name 1.947 twin 0.210 twin_desc 0.259 twin_flip 0.458 rel_desc 0.016 rel_name 0.011  2.82s/step
+  step 620/2532 nce 0.993 nce_desc 1.188 nce_name 1.945 twin 0.187 twin_desc 0.233 twin_flip 0.446 rel_desc 0.016 rel_name 0.011  2.82s/step
+  step 640/2532 nce 0.935 nce_desc 1.130 nce_name 1.905 twin 0.169 twin_desc 0.215 twin_flip 0.412 rel_desc 0.016 rel_name 0.011  2.82s/step
+  step 660/2532 nce 0.863 nce_desc 1.062 nce_name 1.737 twin 0.160 twin_desc 0.195 twin_flip 0.417 rel_desc 0.016 rel_name 0.011  2.82s/step
+  step 680/2532 nce 0.904 nce_desc 1.098 nce_name 1.771 twin 0.183 twin_desc 0.214 twin_flip 0.452 rel_desc 0.015 rel_name 0.011  2.82s/step
+  step 700/2532 nce 0.919 nce_desc 1.088 nce_name 1.896 twin 0.172 twin_desc 0.207 twin_flip 0.382 rel_desc 0.015 rel_name 0.011  2.82s/step
+  step 720/2532 nce 0.892 nce_desc 1.082 nce_name 1.767 twin 0.175 twin_desc 0.204 twin_flip 0.451 rel_desc 0.015 rel_name 0.011  2.82s/step
+  step 740/2532 nce 0.830 nce_desc 1.009 nce_name 1.902 twin 0.173 twin_desc 0.205 twin_flip 0.454 rel_desc 0.016 rel_name 0.011  2.82s/step
+  step 760/2532 nce 0.721 nce_desc 0.931 nce_name 1.619 twin 0.130 twin_desc 0.160 twin_flip 0.308 rel_desc 0.015 rel_name 0.011  2.82s/step
+  step 780/2532 nce 0.774 nce_desc 0.967 nce_name 1.700 twin 0.144 twin_desc 0.170 twin_flip 0.346 rel_desc 0.015 rel_name 0.012  2.83s/step
+  step 800/2532 nce 0.781 nce_desc 0.997 nce_name 1.706 twin 0.143 twin_desc 0.184 twin_flip 0.347 rel_desc 0.016 rel_name 0.011  2.83s/step
+  == step 800: twins 78.1% (desc 77.6%, name 65.8%; opaque-name rows 75.7%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 10.9  gate->desc opaque 0.8831135400690174 named 0.6310644367913053
+     flip slots: twins 84.4% (desc 82.0%, name 64.3%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 820/2532 nce 0.797 nce_desc 1.043 nce_name 1.560 twin 0.131 twin_desc 0.176 twin_flip 0.324 rel_desc 0.016 rel_name 0.010  2.84s/step
+  step 840/2532 nce 0.794 nce_desc 0.992 nce_name 1.753 twin 0.145 twin_desc 0.172 twin_flip 0.342 rel_desc 0.015 rel_name 0.010  2.84s/step
+  step 860/2532 nce 0.681 nce_desc 0.892 nce_name 1.497 twin 0.110 twin_desc 0.146 twin_flip 0.257 rel_desc 0.015 rel_name 0.010  2.84s/step
+  step 880/2532 nce 0.597 nce_desc 0.802 nce_name 1.481 twin 0.086 twin_desc 0.109 twin_flip 0.200 rel_desc 0.015 rel_name 0.010  2.84s/step
+  step 900/2532 nce 0.624 nce_desc 0.823 nce_name 1.601 twin 0.105 twin_desc 0.134 twin_flip 0.272 rel_desc 0.014 rel_name 0.009  2.84s/step
+  step 920/2532 nce 0.606 nce_desc 0.806 nce_name 1.508 twin 0.087 twin_desc 0.117 twin_flip 0.201 rel_desc 0.014 rel_name 0.010  2.84s/step
+  step 940/2532 nce 0.515 nce_desc 0.718 nce_name 1.318 twin 0.080 twin_desc 0.111 twin_flip 0.194 rel_desc 0.015 rel_name 0.010  2.84s/step
+  step 960/2532 nce 0.528 nce_desc 0.715 nce_name 1.407 twin 0.082 twin_desc 0.108 twin_flip 0.206 rel_desc 0.015 rel_name 0.010  2.84s/step
+  step 980/2532 nce 0.572 nce_desc 0.762 nce_name 1.450 twin 0.087 twin_desc 0.113 twin_flip 0.197 rel_desc 0.015 rel_name 0.010  2.84s/step
+  step 1000/2532 nce 0.545 nce_desc 0.733 nce_name 1.460 twin 0.086 twin_desc 0.118 twin_flip 0.191 rel_desc 0.014 rel_name 0.010  2.84s/step
+  step 1020/2532 nce 0.551 nce_desc 0.738 nce_name 1.454 twin 0.079 twin_desc 0.102 twin_flip 0.194 rel_desc 0.014 rel_name 0.009  2.84s/step
+  step 1040/2532 nce 0.547 nce_desc 0.739 nce_name 1.374 twin 0.072 twin_desc 0.098 twin_flip 0.166 rel_desc 0.014 rel_name 0.009  2.84s/step
+  step 1060/2532 nce 0.510 nce_desc 0.700 nce_name 1.422 twin 0.085 twin_desc 0.126 twin_flip 0.212 rel_desc 0.013 rel_name 0.010  2.84s/step
+  step 1080/2532 nce 0.494 nce_desc 0.653 nce_name 1.317 twin 0.078 twin_desc 0.108 twin_flip 0.200 rel_desc 0.013 rel_name 0.010  2.84s/step
+  step 1100/2532 nce 0.526 nce_desc 0.689 nce_name 1.342 twin 0.063 twin_desc 0.087 twin_flip 0.167 rel_desc 0.013 rel_name 0.010  2.84s/step
+  step 1120/2532 nce 0.492 nce_desc 0.693 nce_name 1.361 twin 0.069 twin_desc 0.099 twin_flip 0.158 rel_desc 0.013 rel_name 0.009  2.84s/step
+  step 1140/2532 nce 0.484 nce_desc 0.658 nce_name 1.361 twin 0.062 twin_desc 0.085 twin_flip 0.158 rel_desc 0.013 rel_name 0.009  2.84s/step
+  step 1160/2532 nce 0.498 nce_desc 0.627 nce_name 1.439 twin 0.078 twin_desc 0.103 twin_flip 0.195 rel_desc 0.013 rel_name 0.009  2.84s/step
+  step 1180/2532 nce 0.440 nce_desc 0.604 nce_name 1.374 twin 0.070 twin_desc 0.099 twin_flip 0.172 rel_desc 0.013 rel_name 0.009  2.84s/step
+  step 1200/2532 nce 0.470 nce_desc 0.635 nce_name 1.267 twin 0.074 twin_desc 0.102 twin_flip 0.186 rel_desc 0.013 rel_name 0.009  2.84s/step
+  == step 1200: twins 79.1% (desc 78.8%, name 67.0%; opaque-name rows 77.1%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 12.6  gate->desc opaque 0.8846963015135915 named 0.5321154668597521
+     flip slots: twins 85.8% (desc 82.2%, name 69.7%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 1220/2532 nce 0.463 nce_desc 0.650 nce_name 1.319 twin 0.069 twin_desc 0.094 twin_flip 0.163 rel_desc 0.012 rel_name 0.009  2.85s/step
+  step 1240/2532 nce 0.441 nce_desc 0.629 nce_name 1.262 twin 0.079 twin_desc 0.115 twin_flip 0.204 rel_desc 0.012 rel_name 0.009  2.85s/step
+  step 1260/2532 nce 0.482 nce_desc 0.634 nce_name 1.453 twin 0.086 twin_desc 0.109 twin_flip 0.217 rel_desc 0.013 rel_name 0.009  2.85s/step
+  step 1280/2532 nce 0.438 nce_desc 0.588 nce_name 1.177 twin 0.057 twin_desc 0.082 twin_flip 0.128 rel_desc 0.013 rel_name 0.009  2.85s/step
+  step 1300/2532 nce 0.445 nce_desc 0.599 nce_name 1.238 twin 0.074 twin_desc 0.106 twin_flip 0.191 rel_desc 0.012 rel_name 0.009  2.85s/step
+  step 1320/2532 nce 0.456 nce_desc 0.600 nce_name 1.357 twin 0.077 twin_desc 0.100 twin_flip 0.206 rel_desc 0.012 rel_name 0.009  2.85s/step
+  step 1340/2532 nce 0.419 nce_desc 0.558 nce_name 1.176 twin 0.057 twin_desc 0.079 twin_flip 0.137 rel_desc 0.011 rel_name 0.009  2.85s/step
+  step 1360/2532 nce 0.471 nce_desc 0.638 nce_name 1.322 twin 0.082 twin_desc 0.118 twin_flip 0.218 rel_desc 0.012 rel_name 0.009  2.85s/step
+  step 1380/2532 nce 0.438 nce_desc 0.599 nce_name 1.248 twin 0.063 twin_desc 0.090 twin_flip 0.148 rel_desc 0.012 rel_name 0.008  2.85s/step
+  step 1400/2532 nce 0.408 nce_desc 0.529 nce_name 1.371 twin 0.068 twin_desc 0.094 twin_flip 0.161 rel_desc 0.011 rel_name 0.008  2.85s/step
+  step 1420/2532 nce 0.427 nce_desc 0.569 nce_name 1.294 twin 0.070 twin_desc 0.095 twin_flip 0.211 rel_desc 0.011 rel_name 0.008  2.85s/step
+  step 1440/2532 nce 0.446 nce_desc 0.597 nce_name 1.290 twin 0.078 twin_desc 0.096 twin_flip 0.198 rel_desc 0.011 rel_name 0.008  2.85s/step
+  step 1460/2532 nce 0.436 nce_desc 0.586 nce_name 1.292 twin 0.062 twin_desc 0.082 twin_flip 0.156 rel_desc 0.011 rel_name 0.008  2.85s/step
+  step 1480/2532 nce 0.444 nce_desc 0.579 nce_name 1.331 twin 0.066 twin_desc 0.090 twin_flip 0.193 rel_desc 0.011 rel_name 0.008  2.85s/step
+  step 1500/2532 nce 0.436 nce_desc 0.542 nce_name 1.315 twin 0.047 twin_desc 0.069 twin_flip 0.107 rel_desc 0.011 rel_name 0.008  2.85s/step
+  step 1520/2532 nce 0.406 nce_desc 0.532 nce_name 1.165 twin 0.061 twin_desc 0.088 twin_flip 0.180 rel_desc 0.011 rel_name 0.008  2.85s/step
+  step 1540/2532 nce 0.415 nce_desc 0.544 nce_name 1.250 twin 0.061 twin_desc 0.077 twin_flip 0.171 rel_desc 0.011 rel_name 0.008  2.85s/step
+  step 1560/2532 nce 0.408 nce_desc 0.533 nce_name 1.250 twin 0.049 twin_desc 0.071 twin_flip 0.122 rel_desc 0.010 rel_name 0.008  2.85s/step
+  step 1580/2532 nce 0.440 nce_desc 0.561 nce_name 1.258 twin 0.059 twin_desc 0.076 twin_flip 0.160 rel_desc 0.011 rel_name 0.008  2.85s/step
+  step 1600/2532 nce 0.372 nce_desc 0.491 nce_name 1.161 twin 0.047 twin_desc 0.068 twin_flip 0.126 rel_desc 0.011 rel_name 0.008  2.85s/step
+  == step 1600: twins 80.5% (desc 79.9%, name 67.9%; opaque-name rows 77.1%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 13.5  gate->desc opaque 0.939406002553201 named 0.6307979403146072
+     flip slots: twins 87.8% (desc 83.6%, name 72.7%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 1620/2532 nce 0.408 nce_desc 0.509 nce_name 1.328 twin 0.062 twin_desc 0.081 twin_flip 0.182 rel_desc 0.010 rel_name 0.008  2.86s/step
+  step 1640/2532 nce 0.316 nce_desc 0.439 nce_name 1.140 twin 0.039 twin_desc 0.060 twin_flip 0.104 rel_desc 0.011 rel_name 0.008  2.86s/step
+  step 1660/2532 nce 0.313 nce_desc 0.431 nce_name 1.251 twin 0.041 twin_desc 0.057 twin_flip 0.127 rel_desc 0.011 rel_name 0.008  2.86s/step
+  step 1680/2532 nce 0.371 nce_desc 0.478 nce_name 1.341 twin 0.057 twin_desc 0.075 twin_flip 0.151 rel_desc 0.010 rel_name 0.008  2.86s/step
+  step 1700/2532 nce 0.311 nce_desc 0.418 nce_name 1.143 twin 0.035 twin_desc 0.052 twin_flip 0.093 rel_desc 0.011 rel_name 0.008  2.86s/step
+  step 1720/2532 nce 0.259 nce_desc 0.356 nce_name 1.113 twin 0.026 twin_desc 0.042 twin_flip 0.072 rel_desc 0.011 rel_name 0.008  2.86s/step
+  step 1740/2532 nce 0.284 nce_desc 0.396 nce_name 1.009 twin 0.029 twin_desc 0.049 twin_flip 0.064 rel_desc 0.011 rel_name 0.008  2.86s/step
+  step 1760/2532 nce 0.279 nce_desc 0.397 nce_name 1.104 twin 0.035 twin_desc 0.054 twin_flip 0.090 rel_desc 0.011 rel_name 0.008  2.86s/step
+  step 1780/2532 nce 0.250 nce_desc 0.362 nce_name 0.970 twin 0.021 twin_desc 0.033 twin_flip 0.047 rel_desc 0.011 rel_name 0.008  2.86s/step
+  step 1800/2532 nce 0.274 nce_desc 0.381 nce_name 1.182 twin 0.028 twin_desc 0.044 twin_flip 0.061 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 1820/2532 nce 0.287 nce_desc 0.388 nce_name 1.200 twin 0.037 twin_desc 0.054 twin_flip 0.091 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 1840/2532 nce 0.287 nce_desc 0.383 nce_name 1.140 twin 0.026 twin_desc 0.041 twin_flip 0.061 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 1860/2532 nce 0.228 nce_desc 0.309 nce_name 1.002 twin 0.024 twin_desc 0.039 twin_flip 0.055 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 1880/2532 nce 0.281 nce_desc 0.385 nce_name 1.058 twin 0.028 twin_desc 0.048 twin_flip 0.067 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 1900/2532 nce 0.321 nce_desc 0.430 nce_name 1.218 twin 0.029 twin_desc 0.042 twin_flip 0.072 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 1920/2532 nce 0.253 nce_desc 0.337 nce_name 1.081 twin 0.026 twin_desc 0.035 twin_flip 0.063 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 1940/2532 nce 0.299 nce_desc 0.383 nce_name 1.050 twin 0.028 twin_desc 0.042 twin_flip 0.063 rel_desc 0.010 rel_name 0.007  2.85s/step
+  step 1960/2532 nce 0.283 nce_desc 0.369 nce_name 0.998 twin 0.026 twin_desc 0.033 twin_flip 0.069 rel_desc 0.010 rel_name 0.007  2.85s/step
+  step 1980/2532 nce 0.222 nce_desc 0.296 nce_name 1.002 twin 0.020 twin_desc 0.028 twin_flip 0.050 rel_desc 0.010 rel_name 0.007  2.85s/step
+  step 2000/2532 nce 0.248 nce_desc 0.349 nce_name 1.039 twin 0.020 twin_desc 0.037 twin_flip 0.045 rel_desc 0.010 rel_name 0.007  2.85s/step
+  == step 2000: twins 80.5% (desc 80.4%, name 68.2%; opaque-name rows 76.2%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 14.3  gate->desc opaque 0.9597480470009716 named 0.5708093900002736
+     flip slots: twins 87.6% (desc 83.7%, name 75.0%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 2020/2532 nce 0.269 nce_desc 0.352 nce_name 1.091 twin 0.029 twin_desc 0.044 twin_flip 0.068 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2040/2532 nce 0.297 nce_desc 0.408 nce_name 0.975 twin 0.029 twin_desc 0.045 twin_flip 0.070 rel_desc 0.009 rel_name 0.007  2.86s/step
+  step 2060/2532 nce 0.274 nce_desc 0.380 nce_name 1.157 twin 0.024 twin_desc 0.037 twin_flip 0.054 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2080/2532 nce 0.247 nce_desc 0.316 nce_name 1.154 twin 0.019 twin_desc 0.029 twin_flip 0.044 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2100/2532 nce 0.256 nce_desc 0.353 nce_name 1.041 twin 0.021 twin_desc 0.031 twin_flip 0.044 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2120/2532 nce 0.229 nce_desc 0.331 nce_name 1.064 twin 0.019 twin_desc 0.036 twin_flip 0.046 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2140/2532 nce 0.273 nce_desc 0.388 nce_name 1.054 twin 0.030 twin_desc 0.047 twin_flip 0.079 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2160/2532 nce 0.233 nce_desc 0.322 nce_name 1.077 twin 0.029 twin_desc 0.047 twin_flip 0.068 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2180/2532 nce 0.268 nce_desc 0.362 nce_name 1.101 twin 0.026 twin_desc 0.043 twin_flip 0.057 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2200/2532 nce 0.259 nce_desc 0.343 nce_name 1.046 twin 0.023 twin_desc 0.043 twin_flip 0.045 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2220/2532 nce 0.240 nce_desc 0.335 nce_name 0.996 twin 0.019 twin_desc 0.031 twin_flip 0.038 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2240/2532 nce 0.279 nce_desc 0.376 nce_name 1.020 twin 0.028 twin_desc 0.043 twin_flip 0.069 rel_desc 0.009 rel_name 0.007  2.86s/step
+  step 2260/2532 nce 0.253 nce_desc 0.344 nce_name 0.956 twin 0.026 twin_desc 0.037 twin_flip 0.068 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2280/2532 nce 0.239 nce_desc 0.333 nce_name 0.936 twin 0.024 twin_desc 0.035 twin_flip 0.064 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2300/2532 nce 0.252 nce_desc 0.367 nce_name 0.949 twin 0.028 twin_desc 0.046 twin_flip 0.061 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2320/2532 nce 0.253 nce_desc 0.341 nce_name 0.987 twin 0.027 twin_desc 0.036 twin_flip 0.062 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2340/2532 nce 0.257 nce_desc 0.357 nce_name 1.080 twin 0.025 twin_desc 0.044 twin_flip 0.049 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2360/2532 nce 0.272 nce_desc 0.374 nce_name 1.130 twin 0.022 twin_desc 0.040 twin_flip 0.049 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2380/2532 nce 0.267 nce_desc 0.358 nce_name 1.126 twin 0.020 twin_desc 0.031 twin_flip 0.039 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2400/2532 nce 0.249 nce_desc 0.356 nce_name 1.053 twin 0.020 twin_desc 0.043 twin_flip 0.044 rel_desc 0.010 rel_name 0.007  2.86s/step
+  == step 2400: twins 80.3% (desc 80.6%, name 68.1%; opaque-name rows 77.0%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 14.6  gate->desc opaque 0.9571330492268505 named 0.5627435895622568
+     flip slots: twins 88.3% (desc 85.1%, name 75.5%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+  step 2420/2532 nce 0.264 nce_desc 0.378 nce_name 1.024 twin 0.021 twin_desc 0.035 twin_flip 0.049 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2440/2532 nce 0.278 nce_desc 0.361 nce_name 1.086 twin 0.030 twin_desc 0.043 twin_flip 0.075 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2460/2532 nce 0.245 nce_desc 0.337 nce_name 1.065 twin 0.027 twin_desc 0.047 twin_flip 0.070 rel_desc 0.010 rel_name 0.007  2.86s/step
+  step 2480/2532 nce 0.253 nce_desc 0.351 nce_name 1.110 twin 0.023 twin_desc 0.040 twin_flip 0.047 rel_desc 0.009 rel_name 0.007  3.89s/step
+  step 2500/2532 nce 0.224 nce_desc 0.316 nce_name 1.042 twin 0.022 twin_desc 0.039 twin_flip 0.055 rel_desc 0.009 rel_name 0.007  3.88s/step
+  step 2520/2532 nce 0.240 nce_desc 0.326 nce_name 1.019 twin 0.029 twin_desc 0.042 twin_flip 0.079 rel_desc 0.009 rel_name 0.007  3.87s/step
+  == step 2532: twins 80.3% (desc 80.5%, name 68.2%; opaque-name rows 77.0%) teacher desc 61.9% name 61.4%  chance 41.8%  n=3329  PR 14.6  gate->desc opaque 0.9565565777365933 named 0.5597773539259546
+     flip slots: twins 88.3% (desc 85.0%, name 75.6%) teacher desc 88.9% name 78.7%  chance 41.3%  n=861
+done; best twin accuracy 88.3% -> runs\stages_u1\stages.pt
