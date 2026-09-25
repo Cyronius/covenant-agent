@@ -1,0 +1,610 @@
+{
+ "n": 6000,
+ "goal": 4225,
+ "failed": 1775,
+ "no_compile": 1328,
+ "first_departure": {
+  "tool: another signature": 946,
+  "field": 430,
+  "keyword -> comparison": 25,
+  "keyword": 188,
+  "tool -> constant": 11,
+  "constant -> keyword": 2,
+  "field -> constant": 2,
+  "comparison -> keyword": 7,
+  "comparison -> field": 31,
+  "field -> register": 1,
+  "keyword -> constant": 8,
+  "keyword -> length": 8,
+  "field -> comparison": 26,
+  "length -> keyword": 8,
+  "field -> tool": 19,
+  "tool -> field": 36,
+  "comparison": 5,
+  "tool -> register": 13,
+  "tool: look-alike": 9
+ },
+ "keyword_swaps": {
+  "WRITE -> DELETE": 42,
+  "3 -> 2": 17,
+  "COUNT -> FILTER": 1,
+  "CALL -> FILTER": 3,
+  "WRITE -> SEND": 13,
+  "DELETE -> WRITE": 51,
+  "ABORT -> EFFECTS": 23,
+  "NOT_FOUND -> AMBIGUOUS": 2,
+  "WRITE -> READ": 2,
+  "2 -> 3": 3,
+  "FIRST -> SELECT": 2,
+  "CALL -> TRY": 18,
+  "CALL -> PARALLEL": 6,
+  "FOREACH -> MAP": 1,
+  "-> -> STOP": 1,
+  "DELETE -> SEND": 1,
+  "DELETE -> READ": 1,
+  "ASC -> ->": 1
+ },
+ "diagnostics": {
+  "UNKNOWN_FIELD": 971,
+  "UNBOUND": 162,
+  "TYPE_ERROR": 824,
+  "PARSE_ERROR": 180,
+  "EFFECT_UNDECLARED": 30,
+  "MISSING_ARG": 28
+ },
+ "by_level": {
+  "0": {
+   "n": 312,
+   "goal": 295,
+   "tool: another signature": 4,
+   "no compile": 9,
+   "keyword": 11,
+   "tool -> field": 1,
+   "length -> keyword": 1
+  },
+  "1": {
+   "n": 294,
+   "goal": 205,
+   "tool: another signature": 84,
+   "no compile": 89,
+   "tool: look-alike": 4,
+   "field": 1
+  },
+  "2": {
+   "n": 300,
+   "goal": 151,
+   "tool: another signature": 67,
+   "no compile": 97,
+   "keyword -> comparison": 6,
+   "field": 50,
+   "keyword": 17,
+   "keyword -> constant": 1,
+   "field -> comparison": 3,
+   "comparison": 1,
+   "keyword -> length": 3,
+   "tool -> field": 1
+  },
+  "3": {
+   "n": 303,
+   "keyword -> comparison": 4,
+   "no compile": 73,
+   "goal": 118,
+   "field": 55,
+   "comparison -> field": 31,
+   "tool: another signature": 47,
+   "keyword -> length": 1,
+   "field -> comparison": 23,
+   "comparison": 3,
+   "keyword": 19,
+   "constant -> keyword": 1,
+   "tool -> field": 1
+  },
+  "4": {
+   "n": 309,
+   "goal": 191,
+   "tool: another signature": 71,
+   "no compile": 97,
+   "field": 22,
+   "keyword": 9,
+   "tool -> field": 10,
+   "tool -> constant": 1,
+   "tool -> register": 1,
+   "keyword -> comparison": 1,
+   "field -> tool": 2,
+   "comparison -> keyword": 1
+  },
+  "5": {
+   "n": 303,
+   "tool: another signature": 75,
+   "no compile": 84,
+   "field": 32,
+   "goal": 176,
+   "length -> keyword": 5,
+   "keyword -> length": 4,
+   "keyword": 7,
+   "tool: look-alike": 3,
+   "keyword -> constant": 1
+  },
+  "6": {
+   "n": 294,
+   "goal": 147,
+   "tool: another signature": 52,
+   "no compile": 115,
+   "field": 56,
+   "tool -> constant": 6,
+   "field -> constant": 2,
+   "field -> register": 1,
+   "keyword": 16,
+   "field -> tool": 1,
+   "tool -> field": 11,
+   "tool -> register": 2
+  },
+  "7": {
+   "n": 306,
+   "tool: another signature": 125,
+   "no compile": 144,
+   "goal": 142,
+   "field": 25,
+   "tool -> constant": 2,
+   "keyword -> constant": 1,
+   "tool -> register": 9,
+   "keyword": 1,
+   "tool -> field": 1
+  },
+  "8": {
+   "n": 303,
+   "goal": 229,
+   "keyword": 21,
+   "no compile": 57,
+   "tool: another signature": 43,
+   "field": 7,
+   "tool: look-alike": 1,
+   "tool -> register": 1,
+   "tool -> field": 1
+  },
+  "9": {
+   "n": 303,
+   "tool: another signature": 60,
+   "no compile": 82,
+   "goal": 143,
+   "keyword -> comparison": 13,
+   "keyword": 51,
+   "comparison -> keyword": 6,
+   "field": 26,
+   "keyword -> constant": 2,
+   "comparison": 1,
+   "tool -> field": 1
+  },
+  "11": {
+   "n": 294,
+   "goal": 200,
+   "field": 32,
+   "no compile": 90,
+   "tool: another signature": 35,
+   "keyword": 13,
+   "tool -> field": 4,
+   "field -> tool": 10
+  },
+  "12": {
+   "n": 354,
+   "goal": 184,
+   "tool: another signature": 105,
+   "no compile": 121,
+   "field": 62,
+   "keyword": 2,
+   "tool: look-alike": 1
+  },
+  "13": {
+   "n": 330,
+   "goal": 298,
+   "field": 25,
+   "no compile": 30,
+   "tool: another signature": 3,
+   "keyword -> constant": 3,
+   "length -> keyword": 1
+  },
+  "14": {
+   "n": 342,
+   "goal": 268,
+   "tool: another signature": 67,
+   "no compile": 74,
+   "constant -> keyword": 1,
+   "keyword": 2,
+   "length -> keyword": 1,
+   "keyword -> comparison": 1,
+   "field": 2
+  },
+  "15": {
+   "n": 330,
+   "goal": 301,
+   "tool: another signature": 27,
+   "no compile": 29,
+   "field": 2
+  },
+  "16": {
+   "n": 339,
+   "goal": 322,
+   "keyword": 17,
+   "no compile": 17
+  },
+  "17": {
+   "n": 342,
+   "goal": 342
+  },
+  "18": {
+   "n": 351,
+   "goal": 348,
+   "field -> tool": 3,
+   "no compile": 3
+  },
+  "19": {
+   "n": 291,
+   "tool: another signature": 81,
+   "no compile": 117,
+   "goal": 165,
+   "field": 33,
+   "keyword": 2,
+   "tool -> constant": 2,
+   "field -> tool": 3,
+   "tool -> field": 5
+  }
+ },
+ "examples": {
+  "tool: another signature": [
+   {
+    "task": "freight_forwarding_L19_20260925",
+    "request": "Could you email every shipper that has a non-hazmat shipment.",
+    "generated": "EFFECTS READ SEND\nCALL T1 -> r0\nFILTER r0 F6 EQ B0 -> r1\nMAP r1 F2 -> r2\nCALL T17 -> r3\nFILTER r3 F0 IN r2 -> r4\nFOREACH r4 -> r5\n  CALL T9 r5 S0\nSTOP\n",
+    "reference": "EFFECTS READ SEND\nCALL T17 -> r0\nFILTER r0 F6 EQ B0 -> r1\nMAP r1 F2 -> r2\nCALL T1 -> r3\nFILTER r3 F11 IN r2 -> r4\nFOREACH r4 -> r5\n  CALL T9 r5 S0\nSTOP\n"
+   },
+   {
+    "task": "comic_publisher_L5_20260931",
+    "request": "If the \"Lowtide City #6\" issue is colored, pull it from the pipeline; otherwise message the creator on it",
+    "generated": "EFFECTS READ DELETE SEND\nCALL T7 I0 -> r0\nGET r0.F10 -> r1\nIF r1 EQ S0\n  CALL T5 r0\nELSE\n  CALL T14 r0.F14 S1\nSTOP\n",
+    "reference": "EFFECTS READ DELETE SEND\nCALL T0 I0 -> r0\nGET r0.F10 -> r1\nIF r1 EQ S0\n  CALL T5 r0\nELSE\n  CALL T14 r0.F14 S1\nSTOP\n"
+   },
+   {
+    "task": "border_transit_L9_20260934",
+    "request": "Some of these cases need a second look.",
+    "generated": "EFFECTS READ WRITE\nCALL T9 -> r0\nFILTER r0 F0 EQ S0 AND F10 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T2 r2 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T14 -> r0\nFILTER r0 F0 EQ S0 AND F10 GT NOW -> r1\nFOREACH r1 -> r2\n  CALL T2 r2 -> r3\nSTOP\n"
+   }
+  ],
+  "field": [
+   {
+    "task": "tax_practice_L5_20260942",
+    "request": "Check tax filing 3: flag it for audit risk if it is low risk, and delete it if not.",
+    "generated": "EFFECTS READ WRITE DELETE\nCALL T9 I0 -> r0\nGET r0.F1 -> r1\nIF r1 EQ B0\n  CALL T11 r0 -> r2\nELSE\n  CALL T3 r0\nSTOP\n",
+    "reference": "EFFECTS READ WRITE DELETE\nCALL T9 I0 -> r0\nGET r0.F8 -> r1\nIF r1 EQ B0\n  CALL T14 r0 -> r2\nELSE\n  CALL T3 r0\nSTOP\n"
+   },
+   {
+    "task": "wedding_planning_L19_20260946",
+    "request": "Can you notify the couples that have no vendor bookings inquired more than 98 days ago?",
+    "generated": "EFFECTS READ SEND\nCALL T15 -> r0\nFILTER r0 F8 LT D0 -> r1\nMAP r1 F14 -> r2\nCALL T4 -> r3\nFILTER r3 NOT F16 IN r2 -> r4\nFOREACH r4 -> r5\n  CALL T16 r5 S0\nSTOP\n",
+    "reference": "EFFECTS READ SEND\nCALL T15 -> r0\nFILTER r0 F8 LT D0 -> r1\nMAP r1 F13 -> r2\nCALL T4 -> r3\nFILTER r3 NOT F9 IN r2 -> r4\nFOREACH r4 -> r5\n  CALL T16 r5 S0\nSTOP\n"
+   },
+   {
+    "task": "border_transit_L13_20260957",
+    "request": "Could you add a case titled \"Student exchange program\" for Yara Patel, marked received; after that mark it as denied.",
+    "generated": "EFFECTS WRITE\nCALL T16 I0 S0 S1 -> r0\nCALL T6 r0.F9 S2 -> r1\nSTOP\n",
+    "reference": "EFFECTS WRITE\nCALL T16 I0 S0 S1 -> r0\nCALL T6 r0.F4 S2 -> r1\nSTOP\n"
+   }
+  ],
+  "keyword -> comparison": [
+   {
+    "task": "optometry_L9_20260950",
+    "request": "The exam list is a mess, deal with it.",
+    "generated": "EFFECTS READ DELETE\nCALL T0 -> r0\nFILTER r0 F1 EQ S0 AND F16 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T11 r2\nSTOP\n",
+    "reference": "EFFECTS READ DELETE\nCALL T0 -> r0\nFILTER r0 F1 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T11 r2\nSTOP\n"
+   },
+   {
+    "task": "ev_charging_L3_20260975",
+    "request": "Could you email the fleet behind every sessions plugged in more than 184 days ago, except the faulted ones.",
+    "generated": "EFFECTS READ SEND\nCALL T0 -> r0\nFILTER r0 NOT F10 EQ S0 AND F0 LT D0 AND F10 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T1 r2.F8 S1\nSTOP\n",
+    "reference": "EFFECTS READ SEND\nCALL T0 -> r0\nFILTER r0 NOT F10 EQ S0 AND F0 LT D0 -> r1\nFOREACH r1 -> r2\n  CALL T1 r2.F8 S1\nSTOP\n"
+   },
+   {
+    "task": "coffee_roastery_L2_20261000",
+    "request": "Please pull every roast batches in the roaster under recall.",
+    "generated": "EFFECTS READ WRITE\nCALL T17 -> r0\nFILTER r0 F7 EQ S0 AND F13 GT NOW -> r1\nFOREACH r1 -> r2\n  CALL T10 r2 S0 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T17 -> r0\nFILTER r0 F7 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T10 r2 -> r3\nSTOP\n"
+   }
+  ],
+  "keyword": [
+   {
+    "task": "wedding_planning_L9_20260959",
+    "request": "These vendor leads are getting old, deal with them.",
+    "generated": "EFFECTS READ DELETE\nCALL T17 -> r0\nFILTER r0 F18 EQ S0 AND F3 LT D0 -> r1\nFOREACH r1 -> r2\n  CALL T4 r2\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T17 -> r0\nFILTER r0 F18 EQ S0 AND F3 LT D0 -> r1\nFOREACH r1 -> r2\n  CALL T11 r2 -> r3\nSTOP\n"
+   },
+   {
+    "task": "car_rental_L8_20260994",
+    "request": "reassign the \"Midsize SUV, white\" agreement to Wren Adler, and try again a couple of times if it errors out",
+    "generated": "EFFECTS WRITE\nTRY RETRY 2 -> r0\n  CALL T1 I0 I1 -> r1\nSTOP\n",
+    "reference": "EFFECTS WRITE\nTRY RETRY 3 -> r0\n  CALL T1 I0 I1 -> r1\nSTOP\n"
+   },
+   {
+    "task": "winery_L14_20261044",
+    "request": "Tell me the number of barrel lots",
+    "generated": "EFFECTS READ\nCALL T13 -> r0\nFILTER r0 -> r1\nCOUNT r1 -> r2\nRETURN r2\n",
+    "reference": "EFFECTS READ\nCALL T13 -> r0\nCOUNT r0 -> r2\nRETURN r2\n"
+   }
+  ],
+  "tool -> constant": [
+   {
+    "task": "home_care_L6_20260983",
+    "request": "For every client, flag each of their care visits for Dev Gray for care plan review.",
+    "generated": "EFFECTS READ WRITE\nCALL T3 -> r0\nCALL T13 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 F16 EQ r3.F13 AND F16 EQ I0 -> r4\n  FOREACH r4 -> r5\n    CALL S0 r5 -> r6\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T3 -> r0\nCALL T13 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 F16 EQ r3.F13 AND F16 EQ I0 -> r4\n  FOREACH r4 -> r5\n    CALL T7 r5 -> r6\nSTOP\n"
+   },
+   {
+    "task": "animal_shelter_L6_20261540",
+    "request": "For every adopter, set each of their direct adoption adoption cases back to pending.",
+    "generated": "EFFECTS READ WRITE\nCALL B0 -> r0\nCALL T4 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 F16 EQ r3.F15 AND F13 EQ B0 -> r4\n  FOREACH r4 -> r5\n    CALL T0 r5 S0 -> r6\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T4 -> r0\nCALL T2 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 F16 EQ r3.F9 AND F13 EQ B0 -> r4\n  FOREACH r4 -> r5\n    CALL T0 r5 S0 -> r6\nSTOP\n"
+   },
+   {
+    "task": "coffee_roastery_L7_20261995",
+    "request": "I need you to fetch Northwind's record and the roast batches list together, then flag Northwind's shipped roast batches for recall.",
+    "generated": "EFFECTS READ WRITE\nPARALLEL\n  CALL T4 I0 -> r0\n  CALL T14 -> r1\nFILTER r1 F2 EQ I0 AND F0 EQ S0 -> r2\nFOREACH r2 -> r3\n  CALL S3 r3 -> r4\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nPARALLEL\n  CALL T4 I0 -> r0\n  CALL T14 -> r1\nFILTER r1 F2 EQ I0 AND F0 EQ S0 -> r2\nFOREACH r2 -> r3\n  CALL T5 r3 -> r4\nSTOP\n"
+   }
+  ],
+  "constant -> keyword": [
+   {
+    "task": "home_care_L14_20261035",
+    "request": "What care visits care plan updated more than 81 days ago do we have?",
+    "generated": "EFFECTS READ\nCALL T8 -> r0\nFILTER r0 F20 LT NOW AND F5 EQ D0 -> r1\nRETURN r1\n",
+    "reference": "EFFECTS READ\nCALL T8 -> r0\nFILTER r0 F20 LT D0 -> r1\nRETURN r1\n"
+   },
+   {
+    "task": "ev_charging_L3_20260975",
+    "request": "Could you email the fleet behind every sessions plugged in more than 184 days ago, except the faulted ones.",
+    "generated": "EFFECTS READ SEND\nCALL T0 -> r0\nFILTER r0 NOT F10 EQ S0 AND F0 LT NOW AND F19 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T1 r2.F8 S1\nSTOP\n",
+    "reference": "EFFECTS READ SEND\nCALL T0 -> r0\nFILTER r0 NOT F10 EQ S0 AND F0 LT D0 -> r1\nFOREACH r1 -> r2\n  CALL T1 r2.F8 S1\nSTOP\n"
+   }
+  ],
+  "field -> constant": [
+   {
+    "task": "wedding_planning_L6_20261104",
+    "request": "For every couple, delete each of their vendor bookings being researched.",
+    "generated": "EFFECTS READ DELETE\nCALL T9 -> r0\nCALL T17 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 S0 -> r3\n  CALL T7 r3\nSTOP\n",
+    "reference": "EFFECTS READ DELETE\nCALL T9 -> r0\nCALL T17 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 F7 EQ r3.F13 AND F19 EQ S0 -> r4\n  FOREACH r4 -> r5\n    CALL T7 r5\nSTOP\n"
+   },
+   {
+    "task": "wedding_planning_L6_20261104",
+    "request": "For every couple, delete each of their vendor bookings being researched.",
+    "generated": "EFFECTS READ DELETE\nCALL T9 -> r0\nCALL T17 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 S0 -> r3\n  FILTER r1 F19 EQ S0 -> r4\n  FOREACH r4 -> r5\n  CALL T7 r5\nSTOP\n",
+    "reference": "EFFECTS READ DELETE\nCALL T9 -> r0\nCALL T17 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 F7 EQ r3.F13 AND F19 EQ S0 -> r4\n  FOREACH r4 -> r5\n    CALL T7 r5\nSTOP\n"
+   }
+  ],
+  "comparison -> keyword": [
+   {
+    "task": "toy_store_L9_20261154",
+    "request": "clean up the preorder queue",
+    "generated": "EFFECTS READ DELETE\nCALL T7 -> r0\nFILTER r0 F16 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T0 r2\nSTOP\n",
+    "reference": "EFFECTS READ DELETE\nCALL T7 -> r0\nFILTER r0 F16 EQ S0 AND F17 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T0 r2\nSTOP\n"
+   },
+   {
+    "task": "toy_store_L9_30261635",
+    "request": "clean up the preorder queue",
+    "generated": "EFFECTS READ DELETE\nCALL T13 -> r0\nFILTER r0 F2 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T15 r2\nSTOP\n",
+    "reference": "EFFECTS READ DELETE\nCALL T13 -> r0\nFILTER r0 F2 EQ S0 AND F11 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T15 r2\nSTOP\n"
+   },
+   {
+    "task": "tennis_academy_L9_20261337",
+    "request": "Sort out the court schedule.",
+    "generated": "EFFECTS READ DELETE\nCALL T15 -> r0\nFILTER r0 F8 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T4 r2\nSTOP\n",
+    "reference": "EFFECTS READ DELETE\nCALL T15 -> r0\nFILTER r0 F8 EQ S0 AND F4 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T4 r2\nSTOP\n"
+   }
+  ],
+  "comparison -> field": [
+   {
+    "task": "streaming_service_L3_20261190",
+    "request": "Please move all the non-exclusive licenses with Initech, unless they are dubbed to Globex.",
+    "generated": "EFFECTS READ WRITE\nCALL T17 -> r0\nFILTER r0 F13 EQ B0 AND NOT F3 EQ I0 AND F13 EQ B1 -> r1\nFOREACH r1 -> r2\n  CALL T14 r2 I1 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T17 -> r0\nFILTER r0 NOT F21 EQ B0 AND F3 EQ I0 AND F13 EQ B1 -> r1\nFOREACH r1 -> r2\n  CALL T14 r2 I1 -> r3\nSTOP\n"
+   },
+   {
+    "task": "notary_office_L3_20261256",
+    "request": "Can you flag each of the pending notarization requests, except those ID verified as ID verified?",
+    "generated": "EFFECTS READ WRITE\nCALL T14 -> r0\nFILTER r0 F17 EQ B0 AND NOT F2 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T1 r2 S0 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T14 -> r0\nFILTER r0 NOT F17 EQ B0 AND F2 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T15 r2 -> r3\nSTOP\n"
+   },
+   {
+    "task": "notary_office_L3_20261406",
+    "request": "wipe all the mobile visit notarization requests ID verified, as long as they aren't rejected from the log",
+    "generated": "EFFECTS READ DELETE\nCALL T12 -> r0\nFILTER r0 F17 EQ B0 AND NOT F3 EQ S0 AND F17 EQ B0 -> r1\nFOREACH r1 -> r2\n  CALL T1 r2\nSTOP\n",
+    "reference": "EFFECTS READ DELETE\nCALL T12 -> r0\nFILTER r0 NOT F3 EQ S0 AND F17 EQ B0 AND F5 EQ B0 -> r1\nFOREACH r1 -> r2\n  CALL T1 r2\nSTOP\n"
+   }
+  ],
+  "field -> register": [
+   {
+    "task": "wedding_planning_L6_20261251",
+    "request": "For every couple, move each of their vendor bookings contract signed to Elif Mora.",
+    "generated": "EFFECTS READ WRITE\nCALL T10 -> r0\nCALL T17 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 r2 -> r4\n  CALL T4 r3 I0 -> r4\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T10 -> r0\nCALL T17 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 F16 EQ r3.F6 AND F0 EQ B0 -> r4\n  FOREACH r4 -> r5\n    CALL T4 r5 I0 -> r6\nSTOP\n"
+   }
+  ],
+  "keyword -> constant": [
+   {
+    "task": "tax_practice_L2_20261330",
+    "request": "I need you to flag any tax filings gathering documents for audit risk.",
+    "generated": "EFFECTS READ WRITE\nCALL T4 -> r0\nFILTER r0 F5 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T0 r2 S0 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T4 -> r0\nFILTER r0 F5 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T0 r2 -> r3\nSTOP\n"
+   },
+   {
+    "task": "home_care_L13_30261231",
+    "request": "add a care visit named \"Wound care check-in\" for Uma Lund; after that mark it for review",
+    "generated": "EFFECTS WRITE\nCALL T12 I0 S0 -> r0\nCALL T11 r0.F5 S0 -> r1\nSTOP\n",
+    "reference": "EFFECTS WRITE\nCALL T12 I0 S0 -> r0\nCALL T11 r0.F5 -> r1\nSTOP\n"
+   },
+   {
+    "task": "coffee_roastery_L7_30261407",
+    "request": "Can you fetch Cyberdyne's record and the roast batches list together, then pull Cyberdyne's decaf roast batches under recall?",
+    "generated": "EFFECTS READ WRITE\nPARALLEL\n  CALL T15 I0 -> r0\n  CALL T3 -> r1\nFILTER r1 F8 EQ I0 AND F12 EQ B0 -> r2\nFOREACH r2 -> r3\n  CALL T11 r3 B0 -> r4\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nPARALLEL\n  CALL T15 I0 -> r0\n  CALL T3 -> r1\nFILTER r1 F8 EQ I0 AND F12 EQ B0 -> r2\nFOREACH r2 -> r3\n  CALL T11 r3 -> r4\nSTOP\n"
+   }
+  ],
+  "keyword -> length": [
+   {
+    "task": "courthouse_L3_20261389",
+    "request": "seal every expedited filings, except those filed by Cyberdyne",
+    "generated": "EFFECTS READ\nCALL T16 -> r0\nFILTER r0 F15 EQ B0 AND NOT F10 EQ I0 AND F15 EQ B0 -> r1\nRETURN r1\n",
+    "reference": "EFFECTS READ WRITE\nCALL T16 -> r0\nFILTER r0 F15 EQ B0 AND NOT F10 EQ I0 -> r1\nFOREACH r1 -> r2\n  CALL T8 r2 -> r3\nSTOP\n"
+   },
+   {
+    "task": "art_gallery_L5_20261701",
+    "request": "Check the \"Blue Hour Triptych\" consignment: move it to Northwind if it is authenticated, and end the consignment on it if not.",
+    "generated": "EFFECTS READ WRITE\nCALL T14 I0 -> r0\nGET r0.F15 -> r1\nIF r1 EQ B0\n  CALL T3 r0 I1 -> r2\nELSE\n  CALL T5 r0 B0 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE DELETE\nCALL T14 I0 -> r0\nGET r0.F4 -> r1\nIF r1 EQ B0\n  CALL T5 r0 I1 -> r2\nELSE\n  CALL T13 r0\nSTOP\n"
+   },
+   {
+    "task": "ad_platform_L2_30260963",
+    "request": "I need you to frequency-cap every placements for Wayne Tech.",
+    "generated": "EFFECTS READ\nCALL T7 -> r0\nFILTER r0 F11 EQ I0 -> r1\nRETURN r1\n",
+    "reference": "EFFECTS READ WRITE\nCALL T7 -> r0\nFILTER r0 F11 EQ I0 -> r1\nFOREACH r1 -> r2\n  CALL T14 r2 -> r3\nSTOP\n"
+   }
+  ],
+  "field -> comparison": [
+   {
+    "task": "event_venue_L3_20261394",
+    "request": "move any flagged for follow-up bookings for Initech, but leave the inquiry stage ones alone back to inquiry",
+    "generated": "EFFECTS READ WRITE\nCALL T16 -> r0\nFILTER r0 NOT F4 EQ S0 AND F8 EQ I0 AND F20 EQ B0 -> r1\nFOREACH r1 -> r2\n  CALL T15 r2 I0 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T16 -> r0\nFILTER r0 F11 EQ B0 AND NOT F4 EQ S0 AND F8 EQ I0 -> r1\nFOREACH r1 -> r2\n  CALL T12 r2 S0 -> r3\nSTOP\n"
+   },
+   {
+    "task": "donor_relations_L3_20261421",
+    "request": "set each of the recurring pledges pledged more than 106 days ago, but leave the anonymous ones alone as fulfilled",
+    "generated": "EFFECTS READ WRITE\nCALL T8 -> r0\nFILTER r0 NOT F3 EQ S0 AND F15 EQ B0 AND F13 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T13 r2 S0 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T8 -> r0\nFILTER r0 F21 EQ B0 AND F13 LT D0 AND NOT F15 EQ B0 -> r1\nFOREACH r1 -> r2\n  CALL T13 r2 S0 -> r3\nSTOP\n"
+   },
+   {
+    "task": "wedding_planning_L2_20261427",
+    "request": "email the couple for any vendor bookings inquired more than 85 days ago",
+    "generated": "EFFECTS READ SEND\nCALL T2 -> r0\nFILTER r0 NOT F5 LT D0 -> r1\nFOREACH r1 -> r2\n  CALL T4 r2.F11 S0\nSTOP\n",
+    "reference": "EFFECTS READ SEND\nCALL T2 -> r0\nFILTER r0 F5 LT D0 -> r1\nFOREACH r1 -> r2\n  CALL T4 r2.F12 S0\nSTOP\n"
+   }
+  ],
+  "length -> keyword": [
+   {
+    "task": "golf_club_L5_20261608",
+    "request": "Check tee time 5: move it under Ty Quist if it is walking, and set it back to confirmed if not.",
+    "generated": "EFFECTS READ WRITE DELETE\nCALL T15 I0 -> r0\nGET r0.F14 -> r1\nIF r1 EQ B0\n  CALL T9 r0 S0 -> r2\nELSE\n  CALL T16 r0\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T15 I0 -> r0\nGET r0.F14 -> r1\nIF r1 EQ B0\n  CALL T2 r0 I1 -> r2\nELSE\n  CALL T9 r0 S0 -> r3\nSTOP\n"
+   },
+   {
+    "task": "golf_club_L5_30261986",
+    "request": "If tee time 1 is confirmed, reassign it under Uma Ito; otherwise flag it as walking.",
+    "generated": "EFFECTS READ WRITE DELETE\nCALL T14 I0 -> r0\nGET r0.F4 -> r1\nIF r1 EQ S0\n  CALL T7 r0\nELSE\n  CALL T17 r0 I1 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T14 I0 -> r0\nGET r0.F4 -> r1\nIF r1 EQ S0\n  CALL T17 r0 I1 -> r2\nELSE\n  CALL T8 r0 -> r3\nSTOP\n"
+   },
+   {
+    "task": "golf_club_L14_20261248",
+    "request": "What tee times do we have?",
+    "generated": "EFFECTS READ DELETE\nCALL T10 -> r0\nFILTER r0 AMBIGUOUS F1 EQ -> r1\nRETURN r1\n",
+    "reference": "EFFECTS READ\nCALL T10 -> r0\nRETURN r0\n"
+   }
+  ],
+  "field -> tool": [
+   {
+    "task": "wedding_planning_L6_20261769",
+    "request": "For every couple, move each of their confirmed vendor bookings to Wren Chen.",
+    "generated": "EFFECTS READ WRITE\nCALL T7 -> r0\nCALL T12 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 T9 r3.F0 AND F12 EQ S0 -> r4\n  FOREACH r4 -> r5\n      CALL T6 r5 I0 -> r6\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T7 -> r0\nCALL T12 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 F4 EQ r3.F9 AND F12 EQ S0 -> r4\n  FOREACH r4 -> r5\n    CALL T6 r5 I0 -> r6\nSTOP\n"
+   },
+   {
+    "task": "electronics_repair_L11_20261274",
+    "request": "set the \"Q3 budget review\" intake back to received",
+    "generated": "EFFECTS READ WRITE\nCALL T5 -> r0\nFILTER r0 T6 EQ S0 -> r1\nIF EMPTY r1\n  ABORT NOT_FOUND S0\nFIRST r1 -> r2\nCALL T4 r2.F18 S1 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T5 -> r0\nFILTER r0 F7 EQ S0 -> r1\nIF EMPTY r1\n  ABORT NOT_FOUND S0\nFIRST r1 -> r2\nCALL T4 r2.F18 S1 -> r3\nSTOP\n"
+   },
+   {
+    "task": "pharmacy_L11_20261601",
+    "request": "authorize a refill on the \"Sunset audit\" order",
+    "generated": "EFFECTS READ WRITE\nCALL T8 -> r0\nFILTER r0 T6 EQ S0 -> r1\nIF EMPTY r1\n  ABORT NOT_FOUND S0\nFIRST r1 -> r2\nCALL T7 r2.F12 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T8 -> r0\nFILTER r0 F9 EQ S0 -> r1\nIF EMPTY r1\n  ABORT NOT_FOUND S0\nFIRST r1 -> r2\nCALL T7 r2.F12 -> r3\nSTOP\n"
+   }
+  ],
+  "tool -> field": [
+   {
+    "task": "ad_platform_L4_20261811",
+    "request": "Who has the lowest number of paused placements",
+    "generated": "EFFECTS READ\nCALL F14 -> r0\nCALL T7 -> r1\nFILTER r1 F9 EQ S0 -> r2\nLEAST r2 F2 r0 -> r3\nFILTER r0 F4 EQ r3 -> r4\nFIRST r4 -> r5\nGET r5.F14 -> r6\nRETURN r6\n",
+    "reference": "EFFECTS READ\nCALL T4 -> r0\nCALL T7 -> r1\nFILTER r1 F9 EQ S0 -> r2\nLEAST r2 F2 r0 -> r3\nFILTER r0 F10 EQ r3 -> r4\nFIRST r4 -> r5\nGET r5.F14 -> r6\nRETURN r6\n"
+   },
+   {
+    "task": "home_care_L11_20261952",
+    "request": "Go ahead and flag the \"Winter retrospective\" care visit for care plan review.",
+    "generated": "EFFECTS READ WRITE\nCALL T5 -> r0\nFILTER r0 F12 EQ S0 -> r1\nIF EMPTY r1\n  ABORT NOT_FOUND S0\nFIRST r1 -> r2\nCALL F12 r5.F5\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T5 -> r0\nFILTER r0 F12 EQ S0 -> r1\nIF EMPTY r1\n  ABORT NOT_FOUND S0\nFIRST r1 -> r2\nCALL T12 r2.F5 -> r3\nSTOP\n"
+   },
+   {
+    "task": "optometry_L2_30261144",
+    "request": "Go ahead and flag every eye exams for Wren Adler for referral.",
+    "generated": "EFFECTS READ WRITE\nCALL T16 -> r0\nFILTER r0 F9 EQ I0 -> r1\nFOREACH r1 -> r2\n  CALL F16 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T16 -> r0\nFILTER r0 F9 EQ I0 -> r1\nFOREACH r1 -> r2\n  CALL T7 r2 -> r3\nSTOP\n"
+   }
+  ],
+  "comparison": [
+   {
+    "task": "home_care_L3_20261922",
+    "request": "Please mark each of the care visits still upcoming, unless they are care plan updated more than 187 days ago as in progress.",
+    "generated": "EFFECTS READ WRITE\nCALL T8 -> r0\nFILTER r0 NOT F2 GT NOW AND F2 GT NOW AND F2 GT NOW -> r1\nFOREACH r1 -> r2\n  CALL T6 r2 S0 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T8 -> r0\nFILTER r0 NOT F2 LT D0 AND F19 GT NOW -> r1\nFOREACH r1 -> r2\n  CALL T6 r2 S0 -> r3\nSTOP\n"
+   },
+   {
+    "task": "projects_L2_20262063",
+    "request": "Could you notify the owner of any projects with no activity for 287 days.",
+    "generated": "EFFECTS READ SEND\nCALL T7 -> r0\nFILTER r0 F1 GT NOW -> r1\nMAP r1 F6 -> r2\nCALL T4 -> r3\nFILTER r3 NOT F0 IN r2 -> r4\nFOREACH r4 -> r5\n  CALL T2 r5.F6 S0\nSTOP\n",
+    "reference": "EFFECTS READ SEND\nCALL T7 -> r0\nFILTER r0 F1 LT D0 -> r1\nFOREACH r1 -> r2\n  CALL T2 r2.F6 S0\nSTOP\n"
+   },
+   {
+    "task": "donor_relations_L3_30261794",
+    "request": "Please delete any pledges pledged more than 177 days ago, not yet due, as long as they aren't lapsed.",
+    "generated": "EFFECTS READ DELETE\nCALL T9 -> r0\nFILTER r0 NOT F16 EQ S0 AND F13 GT NOW AND F13 GT NOW -> r1\nFOREACH r1 -> r2\n  CALL T13 r2\nSTOP\n",
+    "reference": "EFFECTS READ DELETE\nCALL T9 -> r0\nFILTER r0 NOT F16 EQ S0 AND F13 LT D0 AND F8 GT NOW -> r1\nFOREACH r1 -> r2\n  CALL T13 r2\nSTOP\n"
+   }
+  ],
+  "tool -> register": [
+   {
+    "task": "art_gallery_L7_30261450",
+    "request": "Go ahead and fetch Northwind's record and the consignments list together, then move Northwind's sold consignments to Tyrell.",
+    "generated": "EFFECTS READ WRITE\nPARALLEL\n  CALL r5 I1 -> r0\n  CALL T6 -> r1\nFILTER r1 F10 EQ I0 AND F3 EQ S0 -> r2\nFOREACH r2 -> r3\n  CALL T5 r3 I1 -> r4\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nPARALLEL\n  CALL T12 I0 -> r0\n  CALL T9 -> r1\nFILTER r1 F10 EQ I0 AND F3 EQ S0 -> r2\nFOREACH r2 -> r3\n  CALL T10 r3 I1 -> r4\nSTOP\n"
+   },
+   {
+    "task": "research_lab_L4_20260951",
+    "request": "Can you notify the sponsor with the fewest a hazardous run runs?",
+    "generated": "EFFECTS READ SEND\nCALL r1\nCALL T13 -> r1\nFILTER r1 F3 EQ B0 -> r2\nLEAST r2 F6 r0 -> r3\nFILTER r0 F20 EQ r3 -> r4\nFIRST r4 -> r5\nCALL T9 r5 S0\nSTOP\n",
+    "reference": "EFFECTS READ SEND\nCALL T12 -> r0\nCALL T13 -> r1\nFILTER r1 F8 EQ B0 -> r2\nLEAST r2 F6 r0 -> r3\nCALL T9 r3 S0\nSTOP\n"
+   },
+   {
+    "task": "art_gallery_L8_40260979",
+    "request": "Hey \u2014 flag the \"Coastal Fracture\" consignment as authenticated, and try again a couple of times if it errors out, thanks!",
+    "generated": "EFFECTS WRITE\nTRY RETRY 2 -> r0\n  CALL r4\nSTOP\n",
+    "reference": "EFFECTS WRITE\nTRY RETRY 2 -> r0\n  CALL T11 I0 -> r1\nSTOP\n"
+   }
+  ],
+  "tool: look-alike": [
+   {
+    "task": "notary_office_L1_20260976",
+    "request": "Hey \u2014 find the \"Real estate deed\" notarization request, then give the requester on it a heads-up, thanks!",
+    "generated": "EFFECTS READ SEND\nCALL T2 I0 -> r0\nCALL T16 r0.F19 S0\nSTOP\n",
+    "reference": "EFFECTS READ SEND\nCALL T14 I0 -> r0\nCALL T16 r0.F19 S0\nSTOP\n"
+   },
+   {
+    "task": "notary_office_L5_20260988",
+    "request": "Check the \"Living will\" notarization request: flag it as ID verified if it is pending, and set it as completed if not.",
+    "generated": "EFFECTS READ WRITE\nCALL T2 I0 -> r0\nGET r0.F8 -> r1\nIF r1 EQ S0\n  CALL T10 r0 S1 -> r2\nELSE\n  CALL T10 r0 S1 -> r3\nSTOP\n",
+    "reference": "EFFECTS READ WRITE\nCALL T3 I0 -> r0\nGET r0.F8 -> r1\nIF r1 EQ S0\n  CALL T2 r0 -> r2\nELSE\n  CALL T10 r0 S1 -> r3\nSTOP\n"
+   },
+   {
+    "task": "notary_office_L5_20261012",
+    "request": "Check the \"Loan signing\" notarization request: wipe it from the log if it is rejected, and text the requester on it if not.",
+    "generated": "EFFECTS READ DELETE SEND\nCALL T12 I0 -> r0\nGET r0.F6 -> r1\nIF r1 EQ S0\n  CALL T5 r0\nELSE\n  CALL T4 r0.F5 S1\nSTOP\n",
+    "reference": "EFFECTS READ DELETE SEND\nCALL T15 I0 -> r0\nGET r0.F6 -> r1\nIF r1 EQ S0\n  CALL T5 r0\nELSE\n  CALL T4 r0.F5 S1\nSTOP\n"
+   }
+  ]
+ }
+}
