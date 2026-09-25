@@ -69,16 +69,60 @@ def compact_line(line: str, desc_chars: int = 60) -> str:
     return line
 
 
-def split_tool_line(line: str) -> tuple[str, str, str]:
+def split_tool_line(line: str, name_words: bool = False) -> tuple[str, str, str]:
     """(signature, name, description) of one compacted tool line. The
     signature keeps the symbol and drops the name, so it is the pre-0.8.0
-    head exactly; the name is empty when the serializer omitted it."""
+    head exactly; the name is empty when the serializer omitted it.
+    `name_words` hands the name stage `flag hoist plan review` rather than
+    `flagHoistPlanReview`, so a small tokenizer spends its pieces on words,
+    not on one identifier's capitals (vocab-push plan, part A)."""
     head, _, desc = line.partition(" :: ")
     sym, _, rest = head.partition(" ")
     name = ""
     if rest and not rest.startswith("("):
         name, _, rest = rest.partition(" ")
+    if name_words and name:
+        name = teacher_name(name)
     return f"{sym} {rest}", name, desc
+
+
+def pad_token_id(tk) -> int:
+    """Our tokenizers pad with `<pad>`; a BERT-family one (`--in-tok
+    teacher:...`) with `[PAD]`."""
+    for t in ("<pad>", "[PAD]"):
+        i = tk.token_to_id(t)
+        if i is not None:
+            return i
+    raise SystemExit("input tokenizer has no <pad> or [PAD] token")
+
+
+def load_input_tokenizer(spec: str):
+    """A ready-made input tokenizer: a tokenizer.json path, or
+    `teacher:MODEL` for that model's own vocabulary. Special-token wrapping,
+    truncation and padding are stripped: prep places every id itself and
+    refuses to truncate."""
+    from tokenizers import Tokenizer
+    if spec.startswith("teacher:"):
+        from huggingface_hub import hf_hub_download
+        spec = hf_hub_download(spec.split(":", 1)[1], "tokenizer.json")
+    raw = json.loads(Path(spec).read_text(encoding="utf-8"))
+    raw.update({"post_processor": None, "truncation": None, "padding": None})
+    return Tokenizer.from_str(json.dumps(raw))
+
+
+def extra_tokenizer_texts(paths: list[str], name_words: bool) -> list[str]:
+    """General-English text to learn the tokenizer's pieces from, beside the
+    training themes (data/general, vocab-push plan part A). Rows are
+    `{"text": ...}`; a names file goes through the same word split as tool
+    names."""
+    texts = []
+    for p in paths:
+        names = Path(p).stem.startswith("names")
+        with open(p, encoding="utf-8") as fh:
+            for line in fh:
+                t = json.loads(line)["text"]
+                texts.append(teacher_name(t) if names and name_words else t)
+    return texts
 
 
 def compact(src: str, desc_chars: int = 60) -> str:
@@ -243,13 +287,14 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
     """Per-line token tensors, graph edges, and canvas targets with pointer ids."""
     from canvas import TaskCodec, context_symbols
 
-    pad_id = tk.token_to_id("<pad>")
+    pad_id = pad_token_id(tk)
     TL, RL = dims["max_line"], dims["max_req"]
     MT, MF, MC = layout.max_tool, layout.max_field, layout.max_const
     N = len(examples)
 
     MR = dims["max_reg"]
     split = bool(dims.get("split"))
+    name_words = bool(dims.get("name_words"))
     SL, DL, NL = dims.get("max_sig", TL), dims.get("max_desc", TL), dims.get("max_name", 16)
     if split:
         sig_tok = torch.full((N, MT, SL), pad_id, dtype=torch.int16)
@@ -293,7 +338,7 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
         all_lines.extend(t for _, t in ln.regs)
         if split:
             for _, t in ln.tools:
-                all_lines.extend(split_tool_line(t))
+                all_lines.extend(split_tool_line(t, name_words))
     encs = tk.encode_batch(all_lines)
     cursor = 0
 
@@ -346,7 +391,7 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
             desc_tok[n, i, :len(desc_ids)] = torch.tensor(desc_ids, dtype=torch.int16)
             name_tok[n, i, :len(name_ids)] = torch.tensor(name_ids, dtype=torch.int16)
         if split:
-            tri = [split_tool_line(t) for _, t in ln.tools]
+            tri = [split_tool_line(t, name_words) for _, t in ln.tools]
             gid: dict[str, int] = {}
             for i, (sg, _, _) in enumerate(tri):
                 sig_group[n, i] = gid.setdefault(sg.split(" ", 1)[1], len(gid))
@@ -428,7 +473,7 @@ def encode_one(source: str, syms: dict, tk, layout, dims: dict,
     every `PAUSE` and encodes it here — same tokenizer, same caps, same line
     order — rather than reaching into a pickled split.
     """
-    pad_id = tk.token_to_id("<pad>")
+    pad_id = pad_token_id(tk)
     TL, RL, MR = dims["max_line"], dims["max_req"], dims.get("max_reg", 8)
     MT, MF, MC = layout.max_tool, layout.max_field, layout.max_const
     ln = Lines(source, dims.get("desc_chars", 60))
@@ -471,7 +516,7 @@ def encode_one(source: str, syms: dict, tk, layout, dims: dict,
     if dims.get("split"):
         caps = {"tool_sig_tok": dims["max_sig"], "tool_desc_tok": dims["max_desc"],
                 "tool_name_tok": dims["max_name"]}
-        tri = [split_tool_line(t) for _, t in ln.tools][:MT]
+        tri = [split_tool_line(t, bool(dims.get("name_words"))) for _, t in ln.tools][:MT]
         for key, j in (("tool_sig_tok", 0), ("tool_name_tok", 1), ("tool_desc_tok", 2)):
             t = torch.full((1, MT, caps[key]), pad_id, dtype=torch.int16)
             for i, e in enumerate(tk.encode_batch([x[j] for x in tri])):
@@ -589,6 +634,18 @@ def main():
     ap.add_argument("--max-sig", type=int, default=48)
     ap.add_argument("--max-desc", type=int, default=64)
     ap.add_argument("--max-name", type=int, default=16)
+    ap.add_argument("--name-words", action="store_true",
+                    help="with --split: the name stage reads a tool name as "
+                         "words (`flag hoist plan review`), and the tokenizer "
+                         "learns pieces for them")
+    ap.add_argument("--in-tok", default=None, metavar="PATH|teacher:MODEL",
+                    help="use this input tokenizer instead of training one "
+                         "(e.g. teacher:unsloth/bge-small-en-v1.5 for the "
+                         "teacher's 30,522 pieces)")
+    ap.add_argument("--tok-extra", action="append", default=[], metavar="JSONL",
+                    help="general-English rows ({\"text\": ...}) to learn the "
+                         "tokenizer's pieces from beside the themes; repeatable "
+                         "(data/general/texts.jsonl, names.jsonl)")
     ap.add_argument("--teacher", default=None, metavar="MODEL",
                     help="with --split: embed every distinct description, name "
                          "and request with this encoder (unsloth/bge-small-en-"
@@ -757,14 +814,27 @@ def main():
         print(f"  layout: {layout.size} joint ids = {len(kws)} keywords + {max_tool} tools "
               f"+ {max_field} fields + {max_const} consts + {layout.n_reg} registers")
 
-        print("training input tokenizer on schema lines and requests ...")
-        texts = []
-        for e in tr[:8000]:
-            ln = Lines(e.source, args.desc_chars)
-            texts.append(ln.request)
-            texts.extend(t for _, t in ln.tools + ln.fields + ln.consts
-                         + ln.regs)
-        tk = train_input_tokenizer(texts, args.in_vocab, max_length=max(args.max_line, args.max_req))
+        if args.in_tok:
+            print(f"input tokenizer: {args.in_tok}")
+            tk = load_input_tokenizer(args.in_tok)
+        else:
+            print("training input tokenizer on schema lines and requests ...")
+            texts = []
+            for e in tr[:8000]:
+                ln = Lines(e.source, args.desc_chars)
+                texts.append(ln.request)
+                texts.extend(t for _, t in ln.tools + ln.fields + ln.consts
+                             + ln.regs)
+                if args.name_words:
+                    # the name stage reads names as words; learn pieces for those
+                    texts.extend(split_tool_line(t, True)[1] for _, t in ln.tools)
+            if args.tok_extra:
+                extra = extra_tokenizer_texts(args.tok_extra, args.name_words)
+                print(f"  plus {len(extra)} general-English texts from "
+                      f"{', '.join(args.tok_extra)}")
+                texts.extend(extra)
+            tk = train_input_tokenizer(texts, args.in_vocab,
+                                       max_length=max(args.max_line, args.max_req))
         tk.no_truncation()       # lengths are checked below; nothing is cut silently
         tk.no_padding()
         tk.save(str(out / "in_tok.json"))
@@ -775,7 +845,11 @@ def main():
         if args.split:
             dims.update({"max_sig": args.max_sig, "max_desc": args.max_desc,
                          "max_name": args.max_name})
-        config.update({"in_vocab": tk.get_vocab_size(), "in_pad": tk.token_to_id("<pad>"),
+        if args.name_words:
+            dims["name_words"] = True
+        if args.in_tok or args.tok_extra:
+            config["tokenizer"] = args.in_tok or {"trained_on": "themes+" + ",".join(args.tok_extra)}
+        config.update({"in_vocab": tk.get_vocab_size(), "in_pad": pad_token_id(tk),
                        "layout": layout.to_dict(), **dims})
 
         parts = {}

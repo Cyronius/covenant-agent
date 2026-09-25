@@ -46,3 +46,6 @@ models/npu/build/
 
 # decoy-audit corpora (harness/decoy_audit.py): regenerable
 data/audit*/
+
+# general-English corpus (data/gen/general_corpus.py): regenerable, raw Google docs cached inside
+data/general/

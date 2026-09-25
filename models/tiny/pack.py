@@ -55,9 +55,29 @@ def add(tar: tarfile.TarFile, src: Path, arcname: str) -> None:
         tar.add(src, arcname=arcname)
 
 
+def add_slim(tar: tarfile.TarFile, src: Path, arcname: str) -> None:
+    """A cache split with only the stage columns (stage_pretrain.COLS)."""
+    import torch
+    from stage_pretrain import COLS
+    d = torch.load(src, mmap=True)
+    buf = io.BytesIO()
+    torch.save({k: v.clone() for k, v in d.items() if k in COLS}, buf)
+    info = tarfile.TarInfo(arcname)
+    info.size = buf.tell()
+    buf.seek(0)
+    tar.addfile(info, buf)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cache", default="data_cache_struct")
+    ap.add_argument("--cache", nargs="+", default=["data_cache_struct"],
+                    help="one or more cache directories")
+    ap.add_argument("--stage-only", action="store_true",
+                    help="ship only the columns stage_pretrain / vocab_report "
+                         "read (a third of a split cache's size)")
+    ap.add_argument("--general", default=None, metavar="DIR",
+                    help="ship data/general's texts, names and siblings as "
+                         "general/ beside tiny/ (run_vocab.sh)")
     ap.add_argument("--out", default="pod_bundle.tar.gz")
     ap.add_argument("--no-cache", action="store_true",
                     help="code only, for when the cache is already uploaded")
@@ -68,9 +88,9 @@ def main():
                          "runs/stages_d256/stages.pt)")
     args = ap.parse_args()
 
-    cache = HERE / args.cache
-    if not args.no_cache and not (cache / "config.json").exists():
-        raise SystemExit(f"no cache at {cache}; run prep.py first")
+    for c in args.cache:
+        if not args.no_cache and not (HERE / c / "config.json").exists():
+            raise SystemExit(f"no cache at {HERE / c}; run prep.py first")
 
     out = Path(args.out)
     n = 0
@@ -79,7 +99,8 @@ def main():
             add(tar, py, f"tiny/{py.name}")
             n += 1
         for extra in ("README.md", "pod.md", "run_phase1.sh", "run_step1.sh",
-                      "run_step2.sh", "run_step3.sh", "run_step4.sh", "selftest.sh"):
+                      "run_step2.sh", "run_step3.sh", "run_step4.sh", "run_vocab.sh",
+                      "selftest.sh"):
             p = HERE / extra
             if p.exists():
                 add(tar, p, f"tiny/{extra}")
@@ -101,18 +122,28 @@ def main():
         n += 2
 
         if not args.no_cache:
-            for f in sorted(cache.iterdir()):
-                if f.suffix in (".pt", ".json") or f.name == "rows.pkl":
-                    add(tar, f, f"tiny/{args.cache}/{f.name}")
-                    n += 1
+            for c in args.cache:
+                for f in sorted((HERE / c).iterdir()):
+                    if f.name == "general.pt":
+                        continue            # rebuilt on the pod from general/
+                    if f.suffix in (".pt", ".json") or f.name == "rows.pkl":
+                        if args.stage_only and f.stem in ("train", "val", "test", "holdout"):
+                            add_slim(tar, f, f"tiny/{c}/{f.name}")
+                        else:
+                            add(tar, f, f"tiny/{c}/{f.name}")
+                        n += 1
+        if args.general:
+            for name in ("texts.jsonl", "names.jsonl", "siblings.jsonl"):
+                add(tar, Path(args.general) / name, f"general/{name}")
+                n += 1
 
     mb = out.stat().st_size / 1e6
     print(f"{n} files -> {out} ({mb:.0f} MB)")
     print("\non the pod:")
     print(f"  tar xzf {out.name} && cd tiny")
     print("  pip install torch tokenizers")
-    print("  bash selftest.sh " + args.cache + "   # 2 minutes, catches what an hour in would not")
-    print(f"  CACHE={args.cache} bash run_step2.sh   # or run_step1.sh, or run_step3.sh")
+    print("  bash selftest.sh " + args.cache[0] + "   # 2 minutes, catches what an hour in would not")
+    print(f"  CACHE={args.cache[0]} bash run_step2.sh   # or run_step1.sh, run_step3.sh, run_vocab.sh")
     print("\nbring back: out/ (generations and curves/)")
 
 

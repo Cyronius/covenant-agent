@@ -13,10 +13,11 @@ teacher's similarities are the second target and need no labels at all.
 
 Graded standalone on the cache's holdout split (the unseen exam worlds) by
 the twin benchmark: for every reference call whose tool has signature twins,
-pick among the twins by score. The bar is the teacher's own zero-shot pick on
-the same decisions from descriptions alone (65.0% on the R10 exam); the
-teacher numbers are recomputed here from teacher.pt, so the bar moves with
-the exam. Also reported: participation ratio of the description vectors
+pick among the twins by score, beside the teacher's own zero-shot pick on
+the same decisions from descriptions alone (a reference, not a gate: R11 §3),
+recomputed here from teacher.pt so it moves with the exam. With --general,
+the stages also learn general English first (vocab-push plan, R12) and the
+held-out dictionary look-alikes are graded too. Also reported: participation ratio of the description vectors
 (the proxy's line encoder used ~4 of 128 dimensions) and, on the opaque-name
 rows, where the gate puts its weight.
 
@@ -59,9 +60,21 @@ def load_part(cache: Path, name: str, limit: int | None = None,
     out = {k: d[k][idx] for k in COLS if k in d}
     out["opaque"] = torch.tensor([bool(meta[i].get("opaque")) for i in keep])
     if "flip_tool" in out and ids is not None:
-        out["flip_tool"] = out["flip_tool"] & readable(cache, name, keep,
-                                                       out["flip_tool"].shape[1])
+        out["flip_tool"] = out["flip_tool"] & readable_cached(
+            cache, name, len(meta), out["flip_tool"].shape[1])[idx]
     return out
+
+
+def readable_cached(cache: Path, split: str, n: int, max_tool: int) -> torch.Tensor:
+    """`readable` for a whole split, kept in the cache as <split>_readable.pt:
+    it needs the generator's themes (and for train, the corpus), which a pod
+    does not have."""
+    f = cache / f"{split}_readable.pt"
+    if f.exists():
+        return torch.load(f)
+    mask = readable(cache, split, list(range(n)), max_tool)
+    torch.save(mask, f)
+    return mask
 
 
 def readable(cache: Path, split: str, keep: list[int], max_tool: int) -> torch.Tensor:
@@ -106,6 +119,24 @@ def readable(cache: Path, split: str, keep: list[int], max_tool: int) -> torch.T
     return out
 
 
+def unread_mask(cache: Path, train: dict, n_kw: int, max_tool: int) -> torch.Tensor:
+    """(N, max_tool): the called flip-slot tools a training row's request
+    never names (--drop-unreadable). Computed once from the corpus and kept
+    in the cache as train_unread.pt, so a pod needs no corpus."""
+    f = cache / "train_unread.pt"
+    N = train["tgt"].size(0)
+    if f.exists():
+        return torch.load(f)[:N]
+    meta = json.loads((cache / "train_meta.json").read_text(encoding="utf-8"))
+    full = load_part(cache, "train")
+    flip = full["flip_tool"] & called_tools(full["tgt"], n_kw, max_tool)[:, :max_tool]
+    # called ones only: an uncalled decoy never fits the request, and
+    # masking it would take the twin decision itself out of the loss
+    mask = flip & ~readable_cached(cache, "train", len(meta), flip.shape[1])
+    torch.save(mask, f)
+    return mask[:N]
+
+
 def build_head(cfg: dict, in_vocab: int, pad: int) -> ReadHead:
     L = max(cfg["max_desc"], cfg["max_req"])
     desc = TextStage(in_vocab, cfg["desc_w"], cfg["desc_layers"], L, pad,
@@ -146,11 +177,19 @@ def teacher_token_init(tk, model: str, width: int) -> tuple[torch.Tensor, torch.
     btok = AutoTokenizer.from_pretrained(model)
     E = AutoModel.from_pretrained(model).embeddings.word_embeddings.weight.detach()
     vocab = tk.get_vocab()
+    tv = btok.get_vocab()
     V = torch.zeros(len(vocab), E.size(1))
     ok = torch.zeros(len(vocab), dtype=torch.bool)
     for piece, i in vocab.items():
+        if piece.startswith(("<", "[")) and piece.endswith((">", "]")):
+            continue                       # <pad>, [CLS], ...: no meaning to copy
+        if piece in tv and not piece.startswith("Ġ"):
+            # the teacher's own piece (the 30k-vocabulary arm): its row exactly
+            V[i] = E[tv[piece]]
+            ok[i] = True
+            continue
         text = piece.replace("Ġ", " ").replace("Ċ", " ").strip()
-        if not text or text.startswith("<"):
+        if not text:
             continue
         ids = btok(text, add_special_tokens=False)["input_ids"]
         if ids:
@@ -174,15 +213,18 @@ def encode_unique(stage: TextStage, tok: torch.Tensor, query: bool = False) -> t
     return v[inv].reshape(B, M, -1)
 
 
+def trim_cols(t: torch.Tensor, pad: int) -> torch.Tensor:
+    """Drop the token columns no row in the batch uses."""
+    live = (t != pad).reshape(-1, t.size(-1))
+    n = int(live.any(0).nonzero().max()) + 1 if live.any() else 1
+    return t[..., :n]
+
+
 def forward(head: ReadHead, b: dict, pad: int):
     """Scores and vectors for a batch: (combined, desc-only, name-only,
     gate, vectors)."""
     req = b["req_tok"].long()
-    # trim the columns to what the batch uses
-    def trim(t):
-        live = (t != pad)
-        n = int(live.any(0).nonzero().max()) + 1 if live.any() else 1
-        return t[..., :n]
+    trim = lambda t: trim_cols(t, pad)  # noqa: E731
     desc_tok = trim(b["tool_desc_tok"].long())
     name_tok = trim(b["tool_name_tok"].long())
     M = int(b["n_tool"].max())
@@ -202,7 +244,7 @@ def forward(head: ReadHead, b: dict, pad: int):
 
 def batch_losses(head, b, pad, n_kw, max_tool, teacher, lam_rel, flip_weight=0.0):
     comb, sd, sn, g, enc, M = forward(head, b, pad)
-    live = torch.arange(M)[None] < b["n_tool"].long()[:, None]
+    live = torch.arange(M, device=b["n_tool"].device)[None] < b["n_tool"].long()[:, None]
     pos = called_tools(b["tgt"], n_kw, max_tool)[:, :M]
     grp = b["sig_group"][:, :M].long()
     clive = live
@@ -236,6 +278,78 @@ def batch_losses(head, b, pad, n_kw, max_tool, teacher, lam_rel, flip_weight=0.0
              + out["twin_desc"] + flip_weight * out.get("twin_flip", 0.0)) + lam_rel * sum(
         v for k, v in out.items() if k.startswith("rel_"))
     return total, out
+
+
+# ------------------------------------------------------- general English
+# vocab-push plan parts B and C: data/general, tokenized for one cache by
+# general_prep.py into <cache>/general.pt.
+def load_general(cache: Path) -> dict:
+    g = torch.load(cache / "general.pt")
+    held = g["sib_heldout"]
+    g["sib_train"] = torch.nonzero(~held).squeeze(1)
+    g["sib_eval"] = torch.nonzero(held).squeeze(1)
+    print(f"  general English: {g['text_tok'].size(0)} texts, "
+          f"{g['name_tok'].size(0)} names, {len(g['sib_train'])} look-alike "
+          f"items ({len(g['sib_eval'])} held out)", flush=True)
+    return g
+
+
+def sibling_logits(head: ReadHead, g: dict, idx: torch.Tensor, pad: int,
+                   dev) -> tuple[torch.Tensor, torch.Tensor]:
+    """Dictionary look-alikes: a word or a sentence using it, against the
+    definitions of its WordNet siblings. (logits (B, K) masked, labels)."""
+    q = trim_cols(g["sib_q_tok"][idx].to(dev).long(), pad)
+    mem = g["sib_members"][idx].long()             # indexes a CPU table first
+    cand = trim_cols(g["gloss_tok"][mem.clamp(min=0)].to(dev).long(), pad)
+    mem = mem.to(dev)
+    qv = F.normalize(head.desc(q, query=True), dim=-1)
+    cv = F.normalize(encode_unique(head.desc, cand), dim=-1)
+    s = head.scale.exp().clamp(max=100)
+    logits = (s * torch.einsum("bw,bkw->bk", qv, cv)).masked_fill(mem < 0, -1e4)
+    return logits, g["sib_label"][idx].to(dev).long()
+
+
+def general_losses(head: ReadHead, proj: torch.nn.ModuleDict, g: dict, bs: int,
+                   pad: int, dev, lam_rel: float, siblings: bool) -> tuple:
+    """Part B: each stage reproduces the teacher's vector for ordinary text
+    (through a projection that never ships) and the teacher's similarities
+    across the batch; the description stage on sentences, the name stage on
+    identifiers. Part C, with `siblings`: pick the right definition among a
+    word's WordNet siblings, answers from WordNet, not from the teacher."""
+    out = {}
+    for key, stage, n in (("text", head.desc, "gen_desc"), ("name", head.name, "gen_name")):
+        idx = torch.randint(0, g[f"{key}_tok"].size(0), (bs,))
+        tok = trim_cols(g[f"{key}_tok"][idx].to(dev).long(), pad)
+        tv = g[f"{key}_t"][idx].to(dev).float()
+        v = stage(tok)
+        out[n] = (1 - F.cosine_similarity(proj[key](v), tv, dim=-1)).mean()
+        out[f"{n}_rel"] = relational_loss(v.unsqueeze(0), tv.unsqueeze(0),
+                                          torch.ones(1, bs, dtype=torch.bool, device=dev))
+    if siblings:
+        pick = g["sib_train"][torch.randint(0, len(g["sib_train"]), (bs // 4,))]
+        logits, lab = sibling_logits(head, g, pick, pad, dev)
+        out["sib"] = F.cross_entropy(logits, lab)
+    total = out["gen_desc"] + out["gen_name"] + out.get("sib", 0.0)         + lam_rel * (out["gen_desc_rel"] + out["gen_name_rel"])
+    return total, out
+
+
+@torch.no_grad()
+def sibling_eval(head: ReadHead, g: dict, pad: int, dev, bs: int = 256) -> dict:
+    """Held-out WordNet sibling families: the stage's pick and the teacher's."""
+    head.eval()
+    idx = g["sib_eval"]
+    hit = t_hit = 0
+    for i in range(0, len(idx), bs):
+        b = idx[i:i + bs]
+        logits, lab = sibling_logits(head, g, b, pad, dev)
+        hit += int((logits.argmax(1) == lab).sum())
+        mem = g["sib_members"][b].long()
+        t = torch.einsum("bt,bkt->bk", g["sib_q_t"][b].float(),
+                         g["gloss_t"][mem.clamp(min=0)].float()).masked_fill(mem < 0, -1e4)
+        t_hit += int((t.argmax(1) == g["sib_label"][b]).sum())
+    head.train()
+    n = max(len(idx), 1)
+    return {"acc_sib": hit / n, "acc_sib_teacher": t_hit / n, "n_sib": len(idx)}
 
 
 # ---------------------------------------------------------------- open pairs
@@ -292,7 +406,7 @@ def open_losses(head, b, pad):
     q_d, q_n = head.desc(req, query=True), head.name(req, query=True)
     d = encode_unique(head.desc, b["tool_desc_tok"][:, :M].long())
     n = encode_unique(head.name, b["tool_name_tok"][:, :M].long())
-    live = torch.arange(M)[None] < b["n_tool"].long()[:, None]
+    live = torch.arange(M, device=b["n_tool"].device)[None] < b["n_tool"].long()[:, None]
     flat_live = live.reshape(-1)
     D = F.normalize(d.reshape(B * M, -1)[flat_live], dim=-1)
     Nv = F.normalize(n.reshape(B * M, -1)[flat_live], dim=-1)
@@ -322,12 +436,17 @@ def twin_eval(head, part, pad, n_kw, max_tool, teacher=None, bs=64) -> dict:
     gates = {"opaque": [], "named": []}
     vecs = []
     N = part["tgt"].size(0)
+    dev = next(head.parameters()).device
     for i in range(0, N, bs):
         b = {k: v[i:i + bs] for k, v in part.items()}
-        comb, sd, sn, g, enc, M = forward(head, b, pad)
+        with torch.no_grad():
+            comb, sd, sn, g, enc, M = forward(head, {k: v.to(dev) for k, v in b.items()}, pad)
+        comb, sd, sn = comb.cpu(), sd.cpu(), sn.cpu()
+        g = g.cpu() if g is not None else None
+        enc = {k: v.cpu() for k, v in enc.items()}
         pos = called_tools(b["tgt"], n_kw, max_tool)[:, :M]
         grp = b["sig_group"][:, :M].long()
-        live = torch.arange(M)[None] < b["n_tool"].long()[:, None]
+        live = torch.arange(M, device=b["n_tool"].device)[None] < b["n_tool"].long()[:, None]
         vecs.append(enc["desc"][live][:64])
         for r in range(comb.size(0)):
             opaque = bool(b["opaque"][r])
@@ -396,6 +515,18 @@ def main():
                     help="leave training flip-slot calls whose request never "
                          "names the tool (S6's L9 'ambiguous' rows, 14%%) out "
                          "of every contrastive term; the exam already skips them")
+    ap.add_argument("--general", action="store_true",
+                    help="vocab-push part B: train on <cache>/general.pt "
+                         "(general_prep.py) as well")
+    ap.add_argument("--siblings", action="store_true",
+                    help="vocab-push part C: WordNet look-alikes, with --general")
+    ap.add_argument("--gen-steps", type=int, default=0,
+                    help="steps of general English alone before the S6 recipe")
+    ap.add_argument("--gen-every", type=int, default=2,
+                    help="after them, a general batch every this many steps (0 never)")
+    ap.add_argument("--gen-batch", type=int, default=256)
+    ap.add_argument("--lam-gen", type=float, default=1.0)
+    ap.add_argument("--device", default=None, help="default: cuda if present")
     ap.add_argument("--limit-train", type=int, default=None)
     ap.add_argument("--limit-eval", type=int, default=3000)
     ap.add_argument("--eval-every", type=int, default=300)
@@ -410,6 +541,7 @@ def main():
                          "(step 5, when post-training rounding costs more "
                          "than a point; stage_quant.py measures that)")
     args = ap.parse_args()
+    dev = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
     torch.set_num_threads(args.threads)
     torch.manual_seed(args.seed)
     random.seed(args.seed)
@@ -440,19 +572,23 @@ def main():
         from stage_quant import quantize_head
         quantize_head(head, args.weights)
         cfg["weights"] = args.weights
-    teacher = None
+    head.to(dev)
+    teacher = teacher_dev = None
     if (cache / "teacher.pt").exists():
         teacher = torch.load(cache / "teacher.pt")["table"].float()
+        teacher_dev = teacher.to(dev)
 
     train = load_part(cache, "train", args.limit_train)
     if args.drop_unreadable:
-        keep = list(range(train["tgt"].size(0)))
-        flip = train["flip_tool"] & called_tools(train["tgt"], n_kw, max_tool)[:, :max_tool]
-        # called ones only: an uncalled decoy never fits the request, and
-        # masking it would take the twin decision itself out of the loss
-        train["unread"] = flip & ~readable(cache, "train", keep, flip.shape[1])
+        train["unread"] = unread_mask(cache, train, n_kw, max_tool)
         print(f"  unreadable flip-slot calls dropped from training: "
-              f"{int(train['unread'].sum())} of {int(flip.sum())}", flush=True)
+              f"{int(train['unread'].sum())}", flush=True)
+    gen = proj = None
+    if args.general:
+        gen = load_general(cache)
+        tw = gen["text_t"].size(1)
+        proj = torch.nn.ModuleDict({"text": torch.nn.Linear(args.desc_w, tw),
+                                    "name": torch.nn.Linear(args.name_w, tw)}).to(dev)
     exam = load_part(cache, "holdout", args.limit_eval, ids=("+decoy", "+flip"))
     opn = None
     if args.open_pairs:
@@ -462,8 +598,11 @@ def main():
         opn = open_part(tk, cfg, meta.get("desc_chars", 60), pad)
 
     N = train["tgt"].size(0)
-    steps = int(math.ceil(N / args.batch) * args.epochs)
-    opt = torch.optim.AdamW(head.parameters(), lr=args.lr, weight_decay=0.01)
+    # general English first (--gen-steps), then the S6 recipe with a general
+    # batch every --gen-every steps so the first phase is not forgotten
+    steps = args.gen_steps + int(math.ceil(N / args.batch) * args.epochs)
+    params = list(head.parameters()) + (list(proj.parameters()) if proj is not None else [])
+    opt = torch.optim.AdamW(params, lr=args.lr, weight_decay=0.01)
     warm = min(200, steps // 10)
     sched = torch.optim.lr_scheduler.LambdaLR(
         opt, lambda s: (s + 1) / warm if s < warm else
@@ -473,11 +612,17 @@ def main():
     log = open(out / "log.jsonl", "a", encoding="utf-8")
     print(f"stages: desc {args.desc_w}x{args.desc_layers}, name {args.name_w}x"
           f"{args.name_layers}, pool {args.pool}: {n_params/1e6:.2f}M params; "
-          f"{N} train rows, {steps} steps; open pairs {'on' if opn else 'off'}",
+          f"{N} train rows, {steps} steps ({args.gen_steps} general first); open pairs "
+          f"{'on' if opn else 'off'}; general {'on' if gen else 'off'}"
+          f"{' + siblings' if gen and args.siblings else ''}; device {dev}",
           flush=True)
 
     def evaluate(step):
         res = twin_eval(head, exam, pad, n_kw, max_tool, teacher)
+        if gen is not None:
+            res.update(sibling_eval(head, gen, pad, dev))
+            print(f"     dictionary look-alikes (held out): stage {res['acc_sib']:.1%} "
+                  f"teacher {res['acc_sib_teacher']:.1%}  n={res['n_sib']}", flush=True)
         rec = {"step": step, **res, "secs": time.time() - t0}
         log.write(json.dumps(rec) + "\n"); log.flush()
         f = lambda k: f"{res[k]:.1%}" if res.get(k) is not None else "-"  # noqa: E731
@@ -501,13 +646,22 @@ def main():
     ocursor = 0
     run = {}
     while step < steps:
-        if cursor + args.batch > N:
-            order, cursor = torch.randperm(N), 0
-        idx = order[cursor:cursor + args.batch]
-        cursor += args.batch
-        b = {k: v[idx] for k, v in train.items()}
-        loss, parts = batch_losses(head, b, pad, n_kw, max_tool, teacher, args.lam_rel,
-                                   args.flip_weight)
+        if step < args.gen_steps:
+            loss, parts = general_losses(head, proj, gen, args.gen_batch, pad, dev,
+                                         args.lam_rel, args.siblings)
+        else:
+            if cursor + args.batch > N:
+                order, cursor = torch.randperm(N), 0
+            idx = order[cursor:cursor + args.batch]
+            cursor += args.batch
+            b = {k: v[idx].to(dev) for k, v in train.items()}
+            loss, parts = batch_losses(head, b, pad, n_kw, max_tool, teacher_dev,
+                                       args.lam_rel, args.flip_weight)
+            if gen is not None and args.gen_every and step % args.gen_every == 0:
+                gl, gparts = general_losses(head, proj, gen, args.gen_batch, pad, dev,
+                                            args.lam_rel, args.siblings)
+                loss = loss + args.lam_gen * gl
+                parts.update(gparts)
         if opn is not None and step % args.open_every == 0:
             on = opn["n_tool"].size(0)
             oidx = torch.arange(ocursor, ocursor + args.batch) % on
@@ -518,7 +672,7 @@ def main():
             parts["open"] = ol
         opt.zero_grad(set_to_none=True)
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(head.parameters(), 1.0)
+        torch.nn.utils.clip_grad_norm_(params, 1.0)
         opt.step()
         sched.step()
         step += 1
