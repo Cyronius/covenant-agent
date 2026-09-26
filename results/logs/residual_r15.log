@@ -1,0 +1,32 @@
+run 3, S6 plain exam: 195 tool-of-another-signature failures (9.8% of tasks)
+    61   3.0% of tasks  compile   2  other entity: named in the request
+        recipes [('format_reminder', 16), ('chain', 12), ('branch', 12), ('parallel', 12)]
+    54   2.7% of tasks  compile  41  same entity, other action
+        recipes [('ambiguous', 13), ('branch', 13), ('pause_filter_act', 7), ('note_add', 5)]
+    54   2.7% of tasks  compile   0  other entity: not named in the request
+        recipes [('filter_act', 14), ('parallel', 10), ('pause_filter_act', 9), ('branch', 8)]
+    19   0.9% of tasks  compile   2  other entity: a tool the reference calls later (order)
+        recipes [('parents_with', 7), ('nested', 6), ('branch', 2), ('parents_without', 2)]
+     7   0.4% of tasks  compile   0  other entity: repeats an earlier call
+        recipes [('nested', 5), ('parents_with', 2)]
+
+other entity: (reference entity, generated entity) [(('case', 'traveler'), 25), (('issue', 'creator'), 23), (('build', 'repo'), 18), (('preorder', 'shopper'), 14), (('spot', 'advertiser'), 12), (('adoption_case', 'adopter'), 9), (('vendor_booking', 'couple'), 8), (('traveler', 'case'), 6), (('repo', 'build'), 5), (('shopper', 'preorder'), 4)]
+run 3: A0, S6 options-off    other-entity failures  7.0% of tasks
+run 1: A0, S5                other-entity failures 10.2% of tasks
+run 2: SPt, S5               other-entity failures 10.8% of tasks
+R13: A0, S6                  other-entity failures 27.7% of tasks
+R13: SPt, S6                 other-entity failures 11.1% of tasks
+
+per world, share of the world's tasks:
+world                   n  run 3: A0, S  run 1: A0, S  run 2: SPt,    R13: A0, S6  R13: SPt, S6
+ci_cd                  49         46.9%         63.3%          8.2%         42.9%         14.3%
+border_transit         67         46.3%         34.3%         10.4%         13.4%         10.4%
+comic_publisher        61         39.3%         41.0%          6.6%          8.2%          3.3%
+toy_store              48         37.5%         39.6%         16.7%         62.5%         50.0%
+radio_station          52         26.9%         26.9%          9.6%         23.1%          1.9%
+animal_shelter         58         20.7%         24.1%         20.7%         36.2%         12.1%
+wedding_planning       45         20.0%         24.4%         42.2%         28.9%          4.4%
+parking_authority      34          5.9%          5.9%         20.6%         32.4%         11.8%
+food_bank              63          3.2%          0.0%          6.3%         22.2%         11.1%
+projects               33          3.0%          9.1%          3.0%         48.5%         42.4%
+other 32             1490          0.3%          4.2%          9.7%         26.9%          9.8%
