@@ -1,0 +1,35 @@
+
+runs/pod_diag/out/diag_s6nonames_flip.jsonl  (472 tasks)
+  parse     91.3%
+  compile   53.4%
+  goal      26.5%
+  exact     21.2%
+  of the 472 scored, 144 are segments of a paused task
+  decoy called  43.7% of 252 decoyed tasks  (a signature-identical sibling, never in a reference)
+  passes   mean 26.5
+
+  slot accuracy against the reference canvas (same slot):
+    kw      76.8%  (n=7254)
+    tool    43.7%  (n=907)
+    field   55.8%  (n=674)
+    const   70.7%  (n=816)
+    reg     77.3%  (n=2590)
+
+  CALL lines where both reference and generation CALL: 845
+    same tool     48.2%   chance   2.0%
+      vs shape    48.2%   chance  41.6%  (uniform inside the signature group)
+    same effect   92.0%   chance  30.8%
+
+  by level:
+      1  n=  49  compile   39%  goal   31%
+      2  n=  50  compile   36%  goal   16%
+      3  n=  48  compile   46%  goal   10%
+      4  n=  28  compile   36%  goal   21%
+      5  n=  50  compile   62%  goal   22%
+      6  n=  54  compile   31%  goal    6%
+      7  n=  38  compile   42%  goal   21%
+      8  n=  37  compile   84%  goal   49%
+     10  n= 108  compile   74%  goal   44%
+     13  n=  10  compile   80%  goal   40%
+
+wrote runs\pod_diag\out\diag_s6nonames_flip.score.json

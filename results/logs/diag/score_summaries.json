@@ -1,0 +1,1136 @@
+{
+ "diag_s5fix_decoy": {
+  "gen": "runs/pod_diag/out/diag_s5fix_decoy.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1963,
+  "compile": 1592,
+  "goal": 735,
+  "exact": 579,
+  "sandbox_error": 0,
+  "decoyed": 1592,
+  "decoy_called": 819,
+  "mean_passes": 25.396,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25384,
+    "hit": 23510
+   },
+   "tool": {
+    "n": 3397,
+    "hit": 1673
+   },
+   "const": {
+    "n": 3513,
+    "hit": 3192
+   },
+   "reg": {
+    "n": 9360,
+    "hit": 8864
+   },
+   "field": {
+    "n": 2584,
+    "hit": 2100
+   }
+  },
+  "call_agreement": {
+   "compared": 3339,
+   "same_tool": 1684,
+   "same_effect": 3254,
+   "chance_tool": 73.98829989922449,
+   "chance_tool_sig": 1455.999999999993,
+   "chance_effect": 992.722915537415,
+   "no_call_on_line": 58
+  },
+  "by_level": {
+   "13": {
+    "n": 96,
+    "compile": 96,
+    "goal": 70
+   },
+   "4": {
+    "n": 85,
+    "compile": 59,
+    "goal": 21
+   },
+   "10": {
+    "n": 174,
+    "compile": 138,
+    "goal": 65
+   },
+   "11": {
+    "n": 108,
+    "compile": 95,
+    "goal": 84
+   },
+   "1": {
+    "n": 89,
+    "compile": 64,
+    "goal": 5
+   },
+   "19": {
+    "n": 88,
+    "compile": 60,
+    "goal": 2
+   },
+   "8": {
+    "n": 89,
+    "compile": 75,
+    "goal": 21
+   },
+   "12": {
+    "n": 96,
+    "compile": 70,
+    "goal": 5
+   },
+   "5": {
+    "n": 128,
+    "compile": 74,
+    "goal": 14
+   },
+   "14": {
+    "n": 95,
+    "compile": 71,
+    "goal": 71
+   },
+   "16": {
+    "n": 99,
+    "compile": 98,
+    "goal": 98
+   },
+   "9": {
+    "n": 88,
+    "compile": 65,
+    "goal": 10
+   },
+   "2": {
+    "n": 88,
+    "compile": 63,
+    "goal": 15
+   },
+   "6": {
+    "n": 91,
+    "compile": 61,
+    "goal": 10
+   },
+   "15": {
+    "n": 95,
+    "compile": 80,
+    "goal": 47
+   },
+   "17": {
+    "n": 91,
+    "compile": 91,
+    "goal": 61
+   },
+   "0": {
+    "n": 87,
+    "compile": 85,
+    "goal": 38
+   },
+   "7": {
+    "n": 126,
+    "compile": 78,
+    "goal": 21
+   },
+   "3": {
+    "n": 89,
+    "compile": 72,
+    "goal": 8
+   },
+   "18": {
+    "n": 98,
+    "compile": 97,
+    "goal": 69
+   }
+  }
+ },
+ "diag_s5fix_plain": {
+  "gen": "C:/code/covenant-agent/models/tiny/runs/pod_diag/out/diag_s5fix_plain.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1977,
+  "compile": 1698,
+  "goal": 1538,
+  "exact": 1392,
+  "sandbox_error": 0,
+  "decoyed": 0,
+  "decoy_called": 0,
+  "mean_passes": 24.5685,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 26797,
+    "hit": 25047
+   },
+   "tool": {
+    "n": 3679,
+    "hit": 3171
+   },
+   "const": {
+    "n": 3815,
+    "hit": 3545
+   },
+   "reg": {
+    "n": 10082,
+    "hit": 9494
+   },
+   "field": {
+    "n": 2754,
+    "hit": 2282
+   }
+  },
+  "call_agreement": {
+   "compared": 3629,
+   "same_tool": 3213,
+   "same_effect": 3556,
+   "chance_tool": 167.30303030303028,
+   "chance_tool_sig": 3629.0,
+   "chance_effect": 1113.0454545454575,
+   "no_call_on_line": 50
+  },
+  "by_level": {
+   "13": {
+    "n": 118,
+    "compile": 118,
+    "goal": 110
+   },
+   "4": {
+    "n": 107,
+    "compile": 77,
+    "goal": 65
+   },
+   "11": {
+    "n": 77,
+    "compile": 71,
+    "goal": 70
+   },
+   "1": {
+    "n": 101,
+    "compile": 75,
+    "goal": 75
+   },
+   "19": {
+    "n": 101,
+    "compile": 76,
+    "goal": 68
+   },
+   "8": {
+    "n": 108,
+    "compile": 97,
+    "goal": 92
+   },
+   "12": {
+    "n": 125,
+    "compile": 97,
+    "goal": 89
+   },
+   "5": {
+    "n": 64,
+    "compile": 51,
+    "goal": 43
+   },
+   "14": {
+    "n": 121,
+    "compile": 97,
+    "goal": 97
+   },
+   "16": {
+    "n": 119,
+    "compile": 119,
+    "goal": 119
+   },
+   "9": {
+    "n": 106,
+    "compile": 82,
+    "goal": 48
+   },
+   "2": {
+    "n": 104,
+    "compile": 77,
+    "goal": 63
+   },
+   "6": {
+    "n": 102,
+    "compile": 77,
+    "goal": 63
+   },
+   "15": {
+    "n": 117,
+    "compile": 97,
+    "goal": 97
+   },
+   "17": {
+    "n": 121,
+    "compile": 121,
+    "goal": 121
+   },
+   "0": {
+    "n": 109,
+    "compile": 107,
+    "goal": 106
+   },
+   "7": {
+    "n": 69,
+    "compile": 48,
+    "goal": 42
+   },
+   "3": {
+    "n": 104,
+    "compile": 84,
+    "goal": 43
+   },
+   "18": {
+    "n": 123,
+    "compile": 123,
+    "goal": 123
+   },
+   "10": {
+    "n": 4,
+    "compile": 4,
+    "goal": 4
+   }
+  }
+ },
+ "diag_s5fix_s6plain": {
+  "gen": "runs/pod_diag/out/diag_s5fix_s6plain.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1968,
+  "compile": 1595,
+  "goal": 1408,
+  "exact": 1201,
+  "sandbox_error": 0,
+  "decoyed": 0,
+  "decoy_called": 0,
+  "mean_passes": 24.8385,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 22650
+   },
+   "field": {
+    "n": 2623,
+    "hit": 2054
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 2731
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 8474
+   },
+   "const": {
+    "n": 3544,
+    "hit": 3166
+   }
+  },
+  "call_agreement": {
+   "compared": 3283,
+   "same_tool": 2783,
+   "same_effect": 3163,
+   "chance_tool": 151.46212121212184,
+   "chance_tool_sig": 3283.0,
+   "chance_effect": 1034.3257575757636,
+   "no_call_on_line": 94
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 95,
+    "goal": 94
+   },
+   "19": {
+    "n": 84,
+    "compile": 62,
+    "goal": 57
+   },
+   "2": {
+    "n": 84,
+    "compile": 67,
+    "goal": 51
+   },
+   "8": {
+    "n": 87,
+    "compile": 69,
+    "goal": 63
+   },
+   "18": {
+    "n": 99,
+    "compile": 99,
+    "goal": 99
+   },
+   "12": {
+    "n": 101,
+    "compile": 56,
+    "goal": 53
+   },
+   "10": {
+    "n": 174,
+    "compile": 145,
+    "goal": 115
+   },
+   "1": {
+    "n": 93,
+    "compile": 60,
+    "goal": 60
+   },
+   "9": {
+    "n": 89,
+    "compile": 65,
+    "goal": 39
+   },
+   "4": {
+    "n": 90,
+    "compile": 70,
+    "goal": 62
+   },
+   "13": {
+    "n": 99,
+    "compile": 99,
+    "goal": 97
+   },
+   "14": {
+    "n": 95,
+    "compile": 76,
+    "goal": 75
+   },
+   "6": {
+    "n": 88,
+    "compile": 64,
+    "goal": 43
+   },
+   "0": {
+    "n": 88,
+    "compile": 88,
+    "goal": 85
+   },
+   "7": {
+    "n": 124,
+    "compile": 74,
+    "goal": 70
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 95
+   },
+   "3": {
+    "n": 89,
+    "compile": 66,
+    "goal": 27
+   },
+   "5": {
+    "n": 117,
+    "compile": 66,
+    "goal": 47
+   },
+   "11": {
+    "n": 108,
+    "compile": 86,
+    "goal": 85
+   },
+   "15": {
+    "n": 97,
+    "compile": 91,
+    "goal": 91
+   }
+  }
+ },
+ "diag_s5fix_test": {
+  "gen": "C:/code/covenant-agent/models/tiny/runs/pod_diag/out/diag_s5fix_test.jsonl",
+  "split": "test",
+  "n": 1000,
+  "parse": 1000,
+  "compile": 1000,
+  "goal": 977,
+  "exact": 933,
+  "sandbox_error": 0,
+  "decoyed": 0,
+  "decoy_called": 0,
+  "mean_passes": 24.542,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 13462,
+    "hit": 13202
+   },
+   "tool": {
+    "n": 1839,
+    "hit": 1829
+   },
+   "const": {
+    "n": 1957,
+    "hit": 1877
+   },
+   "reg": {
+    "n": 4957,
+    "hit": 4933
+   },
+   "field": {
+    "n": 1349,
+    "hit": 1244
+   }
+  },
+  "call_agreement": {
+   "compared": 1836,
+   "same_tool": 1832,
+   "same_effect": 1836,
+   "chance_tool": 83.98744588744668,
+   "chance_tool_sig": 1836.0,
+   "chance_effect": 561.0060606060589,
+   "no_call_on_line": 3
+  },
+  "by_level": {
+   "17": {
+    "n": 63,
+    "compile": 63,
+    "goal": 63
+   },
+   "11": {
+    "n": 39,
+    "compile": 39,
+    "goal": 38
+   },
+   "4": {
+    "n": 52,
+    "compile": 52,
+    "goal": 52
+   },
+   "14": {
+    "n": 43,
+    "compile": 43,
+    "goal": 43
+   },
+   "16": {
+    "n": 65,
+    "compile": 65,
+    "goal": 65
+   },
+   "13": {
+    "n": 59,
+    "compile": 59,
+    "goal": 57
+   },
+   "2": {
+    "n": 65,
+    "compile": 65,
+    "goal": 64
+   },
+   "6": {
+    "n": 58,
+    "compile": 58,
+    "goal": 57
+   },
+   "0": {
+    "n": 57,
+    "compile": 57,
+    "goal": 57
+   },
+   "15": {
+    "n": 55,
+    "compile": 55,
+    "goal": 55
+   },
+   "5": {
+    "n": 34,
+    "compile": 34,
+    "goal": 32
+   },
+   "18": {
+    "n": 63,
+    "compile": 63,
+    "goal": 63
+   },
+   "12": {
+    "n": 58,
+    "compile": 58,
+    "goal": 58
+   },
+   "3": {
+    "n": 53,
+    "compile": 53,
+    "goal": 39
+   },
+   "8": {
+    "n": 69,
+    "compile": 69,
+    "goal": 67
+   },
+   "9": {
+    "n": 45,
+    "compile": 45,
+    "goal": 45
+   },
+   "19": {
+    "n": 43,
+    "compile": 43,
+    "goal": 43
+   },
+   "1": {
+    "n": 42,
+    "compile": 42,
+    "goal": 42
+   },
+   "7": {
+    "n": 33,
+    "compile": 33,
+    "goal": 33
+   },
+   "10": {
+    "n": 4,
+    "compile": 4,
+    "goal": 4
+   }
+  }
+ },
+ "diag_s6nonames_decoy": {
+  "gen": "runs/pod_diag/out/diag_s6nonames_decoy.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1875,
+  "compile": 1206,
+  "goal": 789,
+  "exact": 669,
+  "sandbox_error": 0,
+  "decoyed": 1206,
+  "decoy_called": 393,
+  "mean_passes": 22.4145,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 19286
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1588
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 1533
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 7053
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2670
+   }
+  },
+  "call_agreement": {
+   "compared": 3096,
+   "same_tool": 1575,
+   "same_effect": 2857,
+   "chance_tool": 64.48006588083395,
+   "chance_tool_sig": 1298.4999999999975,
+   "chance_effect": 932.1825379849901,
+   "no_call_on_line": 281
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 93,
+    "goal": 92
+   },
+   "19": {
+    "n": 84,
+    "compile": 24,
+    "goal": 11
+   },
+   "2": {
+    "n": 84,
+    "compile": 35,
+    "goal": 12
+   },
+   "8": {
+    "n": 87,
+    "compile": 61,
+    "goal": 37
+   },
+   "18": {
+    "n": 99,
+    "compile": 76,
+    "goal": 65
+   },
+   "12": {
+    "n": 101,
+    "compile": 46,
+    "goal": 21
+   },
+   "10": {
+    "n": 174,
+    "compile": 124,
+    "goal": 67
+   },
+   "1": {
+    "n": 93,
+    "compile": 40,
+    "goal": 29
+   },
+   "9": {
+    "n": 89,
+    "compile": 41,
+    "goal": 3
+   },
+   "4": {
+    "n": 90,
+    "compile": 32,
+    "goal": 22
+   },
+   "13": {
+    "n": 99,
+    "compile": 68,
+    "goal": 33
+   },
+   "14": {
+    "n": 95,
+    "compile": 56,
+    "goal": 56
+   },
+   "6": {
+    "n": 88,
+    "compile": 31,
+    "goal": 10
+   },
+   "0": {
+    "n": 88,
+    "compile": 84,
+    "goal": 55
+   },
+   "7": {
+    "n": 124,
+    "compile": 51,
+    "goal": 35
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 80
+   },
+   "3": {
+    "n": 89,
+    "compile": 30,
+    "goal": 7
+   },
+   "5": {
+    "n": 117,
+    "compile": 67,
+    "goal": 29
+   },
+   "11": {
+    "n": 108,
+    "compile": 66,
+    "goal": 60
+   },
+   "15": {
+    "n": 97,
+    "compile": 84,
+    "goal": 65
+   }
+  }
+ },
+ "diag_s6nonames_flip": {
+  "gen": "runs/pod_diag/out/diag_s6nonames_flip.jsonl",
+  "split": "holdout",
+  "n": 472,
+  "parse": 431,
+  "compile": 252,
+  "goal": 125,
+  "exact": 100,
+  "sandbox_error": 0,
+  "decoyed": 252,
+  "decoy_called": 110,
+  "mean_passes": 26.451271186440678,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 7254,
+    "hit": 5573
+   },
+   "tool": {
+    "n": 907,
+    "hit": 396
+   },
+   "reg": {
+    "n": 2590,
+    "hit": 2003
+   },
+   "field": {
+    "n": 674,
+    "hit": 376
+   },
+   "const": {
+    "n": 816,
+    "hit": 577
+   }
+  },
+  "call_agreement": {
+   "compared": 845,
+   "same_tool": 407,
+   "same_effect": 777,
+   "chance_tool": 17.249609126220566,
+   "chance_tool_sig": 351.8333333333329,
+   "chance_effect": 260.2543413499842,
+   "no_call_on_line": 62
+  },
+  "by_level": {
+   "10": {
+    "n": 108,
+    "compile": 80,
+    "goal": 47
+   },
+   "6": {
+    "n": 54,
+    "compile": 17,
+    "goal": 3
+   },
+   "5": {
+    "n": 50,
+    "compile": 31,
+    "goal": 11
+   },
+   "1": {
+    "n": 49,
+    "compile": 19,
+    "goal": 15
+   },
+   "3": {
+    "n": 48,
+    "compile": 22,
+    "goal": 5
+   },
+   "8": {
+    "n": 37,
+    "compile": 31,
+    "goal": 18
+   },
+   "7": {
+    "n": 38,
+    "compile": 16,
+    "goal": 8
+   },
+   "4": {
+    "n": 28,
+    "compile": 10,
+    "goal": 6
+   },
+   "2": {
+    "n": 50,
+    "compile": 18,
+    "goal": 8
+   },
+   "13": {
+    "n": 10,
+    "compile": 8,
+    "goal": 4
+   }
+  }
+ },
+ "diag_s6nonames_plain": {
+  "gen": "runs/pod_diag/out/diag_s6nonames_plain.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1831,
+  "compile": 1120,
+  "goal": 985,
+  "exact": 886,
+  "sandbox_error": 0,
+  "decoyed": 0,
+  "decoy_called": 0,
+  "mean_passes": 22.3575,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 18082
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1489
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 1930
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 6531
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2573
+   }
+  },
+  "call_agreement": {
+   "compared": 3070,
+   "same_tool": 2035,
+   "same_effect": 2808,
+   "chance_tool": 141.43939393939505,
+   "chance_tool_sig": 3070.0,
+   "chance_effect": 1004.3636363636451,
+   "no_call_on_line": 307
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 94,
+    "goal": 93
+   },
+   "19": {
+    "n": 84,
+    "compile": 23,
+    "goal": 20
+   },
+   "2": {
+    "n": 84,
+    "compile": 30,
+    "goal": 22
+   },
+   "8": {
+    "n": 87,
+    "compile": 58,
+    "goal": 54
+   },
+   "18": {
+    "n": 99,
+    "compile": 74,
+    "goal": 72
+   },
+   "12": {
+    "n": 101,
+    "compile": 47,
+    "goal": 46
+   },
+   "10": {
+    "n": 174,
+    "compile": 108,
+    "goal": 95
+   },
+   "1": {
+    "n": 93,
+    "compile": 40,
+    "goal": 39
+   },
+   "9": {
+    "n": 89,
+    "compile": 33,
+    "goal": 18
+   },
+   "4": {
+    "n": 90,
+    "compile": 24,
+    "goal": 21
+   },
+   "13": {
+    "n": 99,
+    "compile": 53,
+    "goal": 46
+   },
+   "14": {
+    "n": 95,
+    "compile": 50,
+    "goal": 49
+   },
+   "6": {
+    "n": 88,
+    "compile": 22,
+    "goal": 18
+   },
+   "0": {
+    "n": 88,
+    "compile": 84,
+    "goal": 79
+   },
+   "7": {
+    "n": 124,
+    "compile": 44,
+    "goal": 43
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 97
+   },
+   "3": {
+    "n": 89,
+    "compile": 28,
+    "goal": 11
+   },
+   "5": {
+    "n": 117,
+    "compile": 66,
+    "goal": 39
+   },
+   "11": {
+    "n": 108,
+    "compile": 63,
+    "goal": 58
+   },
+   "15": {
+    "n": 97,
+    "compile": 82,
+    "goal": 65
+   }
+  }
+ },
+ "diag_s6nonames_test": {
+  "gen": "runs/pod_diag/out/diag_s6nonames_test.jsonl",
+  "split": "test",
+  "n": 1000,
+  "parse": 1000,
+  "compile": 999,
+  "goal": 858,
+  "exact": 784,
+  "sandbox_error": 0,
+  "decoyed": 999,
+  "decoy_called": 101,
+  "mean_passes": 23.844,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 12822,
+    "hit": 12363
+   },
+   "tool": {
+    "n": 1699,
+    "hit": 1563
+   },
+   "reg": {
+    "n": 4778,
+    "hit": 4694
+   },
+   "field": {
+    "n": 1293,
+    "hit": 1169
+   },
+   "const": {
+    "n": 1746,
+    "hit": 1639
+   }
+  },
+  "call_agreement": {
+   "compared": 1687,
+   "same_tool": 1567,
+   "same_effect": 1672,
+   "chance_tool": 34.8272816556024,
+   "chance_tool_sig": 704.1666666666675,
+   "chance_effect": 493.0075086463012,
+   "no_call_on_line": 12
+  },
+  "by_level": {
+   "9": {
+    "n": 39,
+    "compile": 39,
+    "goal": 24
+   },
+   "8": {
+    "n": 37,
+    "compile": 37,
+    "goal": 32
+   },
+   "4": {
+    "n": 52,
+    "compile": 52,
+    "goal": 45
+   },
+   "13": {
+    "n": 42,
+    "compile": 42,
+    "goal": 40
+   },
+   "1": {
+    "n": 33,
+    "compile": 33,
+    "goal": 33
+   },
+   "5": {
+    "n": 61,
+    "compile": 61,
+    "goal": 39
+   },
+   "2": {
+    "n": 45,
+    "compile": 44,
+    "goal": 32
+   },
+   "19": {
+    "n": 50,
+    "compile": 50,
+    "goal": 46
+   },
+   "7": {
+    "n": 69,
+    "compile": 69,
+    "goal": 56
+   },
+   "10": {
+    "n": 93,
+    "compile": 93,
+    "goal": 84
+   },
+   "18": {
+    "n": 56,
+    "compile": 56,
+    "goal": 56
+   },
+   "6": {
+    "n": 43,
+    "compile": 43,
+    "goal": 36
+   },
+   "17": {
+    "n": 56,
+    "compile": 56,
+    "goal": 55
+   },
+   "14": {
+    "n": 62,
+    "compile": 62,
+    "goal": 62
+   },
+   "3": {
+    "n": 39,
+    "compile": 39,
+    "goal": 21
+   },
+   "15": {
+    "n": 51,
+    "compile": 51,
+    "goal": 49
+   },
+   "12": {
+    "n": 45,
+    "compile": 45,
+    "goal": 33
+   },
+   "16": {
+    "n": 38,
+    "compile": 38,
+    "goal": 38
+   },
+   "0": {
+    "n": 46,
+    "compile": 46,
+    "goal": 39
+   },
+   "11": {
+    "n": 43,
+    "compile": 43,
+    "goal": 38
+   }
+  }
+ }
+}

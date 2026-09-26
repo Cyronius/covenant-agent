@@ -1,0 +1,364 @@
+{
+ "n": 2000,
+ "goal": 1538,
+ "failed": 462,
+ "no_compile": 302,
+ "first_departure": {
+  "tool: another signature": 314,
+  "field -> tool": 1,
+  "keyword": 20,
+  "field": 92,
+  "tool: look-alike": 1,
+  "comparison -> field": 10,
+  "field -> comparison": 8,
+  "keyword -> comparison": 7,
+  "comparison": 1,
+  "constant -> keyword": 5,
+  "comparison -> keyword": 3
+ },
+ "keyword_swaps": {
+  "CALL -> TRY": 5,
+  "3 -> 2": 4,
+  "COUNT -> MAP": 1,
+  "CALL -> FILTER": 6,
+  "FILTER -> RETURN": 1,
+  "CALL -> PARALLEL": 1,
+  "FILTER -> CALL": 1,
+  "NOT_FOUND -> AMBIGUOUS": 1
+ },
+ "diagnostics": {
+  "TYPE_ERROR": 213,
+  "UNKNOWN_FIELD": 256,
+  "UNBOUND": 45,
+  "PARSE_ERROR": 23,
+  "MISSING_ARG": 4
+ },
+ "by_level": {
+  "0": {
+   "n": 109,
+   "goal": 106,
+   "tool: another signature": 3,
+   "no compile": 2
+  },
+  "1": {
+   "n": 101,
+   "tool: another signature": 24,
+   "no compile": 26,
+   "goal": 75,
+   "keyword": 2
+  },
+  "2": {
+   "n": 104,
+   "goal": 63,
+   "tool: another signature": 25,
+   "no compile": 27,
+   "field": 14,
+   "keyword": 2
+  },
+  "3": {
+   "n": 104,
+   "goal": 43,
+   "field": 20,
+   "no compile": 20,
+   "tool: another signature": 22,
+   "comparison -> field": 10,
+   "field -> comparison": 7,
+   "constant -> keyword": 1,
+   "keyword -> comparison": 1
+  },
+  "4": {
+   "n": 107,
+   "goal": 65,
+   "tool: another signature": 26,
+   "no compile": 30,
+   "field": 7,
+   "keyword": 7,
+   "comparison": 1,
+   "field -> comparison": 1
+  },
+  "5": {
+   "n": 64,
+   "tool: another signature": 19,
+   "no compile": 13,
+   "goal": 43,
+   "tool: look-alike": 1,
+   "field": 1
+  },
+  "6": {
+   "n": 102,
+   "goal": 63,
+   "tool: another signature": 23,
+   "no compile": 25,
+   "field": 13,
+   "keyword": 3
+  },
+  "7": {
+   "n": 69,
+   "field": 5,
+   "no compile": 21,
+   "goal": 42,
+   "tool: another signature": 22
+  },
+  "8": {
+   "n": 108,
+   "goal": 92,
+   "tool: another signature": 12,
+   "no compile": 11,
+   "keyword": 4
+  },
+  "9": {
+   "n": 106,
+   "tool: another signature": 41,
+   "no compile": 24,
+   "goal": 48,
+   "field": 9,
+   "keyword -> comparison": 5,
+   "comparison -> keyword": 3
+  },
+  "10": {
+   "n": 4,
+   "goal": 4
+  },
+  "11": {
+   "n": 77,
+   "goal": 70,
+   "field -> tool": 1,
+   "no compile": 6,
+   "tool: another signature": 5,
+   "keyword": 1
+  },
+  "12": {
+   "n": 125,
+   "goal": 89,
+   "field": 12,
+   "no compile": 28,
+   "tool: another signature": 24
+  },
+  "13": {
+   "n": 118,
+   "goal": 110,
+   "tool: another signature": 4,
+   "no compile": 0,
+   "constant -> keyword": 4
+  },
+  "14": {
+   "n": 121,
+   "goal": 97,
+   "tool: another signature": 22,
+   "no compile": 24,
+   "keyword": 1,
+   "keyword -> comparison": 1
+  },
+  "15": {
+   "n": 117,
+   "goal": 97,
+   "tool: another signature": 20,
+   "no compile": 20
+  },
+  "16": {
+   "n": 119,
+   "goal": 119
+  },
+  "17": {
+   "n": 121,
+   "goal": 121
+  },
+  "18": {
+   "n": 123,
+   "goal": 123
+  },
+  "19": {
+   "n": 101,
+   "tool: another signature": 22,
+   "no compile": 25,
+   "goal": 68,
+   "field": 11
+  }
+ },
+ "examples": {
+  "tool: another signature": [
+   {
+    "task": "ad_platform_L1_20260924",
+    "request": "Please find the \"Brand Awareness Video\" placement, then alert the advertiser behind it.",
+    "generated": "CALL T2 I0 -> r0\nCALL T5 r0.F24 S0\nSTOP\n",
+    "reference": "CALL T3 I0 -> r0\nCALL T5 r0.F24 S0\nSTOP\n"
+   },
+   {
+    "task": "freight_forwarding_L19_20260925",
+    "request": "Go ahead and email every shipper that has a booked shipment.",
+    "generated": "CALL T20 -> r0\nFILTER r0 F21 EQ S0 -> r1\nMAP r1 F20 -> r2\nCALL T20 -> r3\nFILTER r3 F14 IN r2 -> r4\nFOREACH r4 -> r5\n  CALL T15 r5 S1\nSTOP\n",
+    "reference": "CALL T20 -> r0\nFILTER r0 F21 EQ S0 -> r1\nMAP r1 F20 -> r2\nCALL T5 -> r3\nFILTER r3 F14 IN r2 -> r4\nFOREACH r4 -> r5\n  CALL T15 r5 S1\nSTOP\n"
+   },
+   {
+    "task": "comic_publisher_L5_20260931",
+    "request": "Check the \"Skybound Debt #5\" issue: pull it from the pipeline if it is lettered, and mark it lettered if not.",
+    "generated": "CALL T10 I0 -> r0\nGET r0.F4 -> r1\nIF r1 EQ B0\n  CALL T7 r0\nELSE\n  CALL T5 r0 -> r3\nSTOP\n",
+    "reference": "CALL T9 I0 -> r0\nGET r0.F4 -> r1\nIF r1 EQ B0\n  CALL T7 r0\nELSE\n  CALL T5 r0 -> r3\nSTOP\n"
+   }
+  ],
+  "field -> tool": [
+   {
+    "task": "coffee_roastery_L11_20260947",
+    "request": "purge the \"Costa Rica Tarrazu\" roast batch",
+    "generated": "CALL T17 -> r0\nFILTER r0 T16 EQ S0 -> r1\nFIRST r1 -> r2\nCALL T3 r2.F21\nSTOP\n",
+    "reference": "CALL T17 -> r0\nFILTER r0 F10 EQ S0 -> r1\nFIRST r1 -> r2\nCALL T3 r2.F21\nSTOP\n"
+   }
+  ],
+  "keyword": [
+   {
+    "task": "wedding_planning_L1_20260959",
+    "request": "Can you look up the \"String Quartet Booking\" vendor booking and notify the couple behind it?",
+    "generated": "TRY -> r0\n  CALL T12 I0 -> r1\nIF r0 EQ I0\n  CALL T14 r1.F20 S0\nELSE\n  CALL T14 r0.F20 S0\nSTOP\n",
+    "reference": "CALL T10 I0 -> r0\nCALL T14 r0.F20 S0\nSTOP\n"
+   },
+   {
+    "task": "border_transit_L8_20260962",
+    "request": "Can you flag the \"Athletic competition\" case for secondary \u2014 the API has been flaky, so retry if it fails?",
+    "generated": "TRY RETRY 2 -> r0\n  CALL T21 I0 -> r1\nSTOP\n",
+    "reference": "TRY RETRY 3 -> r0\n  CALL T21 I0 -> r1\nSTOP\n"
+   },
+   {
+    "task": "pharmacy_L14_20261020",
+    "request": "Go ahead and count the filled orders.",
+    "generated": "CALL T11 -> r0\nFILTER r0 F6 EQ S0 -> r1\nMAP r1 F19 -> r2\nCALL T0 -> r3\nFILTER r3 F5 IN r2 -> r4\nFOREACH r4 -> r5\n  CALL T3 r5\nSTOP\n",
+    "reference": "CALL T11 -> r0\nFILTER r0 F6 EQ S0 -> r1\nCOUNT r1 -> r2\nRETURN r2\n"
+   }
+  ],
+  "field": [
+   {
+    "task": "app_store_L7_20260970",
+    "request": "Please fetch Kai Mora's record and the submissions list together, then delete Kai Mora's submissions not updated in over 84 days.",
+    "generated": "PARALLEL\n  CALL T10 I0 -> r0\n  CALL T6 -> r1\nFILTER r1 F11 EQ I0 AND F20 LT D0 -> r2\nFOREACH r2 -> r3\n  CALL T1 r3\nSTOP\n",
+    "reference": "PARALLEL\n  CALL T10 I0 -> r0\n  CALL T6 -> r1\nFILTER r1 F11 EQ I0 AND F8 LT D0 -> r2\nFOREACH r2 -> r3\n  CALL T1 r3\nSTOP\n"
+   },
+   {
+    "task": "golf_club_L12_20261022",
+    "request": "Please send the member of tee time 4 a reminder that reads \"Reminder: <status> is due <tee off>\", filled in from the record.",
+    "generated": "CALL T20 I0 -> r0\nFORMAT S0 r0.F16 r0.F2 -> r1\nCALL T0 r0.F20 r1\nSTOP\n",
+    "reference": "CALL T20 I0 -> r0\nFORMAT S0 r0.F11 r0.F2 -> r1\nCALL T0 r0.F20 r1\nSTOP\n"
+   },
+   {
+    "task": "driving_school_L6_20261032",
+    "request": "For every learner, wipe each of their completed lessons",
+    "generated": "CALL T16 -> r0\nCALL T11 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 F13 EQ r3.F4 AND F0 LT NOW -> r4\n  FOREACH r4 -> r5\n    CALL T0 r5\nSTOP\n",
+    "reference": "CALL T16 -> r0\nCALL T11 -> r1\nLET r0 -> r2\nFOREACH r2 -> r3\n  FILTER r1 F13 EQ r3.F4 AND F18 EQ S0 -> r4\n  FOREACH r4 -> r5\n    CALL T0 r5\nSTOP\n"
+   }
+  ],
+  "tool: look-alike": [
+   {
+    "task": "projects_L5_20261006#s1",
+    "request": "Check the \"Website refresh\" project: tear down it if it is active, and archive it if not.",
+    "generated": "CALL T6 I0 -> r0\nGET r0.F13 -> r1\nPAUSE\n",
+    "reference": "CALL T3 r0 -> r2\nSTOP\n"
+   }
+  ],
+  "comparison -> field": [
+   {
+    "task": "home_care_L3_20261238",
+    "request": "Could you give the client on all the care visits for June Ito, except those care plan updated more than 231 days ago a nudge.",
+    "generated": "CALL T15 -> r0\nFILTER r0 F3 EQ I0 AND NOT F8 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T10 r2.F3 S0\nSTOP\n",
+    "reference": "CALL T15 -> r0\nFILTER r0 NOT F8 LT D0 AND F3 EQ I0 -> r1\nFOREACH r1 -> r2\n  CALL T10 r2.F3 S0\nSTOP\n"
+   },
+   {
+    "task": "research_lab_L3_20261395",
+    "request": "mark every runs funded by Aperture, unless they are not yet reproduced as aborted",
+    "generated": "CALL T0 -> r0\nFILTER r0 F1 EQ I0 AND F27 EQ B0 AND NOT F11 GT NOW -> r1\nFOREACH r1 -> r2\n  CALL T14 r2 S0 -> r3\nSTOP\n",
+    "reference": "CALL T0 -> r0\nFILTER r0 F1 EQ I0 AND NOT F27 EQ B0 -> r1\nFOREACH r1 -> r2\n  CALL T14 r2 S0 -> r3\nSTOP\n"
+   },
+   {
+    "task": "home_care_L3_20261625",
+    "request": "give the client on every care visits for Priya Mora, care plan updated more than 146 days ago, except those already missed a nudge",
+    "generated": "CALL T1 -> r0\nFILTER r0 F21 EQ I0 AND NOT F11 LT NOW AND F11 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T8 r2.F21 S0\nSTOP\n",
+    "reference": "CALL T1 -> r0\nFILTER r0 NOT F14 LT NOW AND F21 EQ I0 AND F11 LT D0 -> r1\nFOREACH r1 -> r2\n  CALL T8 r2.F21 S0\nSTOP\n"
+   }
+  ],
+  "field -> comparison": [
+   {
+    "task": "event_venue_L3_20261247",
+    "request": "Can you scrub any bookings inquired more than 71 days ago, as long as they aren't tentative from the schedule?",
+    "generated": "CALL T20 -> r0\nFILTER r0 NOT F24 LT D0 AND F8 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T1 r2\nSTOP\n",
+    "reference": "CALL T20 -> r0\nFILTER r0 F24 LT D0 AND NOT F8 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T1 r2\nSTOP\n"
+   },
+   {
+    "task": "warehouse_L3_20261906",
+    "request": "mark any lots not yet expired, but leave the cleared ones alone as stored",
+    "generated": "CALL T13 -> r0\nFILTER r0 NOT F17 EQ B0 AND F4 GT NOW -> r1\nFOREACH r1 -> r2\n  CALL T11 r2 S0 -> r3\nSTOP\n",
+    "reference": "CALL T13 -> r0\nFILTER r0 F4 GT NOW AND NOT F9 EQ B0 -> r1\nFOREACH r1 -> r2\n  CALL T11 r2 S0 -> r3\nSTOP\n"
+   },
+   {
+    "task": "freight_forwarding_L3_20261940",
+    "request": "I need you to send the shipper of all the shipments for Tyrell, unless they are cleared customs an update.",
+    "generated": "CALL T7 -> r0\nFILTER r0 NOT F15 EQ I0 AND F26 EQ B0 AND F26 EQ B0 -> r1\nFOREACH r1 -> r2\n  CALL T19 r2.F15 S0\nSTOP\n",
+    "reference": "CALL T7 -> r0\nFILTER r0 F15 EQ I0 AND NOT F26 EQ B0 -> r1\nFOREACH r1 -> r2\n  CALL T19 r2.F15 S0\nSTOP\n"
+   }
+  ],
+  "keyword -> comparison": [
+   {
+    "task": "optometry_L9_20261409",
+    "request": "The exam list is a mess, deal with it.",
+    "generated": "CALL T13 -> r0\nFILTER r0 F20 EQ S0 AND F5 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T8 r2 -> r3\nSTOP\n",
+    "reference": "CALL T13 -> r0\nFILTER r0 F20 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T12 r2\nSTOP\n"
+   },
+   {
+    "task": "optometry_L9_20261461",
+    "request": "Sort out the exam backlog.",
+    "generated": "CALL T12 -> r0\nFILTER r0 F9 EQ S0 AND F21 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T20 r2 -> r3\nSTOP\n",
+    "reference": "CALL T12 -> r0\nFILTER r0 F9 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T11 r2\nSTOP\n"
+   },
+   {
+    "task": "optometry_L9_20261975",
+    "request": "The exam list is a mess, deal with it.",
+    "generated": "CALL T20 -> r0\nFILTER r0 F19 EQ S0 AND F7 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T2 r2 -> r3\nSTOP\n",
+    "reference": "CALL T20 -> r0\nFILTER r0 F19 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T19 r2\nSTOP\n"
+   }
+  ],
+  "comparison": [
+   {
+    "task": "ecommerce_L4_20261570",
+    "request": "Go ahead and ping the customer with the highest number of returns expired.",
+    "generated": "CALL T0 -> r0\nFILTER r0 F8 GT NOW -> r1\nMOST r1 F0 -> r2\nCALL T11 r2 S0\nSTOP\n",
+    "reference": "CALL T0 -> r0\nFILTER r0 F8 LT NOW -> r1\nMOST r1 F0 -> r2\nCALL T11 r2 S0\nSTOP\n"
+   }
+  ],
+  "constant -> keyword": [
+   {
+    "task": "animal_shelter_L13_20261644",
+    "request": "Hey \u2014 log a adoption case called \"Deaf dalmatian - Patches\" for June Brooks and set it to completed, then mark it as approved, thanks!",
+    "generated": "CALL T7 I0 S0 -> r0\nCALL T13 r0.F22 -> r1\nSTOP\n",
+    "reference": "CALL T7 I0 S0 S1 -> r0\nCALL T9 r0.F22 S2 -> r1\nSTOP\n"
+   },
+   {
+    "task": "animal_shelter_L13_30260952",
+    "request": "create a adoption case named \"Retired greyhound - Zeus\" for Quinn Chen (approved)",
+    "generated": "CALL T13 I0 S0 -> r0\nSTOP\n",
+    "reference": "CALL T13 I0 S0 S1 -> r0\nSTOP\n"
+   },
+   {
+    "task": "parking_authority_L3_30261195",
+    "request": "Go ahead and delete any active permits, except those issued more than 188 days ago.",
+    "generated": "CALL T8 -> r0\nFILTER r0 NOT F14 LT NOW AND F24 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T9 r2\nSTOP\n",
+    "reference": "CALL T8 -> r0\nFILTER r0 NOT F14 LT D0 AND F16 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T9 r2\nSTOP\n"
+   }
+  ],
+  "comparison -> keyword": [
+   {
+    "task": "golf_club_L9_30260951",
+    "request": "Deal with the walking bookings.",
+    "generated": "CALL T8 -> r0\nFILTER r0 F12 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T21 r2 -> r3\nSTOP\n",
+    "reference": "CALL T8 -> r0\nFILTER r0 F12 EQ S0 AND F24 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T21 r2 -> r3\nSTOP\n"
+   },
+   {
+    "task": "coffee_roastery_L9_30261191",
+    "request": "Sort out the roasting backlog.",
+    "generated": "CALL T20 -> r0\nFILTER r0 F25 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T2 r2\nSTOP\n",
+    "reference": "CALL T20 -> r0\nFILTER r0 F25 EQ S0 AND F1 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T21 r2 -> r3\nSTOP\n"
+   },
+   {
+    "task": "golf_club_L9_30261613",
+    "request": "Deal with the walking bookings.",
+    "generated": "CALL T12 -> r0\nFILTER r0 F17 EQ S0 -> r1\nFOREACH r1 -> r2\n  CALL T15 r2 -> r3\nSTOP\n",
+    "reference": "CALL T12 -> r0\nFILTER r0 F17 EQ S0 AND F18 LT NOW -> r1\nFOREACH r1 -> r2\n  CALL T15 r2 -> r3\nSTOP\n"
+   }
+  ]
+ }
+}

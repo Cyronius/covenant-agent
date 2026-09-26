@@ -1,0 +1,44 @@
+
+runs/pod_diag/out/diag_s6nonames_plain.jsonl  (2000 tasks)
+  parse     91.5%
+  compile   56.0%
+  goal      49.2%
+  exact     44.3%
+  of the 2000 scored, 346 are segments of a paused task
+  passes   mean 22.4
+
+  slot accuracy against the reference canvas (same slot):
+    kw      71.2%  (n=25395)
+    tool    57.2%  (n=3377)
+    field   56.8%  (n=2623)
+    const   72.6%  (n=3544)
+    reg     69.8%  (n=9352)
+
+  CALL lines where both reference and generation CALL: 3070
+    same tool     66.3%   chance   4.6%
+      vs shape    66.3%   chance 100.0%  (uniform inside the signature group)
+    same effect   91.5%   chance  32.7%
+
+  by level:
+      0  n=  88  compile   95%  goal   90%
+      1  n=  93  compile   43%  goal   42%
+      2  n=  84  compile   36%  goal   26%
+      3  n=  89  compile   31%  goal   12%
+      4  n=  90  compile   27%  goal   23%
+      5  n= 117  compile   56%  goal   33%
+      6  n=  88  compile   25%  goal   20%
+      7  n= 124  compile   35%  goal   35%
+      8  n=  87  compile   67%  goal   62%
+      9  n=  89  compile   37%  goal   20%
+     10  n= 174  compile   62%  goal   55%
+     11  n= 108  compile   58%  goal   54%
+     12  n= 101  compile   47%  goal   46%
+     13  n=  99  compile   54%  goal   46%
+     14  n=  95  compile   53%  goal   52%
+     15  n=  97  compile   85%  goal   67%
+     16  n=  97  compile   97%  goal   96%
+     17  n=  97  compile  100%  goal  100%
+     18  n=  99  compile   75%  goal   73%
+     19  n=  84  compile   27%  goal   24%
+
+wrote runs\pod_diag\out\diag_s6nonames_plain.score.json
