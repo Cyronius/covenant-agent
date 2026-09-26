@@ -1,0 +1,45 @@
+
+C:/code/covenant-agent/models/tiny/runs/pod_s6off2/out/s6off_SPt_decoy.jsonl  (2000 tasks)
+  parse     98.0%
+  compile   85.2%
+  goal      46.2%
+  exact     38.4%
+  of the 2000 scored, 346 are segments of a paused task
+  decoy called  41.3% of 1703 decoyed tasks  (a signature-identical sibling, never in a reference)
+  passes   mean 22.6
+
+  slot accuracy against the reference canvas (same slot):
+    kw      85.5%  (n=25395)
+    tool    56.0%  (n=3377)
+    field   72.4%  (n=2623)
+    const   84.8%  (n=3544)
+    reg     85.3%  (n=9352)
+
+  CALL lines where both reference and generation CALL: 3211
+    same tool     60.2%   chance   2.1%
+      vs shape    60.2%   chance  41.9%  (uniform inside the signature group)
+    same effect   95.5%   chance  29.5%
+
+  by level:
+      0  n=  88  compile   99%  goal   52%
+      1  n=  93  compile   85%  goal   33%
+      2  n=  84  compile   79%  goal   30%
+      3  n=  89  compile   90%  goal   18%
+      4  n=  90  compile   68%  goal   36%
+      5  n= 117  compile   87%  goal   28%
+      6  n=  88  compile   74%  goal   17%
+      7  n= 124  compile   79%  goal   32%
+      8  n=  87  compile   91%  goal   39%
+      9  n=  89  compile   85%  goal   12%
+     10  n= 174  compile   94%  goal   48%
+     11  n= 108  compile   88%  goal   74%
+     12  n= 101  compile   72%  goal   35%
+     13  n=  99  compile  100%  goal   41%
+     14  n=  95  compile   85%  goal   84%
+     15  n=  97  compile   77%  goal   65%
+     16  n=  97  compile  100%  goal   98%
+     17  n=  97  compile   81%  goal   76%
+     18  n=  99  compile   96%  goal   81%
+     19  n=  84  compile   62%  goal   11%
+
+wrote C:\code\covenant-agent\models\tiny\runs\pod_s6off2\out\s6off_SPt_decoy.score.json

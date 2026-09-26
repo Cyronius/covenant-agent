@@ -1,0 +1,21 @@
+  100/2000 0.59s/ex {'greedy_ok': 85, 'rescued': 7, 'failed': 8}
+  200/2000 0.60s/ex {'greedy_ok': 168, 'rescued': 14, 'failed': 18}
+  300/2000 0.60s/ex {'greedy_ok': 251, 'rescued': 22, 'failed': 27}
+  400/2000 0.60s/ex {'greedy_ok': 332, 'rescued': 30, 'failed': 38}
+  500/2000 0.61s/ex {'greedy_ok': 414, 'rescued': 39, 'failed': 47}
+  600/2000 0.59s/ex {'greedy_ok': 503, 'rescued': 40, 'failed': 57}
+  700/2000 0.58s/ex {'greedy_ok': 599, 'rescued': 41, 'failed': 60}
+  800/2000 0.59s/ex {'greedy_ok': 683, 'rescued': 46, 'failed': 71}
+  900/2000 0.59s/ex {'greedy_ok': 769, 'rescued': 52, 'failed': 79}
+  1000/2000 0.58s/ex {'greedy_ok': 859, 'rescued': 58, 'failed': 83}
+  1100/2000 0.59s/ex {'greedy_ok': 935, 'rescued': 66, 'failed': 99}
+  1200/2000 0.58s/ex {'greedy_ok': 1024, 'rescued': 72, 'failed': 104}
+  1300/2000 0.59s/ex {'greedy_ok': 1101, 'rescued': 82, 'failed': 117}
+  1400/2000 0.59s/ex {'greedy_ok': 1187, 'rescued': 89, 'failed': 124}
+  1500/2000 0.58s/ex {'greedy_ok': 1278, 'rescued': 91, 'failed': 131}
+  1600/2000 0.58s/ex {'greedy_ok': 1362, 'rescued': 100, 'failed': 138}
+  1700/2000 0.59s/ex {'greedy_ok': 1447, 'rescued': 103, 'failed': 150}
+  1800/2000 0.58s/ex {'greedy_ok': 1529, 'rescued': 108, 'failed': 163}
+  1900/2000 0.57s/ex {'greedy_ok': 1609, 'rescued': 115, 'failed': 176}
+  2000/2000 0.57s/ex {'greedy_ok': 1695, 'rescued': 120, 'failed': 185}
+wrote 2000 -> C:\code\covenant-agent\models\tiny\runs\pod_s6off2\out\s6off_SPt_plain_tb3.jsonl  {'greedy_ok': 1695, 'rescued': 120, 'failed': 185}
