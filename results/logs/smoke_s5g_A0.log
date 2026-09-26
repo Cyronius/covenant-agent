@@ -1,0 +1,6 @@
+arm=ar binding=structural params=9.38M device=cpu train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+  == step 4 val_loss 4.9269  acc: kw 0.02 tool 0.00 field 0.00 const 0.00 reg 0.00
+  == step 8 val_loss 4.8342  acc: kw 0.06 tool 0.00 field 0.00 const 0.00 reg 0.00
+done. best val_loss 4.8342 -> runs\_smoke_s5g_A0
+smoke A0 exit 0

@@ -1,0 +1,46 @@
+cache data_cache_s5g  binding structural
+=== 1. do reference programs survive the round trip and reach the goal ===
+binding: structural
+reference round-trip on test, 40 tasks
+  matches_reference    40/40
+  parse                40/40
+  compile              40/40
+  goal                  0/40
+  sandbox_error      40
+
+--- garden_center_L17_70262818 ---
+  sandbox: 'compose_text'
+  program:
+    CALL T21 S0 -> r0
+    RETURN r0
+
+--- election_office_L11_60264089 ---
+  sandbox: 'generate_image'
+  program:
+    ABORT NOT_FOUND
+
+--- apiary_L4_90262697 ---
+  sandbox: 'update_hive_inspection_note'
+  program:
+    CALL T17 -> r0
+    FILTER r0 F23 EQ S0 -> r1
+    SORT r1 F16 ASC -> r2
+    FIRST r2 -> r3
+    CALL T18 r3
+    STOP
+
+--- auto_repair_L14_90262949 ---
+  sandbox: 'list_repair_order_notes'
+  program:
+    CALL T6 -> r0
+    RETURN r0
+
+--- hospital_ward_L14_30265101 ---
+  sandbox: 'render_image'
+  program:
+    CALL T16 -> r0
+    FILTER r0 F1 EQ I0 -> r1
+    RETURN r1
+
+FAIL: 40 tasks did not reach the goal, 0 did not match the reference text
+selftest exit 1

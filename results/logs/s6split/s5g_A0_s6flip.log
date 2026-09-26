@@ -1,0 +1,21 @@
+loops=1 dec_layers=4 weights=fp
+id filter (++flip -None): 469 of 4838 tasks
+  25/469  0.58s/example
+  50/469  0.56s/example
+  75/469  0.55s/example
+  100/469  0.57s/example
+  125/469  0.58s/example
+  150/469  0.59s/example
+  175/469  0.59s/example
+  200/469  0.58s/example
+  225/469  0.58s/example
+  250/469  0.57s/example
+  275/469  0.57s/example
+  300/469  0.57s/example
+  325/469  0.56s/example
+  350/469  0.56s/example
+  375/469  0.56s/example
+  400/469  0.56s/example
+  425/469  0.56s/example
+  450/469  0.56s/example
+wrote 469 programs -> out/s5g_A0_s6flip.jsonl

@@ -1,0 +1,11 @@
+      3750 data/s6off_shards/train_0.jsonl
+      3750 data/s6off_shards/train_1.jsonl
+      3750 data/s6off_shards/train_2.jsonl
+      3750 data/s6off_shards/train_3.jsonl
+      3750 data/s6off_shards/train_4.jsonl
+      3750 data/s6off_shards/train_5.jsonl
+      3750 data/s6off_shards/train_6.jsonl
+      3750 data/s6off_shards/train_7.jsonl
+     30000 data/s6off_train.jsonl
+     60000 total
+=== gen_s6off done Sat Sep 26 09:50:48 CDT 2026 ===

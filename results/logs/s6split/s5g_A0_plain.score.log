@@ -1,0 +1,44 @@
+
+C:/code/covenant-agent/models/tiny/runs/pod_s6split/out/s5g_A0_plain.jsonl  (2000 tasks)
+  parse     99.6%
+  compile   90.0%
+  goal      82.5%
+  exact     74.2%
+  of the 2000 scored, 12 are segments of a paused task
+  passes   mean 24.4
+
+  slot accuracy against the reference canvas (same slot):
+    kw      94.4%  (n=26797)
+    tool    91.1%  (n=3679)
+    field   83.4%  (n=2754)
+    const   94.1%  (n=3815)
+    reg     95.2%  (n=10082)
+
+  CALL lines where both reference and generation CALL: 3642
+    same tool     93.1%   chance   4.6%
+      vs shape    93.1%   chance 100.0%  (uniform inside the signature group)
+    same effect   98.3%   chance  30.8%
+
+  by level:
+      0  n= 109  compile   99%  goal   97%
+      1  n= 101  compile   78%  goal   78%
+      2  n= 104  compile   85%  goal   71%
+      3  n= 104  compile   90%  goal   60%
+      4  n= 107  compile   81%  goal   75%
+      5  n=  64  compile   72%  goal   62%
+      6  n= 102  compile   91%  goal   79%
+      7  n=  69  compile   77%  goal   65%
+      8  n= 108  compile   88%  goal   80%
+      9  n= 106  compile   87%  goal   49%
+     10  n=   4  compile   75%  goal   75%
+     11  n=  77  compile   95%  goal   95%
+     12  n= 125  compile   76%  goal   69%
+     13  n= 118  compile   99%  goal   97%
+     14  n= 121  compile   91%  goal   91%
+     15  n= 117  compile   97%  goal   97%
+     16  n= 119  compile  100%  goal  100%
+     17  n= 121  compile  100%  goal  100%
+     18  n= 123  compile  100%  goal  100%
+     19  n= 101  compile   90%  goal   80%
+
+wrote C:\code\covenant-agent\models\tiny\runs\pod_s6split\out\s5g_A0_plain.score.json

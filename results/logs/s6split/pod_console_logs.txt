@@ -1,0 +1,22 @@
+STATUS
+cuda ok -13582.45703125
+=== smoke: both S5 runs build and step ===
+arm=ar binding=structural params=9.38M device=cuda train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+  == step 4 val_loss 4.9269  acc: kw 0.02 tool 0.00 field 0.00 const 0.00 reg 0.00
+  == step 8 val_loss 4.8342  acc: kw 0.06 tool 0.00 field 0.00 const 0.00 reg 0.00
+done. best val_loss 4.8342 -> runs/_smoke_s5g_A0
+arm=ar binding=structural params=12.78M device=cuda train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+/workspace/repo/tiny/train.py:171: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  aux["last"] = {k: float(v) for k, v in parts.items()}
+  == step 4 val_loss 4.9448  acc: kw 0.02 tool 0.00 field 0.00 const 0.00 reg 0.00
+  == step 8 val_loss 4.8564  acc: kw 0.07 tool 0.00 field 0.00 const 0.00 reg 0.00
+done. best val_loss 4.8564 -> runs/_smoke_s5g_SPt
+-rw-rw-rw- 1 root root 235886059 Sep 26 16:30 s6split_all.tar.gz
+=== run_s6split done Sat Sep 26 16:30:16 UTC 2026
+===S6DEC
+-rw-rw-rw- 1 root root 555000 Sep 26 16:36 s6dec_all.tar.gz
+=== run_s6dec done Sat Sep 26 16:36:25 UTC 2026
+ENDSTATUS

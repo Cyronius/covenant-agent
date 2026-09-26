@@ -1,0 +1,136 @@
+cache data_cache_s5g  binding structural
+=== 1. do reference programs survive the round trip and reach the goal ===
+
+=== 2. can both samplers reproduce a known answer ===
+binding: structural
+checked 20 programs x 5 step counts, plus 5 line attributions
+
+PASS -- both samplers reproduce a known answer exactly
+
+=== 3. does each arm train, sample and score end to end ===
+arm=diffusion binding=structural params=0.55M device=cpu train=32 steps=8
+weights=fp act_bits=0 loops=1 loop_body=0.07M params = 0.25 MB resident of 4.00 MB
+  == step 8 val_loss 4.9179  acc: kw 0.00 tool 0.00 field 0.00 const 0.00 reg 0.00
+done. best val_loss 4.9179 -> runs\_selftest_diffusion
+loops=1 dec_layers=1 weights=fp
+wrote 4 programs -> runs\_selftest_diffusion.jsonl
+
+runs/_selftest_diffusion.jsonl  (4 tasks)
+  parse      0.0%
+  compile    0.0%
+  goal       0.0%
+  exact      0.0%
+  passes   mean 6.0
+
+  slot accuracy against the reference canvas (same slot):
+    kw       0.0%  (n=68)
+    tool     0.0%  (n=9)
+    field    0.0%  (n=6)
+    const    0.0%  (n=6)
+    reg      0.0%  (n=21)
+
+  CALL lines where both reference and generation CALL: 0
+    same tool      0.0%   chance   0.0%
+      vs shape     0.0%   chance   0.0%  (uniform inside the signature group)
+    same effect    0.0%   chance   0.0%
+
+  by level:
+      1  n=   1  compile    0%  goal    0%
+      2  n=   1  compile    0%  goal    0%
+      7  n=   1  compile    0%  goal    0%
+      9  n=   1  compile    0%  goal    0%
+
+wrote runs\_selftest_diffusion.score.json
+arm=ar binding=structural params=0.55M device=cpu train=32 steps=8
+weights=fp act_bits=0 loops=1 loop_body=0.07M params = 0.25 MB resident of 4.00 MB
+  == step 8 val_loss 4.9451  acc: kw 0.00 tool 0.00 field 0.00 const 0.00 reg 0.00
+done. best val_loss 4.9451 -> runs\_selftest_ar
+loops=1 dec_layers=1 weights=fp
+wrote 4 programs -> runs\_selftest_ar.jsonl
+
+runs/_selftest_ar.jsonl  (4 tasks)
+  parse      0.0%
+  compile    0.0%
+  goal       0.0%
+  exact      0.0%
+  passes   mean 64.0
+
+  slot accuracy against the reference canvas (same slot):
+    kw       2.9%  (n=68)
+    tool     0.0%  (n=9)
+    field    0.0%  (n=6)
+    const    0.0%  (n=6)
+    reg      0.0%  (n=21)
+
+  CALL lines where both reference and generation CALL: 0
+    same tool      0.0%   chance   0.0%
+      vs shape     0.0%   chance   0.0%  (uniform inside the signature group)
+    same effect    0.0%   chance   0.0%
+
+  by level:
+      1  n=   1  compile    0%  goal    0%
+      2  n=   1  compile    0%  goal    0%
+      7  n=   1  compile    0%  goal    0%
+      9  n=   1  compile    0%  goal    0%
+
+wrote runs\_selftest_ar.score.json
+
+=== 4. is the quantised model the model that would be deployed ===
+1. block weights are quantised in the forward pass: ok
+2. the scale is per output row: ok
+3. 219526 parameters either way, gradient reaches them: ok
+4. embeddings and heads stay int8 while the block is ternary: ok
+5. a quantised checkpoint round-trips to identical logits: ok
+8. activations rounded at 44 matmul operands per pass: ok
+6. 219526 parameters at every loop count, loop body 100480: ok
+7. resident-byte arithmetic: 16M ternary in the space of 4M int8: ok
+ALL PASS
+
+=== 5. does a looped, ternary run train, generate and score ===
+arm=diffusion binding=structural params=0.55M device=cpu train=32 steps=8
+weights=tern act_bits=8 loops=4 loop_body=0.07M params = 0.02 MB resident of 4.00 MB
+  == step 8 val_loss 4.8984  acc: kw 0.02 tool 0.00 field 0.00 const 0.00 reg 0.00
+done. best val_loss 4.8984 -> runs\_selftest_q
+  block 66752 params -> 16688 resident bytes
+loops=2 dec_layers=1 weights=tern
+wrote 4 programs -> runs\_selftest_q.jsonl
+
+runs/_selftest_q.jsonl  (4 tasks)
+  parse      0.0%
+  compile    0.0%
+  goal       0.0%
+  exact      0.0%
+  passes   mean 2.0
+
+  slot accuracy against the reference canvas (same slot):
+    kw       0.0%  (n=68)
+    tool     0.0%  (n=9)
+    field    0.0%  (n=6)
+    const    0.0%  (n=6)
+    reg      0.0%  (n=21)
+
+  CALL lines where both reference and generation CALL: 0
+    same tool      0.0%   chance   0.0%
+      vs shape     0.0%   chance   0.0%  (uniform inside the signature group)
+    same effect    0.0%   chance   0.0%
+
+  by level:
+      1  n=   1  compile    0%  goal    0%
+      2  n=   1  compile    0%  goal    0%
+      7  n=   1  compile    0%  goal    0%
+      9  n=   1  compile    0%  goal    0%
+
+wrote runs\_selftest_q.score.json
+  generation ran at the overridden loop count
+
+=== 6. does the fill-order probe read a generated file ===
+4 programs, 2 distinct unmask steps
+
+token class        n  mean step  median
+other            256       0.72     1.0
+
+correlation between slot position and unmask step: -0.090
+  near +1 means left-to-right; near 0 means the order is content-driven
+
+ALL PASS -- correctness only, no timing claimed
+exit 0

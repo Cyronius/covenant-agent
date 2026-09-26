@@ -1,0 +1,9 @@
+arm=ar binding=structural params=12.78M device=cpu train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+C:\code\covenant-agent\models\tiny\train.py:171: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:823.)
+  aux["last"] = {k: float(v) for k, v in parts.items()}
+  == step 4 val_loss 4.9448  acc: kw 0.02 tool 0.00 field 0.00 const 0.00 reg 0.00
+  == step 8 val_loss 4.8561  acc: kw 0.07 tool 0.00 field 0.00 const 0.00 reg 0.00
+done. best val_loss 4.8561 -> runs\_smoke_s5g_SPt
+smoke SPt exit 0

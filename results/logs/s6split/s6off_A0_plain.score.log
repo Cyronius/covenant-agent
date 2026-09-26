@@ -1,0 +1,44 @@
+
+runs/pod_s6split/out/s6off_A0_plain.jsonl  (2000 tasks)
+  parse     98.6%
+  compile   89.5%
+  goal      79.5%
+  exact     70.8%
+  of the 2000 scored, 346 are segments of a paused task
+  passes   mean 23.4
+
+  slot accuracy against the reference canvas (same slot):
+    kw      90.9%  (n=25395)
+    tool    88.8%  (n=3377)
+    field   79.4%  (n=2623)
+    const   90.8%  (n=3544)
+    reg     92.2%  (n=9352)
+
+  CALL lines where both reference and generation CALL: 3313
+    same tool     92.4%   chance   4.6%
+      vs shape    92.4%   chance 100.0%  (uniform inside the signature group)
+    same effect   97.7%   chance  31.4%
+
+  by level:
+      0  n=  88  compile  100%  goal   98%
+      1  n=  93  compile   85%  goal   85%
+      2  n=  84  compile   89%  goal   74%
+      3  n=  89  compile   87%  goal   29%
+      4  n=  90  compile   78%  goal   71%
+      5  n= 117  compile   85%  goal   64%
+      6  n=  88  compile   83%  goal   56%
+      7  n= 124  compile   79%  goal   77%
+      8  n=  87  compile   97%  goal   93%
+      9  n=  89  compile   90%  goal   57%
+     10  n= 174  compile   91%  goal   81%
+     11  n= 108  compile   91%  goal   76%
+     12  n= 101  compile   78%  goal   77%
+     13  n=  99  compile  100%  goal   99%
+     14  n=  95  compile   95%  goal   94%
+     15  n=  97  compile   98%  goal   98%
+     16  n=  97  compile   99%  goal   97%
+     17  n=  97  compile  100%  goal  100%
+     18  n=  99  compile   90%  goal   90%
+     19  n=  84  compile   76%  goal   69%
+
+wrote runs\pod_s6split\out\s6off_A0_plain.score.json

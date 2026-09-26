@@ -1,0 +1,35 @@
+
+runs/pod_s6split/out/s6off_A0_flip.jsonl  (472 tasks)
+  parse     98.5%
+  compile   90.3%
+  goal      22.7%
+  exact     16.5%
+  of the 472 scored, 144 are segments of a paused task
+  decoy called  70.4% of 426 decoyed tasks  (a signature-identical sibling, never in a reference)
+  passes   mean 27.4
+
+  slot accuracy against the reference canvas (same slot):
+    kw      92.7%  (n=7254)
+    tool    44.8%  (n=907)
+    field   76.6%  (n=674)
+    const   86.0%  (n=816)
+    reg     95.6%  (n=2590)
+
+  CALL lines where both reference and generation CALL: 899
+    same tool     45.4%   chance   2.0%
+      vs shape    45.4%   chance  41.6%  (uniform inside the signature group)
+    same effect   96.4%   chance  30.0%
+
+  by level:
+      1  n=  49  compile   86%  goal   12%
+      2  n=  50  compile   92%  goal   18%
+      3  n=  48  compile   96%  goal   15%
+      4  n=  28  compile   93%  goal    7%
+      5  n=  50  compile   82%  goal   22%
+      6  n=  54  compile   87%  goal   13%
+      7  n=  38  compile   84%  goal   16%
+      8  n=  37  compile   97%  goal   46%
+     10  n= 108  compile   93%  goal   37%
+     13  n=  10  compile  100%  goal   20%
+
+wrote runs\pod_s6split\out\s6off_A0_flip.score.json

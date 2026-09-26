@@ -1,0 +1,45 @@
+
+runs/pod_s6split/out/s5g_A0_s6decoy.jsonl  (2000 tasks)
+  parse     99.3%
+  compile   84.9%
+  goal      32.8%
+  exact     22.4%
+  of the 2000 scored, 350 are segments of a paused task
+  decoy called  65.5% of 1698 decoyed tasks  (a signature-identical sibling, never in a reference)
+  passes   mean 25.4
+
+  slot accuracy against the reference canvas (same slot):
+    kw      91.6%  (n=25431)
+    tool    39.5%  (n=3377)
+    field   80.4%  (n=2626)
+    const   90.5%  (n=3543)
+    reg     93.7%  (n=9371)
+
+  CALL lines where both reference and generation CALL: 3305
+    same tool     40.9%   chance   2.1%
+      vs shape    40.9%   chance  41.9%  (uniform inside the signature group)
+    same effect   97.2%   chance  29.3%
+
+  by level:
+      0  n=  88  compile   99%  goal   41%
+      1  n=  92  compile   72%  goal   13%
+      2  n=  84  compile   90%  goal   11%
+      3  n=  90  compile   86%  goal    4%
+      4  n=  90  compile   84%  goal   23%
+      5  n= 116  compile   53%  goal    4%
+      6  n=  89  compile   78%  goal    6%
+      7  n= 123  compile   62%  goal   11%
+      8  n=  87  compile   87%  goal   43%
+      9  n=  89  compile   90%  goal   15%
+     10  n= 178  compile   92%  goal   36%
+     11  n= 108  compile   73%  goal   66%
+     12  n= 101  compile   67%  goal    9%
+     13  n=  97  compile   98%  goal   27%
+     14  n=  95  compile   96%  goal   96%
+     15  n=  96  compile   98%  goal   17%
+     16  n=  96  compile  100%  goal  100%
+     17  n=  96  compile  100%  goal   80%
+     18  n= 101  compile  100%  goal   36%
+     19  n=  84  compile   83%  goal   17%
+
+wrote runs\pod_s6split\out\s5g_A0_s6decoy.score.json
