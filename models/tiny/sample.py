@@ -56,8 +56,9 @@ JOIN = ("AND", "OR")
 
 
 def local_sets(ov):
-    """(receiver, field, cmp, join, not) as bool tensors over the codec's id
-    space. Cached on the codec, which is per task for the structural binding."""
+    """(receiver, field, cmp, join, not, CALL, tool) as bool tensors over the
+    codec's id space. Cached on the codec, which is per task for the
+    structural binding. `tool` is this task's declared tools only."""
     cached = getattr(ov, "_local_sets", None)
     if cached is None:
         toks = ov.decode(list(range(len(ov))))
@@ -66,7 +67,9 @@ def local_sets(ov):
         cmp_ = torch.tensor([t in CMP for t in toks])
         join = torch.tensor([t in JOIN for t in toks])
         neg = torch.tensor([t == "NOT" for t in toks])
-        cached = (recv, fld, cmp_, join, neg)
+        call = torch.tensor([t == "CALL" for t in toks])
+        tool = torch.tensor([bool(re.fullmatch(r"T\d+", t)) for t in toks])
+        cached = (recv, fld, cmp_, join, neg, call, tool)
         try:
             ov._local_sets = cached
         except AttributeError:
@@ -80,6 +83,7 @@ def local_mask(canvas: torch.Tensor, ov) -> torch.Tensor:
     nothing else (`.claude/plans/canvas-field-access-split.md` section 7):
 
       after a receiver `rN.`   the slot must hold a field
+      after CALL               the slot must hold one of the task's tools
       before a filled non-field the slot must not hold a receiver
       after AND or OR          the slot is not AND, OR, or a comparator
       after NOT                the slot is not AND, OR, NOT, or a comparator
@@ -108,7 +112,7 @@ def local_mask(canvas: torch.Tensor, ov) -> torch.Tensor:
     Everything entity-aware (a field of the entity in r0, a register bound
     before use) stays with the host typechecker in `repair`.
     """
-    recv, fld, cmp_, join, neg = (t.to(canvas.device) for t in local_sets(ov))
+    recv, fld, cmp_, join, neg, call, tool = (t.to(canvas.device) for t in local_sets(ov))
     tok = canvas[0]
     n = tok.numel()
     blocked = torch.zeros(1, n, recv.numel(), dtype=torch.bool, device=canvas.device)
@@ -125,6 +129,11 @@ def local_mask(canvas: torch.Tensor, ov) -> torch.Tensor:
 
     after_recv = shifted(recv, 1)
     blocked[0, after_recv] = ~fld
+    # `call = "CALL" tool {operand}` (spec/agent_core.md:68). Without this the
+    # planner wrote `CALL r0` / `CALL S0` in 58% of SPt's failed plain-exam
+    # programs, the rest of the program often right (R12, step 4)
+    if tool.any():
+        blocked[0, shifted(call, 1)] |= ~tool
     before_nonfield = torch.zeros(n, dtype=torch.bool, device=canvas.device)
     before_nonfield[:-1] = filled[1:] & ~fld[tok[1:]]
     blocked[0, before_nonfield] |= recv
@@ -233,8 +242,11 @@ def diffusion_sample(model, inputs: dict, ov, steps: int = 8, temperature: float
 
 
 @torch.no_grad()
-def ar_sample(model, inputs: dict, ov, trace: Trace | None = None):
-    """Greedy left to right. Stops at the first PAD, which is the trained stop."""
+def ar_sample(model, inputs: dict, ov, trace: Trace | None = None,
+              temperature: float = 0.0, generator: torch.Generator | None = None):
+    """Left to right, greedy at temperature 0, else sampled from the
+    softmax at that temperature (evaluate.py --best-of). Stops at the first
+    PAD, which is the trained stop."""
     n = model.c.canvas
     device = next(iter(inputs.values())).device
     canvas = torch.full((1, n), ov.mask, dtype=torch.long, device=device)
@@ -249,7 +261,11 @@ def ar_sample(model, inputs: dict, ov, trace: Trace | None = None):
         if i > 0:
             # The receiver rule, left to right: after `rN.` comes a field.
             row = row.masked_fill(local_mask(out[:, :i + 1], ov)[0, i], float("-inf"))
-        tok = int(row.argmax())
+        if temperature > 0:
+            probs = F.softmax(row.float() / temperature, dim=-1)
+            tok = int(torch.multinomial(probs, 1, generator=generator))
+        else:
+            tok = int(row.argmax())
         out[0, i] = tok
         tr.unmask_step[i] = i
         if tok == ov.pad:

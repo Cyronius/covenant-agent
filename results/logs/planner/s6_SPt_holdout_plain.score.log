@@ -1,0 +1,44 @@
+
+runs/pod_planner/out/s6_SPt_holdout_plain.jsonl  (2000 tasks)
+  parse     71.0%
+  compile   61.5%
+  goal      56.0%
+  exact     52.0%
+  of the 2000 scored, 346 are segments of a paused task
+  passes   mean 22.7
+
+  slot accuracy against the reference canvas (same slot):
+    kw      64.9%  (n=25395)
+    tool    60.3%  (n=3377)
+    field   46.2%  (n=2623)
+    const   70.5%  (n=3544)
+    reg     58.3%  (n=9352)
+
+  CALL lines where both reference and generation CALL: 3225
+    same tool     71.2%   chance   4.6%
+      vs shape    71.2%   chance 100.0%  (uniform inside the signature group)
+    same effect   79.5%   chance  31.9%
+
+  by level:
+      0  n=  88  compile   98%  goal   97%
+      1  n=  93  compile   76%  goal   76%
+      2  n=  84  compile   33%  goal   24%
+      3  n=  89  compile   30%  goal   19%
+      4  n=  90  compile   23%  goal   19%
+      5  n= 117  compile   76%  goal   40%
+      6  n=  88  compile   19%  goal   15%
+      7  n= 124  compile   35%  goal   32%
+      8  n=  87  compile   83%  goal   78%
+      9  n=  89  compile   28%  goal   18%
+     10  n= 174  compile   68%  goal   60%
+     11  n= 108  compile   61%  goal   61%
+     12  n= 101  compile   51%  goal   50%
+     13  n=  99  compile   96%  goal   91%
+     14  n=  95  compile   39%  goal   38%
+     15  n=  97  compile   84%  goal   82%
+     16  n=  97  compile   99%  goal   98%
+     17  n=  97  compile  100%  goal  100%
+     18  n=  99  compile   94%  goal   94%
+     19  n=  84  compile   18%  goal   17%
+
+wrote runs\pod_planner\out\s6_SPt_holdout_plain.score.json

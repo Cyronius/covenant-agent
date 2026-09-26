@@ -1,0 +1,45 @@
+
+runs/pod_planner/out/s6_A0_holdout_decoy.jsonl  (2000 tasks)
+  parse     79.8%
+  compile   55.0%
+  goal      37.6%
+  exact     32.4%
+  of the 2000 scored, 346 are segments of a paused task
+  decoy called  29.1% of 1100 decoyed tasks  (a signature-identical sibling, never in a reference)
+  passes   mean 22.6
+
+  slot accuracy against the reference canvas (same slot):
+    kw      76.2%  (n=25395)
+    tool    44.2%  (n=3377)
+    field   61.5%  (n=2623)
+    const   71.8%  (n=3544)
+    reg     75.3%  (n=9352)
+
+  CALL lines where both reference and generation CALL: 3131
+    same tool     50.4%   chance   2.1%
+      vs shape    50.4%   chance  41.9%  (uniform inside the signature group)
+    same effect   84.3%   chance  29.8%
+
+  by level:
+      0  n=  88  compile   94%  goal   67%
+      1  n=  93  compile   43%  goal   34%
+      2  n=  84  compile   35%  goal   13%
+      3  n=  89  compile   28%  goal    3%
+      4  n=  90  compile   21%  goal   12%
+      5  n= 117  compile   56%  goal   19%
+      6  n=  88  compile   30%  goal    5%
+      7  n= 124  compile   46%  goal   31%
+      8  n=  87  compile   67%  goal   44%
+      9  n=  89  compile   36%  goal    6%
+     10  n= 174  compile   70%  goal   48%
+     11  n= 108  compile   59%  goal   56%
+     12  n= 101  compile   35%  goal   15%
+     13  n=  99  compile   58%  goal   29%
+     14  n=  95  compile   43%  goal   43%
+     15  n=  97  compile   68%  goal   55%
+     16  n=  97  compile  100%  goal   98%
+     17  n=  97  compile  100%  goal   88%
+     18  n=  99  compile   73%  goal   59%
+     19  n=  84  compile   19%  goal   10%
+
+wrote runs\pod_planner\out\s6_A0_holdout_decoy.score.json

@@ -149,6 +149,30 @@ def generate(args):
         rows = pickle.load(open(cache / "rows.pkl", "rb"))[args.split]
         ctxs = [TaskContext.from_json(r["context"]) for r in rows]
 
+    # --best-of K (ar): keep the greedy program if it compiles, else sample up
+    # to K-1 more at --temperature and keep the first that compiles, checked
+    # the way --score checks it (R12: 75% of failed programs do not compile)
+    check = None
+    if args.best_of > 1 and arm == "ar":
+        from core.pipeline import build
+        from harness.context import TaskContext
+        from corpus import _replay
+        by_id = {r["id"]: r for r in pickle.load(open(cache / "rows.pkl", "rb"))[args.split]}
+
+        def check(task_id, text):
+            base, _, seg = task_id.partition("#s")
+            row = by_id.get(base)
+            if row is None:
+                return True
+            ctx = TaskContext.from_json(row["context"])
+            if seg and int(seg):
+                starts = _replay(row, row["reference"]["segments"])
+                if starts is None:
+                    return True
+                ctx = starts[int(seg)][0]
+            return bool(build(text, ctx).compile_ok)
+    gen_rng = torch.Generator(device=args.device).manual_seed(0)
+
     out = []
     t0 = time.time()
     for k, i in enumerate(which):
@@ -165,6 +189,15 @@ def generate(args):
                                     trace=tr)
         else:
             canvas, tr = ar_sample(model, inputs, ov, trace=tr)
+            tr.tries = 1
+            if check is not None and not check(split.meta[i]["task_id"], to_text(canvas, ov)):
+                for _ in range(args.best_of - 1):
+                    cand, _ = ar_sample(model, inputs, ov, temperature=args.temperature or 0.7,
+                                        generator=gen_rng)
+                    tr.tries += 1
+                    if check(split.meta[i]["task_id"], to_text(cand, ov)):
+                        canvas = cand
+                        break
         tgt = split.target(i)
         meta = {k: v for k, v in split.meta[i].items() if k != "syms"}
         out.append({
@@ -179,6 +212,7 @@ def generate(args):
             "canvas_tokens": ov.decode(canvas[0].tolist()),
             "reference_tokens": ov.decode(tgt[0].tolist()),
             "compiled_inline": tr.compiled,
+            "tries": getattr(tr, "tries", 1),
             # The compute this program cost, for the axis report.py draws:
             # one forward pass applies the block dec_layers x loops times.
             "loops": model.c.dec_loops, "dec_layers": model.c.dec_layers,
@@ -381,6 +415,10 @@ def main():
                          "at least one, instead of following the cosine "
                          "schedule; --steps becomes a cap on passes")
     ap.add_argument("--repair-rounds", type=int, default=0)
+    ap.add_argument("--best-of", type=int, default=1,
+                    help="ar: if the greedy program does not compile, sample up "
+                         "to this many in all (at --temperature, default 0.7) and "
+                         "keep the first that compiles")
     ap.add_argument("--repair-steps", type=int, default=4)
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--id-contains", default=None, metavar="TEXT",

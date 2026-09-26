@@ -1,0 +1,17 @@
+cuda ok 53650.203125
+=== smoke: every arm builds and steps ===
+arm=ar binding=structural params=9.38M device=cuda train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+  == step 4 val_loss 5.1010  acc: kw 0.03 tool 0.00 field 0.00 const 0.00 reg 0.00
+  == step 8 val_loss 5.0003  acc: kw 0.04 tool 0.00 field 0.00 const 0.00 reg 0.00
+done. best val_loss 5.0003 -> runs/_smoke_A0
+arm=ar binding=structural params=12.78M device=cuda train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+/workspace/tiny/train.py:171: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:835.)
+  aux["last"] = {k: float(v) for k, v in parts.items()}
+  == step 4 val_loss 5.1284  acc: kw 0.02 tool 0.00 field 0.00 const 0.00 reg 0.00
+  == step 8 val_loss 5.0370  acc: kw 0.05 tool 0.00 field 0.00 const 0.00 reg 0.00
+done. best val_loss 5.0370 -> runs/_smoke_SPt
+=== step 4 done: bring back out/ and runs/s6_*/best.pt ===
+run_step4 exit 0

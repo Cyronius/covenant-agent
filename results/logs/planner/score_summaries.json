@@ -1,0 +1,2466 @@
+{
+ "s6_A0_holdout_decoy_as_trained": {
+  "gen": "runs/pod_planner/out/s6_A0_holdout_decoy.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1595,
+  "compile": 1100,
+  "goal": 753,
+  "exact": 648,
+  "sandbox_error": 0,
+  "decoyed": 1100,
+  "decoy_called": 320,
+  "mean_passes": 22.616,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 19361
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1613
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 1491
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 7039
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2545
+   }
+  },
+  "call_agreement": {
+   "compared": 3131,
+   "same_tool": 1579,
+   "same_effect": 2639,
+   "chance_tool": 65.12677512254534,
+   "chance_tool_sig": 1312.3333333333303,
+   "chance_effect": 932.7965352976588,
+   "no_call_on_line": 246
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 97,
+    "goal": 95
+   },
+   "19": {
+    "n": 84,
+    "compile": 16,
+    "goal": 8
+   },
+   "2": {
+    "n": 84,
+    "compile": 29,
+    "goal": 11
+   },
+   "8": {
+    "n": 87,
+    "compile": 58,
+    "goal": 38
+   },
+   "18": {
+    "n": 99,
+    "compile": 72,
+    "goal": 58
+   },
+   "12": {
+    "n": 101,
+    "compile": 35,
+    "goal": 15
+   },
+   "10": {
+    "n": 174,
+    "compile": 121,
+    "goal": 84
+   },
+   "1": {
+    "n": 93,
+    "compile": 40,
+    "goal": 32
+   },
+   "9": {
+    "n": 89,
+    "compile": 32,
+    "goal": 5
+   },
+   "4": {
+    "n": 90,
+    "compile": 19,
+    "goal": 11
+   },
+   "13": {
+    "n": 99,
+    "compile": 57,
+    "goal": 29
+   },
+   "14": {
+    "n": 95,
+    "compile": 41,
+    "goal": 41
+   },
+   "6": {
+    "n": 88,
+    "compile": 26,
+    "goal": 4
+   },
+   "0": {
+    "n": 88,
+    "compile": 83,
+    "goal": 59
+   },
+   "7": {
+    "n": 124,
+    "compile": 57,
+    "goal": 39
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 85
+   },
+   "3": {
+    "n": 89,
+    "compile": 25,
+    "goal": 3
+   },
+   "5": {
+    "n": 117,
+    "compile": 65,
+    "goal": 22
+   },
+   "11": {
+    "n": 108,
+    "compile": 64,
+    "goal": 61
+   },
+   "15": {
+    "n": 97,
+    "compile": 66,
+    "goal": 53
+   }
+  }
+ },
+ "s6_A0_holdout_flip_as_trained": {
+  "gen": "runs/pod_planner/out/s6_A0_holdout_flip.jsonl",
+  "split": "holdout",
+  "n": 472,
+  "parse": 372,
+  "compile": 236,
+  "goal": 120,
+  "exact": 98,
+  "sandbox_error": 0,
+  "decoyed": 236,
+  "decoy_called": 105,
+  "mean_passes": 26.4364406779661,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 7254,
+    "hit": 5772
+   },
+   "tool": {
+    "n": 907,
+    "hit": 362
+   },
+   "reg": {
+    "n": 2590,
+    "hit": 2062
+   },
+   "field": {
+    "n": 674,
+    "hit": 415
+   },
+   "const": {
+    "n": 816,
+    "hit": 576
+   }
+  },
+  "call_agreement": {
+   "compared": 852,
+   "same_tool": 388,
+   "same_effect": 735,
+   "chance_tool": 17.38513468563026,
+   "chance_tool_sig": 354.9999999999995,
+   "chance_effect": 258.87662927700825,
+   "no_call_on_line": 55
+  },
+  "by_level": {
+   "10": {
+    "n": 108,
+    "compile": 73,
+    "goal": 42
+   },
+   "6": {
+    "n": 54,
+    "compile": 15,
+    "goal": 5
+   },
+   "5": {
+    "n": 50,
+    "compile": 26,
+    "goal": 11
+   },
+   "1": {
+    "n": 49,
+    "compile": 21,
+    "goal": 19
+   },
+   "3": {
+    "n": 48,
+    "compile": 19,
+    "goal": 4
+   },
+   "8": {
+    "n": 37,
+    "compile": 29,
+    "goal": 14
+   },
+   "7": {
+    "n": 38,
+    "compile": 16,
+    "goal": 13
+   },
+   "4": {
+    "n": 28,
+    "compile": 7,
+    "goal": 2
+   },
+   "2": {
+    "n": 50,
+    "compile": 23,
+    "goal": 7
+   },
+   "13": {
+    "n": 10,
+    "compile": 7,
+    "goal": 3
+   }
+  }
+ },
+ "s6_A0_holdout_plain_as_trained": {
+  "gen": "runs/pod_planner/out/s6_A0_holdout_plain.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1501,
+  "compile": 1023,
+  "goal": 917,
+  "exact": 821,
+  "sandbox_error": 0,
+  "decoyed": 0,
+  "decoy_called": 0,
+  "mean_passes": 22.778,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 18453
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1524
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 1814
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 6681
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2390
+   }
+  },
+  "call_agreement": {
+   "compared": 3117,
+   "same_tool": 1955,
+   "same_effect": 2525,
+   "chance_tool": 143.61363636363734,
+   "chance_tool_sig": 3117.0,
+   "chance_effect": 1006.5000000000076,
+   "no_call_on_line": 260
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 97,
+    "goal": 95
+   },
+   "19": {
+    "n": 84,
+    "compile": 12,
+    "goal": 12
+   },
+   "2": {
+    "n": 84,
+    "compile": 23,
+    "goal": 21
+   },
+   "8": {
+    "n": 87,
+    "compile": 58,
+    "goal": 56
+   },
+   "18": {
+    "n": 99,
+    "compile": 67,
+    "goal": 63
+   },
+   "12": {
+    "n": 101,
+    "compile": 30,
+    "goal": 22
+   },
+   "10": {
+    "n": 174,
+    "compile": 110,
+    "goal": 100
+   },
+   "1": {
+    "n": 93,
+    "compile": 40,
+    "goal": 40
+   },
+   "9": {
+    "n": 89,
+    "compile": 28,
+    "goal": 14
+   },
+   "4": {
+    "n": 90,
+    "compile": 16,
+    "goal": 16
+   },
+   "13": {
+    "n": 99,
+    "compile": 43,
+    "goal": 40
+   },
+   "14": {
+    "n": 95,
+    "compile": 38,
+    "goal": 38
+   },
+   "6": {
+    "n": 88,
+    "compile": 20,
+    "goal": 15
+   },
+   "0": {
+    "n": 88,
+    "compile": 80,
+    "goal": 76
+   },
+   "7": {
+    "n": 124,
+    "compile": 54,
+    "goal": 53
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 97
+   },
+   "3": {
+    "n": 89,
+    "compile": 21,
+    "goal": 11
+   },
+   "5": {
+    "n": 117,
+    "compile": 64,
+    "goal": 34
+   },
+   "11": {
+    "n": 108,
+    "compile": 62,
+    "goal": 60
+   },
+   "15": {
+    "n": 97,
+    "compile": 63,
+    "goal": 54
+   }
+  }
+ },
+ "s6_A0_test_as_trained": {
+  "gen": "runs/pod_planner/out/s6_A0_test.jsonl",
+  "split": "test",
+  "n": 1000,
+  "parse": 999,
+  "compile": 998,
+  "goal": 858,
+  "exact": 776,
+  "sandbox_error": 0,
+  "decoyed": 998,
+  "decoy_called": 91,
+  "mean_passes": 23.823,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 12822,
+    "hit": 12279
+   },
+   "tool": {
+    "n": 1699,
+    "hit": 1566
+   },
+   "reg": {
+    "n": 4778,
+    "hit": 4671
+   },
+   "field": {
+    "n": 1293,
+    "hit": 1166
+   },
+   "const": {
+    "n": 1746,
+    "hit": 1630
+   }
+  },
+  "call_agreement": {
+   "compared": 1685,
+   "same_tool": 1571,
+   "same_effect": 1672,
+   "chance_tool": 34.785116269558976,
+   "chance_tool_sig": 703.3333333333343,
+   "chance_effect": 492.3824909472696,
+   "no_call_on_line": 14
+  },
+  "by_level": {
+   "9": {
+    "n": 39,
+    "compile": 39,
+    "goal": 26
+   },
+   "8": {
+    "n": 37,
+    "compile": 37,
+    "goal": 34
+   },
+   "4": {
+    "n": 52,
+    "compile": 52,
+    "goal": 49
+   },
+   "13": {
+    "n": 42,
+    "compile": 42,
+    "goal": 39
+   },
+   "1": {
+    "n": 33,
+    "compile": 33,
+    "goal": 33
+   },
+   "5": {
+    "n": 61,
+    "compile": 61,
+    "goal": 39
+   },
+   "2": {
+    "n": 45,
+    "compile": 44,
+    "goal": 34
+   },
+   "19": {
+    "n": 50,
+    "compile": 50,
+    "goal": 46
+   },
+   "7": {
+    "n": 69,
+    "compile": 69,
+    "goal": 56
+   },
+   "10": {
+    "n": 93,
+    "compile": 93,
+    "goal": 79
+   },
+   "18": {
+    "n": 56,
+    "compile": 56,
+    "goal": 56
+   },
+   "6": {
+    "n": 43,
+    "compile": 43,
+    "goal": 35
+   },
+   "17": {
+    "n": 56,
+    "compile": 56,
+    "goal": 55
+   },
+   "14": {
+    "n": 62,
+    "compile": 62,
+    "goal": 62
+   },
+   "3": {
+    "n": 39,
+    "compile": 38,
+    "goal": 22
+   },
+   "15": {
+    "n": 51,
+    "compile": 51,
+    "goal": 47
+   },
+   "12": {
+    "n": 45,
+    "compile": 45,
+    "goal": 31
+   },
+   "16": {
+    "n": 38,
+    "compile": 38,
+    "goal": 38
+   },
+   "0": {
+    "n": 46,
+    "compile": 46,
+    "goal": 39
+   },
+   "11": {
+    "n": 43,
+    "compile": 43,
+    "goal": 38
+   }
+  }
+ },
+ "s6_SPt_holdout_decoy_as_trained": {
+  "gen": "runs/pod_planner/out/s6_SPt_holdout_decoy.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1485,
+  "compile": 1275,
+  "goal": 969,
+  "exact": 879,
+  "sandbox_error": 0,
+  "decoyed": 1275,
+  "decoy_called": 265,
+  "mean_passes": 22.4905,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 17441
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1330
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 1808
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 5935
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2597
+   }
+  },
+  "call_agreement": {
+   "compared": 3227,
+   "same_tool": 1989,
+   "same_effect": 2608,
+   "chance_tool": 67.24605969955805,
+   "chance_tool_sig": 1349.6666666666617,
+   "chance_effect": 951.5080293737906,
+   "no_call_on_line": 150
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 97,
+    "goal": 96
+   },
+   "19": {
+    "n": 84,
+    "compile": 18,
+    "goal": 9
+   },
+   "2": {
+    "n": 84,
+    "compile": 33,
+    "goal": 14
+   },
+   "8": {
+    "n": 87,
+    "compile": 74,
+    "goal": 57
+   },
+   "18": {
+    "n": 99,
+    "compile": 93,
+    "goal": 83
+   },
+   "12": {
+    "n": 101,
+    "compile": 52,
+    "goal": 36
+   },
+   "10": {
+    "n": 174,
+    "compile": 118,
+    "goal": 93
+   },
+   "1": {
+    "n": 93,
+    "compile": 70,
+    "goal": 63
+   },
+   "9": {
+    "n": 89,
+    "compile": 31,
+    "goal": 6
+   },
+   "4": {
+    "n": 90,
+    "compile": 20,
+    "goal": 16
+   },
+   "13": {
+    "n": 99,
+    "compile": 95,
+    "goal": 52
+   },
+   "14": {
+    "n": 95,
+    "compile": 46,
+    "goal": 45
+   },
+   "6": {
+    "n": 88,
+    "compile": 23,
+    "goal": 8
+   },
+   "0": {
+    "n": 88,
+    "compile": 84,
+    "goal": 73
+   },
+   "7": {
+    "n": 124,
+    "compile": 52,
+    "goal": 39
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 82
+   },
+   "3": {
+    "n": 89,
+    "compile": 30,
+    "goal": 15
+   },
+   "5": {
+    "n": 117,
+    "compile": 91,
+    "goal": 38
+   },
+   "11": {
+    "n": 108,
+    "compile": 69,
+    "goal": 69
+   },
+   "15": {
+    "n": 97,
+    "compile": 82,
+    "goal": 75
+   }
+  }
+ },
+ "s6_SPt_holdout_flip_as_trained": {
+  "gen": "runs/pod_planner/out/s6_SPt_holdout_flip.jsonl",
+  "split": "holdout",
+  "n": 472,
+  "parse": 360,
+  "compile": 274,
+  "goal": 178,
+  "exact": 150,
+  "sandbox_error": 0,
+  "decoyed": 274,
+  "decoy_called": 64,
+  "mean_passes": 25.572033898305083,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 7254,
+    "hit": 4962
+   },
+   "tool": {
+    "n": 907,
+    "hit": 481
+   },
+   "reg": {
+    "n": 2590,
+    "hit": 1686
+   },
+   "field": {
+    "n": 674,
+    "hit": 319
+   },
+   "const": {
+    "n": 816,
+    "hit": 552
+   }
+  },
+  "call_agreement": {
+   "compared": 841,
+   "same_tool": 509,
+   "same_effect": 683,
+   "chance_tool": 17.169367061438574,
+   "chance_tool_sig": 351.333333333333,
+   "chance_effect": 257.22626934158535,
+   "no_call_on_line": 66
+  },
+  "by_level": {
+   "10": {
+    "n": 108,
+    "compile": 75,
+    "goal": 58
+   },
+   "6": {
+    "n": 54,
+    "compile": 14,
+    "goal": 5
+   },
+   "5": {
+    "n": 50,
+    "compile": 35,
+    "goal": 14
+   },
+   "1": {
+    "n": 49,
+    "compile": 37,
+    "goal": 35
+   },
+   "3": {
+    "n": 48,
+    "compile": 20,
+    "goal": 7
+   },
+   "8": {
+    "n": 37,
+    "compile": 35,
+    "goal": 29
+   },
+   "7": {
+    "n": 38,
+    "compile": 19,
+    "goal": 13
+   },
+   "4": {
+    "n": 28,
+    "compile": 7,
+    "goal": 4
+   },
+   "2": {
+    "n": 50,
+    "compile": 22,
+    "goal": 10
+   },
+   "13": {
+    "n": 10,
+    "compile": 10,
+    "goal": 3
+   }
+  }
+ },
+ "s6_SPt_holdout_plain_as_trained": {
+  "gen": "runs/pod_planner/out/s6_SPt_holdout_plain.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1421,
+  "compile": 1230,
+  "goal": 1121,
+  "exact": 1041,
+  "sandbox_error": 0,
+  "decoyed": 0,
+  "decoy_called": 0,
+  "mean_passes": 22.6895,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 16479
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1213
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 2036
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 5455
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2497
+   }
+  },
+  "call_agreement": {
+   "compared": 3225,
+   "same_tool": 2295,
+   "same_effect": 2564,
+   "chance_tool": 148.78787878787924,
+   "chance_tool_sig": 3225.0,
+   "chance_effect": 1028.3863636363717,
+   "no_call_on_line": 152
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 96,
+    "goal": 95
+   },
+   "19": {
+    "n": 84,
+    "compile": 15,
+    "goal": 14
+   },
+   "2": {
+    "n": 84,
+    "compile": 28,
+    "goal": 20
+   },
+   "8": {
+    "n": 87,
+    "compile": 72,
+    "goal": 68
+   },
+   "18": {
+    "n": 99,
+    "compile": 93,
+    "goal": 93
+   },
+   "12": {
+    "n": 101,
+    "compile": 52,
+    "goal": 51
+   },
+   "10": {
+    "n": 174,
+    "compile": 119,
+    "goal": 105
+   },
+   "1": {
+    "n": 93,
+    "compile": 71,
+    "goal": 71
+   },
+   "9": {
+    "n": 89,
+    "compile": 25,
+    "goal": 16
+   },
+   "4": {
+    "n": 90,
+    "compile": 21,
+    "goal": 17
+   },
+   "13": {
+    "n": 99,
+    "compile": 95,
+    "goal": 90
+   },
+   "14": {
+    "n": 95,
+    "compile": 37,
+    "goal": 36
+   },
+   "6": {
+    "n": 88,
+    "compile": 17,
+    "goal": 13
+   },
+   "0": {
+    "n": 88,
+    "compile": 86,
+    "goal": 85
+   },
+   "7": {
+    "n": 124,
+    "compile": 43,
+    "goal": 40
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 97
+   },
+   "3": {
+    "n": 89,
+    "compile": 27,
+    "goal": 17
+   },
+   "5": {
+    "n": 117,
+    "compile": 89,
+    "goal": 47
+   },
+   "11": {
+    "n": 108,
+    "compile": 66,
+    "goal": 66
+   },
+   "15": {
+    "n": 97,
+    "compile": 81,
+    "goal": 80
+   }
+  }
+ },
+ "s6_SPt_test_as_trained": {
+  "gen": "runs/pod_planner/out/s6_SPt_test.jsonl",
+  "split": "test",
+  "n": 1000,
+  "parse": 1000,
+  "compile": 999,
+  "goal": 901,
+  "exact": 826,
+  "sandbox_error": 0,
+  "decoyed": 999,
+  "decoy_called": 46,
+  "mean_passes": 23.703,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 12822,
+    "hit": 12285
+   },
+   "tool": {
+    "n": 1699,
+    "hit": 1605
+   },
+   "reg": {
+    "n": 4778,
+    "hit": 4669
+   },
+   "field": {
+    "n": 1293,
+    "hit": 1171
+   },
+   "const": {
+    "n": 1746,
+    "hit": 1627
+   }
+  },
+  "call_agreement": {
+   "compared": 1679,
+   "same_tool": 1612,
+   "same_effect": 1667,
+   "chance_tool": 34.66460698073707,
+   "chance_tool_sig": 700.8333333333342,
+   "chance_effect": 491.3163167754732,
+   "no_call_on_line": 20
+  },
+  "by_level": {
+   "9": {
+    "n": 39,
+    "compile": 39,
+    "goal": 26
+   },
+   "8": {
+    "n": 37,
+    "compile": 37,
+    "goal": 34
+   },
+   "4": {
+    "n": 52,
+    "compile": 52,
+    "goal": 50
+   },
+   "13": {
+    "n": 42,
+    "compile": 42,
+    "goal": 41
+   },
+   "1": {
+    "n": 33,
+    "compile": 33,
+    "goal": 33
+   },
+   "5": {
+    "n": 61,
+    "compile": 61,
+    "goal": 33
+   },
+   "2": {
+    "n": 45,
+    "compile": 45,
+    "goal": 44
+   },
+   "19": {
+    "n": 50,
+    "compile": 50,
+    "goal": 49
+   },
+   "7": {
+    "n": 69,
+    "compile": 69,
+    "goal": 60
+   },
+   "10": {
+    "n": 93,
+    "compile": 93,
+    "goal": 89
+   },
+   "18": {
+    "n": 56,
+    "compile": 56,
+    "goal": 56
+   },
+   "6": {
+    "n": 43,
+    "compile": 43,
+    "goal": 41
+   },
+   "17": {
+    "n": 56,
+    "compile": 56,
+    "goal": 56
+   },
+   "14": {
+    "n": 62,
+    "compile": 61,
+    "goal": 61
+   },
+   "3": {
+    "n": 39,
+    "compile": 39,
+    "goal": 26
+   },
+   "15": {
+    "n": 51,
+    "compile": 51,
+    "goal": 48
+   },
+   "12": {
+    "n": 45,
+    "compile": 45,
+    "goal": 31
+   },
+   "16": {
+    "n": 38,
+    "compile": 38,
+    "goal": 38
+   },
+   "0": {
+    "n": 46,
+    "compile": 46,
+    "goal": 46
+   },
+   "11": {
+    "n": 43,
+    "compile": 43,
+    "goal": 39
+   }
+  }
+ },
+ "s6_A0_holdout_decoy_mask": {
+  "gen": "runs/pod_planner/out2/s6_A0_holdout_decoy_mask.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1887,
+  "compile": 1150,
+  "goal": 771,
+  "exact": 661,
+  "sandbox_error": 0,
+  "decoyed": 1150,
+  "decoy_called": 340,
+  "mean_passes": 22.2765,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 18979
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1578
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 1497
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 6904
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2573
+   }
+  },
+  "call_agreement": {
+   "compared": 3049,
+   "same_tool": 1563,
+   "same_effect": 2766,
+   "chance_tool": 63.43095767624607,
+   "chance_tool_sig": 1277.6666666666647,
+   "chance_effect": 917.0018686926328,
+   "no_call_on_line": 328
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 97,
+    "goal": 95
+   },
+   "19": {
+    "n": 84,
+    "compile": 16,
+    "goal": 8
+   },
+   "2": {
+    "n": 84,
+    "compile": 29,
+    "goal": 11
+   },
+   "8": {
+    "n": 87,
+    "compile": 62,
+    "goal": 39
+   },
+   "18": {
+    "n": 99,
+    "compile": 75,
+    "goal": 61
+   },
+   "12": {
+    "n": 101,
+    "compile": 35,
+    "goal": 15
+   },
+   "10": {
+    "n": 174,
+    "compile": 125,
+    "goal": 85
+   },
+   "1": {
+    "n": 93,
+    "compile": 46,
+    "goal": 32
+   },
+   "9": {
+    "n": 89,
+    "compile": 34,
+    "goal": 5
+   },
+   "4": {
+    "n": 90,
+    "compile": 22,
+    "goal": 14
+   },
+   "13": {
+    "n": 99,
+    "compile": 67,
+    "goal": 30
+   },
+   "14": {
+    "n": 95,
+    "compile": 46,
+    "goal": 46
+   },
+   "6": {
+    "n": 88,
+    "compile": 29,
+    "goal": 5
+   },
+   "0": {
+    "n": 88,
+    "compile": 83,
+    "goal": 59
+   },
+   "7": {
+    "n": 124,
+    "compile": 60,
+    "goal": 41
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 85
+   },
+   "3": {
+    "n": 89,
+    "compile": 28,
+    "goal": 4
+   },
+   "5": {
+    "n": 117,
+    "compile": 66,
+    "goal": 22
+   },
+   "11": {
+    "n": 108,
+    "compile": 64,
+    "goal": 61
+   },
+   "15": {
+    "n": 97,
+    "compile": 69,
+    "goal": 53
+   }
+  }
+ },
+ "s6_A0_holdout_flip_mask": {
+  "gen": "runs/pod_planner/out2/s6_A0_holdout_flip_mask.jsonl",
+  "split": "holdout",
+  "n": 472,
+  "parse": 451,
+  "compile": 249,
+  "goal": 122,
+  "exact": 98,
+  "sandbox_error": 0,
+  "decoyed": 249,
+  "decoy_called": 113,
+  "mean_passes": 26.402542372881356,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 7254,
+    "hit": 5773
+   },
+   "tool": {
+    "n": 907,
+    "hit": 369
+   },
+   "reg": {
+    "n": 2590,
+    "hit": 2069
+   },
+   "field": {
+    "n": 674,
+    "hit": 412
+   },
+   "const": {
+    "n": 816,
+    "hit": 597
+   }
+  },
+  "call_agreement": {
+   "compared": 833,
+   "same_tool": 381,
+   "same_effect": 768,
+   "chance_tool": 16.999935445019396,
+   "chance_tool_sig": 346.9999999999995,
+   "chance_effect": 255.09993550879665,
+   "no_call_on_line": 74
+  },
+  "by_level": {
+   "10": {
+    "n": 108,
+    "compile": 75,
+    "goal": 42
+   },
+   "6": {
+    "n": 54,
+    "compile": 15,
+    "goal": 5
+   },
+   "5": {
+    "n": 50,
+    "compile": 26,
+    "goal": 11
+   },
+   "1": {
+    "n": 49,
+    "compile": 25,
+    "goal": 19
+   },
+   "3": {
+    "n": 48,
+    "compile": 23,
+    "goal": 6
+   },
+   "8": {
+    "n": 37,
+    "compile": 29,
+    "goal": 14
+   },
+   "7": {
+    "n": 38,
+    "compile": 16,
+    "goal": 13
+   },
+   "4": {
+    "n": 28,
+    "compile": 7,
+    "goal": 2
+   },
+   "2": {
+    "n": 50,
+    "compile": 24,
+    "goal": 7
+   },
+   "13": {
+    "n": 10,
+    "compile": 9,
+    "goal": 3
+   }
+  }
+ },
+ "s6_A0_holdout_plain_mask": {
+  "gen": "runs/pod_planner/out2/s6_A0_holdout_plain_mask.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1873,
+  "compile": 1074,
+  "goal": 942,
+  "exact": 840,
+  "sandbox_error": 0,
+  "decoyed": 0,
+  "decoy_called": 0,
+  "mean_passes": 22.4945,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 18566
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1555
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 1863
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 6782
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2507
+   }
+  },
+  "call_agreement": {
+   "compared": 3050,
+   "same_tool": 1968,
+   "same_effect": 2747,
+   "chance_tool": 140.60606060606176,
+   "chance_tool_sig": 3050.0,
+   "chance_effect": 991.1818181818276,
+   "no_call_on_line": 327
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 97,
+    "goal": 95
+   },
+   "19": {
+    "n": 84,
+    "compile": 14,
+    "goal": 13
+   },
+   "2": {
+    "n": 84,
+    "compile": 24,
+    "goal": 21
+   },
+   "8": {
+    "n": 87,
+    "compile": 60,
+    "goal": 56
+   },
+   "18": {
+    "n": 99,
+    "compile": 73,
+    "goal": 69
+   },
+   "12": {
+    "n": 101,
+    "compile": 30,
+    "goal": 22
+   },
+   "10": {
+    "n": 174,
+    "compile": 111,
+    "goal": 101
+   },
+   "1": {
+    "n": 93,
+    "compile": 42,
+    "goal": 40
+   },
+   "9": {
+    "n": 89,
+    "compile": 31,
+    "goal": 14
+   },
+   "4": {
+    "n": 90,
+    "compile": 17,
+    "goal": 16
+   },
+   "13": {
+    "n": 99,
+    "compile": 52,
+    "goal": 46
+   },
+   "14": {
+    "n": 95,
+    "compile": 41,
+    "goal": 41
+   },
+   "6": {
+    "n": 88,
+    "compile": 23,
+    "goal": 17
+   },
+   "0": {
+    "n": 88,
+    "compile": 81,
+    "goal": 77
+   },
+   "7": {
+    "n": 124,
+    "compile": 58,
+    "goal": 55
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 97
+   },
+   "3": {
+    "n": 89,
+    "compile": 28,
+    "goal": 14
+   },
+   "5": {
+    "n": 117,
+    "compile": 64,
+    "goal": 34
+   },
+   "11": {
+    "n": 108,
+    "compile": 64,
+    "goal": 60
+   },
+   "15": {
+    "n": 97,
+    "compile": 67,
+    "goal": 54
+   }
+  }
+ },
+ "s6_A0_test_mask": {
+  "gen": "runs/pod_planner/out2/s6_A0_test_mask.jsonl",
+  "split": "test",
+  "n": 1000,
+  "parse": 999,
+  "compile": 998,
+  "goal": 858,
+  "exact": 776,
+  "sandbox_error": 0,
+  "decoyed": 998,
+  "decoy_called": 91,
+  "mean_passes": 23.823,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 12822,
+    "hit": 12279
+   },
+   "tool": {
+    "n": 1699,
+    "hit": 1566
+   },
+   "reg": {
+    "n": 4778,
+    "hit": 4671
+   },
+   "field": {
+    "n": 1293,
+    "hit": 1166
+   },
+   "const": {
+    "n": 1746,
+    "hit": 1630
+   }
+  },
+  "call_agreement": {
+   "compared": 1685,
+   "same_tool": 1571,
+   "same_effect": 1672,
+   "chance_tool": 34.785116269558976,
+   "chance_tool_sig": 703.3333333333343,
+   "chance_effect": 492.3824909472696,
+   "no_call_on_line": 14
+  },
+  "by_level": {
+   "9": {
+    "n": 39,
+    "compile": 39,
+    "goal": 26
+   },
+   "8": {
+    "n": 37,
+    "compile": 37,
+    "goal": 34
+   },
+   "4": {
+    "n": 52,
+    "compile": 52,
+    "goal": 49
+   },
+   "13": {
+    "n": 42,
+    "compile": 42,
+    "goal": 39
+   },
+   "1": {
+    "n": 33,
+    "compile": 33,
+    "goal": 33
+   },
+   "5": {
+    "n": 61,
+    "compile": 61,
+    "goal": 39
+   },
+   "2": {
+    "n": 45,
+    "compile": 44,
+    "goal": 34
+   },
+   "19": {
+    "n": 50,
+    "compile": 50,
+    "goal": 46
+   },
+   "7": {
+    "n": 69,
+    "compile": 69,
+    "goal": 56
+   },
+   "10": {
+    "n": 93,
+    "compile": 93,
+    "goal": 79
+   },
+   "18": {
+    "n": 56,
+    "compile": 56,
+    "goal": 56
+   },
+   "6": {
+    "n": 43,
+    "compile": 43,
+    "goal": 35
+   },
+   "17": {
+    "n": 56,
+    "compile": 56,
+    "goal": 55
+   },
+   "14": {
+    "n": 62,
+    "compile": 62,
+    "goal": 62
+   },
+   "3": {
+    "n": 39,
+    "compile": 38,
+    "goal": 22
+   },
+   "15": {
+    "n": 51,
+    "compile": 51,
+    "goal": 47
+   },
+   "12": {
+    "n": 45,
+    "compile": 45,
+    "goal": 31
+   },
+   "16": {
+    "n": 38,
+    "compile": 38,
+    "goal": 38
+   },
+   "0": {
+    "n": 46,
+    "compile": 46,
+    "goal": 39
+   },
+   "11": {
+    "n": 43,
+    "compile": 43,
+    "goal": 38
+   }
+  }
+ },
+ "s6_SPt_holdout_decoy_mask": {
+  "gen": "runs/pod_planner/out2/s6_SPt_holdout_decoy_mask.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1949,
+  "compile": 1345,
+  "goal": 1007,
+  "exact": 903,
+  "sandbox_error": 0,
+  "decoyed": 1345,
+  "decoy_called": 283,
+  "mean_passes": 20.6405,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 17861
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1451
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 1854
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 6248
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2655
+   }
+  },
+  "call_agreement": {
+   "compared": 3061,
+   "same_tool": 1937,
+   "same_effect": 2779,
+   "chance_tool": 63.894501615640586,
+   "chance_tool_sig": 1281.1666666666645,
+   "chance_effect": 917.2147634934317,
+   "no_call_on_line": 316
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 97,
+    "goal": 96
+   },
+   "19": {
+    "n": 84,
+    "compile": 20,
+    "goal": 9
+   },
+   "2": {
+    "n": 84,
+    "compile": 36,
+    "goal": 17
+   },
+   "8": {
+    "n": 87,
+    "compile": 75,
+    "goal": 58
+   },
+   "18": {
+    "n": 99,
+    "compile": 93,
+    "goal": 83
+   },
+   "12": {
+    "n": 101,
+    "compile": 56,
+    "goal": 40
+   },
+   "10": {
+    "n": 174,
+    "compile": 125,
+    "goal": 95
+   },
+   "1": {
+    "n": 93,
+    "compile": 76,
+    "goal": 66
+   },
+   "9": {
+    "n": 89,
+    "compile": 35,
+    "goal": 7
+   },
+   "4": {
+    "n": 90,
+    "compile": 25,
+    "goal": 19
+   },
+   "13": {
+    "n": 99,
+    "compile": 95,
+    "goal": 52
+   },
+   "14": {
+    "n": 95,
+    "compile": 52,
+    "goal": 51
+   },
+   "6": {
+    "n": 88,
+    "compile": 27,
+    "goal": 9
+   },
+   "0": {
+    "n": 88,
+    "compile": 84,
+    "goal": 73
+   },
+   "7": {
+    "n": 124,
+    "compile": 64,
+    "goal": 46
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 82
+   },
+   "3": {
+    "n": 89,
+    "compile": 36,
+    "goal": 17
+   },
+   "5": {
+    "n": 117,
+    "compile": 96,
+    "goal": 41
+   },
+   "11": {
+    "n": 108,
+    "compile": 73,
+    "goal": 71
+   },
+   "15": {
+    "n": 97,
+    "compile": 83,
+    "goal": 75
+   }
+  }
+ },
+ "s6_SPt_holdout_decoy_mask_bo4": {
+  "gen": "runs/pod_planner/out2/s6_SPt_holdout_decoy_mask_bo4.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1956,
+  "compile": 1396,
+  "goal": 1034,
+  "exact": 918,
+  "sandbox_error": 0,
+  "decoyed": 1396,
+  "decoy_called": 301,
+  "mean_passes": 20.6405,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 18072
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1478
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 1896
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 6339
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2678
+   }
+  },
+  "call_agreement": {
+   "compared": 3068,
+   "same_tool": 1976,
+   "same_effect": 2802,
+   "chance_tool": 64.04000468643412,
+   "chance_tool_sig": 1283.4999999999977,
+   "chance_effect": 919.0754070515026,
+   "no_call_on_line": 309
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 97,
+    "goal": 96
+   },
+   "19": {
+    "n": 84,
+    "compile": 22,
+    "goal": 10
+   },
+   "2": {
+    "n": 84,
+    "compile": 37,
+    "goal": 18
+   },
+   "8": {
+    "n": 87,
+    "compile": 75,
+    "goal": 58
+   },
+   "18": {
+    "n": 99,
+    "compile": 94,
+    "goal": 84
+   },
+   "12": {
+    "n": 101,
+    "compile": 59,
+    "goal": 40
+   },
+   "10": {
+    "n": 174,
+    "compile": 128,
+    "goal": 97
+   },
+   "1": {
+    "n": 93,
+    "compile": 83,
+    "goal": 72
+   },
+   "9": {
+    "n": 89,
+    "compile": 39,
+    "goal": 10
+   },
+   "4": {
+    "n": 90,
+    "compile": 26,
+    "goal": 20
+   },
+   "13": {
+    "n": 99,
+    "compile": 98,
+    "goal": 53
+   },
+   "14": {
+    "n": 95,
+    "compile": 54,
+    "goal": 53
+   },
+   "6": {
+    "n": 88,
+    "compile": 29,
+    "goal": 10
+   },
+   "0": {
+    "n": 88,
+    "compile": 86,
+    "goal": 74
+   },
+   "7": {
+    "n": 124,
+    "compile": 71,
+    "goal": 47
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 82
+   },
+   "3": {
+    "n": 89,
+    "compile": 40,
+    "goal": 18
+   },
+   "5": {
+    "n": 117,
+    "compile": 102,
+    "goal": 45
+   },
+   "11": {
+    "n": 108,
+    "compile": 76,
+    "goal": 72
+   },
+   "15": {
+    "n": 97,
+    "compile": 83,
+    "goal": 75
+   }
+  }
+ },
+ "s6_SPt_holdout_flip_mask": {
+  "gen": "runs/pod_planner/out2/s6_SPt_holdout_flip_mask.jsonl",
+  "split": "holdout",
+  "n": 472,
+  "parse": 459,
+  "compile": 285,
+  "goal": 182,
+  "exact": 151,
+  "sandbox_error": 0,
+  "decoyed": 285,
+  "decoy_called": 70,
+  "mean_passes": 23.766949152542374,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 7254,
+    "hit": 5150
+   },
+   "tool": {
+    "n": 907,
+    "hit": 483
+   },
+   "reg": {
+    "n": 2590,
+    "hit": 1802
+   },
+   "field": {
+    "n": 674,
+    "hit": 351
+   },
+   "const": {
+    "n": 816,
+    "hit": 562
+   }
+  },
+  "call_agreement": {
+   "compared": 819,
+   "same_tool": 502,
+   "same_effect": 734,
+   "chance_tool": 16.721599464967284,
+   "chance_tool_sig": 341.16666666666646,
+   "chance_effect": 250.51689054210658,
+   "no_call_on_line": 88
+  },
+  "by_level": {
+   "10": {
+    "n": 108,
+    "compile": 76,
+    "goal": 59
+   },
+   "6": {
+    "n": 54,
+    "compile": 17,
+    "goal": 5
+   },
+   "5": {
+    "n": 50,
+    "compile": 35,
+    "goal": 14
+   },
+   "1": {
+    "n": 49,
+    "compile": 38,
+    "goal": 35
+   },
+   "3": {
+    "n": 48,
+    "compile": 22,
+    "goal": 8
+   },
+   "8": {
+    "n": 37,
+    "compile": 35,
+    "goal": 29
+   },
+   "7": {
+    "n": 38,
+    "compile": 21,
+    "goal": 14
+   },
+   "4": {
+    "n": 28,
+    "compile": 8,
+    "goal": 5
+   },
+   "2": {
+    "n": 50,
+    "compile": 23,
+    "goal": 10
+   },
+   "13": {
+    "n": 10,
+    "compile": 10,
+    "goal": 3
+   }
+  }
+ },
+ "s6_SPt_holdout_plain_mask": {
+  "gen": "runs/pod_planner/out2/s6_SPt_holdout_plain_mask.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1909,
+  "compile": 1303,
+  "goal": 1172,
+  "exact": 1072,
+  "sandbox_error": 0,
+  "decoyed": 0,
+  "decoy_called": 0,
+  "mean_passes": 21.1455,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 17461
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1394
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 2147
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 6060
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2614
+   }
+  },
+  "call_agreement": {
+   "compared": 3098,
+   "same_tool": 2277,
+   "same_effect": 2854,
+   "chance_tool": 143.05303030303122,
+   "chance_tool_sig": 3098.0,
+   "chance_effect": 1001.6818181818269,
+   "no_call_on_line": 279
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 96,
+    "goal": 95
+   },
+   "19": {
+    "n": 84,
+    "compile": 16,
+    "goal": 15
+   },
+   "2": {
+    "n": 84,
+    "compile": 33,
+    "goal": 24
+   },
+   "8": {
+    "n": 87,
+    "compile": 74,
+    "goal": 70
+   },
+   "18": {
+    "n": 99,
+    "compile": 93,
+    "goal": 93
+   },
+   "12": {
+    "n": 101,
+    "compile": 53,
+    "goal": 52
+   },
+   "10": {
+    "n": 174,
+    "compile": 123,
+    "goal": 108
+   },
+   "1": {
+    "n": 93,
+    "compile": 74,
+    "goal": 74
+   },
+   "9": {
+    "n": 89,
+    "compile": 31,
+    "goal": 18
+   },
+   "4": {
+    "n": 90,
+    "compile": 23,
+    "goal": 19
+   },
+   "13": {
+    "n": 99,
+    "compile": 95,
+    "goal": 90
+   },
+   "14": {
+    "n": 95,
+    "compile": 43,
+    "goal": 42
+   },
+   "6": {
+    "n": 88,
+    "compile": 24,
+    "goal": 18
+   },
+   "0": {
+    "n": 88,
+    "compile": 86,
+    "goal": 85
+   },
+   "7": {
+    "n": 124,
+    "compile": 60,
+    "goal": 52
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 97
+   },
+   "3": {
+    "n": 89,
+    "compile": 33,
+    "goal": 20
+   },
+   "5": {
+    "n": 117,
+    "compile": 96,
+    "goal": 51
+   },
+   "11": {
+    "n": 108,
+    "compile": 71,
+    "goal": 69
+   },
+   "15": {
+    "n": 97,
+    "compile": 82,
+    "goal": 80
+   }
+  }
+ },
+ "s6_SPt_holdout_plain_mask_bo4": {
+  "gen": "runs/pod_planner/out2/s6_SPt_holdout_plain_mask_bo4.jsonl",
+  "split": "holdout",
+  "n": 2000,
+  "parse": 1921,
+  "compile": 1365,
+  "goal": 1213,
+  "exact": 1102,
+  "sandbox_error": 0,
+  "decoyed": 0,
+  "decoy_called": 0,
+  "mean_passes": 21.1455,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 25395,
+    "hit": 17713
+   },
+   "field": {
+    "n": 2623,
+    "hit": 1433
+   },
+   "tool": {
+    "n": 3377,
+    "hit": 2201
+   },
+   "reg": {
+    "n": 9352,
+    "hit": 6182
+   },
+   "const": {
+    "n": 3544,
+    "hit": 2640
+   }
+  },
+  "call_agreement": {
+   "compared": 3099,
+   "same_tool": 2322,
+   "same_effect": 2869,
+   "chance_tool": 143.09848484848575,
+   "chance_tool_sig": 3099.0,
+   "chance_effect": 1001.1363636363726,
+   "no_call_on_line": 278
+  },
+  "by_level": {
+   "16": {
+    "n": 97,
+    "compile": 97,
+    "goal": 96
+   },
+   "19": {
+    "n": 84,
+    "compile": 19,
+    "goal": 18
+   },
+   "2": {
+    "n": 84,
+    "compile": 34,
+    "goal": 24
+   },
+   "8": {
+    "n": 87,
+    "compile": 78,
+    "goal": 74
+   },
+   "18": {
+    "n": 99,
+    "compile": 93,
+    "goal": 93
+   },
+   "12": {
+    "n": 101,
+    "compile": 57,
+    "goal": 56
+   },
+   "10": {
+    "n": 174,
+    "compile": 125,
+    "goal": 109
+   },
+   "1": {
+    "n": 93,
+    "compile": 80,
+    "goal": 80
+   },
+   "9": {
+    "n": 89,
+    "compile": 35,
+    "goal": 20
+   },
+   "4": {
+    "n": 90,
+    "compile": 27,
+    "goal": 23
+   },
+   "13": {
+    "n": 99,
+    "compile": 96,
+    "goal": 91
+   },
+   "14": {
+    "n": 95,
+    "compile": 47,
+    "goal": 46
+   },
+   "6": {
+    "n": 88,
+    "compile": 27,
+    "goal": 20
+   },
+   "0": {
+    "n": 88,
+    "compile": 86,
+    "goal": 85
+   },
+   "7": {
+    "n": 124,
+    "compile": 66,
+    "goal": 55
+   },
+   "17": {
+    "n": 97,
+    "compile": 97,
+    "goal": 97
+   },
+   "3": {
+    "n": 89,
+    "compile": 39,
+    "goal": 23
+   },
+   "5": {
+    "n": 117,
+    "compile": 103,
+    "goal": 53
+   },
+   "11": {
+    "n": 108,
+    "compile": 74,
+    "goal": 69
+   },
+   "15": {
+    "n": 97,
+    "compile": 85,
+    "goal": 81
+   }
+  }
+ },
+ "s6_SPt_test_mask": {
+  "gen": "runs/pod_planner/out2/s6_SPt_test_mask.jsonl",
+  "split": "test",
+  "n": 1000,
+  "parse": 1000,
+  "compile": 999,
+  "goal": 901,
+  "exact": 826,
+  "sandbox_error": 0,
+  "decoyed": 999,
+  "decoy_called": 46,
+  "mean_passes": 23.703,
+  "loops": 1,
+  "dec_layers": 4,
+  "slot_acc": {
+   "kw": {
+    "n": 12822,
+    "hit": 12285
+   },
+   "tool": {
+    "n": 1699,
+    "hit": 1605
+   },
+   "reg": {
+    "n": 4778,
+    "hit": 4669
+   },
+   "field": {
+    "n": 1293,
+    "hit": 1171
+   },
+   "const": {
+    "n": 1746,
+    "hit": 1627
+   }
+  },
+  "call_agreement": {
+   "compared": 1679,
+   "same_tool": 1612,
+   "same_effect": 1667,
+   "chance_tool": 34.66460698073707,
+   "chance_tool_sig": 700.8333333333342,
+   "chance_effect": 491.3163167754732,
+   "no_call_on_line": 20
+  },
+  "by_level": {
+   "9": {
+    "n": 39,
+    "compile": 39,
+    "goal": 26
+   },
+   "8": {
+    "n": 37,
+    "compile": 37,
+    "goal": 34
+   },
+   "4": {
+    "n": 52,
+    "compile": 52,
+    "goal": 50
+   },
+   "13": {
+    "n": 42,
+    "compile": 42,
+    "goal": 41
+   },
+   "1": {
+    "n": 33,
+    "compile": 33,
+    "goal": 33
+   },
+   "5": {
+    "n": 61,
+    "compile": 61,
+    "goal": 33
+   },
+   "2": {
+    "n": 45,
+    "compile": 45,
+    "goal": 44
+   },
+   "19": {
+    "n": 50,
+    "compile": 50,
+    "goal": 49
+   },
+   "7": {
+    "n": 69,
+    "compile": 69,
+    "goal": 60
+   },
+   "10": {
+    "n": 93,
+    "compile": 93,
+    "goal": 89
+   },
+   "18": {
+    "n": 56,
+    "compile": 56,
+    "goal": 56
+   },
+   "6": {
+    "n": 43,
+    "compile": 43,
+    "goal": 41
+   },
+   "17": {
+    "n": 56,
+    "compile": 56,
+    "goal": 56
+   },
+   "14": {
+    "n": 62,
+    "compile": 61,
+    "goal": 61
+   },
+   "3": {
+    "n": 39,
+    "compile": 39,
+    "goal": 26
+   },
+   "15": {
+    "n": 51,
+    "compile": 51,
+    "goal": 48
+   },
+   "12": {
+    "n": 45,
+    "compile": 45,
+    "goal": 31
+   },
+   "16": {
+    "n": 38,
+    "compile": 38,
+    "goal": 38
+   },
+   "0": {
+    "n": 46,
+    "compile": 46,
+    "goal": 46
+   },
+   "11": {
+    "n": 43,
+    "compile": 43,
+    "goal": 39
+   }
+  }
+ }
+}
