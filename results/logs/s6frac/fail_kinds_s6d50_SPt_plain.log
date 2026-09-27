@@ -1,0 +1,38 @@
+1 runs, 2000 tasks: goal 60.0%, failed 800 (40.0%), of which 654 do not compile
+
+failed tasks by the first departure from the reference:
+    637   79.6% of failures  31.9% of tasks  tool: another signature
+     71    8.9% of failures   3.5% of tasks  field
+     38    4.8% of failures   1.9% of tasks  keyword
+     16    2.0% of failures   0.8% of tasks  keyword -> constant
+     14    1.8% of failures   0.7% of tasks  keyword -> register
+      8    1.0% of failures   0.4% of tasks  keyword -> comparison
+      6    0.8% of failures   0.3% of tasks  comparison -> field
+      6    0.8% of failures   0.3% of tasks  field -> comparison
+      3    0.4% of failures   0.1% of tasks  field -> constant
+      1    0.1% of failures   0.1% of tasks  keyword -> field
+
+keyword swaps (reference -> generated): FILTER -> CALL 15, IF -> PAUSE 6, PAUSE -> IF 5, CALL -> TRY 4, 3 -> 2 2, FOREACH -> RETURN 1
+compile diagnostics (tasks with at least one): TYPE_ERROR 371, UNBOUND 259, UNKNOWN_FIELD 174, MISSING_ARG 103, PARSE_ERROR 89
+
+by level: goal, n, top departures
+  L0    95.5%  n=  88  tool: another signature 4
+  L1    73.1%  n=  93  tool: another signature 18, field 5, keyword 2
+  L2    31.0%  n=  84  tool: another signature 47, field 7, keyword 3
+  L3    18.0%  n=  89  tool: another signature 43, field 9, keyword -> register 9
+  L4    25.6%  n=  90  tool: another signature 53, keyword 6, field 5
+  L5    47.9%  n= 117  tool: another signature 47, field 8, keyword 6
+  L6    21.6%  n=  88  tool: another signature 65, field 3, keyword -> register 1
+  L7    46.0%  n= 124  tool: another signature 51, field 5, keyword -> constant 4
+  L8    85.1%  n=  87  tool: another signature 9, field 2, keyword 2
+  L9    25.8%  n=  89  tool: another signature 57, keyword -> comparison 6, keyword -> register 2
+  L10   63.8%  n= 174  tool: another signature 52, field 10, keyword 1
+  L11   62.0%  n= 108  tool: another signature 30, keyword 4, field 4
+  L12   59.4%  n= 101  tool: another signature 30, field 10, keyword 1
+  L13   87.9%  n=  99  tool: another signature 12
+  L14   43.2%  n=  95  tool: another signature 51, keyword 1, keyword -> register 1
+  L15   83.5%  n=  97  tool: another signature 11, keyword -> constant 4, keyword 1
+  L16   97.9%  n=  97  keyword 2
+  L17   99.0%  n=  97  tool: another signature 1
+  L18   92.9%  n=  99  tool: another signature 6, keyword 1
+  L19   28.6%  n=  84  tool: another signature 50, keyword 7, field 2

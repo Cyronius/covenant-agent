@@ -1,0 +1,11 @@
+      2489 data/s6today_shards/train_0.jsonl
+      3750 data/s6today_shards/train_1.jsonl
+      3750 data/s6today_shards/train_2.jsonl
+      3750 data/s6today_shards/train_3.jsonl
+      3750 data/s6today_shards/train_4.jsonl
+      3750 data/s6today_shards/train_5.jsonl
+      3750 data/s6today_shards/train_6.jsonl
+      3750 data/s6today_shards/train_7.jsonl
+     28739 data/s6today_train.jsonl
+     57478 total
+=== gen_s6today done Sat Sep 26 20:12:45 CDT 2026

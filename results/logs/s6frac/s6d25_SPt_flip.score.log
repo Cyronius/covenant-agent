@@ -1,0 +1,35 @@
+
+C:/code/covenant-agent/models/tiny/runs/pod_s6frac/out/s6d25_SPt_flip.jsonl  (472 tasks)
+  parse     91.9%
+  compile   62.1%
+  goal      38.8%
+  exact     33.9%
+  of the 472 scored, 144 are segments of a paused task
+  decoy called  27.3% of 293 decoyed tasks  (a signature-identical sibling, never in a reference)
+  passes   mean 25.6
+
+  slot accuracy against the reference canvas (same slot):
+    kw      72.8%  (n=7254)
+    tool    57.1%  (n=907)
+    field   53.4%  (n=674)
+    const   73.3%  (n=816)
+    reg     70.8%  (n=2590)
+
+  CALL lines where both reference and generation CALL: 845
+    same tool     63.3%   chance   2.0%
+      vs shape    63.3%   chance  41.7%  (uniform inside the signature group)
+    same effect   94.1%   chance  30.3%
+
+  by level:
+      1  n=  49  compile   73%  goal   69%
+      2  n=  50  compile   54%  goal   28%
+      3  n=  48  compile   42%  goal    4%
+      4  n=  28  compile   36%  goal   18%
+      5  n=  50  compile   72%  goal   34%
+      6  n=  54  compile   33%  goal   13%
+      7  n=  38  compile   61%  goal   45%
+      8  n=  37  compile   89%  goal   62%
+     10  n= 108  compile   74%  goal   55%
+     13  n=  10  compile  100%  goal   50%
+
+wrote C:\code\covenant-agent\models\tiny\runs\pod_s6frac\out\s6d25_SPt_flip.score.json
