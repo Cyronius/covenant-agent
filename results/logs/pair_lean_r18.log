@@ -1,0 +1,6 @@
+A0   0% S6, seed 0     pair decisions 989: right 90.5%   picked the earlier-listed tool 50.6%   picked the parent entity 32.8% (parent is right 26.5%, n=989)
+A0   25% S6            pair decisions 801: right 69.0%   picked the earlier-listed tool 50.4%   picked the parent entity 50.1% (parent is right 28.1%, n=801)
+A0   100% S6 (R13)     pair decisions 703: right 60.9%   picked the earlier-listed tool 53.3%   picked the parent entity 58.3% (parent is right 28.9%, n=703)
+SPt  25% S6            pair decisions 795: right 81.4%   picked the earlier-listed tool 51.1%   picked the parent entity 44.7% (parent is right 31.3%, n=795)
+
+[exited with code 0]

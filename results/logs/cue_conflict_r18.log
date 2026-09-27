@@ -1,0 +1,69 @@
+800 single-segment plain-exam tasks with a same-shape decision
+
+data_cache_s5g: 1000 decisions; rebuilt inputs match the cache on 50 of 50 checked tasks
+
+data_cache_s6off: 1000 decisions; rebuilt inputs match the cache on 50 of 50 checked tasks
+
+data_cache_s6d25: 1000 decisions; rebuilt inputs match the cache on 50 of 50 checked tasks
+
+data_cache_s6g: 1000 decisions; rebuilt inputs match the cache on 50 of 50 checked tasks
+
+data_cache_s6d50: 1000 decisions; rebuilt inputs match the cache on 50 of 50 checked tasks
+
+Share of decisions where the planner picks R (the tool the program needs; after a swap, the one with the right types) or S (its sibling; after a swap, the one with R's text). Gate = SPt's weights on its sig/desc/name scores.
+n = 1000 decisions per model
+
+base: the task as it is
+  A0   S5 rows (no S6)   R  85.4%  S  12.7%  (n=1000)   getters R  76.0% / listers R  89.8%
+  A0   0% S6, seed 0     R  89.5%  S   9.4%  (n=1000)   getters R  87.5% / listers R  90.4%
+  A0   0% S6, seed 1     R  89.0%  S   8.9%  (n=1000)   getters R  87.9% / listers R  89.5%
+  SPt  0% S6             R  87.7%  S   6.7%  (n=1000)   getters R  84.7% / listers R  89.1%   gate 0.64 / 0.02 / 0.34
+  A0   25% S6            R  55.3%  S  24.8%  (n=1000)   getters R  57.6% / listers R  54.2%
+  SPt  25% S6            R  64.7%  S  14.8%  (n=1000)   getters R  83.8% / listers R  55.7%   gate 0.76 / 0.03 / 0.21
+  A0   100% S6 (R13)     R  42.8%  S  27.5%  (n=1000)   getters R  44.9% / listers R  41.8%
+  SPt  100% S6 (R13)     R  56.1%  S  15.5%  (n=1000)   getters R  80.7% / listers R  44.5%   gate 0.84 / 0.05 / 0.11
+  SPt  50% S6            R  62.1%  S  15.6%  (n=1000)   getters R  82.6% / listers R  52.4%   gate 0.81 / 0.03 / 0.15
+
+swap: names and descriptions swapped
+  A0   S5 rows (no S6)   R  21.5%  S  75.0%  (n=1000)   getters R  46.1% / listers R   9.9%
+  A0   0% S6, seed 0     R  14.9%  S  83.7%  (n=1000)   getters R  27.4% / listers R   9.0%
+  A0   0% S6, seed 1     R  19.0%  S  78.5%  (n=1000)   getters R  36.1% / listers R  10.9%
+  SPt  0% S6             R  12.2%  S  82.2%  (n=1000)   getters R  22.4% / listers R   7.4%
+  A0   25% S6            R  31.5%  S  47.5%  (n=1000)   getters R  35.5% / listers R  29.6%
+  SPt  25% S6            R  17.3%  S  60.3%  (n=1000)   getters R  18.4% / listers R  16.8%
+  A0   100% S6 (R13)     R  32.8%  S  41.1%  (n=1000)   getters R  38.3% / listers R  30.2%
+  SPt  100% S6 (R13)     R  19.3%  S  53.9%  (n=1000)   getters R  19.6% / listers R  19.1%
+  SPt  50% S6            R  19.1%  S  58.2%  (n=1000)   getters R  19.3% / listers R  19.0%
+
+swap_name: names swapped
+  A0   S5 rows (no S6)   R  77.3%  S  20.1%  (n=1000)   getters R  72.3% / listers R  79.7%
+  A0   0% S6, seed 0     R  86.9%  S  11.8%  (n=1000)   getters R  84.1% / listers R  88.2%
+  A0   0% S6, seed 1     R  85.2%  S  11.5%  (n=1000)   getters R  86.6% / listers R  84.5%
+  SPt  0% S6             R  50.3%  S  42.7%  (n=1000)   getters R  36.1% / listers R  57.0%
+  A0   25% S6            R  50.2%  S  25.7%  (n=1000)   getters R  53.9% / listers R  48.5%
+  SPt  25% S6            R  49.0%  S  29.5%  (n=1000)   getters R  67.6% / listers R  40.2%
+  A0   100% S6 (R13)     R  43.5%  S  27.2%  (n=1000)   getters R  41.7% / listers R  44.3%
+  SPt  100% S6 (R13)     R  47.4%  S  27.0%  (n=1000)   getters R  68.2% / listers R  37.6%
+  SPt  50% S6            R  53.0%  S  24.2%  (n=1000)   getters R  71.7% / listers R  44.2%
+
+swap_desc: descriptions swapped
+  A0   S5 rows (no S6)   R  29.5%  S  67.9%  (n=1000)   getters R  49.2% / listers R  20.2%
+  A0   0% S6, seed 0     R  19.0%  S  79.5%  (n=1000)   getters R  31.8% / listers R  13.0%
+  A0   0% S6, seed 1     R  22.6%  S  73.9%  (n=1000)   getters R  42.4% / listers R  13.3%
+  SPt  0% S6             R  50.2%  S  42.7%  (n=1000)   getters R  78.5% / listers R  36.8%
+  A0   25% S6            R  34.3%  S  45.3%  (n=1000)   getters R  45.8% / listers R  28.9%
+  SPt  25% S6            R  35.4%  S  43.2%  (n=1000)   getters R  43.6% / listers R  31.5%
+  A0   100% S6 (R13)     R  31.9%  S  42.3%  (n=1000)   getters R  43.6% / listers R  26.4%
+  SPt  100% S6 (R13)     R  32.6%  S  42.0%  (n=1000)   getters R  38.9% / listers R  29.6%
+  SPt  50% S6            R  28.4%  S  48.5%  (n=1000)   getters R  33.3% / listers R  26.1%
+
+blank: entity words blanked to `item` (decisions where both texts changed)
+  A0   S5 rows (no S6)   R  68.5%  S  28.5%  (n=941)   getters R  71.2% / listers R  67.2%
+  A0   0% S6, seed 0     R  85.1%  S  14.2%  (n=941)   getters R  85.1% / listers R  85.1%
+  A0   0% S6, seed 1     R  86.8%  S   9.6%  (n=941)   getters R  89.6% / listers R  85.4%
+  SPt  0% S6             R  63.2%  S  21.5%  (n=941)   getters R  73.1% / listers R  58.2%
+  A0   25% S6            R  50.1%  S  25.4%  (n=941)   getters R  46.5% / listers R  51.8%
+  SPt  25% S6            R  40.4%  S  17.9%  (n=941)   getters R  79.4% / listers R  20.6%
+  A0   100% S6 (R13)     R  30.6%  S  22.1%  (n=941)   getters R  27.5% / listers R  32.2%
+  SPt  100% S6 (R13)     R  42.8%  S  18.9%  (n=941)   getters R  81.6% / listers R  23.2%
+  SPt  50% S6            R  40.1%  S  16.9%  (n=941)   getters R  78.2% / listers R  20.8%

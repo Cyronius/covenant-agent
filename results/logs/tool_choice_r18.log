@@ -1,0 +1,11 @@
+A0   S5 rows (no S6)   with a lookalike  86.8%  shape-unique  96.9%   wrong at lookalike pairs: its lookalike 90%, another tool, same entity 4%, a generic tool (no entity) 3%, another tool, other entity 2%
+A0   0% S6, seed 0     with a lookalike  89.2%  shape-unique  96.4%   wrong at lookalike pairs: its lookalike 90%, another tool, same entity 7%, another tool, other entity 3%
+A0   0% S6, seed 1     with a lookalike  89.0%  shape-unique  95.2%   wrong at lookalike pairs: its lookalike 76%, a generic tool (no entity) 15%, another tool, same entity 5%, another tool, other entity 4%
+A0   25% S6            with a lookalike  55.8%  shape-unique  93.4%   wrong at lookalike pairs: its lookalike 55%, a generic tool (no entity) 34%, another tool, same entity 8%, another tool, other entity 3%
+A0   100% S6 (R13)     with a lookalike  43.6%  shape-unique  92.4%   wrong at lookalike pairs: its lookalike 47%, a generic tool (no entity) 31%, another tool, same entity 13%, another tool, other entity 9%
+SPt  0% S6             with a lookalike  87.8%  shape-unique  93.1%   wrong at lookalike pairs: its lookalike 55%, another tool, same entity 19%, another tool, other entity 19%, a generic tool (no entity) 6%
+SPt  25% S6            with a lookalike  64.8%  shape-unique  95.6%   wrong at lookalike pairs: its lookalike 42%, a generic tool (no entity) 27%, another tool, same entity 17%, another tool, other entity 13%
+SPt  50% S6            with a lookalike  61.4%  shape-unique  95.9%   wrong at lookalike pairs: its lookalike 39%, a generic tool (no entity) 22%, another tool, other entity 21%, another tool, same entity 18%
+SPt  100% S6 (R13)     with a lookalike  56.3%  shape-unique  96.1%   wrong at lookalike pairs: its lookalike 33%, a generic tool (no entity) 26%, another tool, other entity 22%, another tool, same entity 19%
+
+[exited with code 0]

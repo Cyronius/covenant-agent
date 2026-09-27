@@ -1,0 +1,8 @@
+A0 0% S6, seed 0   real names 79.3% (n=1648)   meaningless names 80.1% (n=352)   gap -0.8
+A0 0% S6, seed 1   real names 77.8% (n=1648)   meaningless names 74.7% (n=352)   gap +3.1
+A0 25% S6          real names 54.2% (n=1648)   meaningless names 54.8% (n=352)   gap -0.6
+A0 100% S6 (R13)   real names 45.3% (n=1648)   meaningless names 48.3% (n=352)   gap -3.0
+SPt 0% S6          real names 77.2% (n=1648)   meaningless names 52.0% (n=352)   gap +25.3
+SPt 25% S6         real names 62.3% (n=1648)   meaningless names 59.1% (n=352)   gap +3.2
+SPt 50% S6         real names 60.6% (n=1648)   meaningless names 57.1% (n=352)   gap +3.5
+SPt 100% S6 (R13)  real names 56.8% (n=1648)   meaningless names 52.6% (n=352)   gap +4.2
