@@ -47,6 +47,9 @@ class Trace:
     unmask_step: list[int] = field(default_factory=list)   # per slot, -1 if never
     compiled: bool = False
     diagnostics: list[str] = field(default_factory=list)
+    tries: int = 1                  # decodes spent on this program (--best-of, --backoff)
+    backoff_at: tuple | None = None                          # (slot, prob) ar_backoff changed
+    tool_probs: dict = field(default_factory=dict)           # slot after CALL -> distribution
 
 
 # -- the grammar's local half: a receiver is followed by a field -----------
@@ -243,24 +246,41 @@ def diffusion_sample(model, inputs: dict, ov, steps: int = 8, temperature: float
 
 @torch.no_grad()
 def ar_sample(model, inputs: dict, ov, trace: Trace | None = None,
-              temperature: float = 0.0, generator: torch.Generator | None = None):
+              temperature: float = 0.0, generator: torch.Generator | None = None,
+              prefix: list[int] | None = None, keep_tool_probs: bool = False):
     """Left to right, greedy at temperature 0, else sampled from the
     softmax at that temperature (evaluate.py --best-of). Stops at the first
-    PAD, which is the trained stop."""
+    PAD, which is the trained stop.
+
+    `prefix` fills the first len(prefix) slots as given instead of decoding
+    them. `keep_tool_probs` records the masked distribution at every slot that
+    follows a CALL in `trace.tool_probs`. ar_backoff uses both."""
     n = model.c.canvas
     device = next(iter(inputs.values())).device
     canvas = torch.full((1, n), ov.mask, dtype=torch.long, device=device)
     tr = trace or Trace()
     tr.unmask_step = [-1] * n
     out = torch.full((1, n), ov.pad, dtype=torch.long, device=device)
+    call = local_sets(ov)[5]
     mem = model.encode_inputs(inputs)      # once, same as the diffusion arm
     for i in range(n):
+        if prefix is not None and i < len(prefix):
+            tok = int(prefix[i])
+            out[0, i] = tok
+            tr.unmask_step[i] = i
+            if tok == ov.pad:
+                break
+            if i + 1 < n:
+                canvas[0, i + 1] = tok
+            continue
         logits = model.decode(inputs, canvas, mem=mem)
         tr.passes += 1
         row = logits[0, i]
         if i > 0:
             # The receiver rule, left to right: after `rN.` comes a field.
             row = row.masked_fill(local_mask(out[:, :i + 1], ov)[0, i], float("-inf"))
+            if keep_tool_probs and bool(call[int(out[0, i - 1])]):
+                tr.tool_probs[i] = F.softmax(row.float(), dim=-1)
         if temperature > 0:
             probs = F.softmax(row.float() / temperature, dim=-1)
             tok = int(torch.multinomial(probs, 1, generator=generator))
@@ -273,6 +293,54 @@ def ar_sample(model, inputs: dict, ov, trace: Trace | None = None,
         if i + 1 < n:
             canvas[0, i + 1] = tok
     return out, tr
+
+
+@torch.no_grad()
+def ar_backoff(model, inputs: dict, ov, check, tries: int, alts: int = 2,
+               trace: Trace | None = None):
+    """Greedy; if that program does not compile, put one of the planner's
+    runner-up tools at a slot after CALL and decode greedily from there.
+
+    Candidates are the `alts` next-best tools at every CALL slot of the greedy
+    program, most probable first across all slots; at most `tries` of them are
+    decoded, and the first that compiles is kept. Otherwise the greedy program
+    is. `check(text) -> bool` is the host's compile check, so this module stays
+    free of the compiler.
+
+    Why not resample (evaluate.py --best-of): the residual wrong-tool failure is
+    a swap between two tools of the same shape -- one entity's getter for
+    another's -- and the typechecker rejects 97% of them, but the right tool is
+    often a 5% runner-up that sampling at temperature 0.7 rarely draws while
+    keeping every other slot right. At the same budget this takes the plain
+    exam from 79.5% to 84.5%, against 81.2% for best-of-4 (results/R15.md).
+
+    `trace.tries` counts decodes (1 = greedy only) and `trace.passes` all of
+    their forward passes; `trace.backoff_at` is (slot, probability of the tool
+    put there), or None."""
+    tr = trace or Trace()
+    canvas, tr = ar_sample(model, inputs, ov, trace=tr, keep_tool_probs=True)
+    tr.tries, tr.backoff_at = 1, None
+    if check(to_text(canvas, ov)):
+        return canvas, tr
+    ids = canvas[0].tolist()
+    tool = local_sets(ov)[6]
+    cands = []
+    for s, p in tr.tool_probs.items():
+        p = p.clone()
+        p[ids[s]] = 0
+        top = p.topk(alts)
+        for pr, alt in zip(top.values.tolist(), top.indices.tolist()):
+            if pr > 0 and bool(tool[alt]):
+                cands.append((pr, s, alt))
+    cands.sort(reverse=True)
+    for pr, s, alt in cands[:tries]:
+        cand, ctr = ar_sample(model, inputs, ov, prefix=ids[:s] + [alt])
+        tr.tries += 1
+        tr.passes += ctr.passes
+        if check(to_text(cand, ov)):
+            tr.backoff_at = (s, round(pr, 3))
+            return cand, tr
+    return canvas, tr
 
 
 # -- the compiler in the loop -------------------------------------------------

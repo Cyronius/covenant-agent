@@ -22,7 +22,8 @@ import torch
 import torch.nn as nn
 
 from evaluate import Split
-from sample import ar_sample, diffusion_sample, local_mask, repair_targets, slots_for_lines, slots_for_register
+from sample import (ar_backoff, ar_sample, diffusion_sample, local_mask, local_sets,
+                    repair_targets, slots_for_lines, slots_for_register)
 
 
 class Oracle(nn.Module):
@@ -56,6 +57,22 @@ class Oracle(nn.Module):
         return logits
 
 
+class Detour(Oracle):
+    """The oracle, except that at one slot after CALL it prefers a wrong tool
+    and ranks the target's second -- the shape of R15's same-shape swap, which
+    ar_backoff exists to undo."""
+
+    def __init__(self, target: torch.Tensor, vocab: int, canvas: int, slot: int, wrong: int):
+        super().__init__(target, vocab, canvas, causal=True)
+        self.slot, self.wrong = slot, wrong
+
+    def decode(self, inputs, canvas, mem=None, loops=None):
+        logits = super().decode(inputs, canvas, mem, loops)
+        logits[:, self.slot, int(self.target[0, self.slot])] = 5.0
+        logits[:, self.slot, self.wrong] = 10.0
+        return logits
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", default="data_cache_struct")
@@ -67,6 +84,7 @@ def main():
     print(f"binding: {split.binding}")
 
     failures = []
+    backoff_checked = 0
     n = min(args.n, len(split))
     for i in range(n):
         tgt = split.target(i)
@@ -99,6 +117,33 @@ def main():
         # Text round-trip: what the scorer will compile has to match the target.
         if ov.render(out[0].tolist()) != ov.render(tgt[0].tolist()):
             failures.append(f"ar row={i} text round-trip differs")
+
+        # Tool backoff. The compiler stand-in accepts only the target program.
+        want = ov.render(tgt[0].tolist())
+        model = Oracle(tgt, len(ov), canvas_len, causal=True)
+        out, tr = ar_backoff(model, inputs, ov, lambda text: text == want, tries=3)
+        if ov.render(out[0].tolist()) != want or tr.tries != 1 or tr.backoff_at is not None:
+            failures.append(f"backoff row={i} touched a program that compiled")
+        toks = ov.decode(tgt[0].tolist())
+        tools = local_sets(ov)[6].nonzero().squeeze(1).tolist()
+        for s in [k for k in range(1, end) if toks[k - 1] == "CALL"][:1]:
+            wrong = next((t for t in tools if t != int(tgt[0, s])), None)
+            if wrong is None:
+                continue
+            backoff_checked += 1
+            model = Detour(tgt, len(ov), canvas_len, s, wrong)
+            out, tr = ar_backoff(model, inputs, ov, lambda text: text == want, tries=3)
+            if ov.render(out[0].tolist()) != want:
+                failures.append(f"backoff row={i} slot={s} did not recover the target")
+            elif tr.tries != 2 or not tr.backoff_at or tr.backoff_at[0] != s:
+                failures.append(f"backoff row={i} slot={s} recovered it at the wrong "
+                                f"place: tries={tr.tries} at={tr.backoff_at}")
+            # Nothing compiles: the greedy program comes back, within budget.
+            greedy, _ = ar_sample(model, inputs, ov)
+            out, tr = ar_backoff(model, inputs, ov, lambda text: False, tries=3)
+            if not torch.equal(out, greedy) or not 1 < tr.tries <= 4:
+                failures.append(f"backoff row={i} slot={s} did not fall back to greedy "
+                                f"within budget: tries={tr.tries}")
 
         # The receiver rule must never block the reference at any slot.
         blocked = local_mask(tgt, ov)[0]
@@ -136,7 +181,10 @@ def main():
     if not repair_targets(empty, ov, ["PARSE_ERROR line:1 empty program"]) == []:
         pass  # attribution finds nothing here; repair() supplies the fallback
 
-    print(f"checked {n} programs x 5 step counts, plus {n_lines} line attributions")
+    print(f"checked {n} programs x 5 step counts, plus {n_lines} line attributions, "
+          f"plus tool backoff on {backoff_checked} detoured CALL slots")
+    if not backoff_checked:
+        failures.append("no program with a CALL and two tools: tool backoff went unchecked")
     if failures:
         print(f"\n{len(failures)} FAILURES:")
         for f in failures[:15]:

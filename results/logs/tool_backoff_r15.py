@@ -15,6 +15,10 @@ draws.
 Writes evaluate.py-format JSONL, so `evaluate.py --score` and fail_kinds.py
 read it unchanged. Needs the sandbox (the compile check), so laptop only.
 
+Kept as the record of how R15/R16's numbers were made. For new runs use
+`evaluate.py --generate --backoff 3` (sample.ar_backoff), which writes the
+same programs.
+
   cd models/tiny && python ../../results/logs/tool_backoff_r15.py       --ckpt runs/pod_s6split/runs/s6off_A0/best.pt --cache data_cache_s6off       --gen-out runs/pod_s6split/out/s6off_A0_plain_tb3.jsonl
 """
 import argparse, json, pickle, re, sys, time

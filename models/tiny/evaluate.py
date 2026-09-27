@@ -33,8 +33,33 @@ import torch
 
 from model import Config, build_model
 from prep import STRUCT_KEYS, cache_keys
-from sample import Trace, ar_sample, diffusion_sample, repair, to_text
+from sample import Trace, ar_backoff, ar_sample, diffusion_sample, repair, to_text
 from tok import OutVocab
+
+
+def compile_check(cache: Path, split: str):
+    """check(task_id, text) -> bool: does the host's compiler accept the
+    program, checked the way --score checks it. A paused task's later segment
+    is checked against the context its earlier segments leave behind. Needs
+    covenant-agent's core/ and harness (the sandbox), so not on a pod."""
+    from core.pipeline import build
+    from harness.context import TaskContext
+    from corpus import _replay
+    by_id = {r["id"]: r for r in pickle.load(open(cache / "rows.pkl", "rb"))[split]}
+
+    def check(task_id, text):
+        base, _, seg = task_id.partition("#s")
+        row = by_id.get(base)
+        if row is None:
+            return True
+        ctx = TaskContext.from_json(row["context"])
+        if seg and int(seg):
+            starts = _replay(row, row["reference"]["segments"])
+            if starts is None:
+                return True
+            ctx = starts[int(seg)][0]
+        return bool(build(text, ctx).compile_ok)
+    return check
 
 
 def load_model(ckpt_path: Path, device, ov=None):
@@ -151,26 +176,18 @@ def generate(args):
 
     # --best-of K (ar): keep the greedy program if it compiles, else sample up
     # to K-1 more at --temperature and keep the first that compiles, checked
-    # the way --score checks it (R12: 75% of failed programs do not compile)
+    # the way --score checks it (R12: 75% of failed programs do not compile).
+    # --backoff K (ar): instead retry the runner-up tools at CALL slots, up to
+    # K more decodes (sample.ar_backoff, results/R15.md). Never both: nothing
+    # has measured them together, and an order between them would be a hidden
+    # choice.
+    if args.best_of > 1 and args.backoff:
+        raise SystemExit("--best-of and --backoff are separate measurements; pick one")
+    if args.backoff and arm != "ar":
+        raise SystemExit("--backoff is for the ar arm; the diffusion arm has --repair-rounds")
     check = None
-    if args.best_of > 1 and arm == "ar":
-        from core.pipeline import build
-        from harness.context import TaskContext
-        from corpus import _replay
-        by_id = {r["id"]: r for r in pickle.load(open(cache / "rows.pkl", "rb"))[args.split]}
-
-        def check(task_id, text):
-            base, _, seg = task_id.partition("#s")
-            row = by_id.get(base)
-            if row is None:
-                return True
-            ctx = TaskContext.from_json(row["context"])
-            if seg and int(seg):
-                starts = _replay(row, row["reference"]["segments"])
-                if starts is None:
-                    return True
-                ctx = starts[int(seg)][0]
-            return bool(build(text, ctx).compile_ok)
+    if (args.best_of > 1 or args.backoff) and arm == "ar":
+        check = compile_check(cache, args.split)
     gen_rng = torch.Generator(device=args.device).manual_seed(0)
 
     out = []
@@ -187,6 +204,10 @@ def generate(args):
                 canvas, tr = repair(model, inputs, ov, canvas, build_fn, ctxs[i],
                                     rounds=args.repair_rounds, steps=args.repair_steps,
                                     trace=tr)
+        elif args.backoff:
+            tid = split.meta[i]["task_id"]
+            canvas, tr = ar_backoff(model, inputs, ov, lambda text: check(tid, text),
+                                    tries=args.backoff, trace=tr)
         else:
             canvas, tr = ar_sample(model, inputs, ov, trace=tr)
             tr.tries = 1
@@ -213,6 +234,7 @@ def generate(args):
             "reference_tokens": ov.decode(tgt[0].tolist()),
             "compiled_inline": tr.compiled,
             "tries": getattr(tr, "tries", 1),
+            "backoff_at": tr.backoff_at,
             # The compute this program cost, for the axis report.py draws:
             # one forward pass applies the block dec_layers x loops times.
             "loops": model.c.dec_loops, "dec_layers": model.c.dec_layers,
@@ -419,6 +441,11 @@ def main():
                     help="ar: if the greedy program does not compile, sample up "
                          "to this many in all (at --temperature, default 0.7) and "
                          "keep the first that compiles")
+    ap.add_argument("--backoff", type=int, default=0, metavar="K",
+                    help="ar: if the greedy program does not compile, put the "
+                         "model's runner-up tools at CALL slots and decode again, "
+                         "up to K more decodes; keep the first that compiles "
+                         "(results/R15.md). Not with --best-of")
     ap.add_argument("--repair-steps", type=int, default=4)
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--id-contains", default=None, metavar="TEXT",
