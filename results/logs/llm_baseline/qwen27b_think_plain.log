@@ -1,0 +1,127 @@
+20/150 goal=15 compile=20 (1.6s/task)
+40/150 goal=32 compile=39 (1.5s/task)
+60/150 goal=48 compile=58 (1.8s/task)
+80/150 goal=64 compile=76 (2.0s/task)
+100/150 goal=77 compile=95 (2.2s/task)
+120/150 goal=91 compile=114 (2.4s/task)
+140/150 goal=106 compile=132 (2.5s/task)
+{
+  "model": "qwen-3.8-27b",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-unconstrained+K2repair2+api-reasoning-low+letters+enums+kinds",
+  "n": 150,
+  "compile_ok_rate": 0.9333333333333333,
+  "goal_success_rate": 0.74,
+  "parse_ok_rate": 0.9333333333333333,
+  "by_level": {
+    "0": {
+      "n": 7,
+      "compile": 7,
+      "goal": 7
+    },
+    "1": {
+      "n": 6,
+      "compile": 6,
+      "goal": 6
+    },
+    "2": {
+      "n": 4,
+      "compile": 4,
+      "goal": 4
+    },
+    "3": {
+      "n": 10,
+      "compile": 9,
+      "goal": 9
+    },
+    "4": {
+      "n": 6,
+      "compile": 5,
+      "goal": 3
+    },
+    "5": {
+      "n": 7,
+      "compile": 7,
+      "goal": 7
+    },
+    "6": {
+      "n": 7,
+      "compile": 7,
+      "goal": 6
+    },
+    "7": {
+      "n": 5,
+      "compile": 5,
+      "goal": 5
+    },
+    "8": {
+      "n": 7,
+      "compile": 6,
+      "goal": 0
+    },
+    "9": {
+      "n": 7,
+      "compile": 6,
+      "goal": 0
+    },
+    "10": {
+      "n": 12,
+      "compile": 12,
+      "goal": 8
+    },
+    "11": {
+      "n": 6,
+      "compile": 4,
+      "goal": 4
+    },
+    "12": {
+      "n": 7,
+      "compile": 7,
+      "goal": 7
+    },
+    "13": {
+      "n": 11,
+      "compile": 11,
+      "goal": 11
+    },
+    "14": {
+      "n": 7,
+      "compile": 7,
+      "goal": 7
+    },
+    "15": {
+      "n": 7,
+      "compile": 7,
+      "goal": 6
+    },
+    "16": {
+      "n": 8,
+      "compile": 8,
+      "goal": 7
+    },
+    "17": {
+      "n": 6,
+      "compile": 6,
+      "goal": 6
+    },
+    "18": {
+      "n": 8,
+      "compile": 8,
+      "goal": 7
+    },
+    "19": {
+      "n": 12,
+      "compile": 8,
+      "goal": 1
+    }
+  },
+  "gen_ms_p50": 1550.528600000689,
+  "gen_ms_p95": 8893.620200000441,
+  "tokens_out_p50": 446.5,
+  "pauses_mean": 0.05333333333333334,
+  "pauses_p95": 1,
+  "error_turns_total": 0,
+  "tasks_with_pause": 8,
+  "tasks_with_error_turn": 0
+}

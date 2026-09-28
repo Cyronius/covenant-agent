@@ -1,0 +1,135 @@
+20/300 goal=8 compile=18 (0.5s/task)
+40/300 goal=19 compile=34 (0.6s/task)
+60/300 goal=27 compile=50 (0.7s/task)
+80/300 goal=37 compile=67 (0.7s/task)
+100/300 goal=43 compile=85 (1.3s/task)
+120/300 goal=55 compile=103 (1.2s/task)
+140/300 goal=64 compile=121 (1.1s/task)
+160/300 goal=73 compile=137 (1.5s/task)
+180/300 goal=80 compile=153 (1.4s/task)
+200/300 goal=86 compile=171 (1.3s/task)
+220/300 goal=91 compile=186 (1.3s/task)
+240/300 goal=101 compile=201 (1.2s/task)
+260/300 goal=111 compile=218 (1.4s/task)
+280/300 goal=120 compile=234 (1.4s/task)
+300/300 goal=127 compile=246 (1.4s/task)
+{
+  "model": "qwen-3.8-27b",
+  "lora": null,
+  "lora_scale": null,
+  "condition": "A-unconstrained+K2repair2+api-reasoning-none+letters+enums+kinds",
+  "n": 300,
+  "compile_ok_rate": 0.82,
+  "goal_success_rate": 0.42333333333333334,
+  "parse_ok_rate": 0.9266666666666666,
+  "by_level": {
+    "0": {
+      "n": 12,
+      "compile": 11,
+      "goal": 10
+    },
+    "1": {
+      "n": 16,
+      "compile": 15,
+      "goal": 6
+    },
+    "2": {
+      "n": 9,
+      "compile": 9,
+      "goal": 4
+    },
+    "3": {
+      "n": 22,
+      "compile": 20,
+      "goal": 9
+    },
+    "4": {
+      "n": 18,
+      "compile": 12,
+      "goal": 8
+    },
+    "5": {
+      "n": 14,
+      "compile": 13,
+      "goal": 9
+    },
+    "6": {
+      "n": 12,
+      "compile": 12,
+      "goal": 5
+    },
+    "7": {
+      "n": 16,
+      "compile": 14,
+      "goal": 4
+    },
+    "8": {
+      "n": 17,
+      "compile": 6,
+      "goal": 1
+    },
+    "9": {
+      "n": 17,
+      "compile": 14,
+      "goal": 0
+    },
+    "10": {
+      "n": 19,
+      "compile": 9,
+      "goal": 3
+    },
+    "11": {
+      "n": 8,
+      "compile": 5,
+      "goal": 3
+    },
+    "12": {
+      "n": 17,
+      "compile": 16,
+      "goal": 5
+    },
+    "13": {
+      "n": 18,
+      "compile": 18,
+      "goal": 18
+    },
+    "14": {
+      "n": 14,
+      "compile": 12,
+      "goal": 11
+    },
+    "15": {
+      "n": 12,
+      "compile": 12,
+      "goal": 9
+    },
+    "16": {
+      "n": 13,
+      "compile": 10,
+      "goal": 4
+    },
+    "17": {
+      "n": 10,
+      "compile": 5,
+      "goal": 4
+    },
+    "18": {
+      "n": 16,
+      "compile": 16,
+      "goal": 9
+    },
+    "19": {
+      "n": 20,
+      "compile": 17,
+      "goal": 5
+    }
+  },
+  "gen_ms_p50": 511.2636499998189,
+  "gen_ms_p95": 1834.7997999990184,
+  "tokens_out_p50": 51.0,
+  "pauses_mean": 0.0033333333333333335,
+  "pauses_p95": 0,
+  "error_turns_total": 0,
+  "tasks_with_pause": 1,
+  "tasks_with_error_turn": 0
+}

@@ -294,6 +294,10 @@ def generate(llm, grammar, user: str, max_tokens: int = 250,
             grammar=grammar, temperature=0.0, max_tokens=max_tokens)
         choice = res["choices"][0]
         text = (choice["message"].get("content") or "").strip()
+        if choice["message"].get("reasoning"):   # --api with reasoning on
+            return {"text": text, "usage": res.get("usage", {}),
+                    "finish_reason": choice.get("finish_reason"),
+                    "think": choice["message"]["reasoning"].strip()}
     else:
         turns = "".join(f"<|im_start|>user\n{u}<|im_end|>\n"
                         f"<|im_start|>assistant\n<think>\n\n</think>\n\n"
@@ -327,6 +331,77 @@ def generate(llm, grammar, user: str, max_tokens: int = 250,
                     "think": thought.strip()}
     return {"text": text, "usage": res.get("usage", {}),
             "finish_reason": choice.get("finish_reason")}
+
+
+class ApiLlm:
+    """An OpenAI-style chat endpoint in place of llama_cpp.Llama (--api), for
+    the `chat` template path: `create_chat_completion` with the same return
+    shape. No grammar reaches the server, so the program comes back free and
+    is cleaned of code fences and think blocks before the checker sees it
+    (.claude/plans/llm-baseline.md). The key is read from an environment
+    variable, never from an argument, so it stays out of logs and rows."""
+
+    def __init__(self, url: str, model: str, key_env: str,
+                 reasoning: str = "none", reasoning_tokens: int = 1024):
+        import os
+        self.url = url.rstrip("/") + "/chat/completions"
+        self.model = model
+        self.key = os.environ[key_env]
+        self.reasoning = reasoning
+        self.reasoning_tokens = reasoning_tokens
+
+    @staticmethod
+    def clean(text: str) -> str:
+        import re
+        text = re.sub(r"<think>.*?</think>", "", text or "", flags=re.S)
+        fence = re.search(r"```[a-zA-Z]*\n(.*?)```", text, flags=re.S)
+        if fence:
+            text = fence.group(1)
+        text = text.strip()
+        if text.upper().startswith("PROGRAM:"):
+            text = text[len("PROGRAM:"):].lstrip("\n")
+        return text.strip("\n")
+
+    def create_chat_completion(self, messages, grammar=None, temperature=0.0,
+                               max_tokens=250):
+        import urllib.error
+        import urllib.request
+        body = {"model": self.model, "messages": messages,
+                "temperature": temperature,
+                "reasoning_effort": self.reasoning,
+                "max_completion_tokens": max_tokens + (
+                    self.reasoning_tokens if self.reasoning != "none" else 0)}
+        req = urllib.request.Request(
+            self.url, data=json.dumps(body).encode(), method="POST",
+            headers={"Authorization": f"Bearer {self.key}",
+                     "Content-Type": "application/json",
+                     "User-Agent": "covenant-agent-run_a"})
+        for attempt in range(12):
+            wait = min(60, 2 ** attempt)
+            try:
+                with urllib.request.urlopen(req, timeout=120) as r:
+                    d = json.load(r)
+                break
+            except urllib.error.HTTPError as e:
+                if e.code not in (429, 500, 502, 503, 504) or attempt == 11:
+                    raise
+                # a per-minute token limit resets within the minute
+                wait = max(wait, float(e.headers.get("retry-after") or 0))
+            except (urllib.error.URLError, TimeoutError):
+                if attempt == 11:
+                    raise
+            time.sleep(wait)
+        choice = d["choices"][0]
+        msg = choice["message"]
+        u = d.get("usage", {})
+        usage = {"prompt_tokens": u.get("prompt_tokens", 0),
+                 "completion_tokens": u.get("completion_tokens", 0),
+                 "think_tokens": (u.get("completion_tokens_details") or {})
+                 .get("reasoning_tokens", 0)}
+        return {"choices": [{"message": {"content": self.clean(msg.get("content")),
+                                         "reasoning": msg.get("reasoning")},
+                             "finish_reason": choice.get("finish_reason")}],
+                "usage": usage}
 
 
 def load_shots(path: Path, n: int, exclude: set) -> list:
@@ -470,33 +545,61 @@ def main():
                     help="qwen: hand-rolled ChatML + empty think block (the S1-S3 "
                          "markup); chat: the GGUF's own chat_template via "
                          "create_chat_completion (LFM2.5, any other instruct model)")
+    ap.add_argument("--api", default=None, metavar="URL",
+                    help="an OpenAI-style endpoint (e.g. "
+                         "https://api.cerebras.ai/v1) instead of a GGUF; "
+                         "--model is then the API's model id. Implies "
+                         "--template chat and --no-grammar (no API takes GBNF)")
+    ap.add_argument("--api-key-env", default="CEREBRAS_API_KEY")
+    ap.add_argument("--api-reasoning", default="none",
+                    help="the API's reasoning_effort: none, low, medium, high")
+    ap.add_argument("--api-reasoning-tokens", type=int, default=1024,
+                    help="reasoning budget added to --max-tokens when "
+                         "--api-reasoning is not none")
+    ap.add_argument("--ids", default=None, metavar="JSON",
+                    help="run only the task ids listed in this JSON file "
+                         "(a list, or a dict whose values are lists: the "
+                         "key named by --ids-key)")
+    ap.add_argument("--ids-key", default=None)
     args = ap.parse_args()
     if args.domains:
         from data.gen.domains import register_domains
         register_domains(args.domains)
 
-    from llama_cpp import Llama
+    if args.api:
+        args.template, args.no_grammar = "chat", True
+        llm = ApiLlm(args.api, args.model, args.api_key_env,
+                     args.api_reasoning, args.api_reasoning_tokens)
     grammars = GrammarCache("none" if args.no_grammar else args.grammar_mode,
                             Path(args.grammar), stdlib=not args.no_stdlib,
                             kinds=args.kinds)
-    llm = Llama(model_path=args.model, n_ctx=args.ctx,
-                n_threads=args.threads, verbose=False,
-                n_gpu_layers=args.gpu_layers,
-                lora_path=args.lora, lora_scale=args.lora_scale)
+    if not args.api:
+        from llama_cpp import Llama
+        llm = Llama(model_path=args.model, n_ctx=args.ctx,
+                    n_threads=args.threads, verbose=False,
+                    n_gpu_layers=args.gpu_layers,
+                    lora_path=args.lora, lora_scale=args.lora_scale)
     system = typed_system(SYSTEM) if args.symbols == "typed" else SYSTEM
     system = (system_without_stdlib(system) if args.no_stdlib else system) + (
         REACTIVE if args.reactive_prompt else "")
     max_segments = args.max_segments or (5 if args.react else 3)
 
     tasks = load_tasks(Path(args.tasks))
+    if args.ids:
+        keep = json.loads(Path(args.ids).read_text())
+        keep = set(keep[args.ids_key] if args.ids_key else keep)
+        tasks = [t for t in tasks if t["id"] in keep]
     if args.n:
         tasks = tasks[:args.n]
     if args.symbols == "typed" or args.enums or args.kinds:
         # spec 0.4.0 surface on a stored 0.3.x suite: same tasks, same
-        # scoring, re-rendered symbol table (harness/retype.py)
+        # scoring, re-rendered symbol table (harness/retype.py). A row the
+        # generator already wrote typed (S6 on) keeps its own rendering: the
+        # registry world has none of the row's decoys or opaque names.
         from harness.retype import retype_task
         from runtime.worlds import get_world
-        tasks = [retype_task(t, get_world(t["world"]), symbols=args.symbols,
+        tasks = [t if t.get("symbols") == "typed" else
+                 retype_task(t, get_world(t["world"]), symbols=args.symbols,
                              enums=args.enums, kinds=args.kinds)
                  for t in tasks]
     shots = load_shots(ROOT / args.shots_from, args.shots,
@@ -517,7 +620,7 @@ def main():
                                    max_segments=max_segments, system=system,
                                    think=args.think)
             row = run_task(task, planner, react_on_error=args.react)
-            if args.think:
+            if args.think or planner.thoughts:
                 row["think"] = list(planner.thoughts)
                 row["think_tokens"] = sum(u.get("think_tokens", 0)
                                           for u in usage)
@@ -533,6 +636,7 @@ def main():
                 "+K3prompt" if args.reactive_prompt else "") + (
                 "+K3react" if args.react else "") + (
                 f"+think{args.think}" if args.think else "") + (
+                f"+api-reasoning-{args.api_reasoning}" if args.api else "") + (
                 "-stdlib" if args.no_stdlib else "") + (
                 "+letters" if args.symbols == "typed" else "") + (
                 "+enums" if args.enums else "") + (
