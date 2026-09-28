@@ -1,0 +1,4 @@
+A0 decoys only 25%     with a lookalike  54.2%  shape-unique  66.5%   wrong at lookalike pairs: its lookalike 61%, a generic tool (no entity) 22%, another tool, same entity 9%, another tool, other entity 7%
+A0 decoys+twin 25%     with a lookalike  53.8%  shape-unique  94.6%   wrong at lookalike pairs: its lookalike 54%, a generic tool (no entity) 25%, another tool, same entity 12%, another tool, other entity 9%
+A0 opaque names 25%    with a lookalike  80.4%  shape-unique  95.8%   wrong at lookalike pairs: its lookalike 91%, another tool, other entity 3%, another tool, same entity 3%, a generic tool (no entity) 3%
+SPt opaque names 25%   with a lookalike  83.4%  shape-unique  96.0%   wrong at lookalike pairs: its lookalike 42%, another tool, other entity 34%, another tool, same entity 23%, a generic tool (no entity) 2%

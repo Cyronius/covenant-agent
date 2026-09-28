@@ -5,16 +5,19 @@ sibling of another entity (a lookalike) against where its shape is unique,
 and where the wrong picks at lookalike pairs go.
 
   cd models/tiny && python ../../results/logs/tool_choice_r18.py
+  ... tool_choice_r18.py --models "label|runs/x/best.pt|data_cache_y" ...   # other models
 """
 import pickle, sys, importlib.util
 from collections import Counter
 from pathlib import Path
 import torch
-sys.path.insert(0, '.'); sys.argv = sys.argv[:1]
+sys.path.insert(0, '.')
 from evaluate import Split, load_model
 spec = importlib.util.spec_from_file_location('c', str(Path(__file__).parent / 'cue_conflict_r18.py')); c = importlib.util.module_from_spec(spec); spec.loader.exec_module(c)
 torch.set_grad_enabled(False)
-for label, ckpt, cache in c.MODELS:
+models = ([tuple(m.split('|')) for m in sys.argv[sys.argv.index('--models') + 1:]]
+          if '--models' in sys.argv else c.MODELS)
+for label, ckpt, cache in models:
     split = Split(Path(cache), 'holdout', torch.device('cpu'))
     rows = {r['id']: r for r in pickle.load(open(Path(cache) / 'rows.pkl', 'rb'))['holdout']}
     model = load_model(Path(ckpt), torch.device('cpu'))

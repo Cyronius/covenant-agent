@@ -15,7 +15,12 @@ RUNS = {"A0 0% S6, seed 0": "runs/pod_s6split/out/s6off_A0_plain",
         "SPt 0% S6": "runs/pod_s6off2/out/s6off_SPt_plain",
         "SPt 25% S6": "runs/pod_s6frac/out/s6d25_SPt_plain",
         "SPt 50% S6": "runs/pod_s6frac/out/s6d50_SPt_plain",
-        "SPt 100% S6 (R13)": "runs/pod_planner/out/s6_SPt_holdout_plain"}
+        "SPt 100% S6 (R13)": "runs/pod_planner/out/s6_SPt_holdout_plain",
+        # R19: S6's options one at a time, 25% of rows each
+        "A0 25% decoys only": "runs/pod_s6opt/out/dec25_A0_plain",
+        "A0 25% decoys+twin": "runs/pod_s6opt/out/dtw25_A0_plain",
+        "A0 25% opaque names": "runs/pod_s6opt/out/opq25_A0_plain",
+        "SPt 25% opaque names": "runs/pod_s6opt/out/opq25_SPt_plain"}
 for name, run in RUNS.items():
     sc = json.load(open(run + ".score.json"))["rows"]
     tag = lambda s: "opaque-names" in rows[s["task_id"].split("#")[0]]["tags"]  # noqa: E731

@@ -1,0 +1,8 @@
+     3750 data/s6opt_shards/dec_1.jsonl
+     3750 data/s6opt_shards/dec_2.jsonl
+      519 data/s6opt_shards/dtw_1.jsonl
+      421 data/s6opt_shards/dtw_2.jsonl
+     3750 data/s6opt_shards/opq_1.jsonl
+     3750 data/s6opt_shards/opq_2.jsonl
+    15940 total
+=== gen_s6opt done Sun Sep 27 12:10:28 CDT 2026

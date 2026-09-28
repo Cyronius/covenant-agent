@@ -1,0 +1,38 @@
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/dec25_A0_decoy.score.log:  goal      35.4%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/dec25_A0_flip.score.log:  goal      10.8%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/dec25_A0_plain.score.log:  goal      42.0%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/dec25_A0_plain_bk3.score.log:  goal      50.9%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/dec25_A0_test.score.log:  goal      95.7%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/dtw25_A0_decoy.score.log:  goal      40.2%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/dtw25_A0_flip.score.log:  goal      25.8%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/dtw25_A0_plain.score.log:  goal      53.9%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/dtw25_A0_plain_bk3.score.log:  goal      64.8%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/dtw25_A0_test.score.log:  goal      92.6%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/opq25_A0_decoy.score.log:  goal      33.9%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/opq25_A0_flip.score.log:  goal      17.6%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/opq25_A0_plain.score.log:  goal      74.4%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/opq25_A0_plain_bk3.score.log:  goal      82.0%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/opq25_A0_test.score.log:  goal      96.7%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/opq25_SPt_decoy.score.log:  goal      43.6%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/opq25_SPt_flip.score.log:  goal      22.2%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/opq25_SPt_plain.score.log:  goal      74.2%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/opq25_SPt_plain_bk3.score.log:  goal      79.8%
+/c/code/covenant-agent/models/tiny/runs/pod_s6opt/out/opq25_SPt_test.score.log:  goal      94.0%
+Traceback (most recent call last):
+  File "C:\code\covenant-agent\results\logs\tool_choice_r18.py", line 23, in <module>
+    model = load_model(Path(ckpt), torch.device('cpu'))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\code\covenant-agent\models\tiny\evaluate.py", line 66, in load_model
+    ck = torch.load(ckpt_path, map_location=device)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\josha\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 1561, in load
+    with _open_file_like(f, "rb") as opened_file:
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\josha\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 795, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\josha\AppData\Roaming\Python\Python311\site-packages\torch\serialization.py", line 776, in __init__
+    super().__init__(open(name, mode))  # noqa: SIM115
+                     ^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '\\c\\code\\covenant-agent\\models\\tiny\\runs\\pod_s6opt\\runs\\dec25_A0\\best.pt'
+=== score_s6opt done Sun Sep 27 17:06:11 CDT 2026
