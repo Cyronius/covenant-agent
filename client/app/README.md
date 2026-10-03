@@ -23,17 +23,20 @@ npm run dev
 
 Open the Vite URL it prints (typically `http://localhost:5173`). Vite
 proxies `/validate`, `/kanban_prompt`, `/rpg_new`, `/rpg_prompt`,
-`/db_prompt`, `/db_new`, `/apps`, `/models/*`, and `/agent_core.gbnf` to the
-running Python server and sends the same COOP/COEP headers `dev_server.py`
-does, which wllama's multi-threaded WASM path needs. `COVENANT_BACKEND`
-points at a different server (another port, another checkpoint) without
-editing `vite.config.ts`.
+`/db_prompt`, `/db_new`, `/apps` and `/plan` to the running Python server.
+`COVENANT_BACKEND` points at a different server (another port, another
+planner) without editing `vite.config.ts`.
+
+Every world runs the one planner the server was started with — the newest
+tiny checkpoint by default (`DEMO_PLANNER` in `server/dev_server.py`). There
+is no model or inference-mode picker; the header shows which planner is
+loaded. Generation happens on the dev server, not in the browser.
 
 ## The three demos
 
 **Kanban Board** (`/kanban`, `src/worlds/kanban/`) — free-typed requests
 against a fake team board: "archive the overdue cards assigned to Bob",
-"message Priya about her overdue card." The full pipeline is real: in-browser
+"message Priya about her overdue card." The full pipeline is real: the planner on the dev server,
 grammar-constrained generation, the real `core/` compile pipeline, real
 sandboxed execution, and a real approval gate that runs the whole program
 unapproved first and previews *everything* it would do before a DELETE/SEND
@@ -77,8 +80,8 @@ had to be built deliberately, not assumed:
 
 Each world still owns its own components and styling — no shared
 `ChatPanel`/`Message`/board-or-dungeon-or-table component — matching the
-convention `InferenceControls.tsx`'s own comment already established
-(logic lives in `client/shared/*.ts`; markup stays per-world).
+convention the per-world `LoadingView.tsx` copies follow (logic lives in
+`client/shared/*.ts`; markup stays per-world).
 
 ## Adding a fourth world
 

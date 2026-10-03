@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { InferenceControls } from './components/InferenceControls';
 import KanbanBoard from './components/KanbanBoard';
 import ChatPanel from './components/ChatPanel';
 import Toast from './components/Toast';
@@ -49,11 +48,6 @@ export default function App() {
     modelStatus,
     busy,
     toast,
-    inference,
-    setInferenceMode,
-    models,
-    model,
-    selectModel,
     sendMessage,
     approveGate,
     cancelGate,
@@ -81,18 +75,10 @@ export default function App() {
               Tools
             </button>
           )}
-          <InferenceControls
-            mode={inference}
-            model={model}
-            models={models}
-            disabled={busy || modelStatus.phase === 'loading'}
-            onMode={setInferenceMode}
-            onModel={selectModel}
-          />
           {ready && (
             <span className="model-status ready">
               <span className="dot" />
-              {modelStatus.backend} · {Math.round(modelStatus.loadMs)}ms load
+              {modelStatus.model} · {Math.round(modelStatus.loadMs)}ms load
             </span>
           )}
           {ready && messages.length > 0 && (

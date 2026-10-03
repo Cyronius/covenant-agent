@@ -1,0 +1,45 @@
+516748 texts tokenized in 4s
+step 0: {'held_flip': 0.9727, 'held_teacher': 0.7426, 'hand': [0.959, 1.0, 0.923, 0.955, 0.954, 0.596]}
+{"step": 100, "epoch": 0, "total": 0.5889, "distill": 0.2497, "rel": 0.0063, "push": 0.165, "anchor": 0.003, "flip_cos": 0.9595, "teacher_flip": 0.9475, "moved": 0.0, "sec": 29}
+{"step": 200, "epoch": 0, "total": 0.5026, "distill": 0.2489, "rel": 0.0102, "push": 0.1093, "anchor": 0.0249, "flip_cos": 0.8651, "teacher_flip": 0.9455, "moved": 0.0031, "sec": 60}
+{"step": 300, "epoch": 0, "total": 0.4487, "distill": 0.2382, "rel": 0.0092, "push": 0.0842, "anchor": 0.033, "flip_cos": 0.8443, "teacher_flip": 0.9455, "moved": 0.0071, "sec": 89}
+{"step": 400, "epoch": 0, "total": 0.4375, "distill": 0.2321, "rel": 0.0085, "push": 0.0797, "anchor": 0.0374, "flip_cos": 0.8469, "teacher_flip": 0.9464, "moved": 0.0115, "sec": 117}
+{"step": 500, "epoch": 0, "total": 0.4249, "distill": 0.2269, "rel": 0.008, "push": 0.0743, "anchor": 0.0413, "flip_cos": 0.8449, "teacher_flip": 0.9461, "moved": 0.0165, "sec": 148, "held_flip": 0.8378, "held_teacher": 0.7707, "hand": [0.77, 0.977, 0.772, 0.724, 0.965, 0.691]}
+{"step": 600, "epoch": 0, "total": 0.4116, "distill": 0.2272, "rel": 0.0077, "push": 0.0625, "anchor": 0.0518, "flip_cos": 0.8337, "teacher_flip": 0.9463, "moved": 0.0213, "sec": 185}
+{"step": 700, "epoch": 0, "total": 0.4052, "distill": 0.2288, "rel": 0.0078, "push": 0.0555, "anchor": 0.0575, "flip_cos": 0.8247, "teacher_flip": 0.9454, "moved": 0.0256, "sec": 215}
+{"step": 800, "epoch": 0, "total": 0.3954, "distill": 0.2241, "rel": 0.0076, "push": 0.0534, "anchor": 0.0569, "flip_cos": 0.8242, "teacher_flip": 0.9464, "moved": 0.0302, "sec": 244}
+{"step": 900, "epoch": 0, "total": 0.3968, "distill": 0.224, "rel": 0.0075, "push": 0.0528, "anchor": 0.0597, "flip_cos": 0.8232, "teacher_flip": 0.9462, "moved": 0.0331, "sec": 272}
+{"step": 1000, "epoch": 0, "total": 0.3933, "distill": 0.2214, "rel": 0.0074, "push": 0.0523, "anchor": 0.0599, "flip_cos": 0.8242, "teacher_flip": 0.9477, "moved": 0.0366, "sec": 302, "held_flip": 0.8234, "held_teacher": 0.7764, "hand": [0.776, 0.948, 0.79, 0.687, 0.966, 0.751]}
+{"step": 1100, "epoch": 0, "total": 0.3924, "distill": 0.2213, "rel": 0.0073, "push": 0.0514, "anchor": 0.061, "flip_cos": 0.8223, "teacher_flip": 0.9462, "moved": 0.0397, "sec": 340}
+{"step": 1200, "epoch": 0, "total": 0.3859, "distill": 0.2191, "rel": 0.0073, "push": 0.0488, "anchor": 0.0618, "flip_cos": 0.8199, "teacher_flip": 0.9457, "moved": 0.0425, "sec": 369}
+{"step": 1300, "epoch": 0, "total": 0.3861, "distill": 0.2188, "rel": 0.0072, "push": 0.0488, "anchor": 0.0624, "flip_cos": 0.8206, "teacher_flip": 0.9453, "moved": 0.0454, "sec": 399}
+{"step": 1400, "epoch": 0, "total": 0.3855, "distill": 0.2168, "rel": 0.0071, "push": 0.0493, "anchor": 0.063, "flip_cos": 0.8213, "teacher_flip": 0.9463, "moved": 0.0482, "sec": 427}
+{"step": 1500, "epoch": 0, "total": 0.3831, "distill": 0.2165, "rel": 0.0071, "push": 0.0483, "anchor": 0.063, "flip_cos": 0.8199, "teacher_flip": 0.9452, "moved": 0.0504, "sec": 457, "held_flip": 0.8317, "held_teacher": 0.7837, "hand": [0.794, 0.956, 0.785, 0.758, 0.963, 0.74]}
+{"step": 1600, "epoch": 0, "total": 0.3865, "distill": 0.2172, "rel": 0.007, "push": 0.0492, "anchor": 0.0638, "flip_cos": 0.8213, "teacher_flip": 0.9457, "moved": 0.0523, "sec": 496}
+{"step": 1700, "epoch": 0, "total": 0.3832, "distill": 0.2146, "rel": 0.007, "push": 0.0489, "anchor": 0.0636, "flip_cos": 0.8218, "teacher_flip": 0.9456, "moved": 0.0542, "sec": 525}
+{"step": 1800, "epoch": 0, "total": 0.3852, "distill": 0.2149, "rel": 0.0069, "push": 0.0495, "anchor": 0.0644, "flip_cos": 0.8222, "teacher_flip": 0.9454, "moved": 0.0567, "sec": 553}
+{"step": 1900, "epoch": 0, "total": 0.3839, "distill": 0.2147, "rel": 0.007, "push": 0.0485, "anchor": 0.0654, "flip_cos": 0.8208, "teacher_flip": 0.9456, "moved": 0.0584, "sec": 584}
+{"step": 2000, "epoch": 0, "total": 0.3834, "distill": 0.2152, "rel": 0.0069, "push": 0.0475, "anchor": 0.0662, "flip_cos": 0.8206, "teacher_flip": 0.946, "moved": 0.0602, "sec": 611, "held_flip": 0.8264, "held_teacher": 0.785, "hand": [0.78, 0.932, 0.77, 0.746, 0.963, 0.728]}
+{"step": 2100, "epoch": 0, "total": 0.3794, "distill": 0.2131, "rel": 0.0069, "push": 0.0467, "anchor": 0.0659, "flip_cos": 0.8194, "teacher_flip": 0.9455, "moved": 0.0613, "sec": 650}
+{"step": 2200, "epoch": 0, "total": 0.38, "distill": 0.2138, "rel": 0.0069, "push": 0.0467, "anchor": 0.066, "flip_cos": 0.8196, "teacher_flip": 0.9452, "moved": 0.0626, "sec": 679}
+{"step": 2300, "epoch": 0, "total": 0.3802, "distill": 0.2128, "rel": 0.0068, "push": 0.0476, "anchor": 0.0654, "flip_cos": 0.8215, "teacher_flip": 0.9468, "moved": 0.064, "sec": 709}
+{"step": 2400, "epoch": 0, "total": 0.3775, "distill": 0.2117, "rel": 0.0068, "push": 0.0463, "anchor": 0.0663, "flip_cos": 0.8193, "teacher_flip": 0.9452, "moved": 0.065, "sec": 738}
+{"step": 2500, "epoch": 0, "total": 0.3765, "distill": 0.2126, "rel": 0.0068, "push": 0.0459, "anchor": 0.0654, "flip_cos": 0.819, "teacher_flip": 0.945, "moved": 0.0659, "sec": 768, "held_flip": 0.8254, "held_teacher": 0.7875, "hand": [0.782, 0.928, 0.77, 0.754, 0.966, 0.707]}
+{"step": 2600, "epoch": 0, "total": 0.3822, "distill": 0.212, "rel": 0.0068, "push": 0.0483, "anchor": 0.0668, "flip_cos": 0.8211, "teacher_flip": 0.9451, "moved": 0.0669, "sec": 807}
+{"step": 2700, "epoch": 0, "total": 0.3746, "distill": 0.2119, "rel": 0.0068, "push": 0.0453, "anchor": 0.0654, "flip_cos": 0.8184, "teacher_flip": 0.9454, "moved": 0.0675, "sec": 836}
+{"step": 2800, "epoch": 0, "total": 0.3798, "distill": 0.2103, "rel": 0.0067, "push": 0.048, "anchor": 0.0669, "flip_cos": 0.8215, "teacher_flip": 0.9452, "moved": 0.068, "sec": 864}
+{"step": 2900, "epoch": 0, "total": 0.3764, "distill": 0.2113, "rel": 0.0068, "push": 0.0464, "anchor": 0.0655, "flip_cos": 0.8197, "teacher_flip": 0.9463, "moved": 0.0685, "sec": 893}
+{"step": 3000, "epoch": 0, "total": 0.3773, "distill": 0.211, "rel": 0.0068, "push": 0.0469, "anchor": 0.0656, "flip_cos": 0.8209, "teacher_flip": 0.9459, "moved": 0.0689, "sec": 922, "held_flip": 0.8276, "held_teacher": 0.7892, "hand": [0.748, 0.924, 0.783, 0.759, 0.962, 0.724]}
+{"step": 3100, "epoch": 0, "total": 0.3792, "distill": 0.2117, "rel": 0.0068, "push": 0.0477, "anchor": 0.0653, "flip_cos": 0.8213, "teacher_flip": 0.9455, "moved": 0.0695, "sec": 960}
+{"step": 3200, "epoch": 0, "total": 0.3783, "distill": 0.2103, "rel": 0.0066, "push": 0.0473, "anchor": 0.0668, "flip_cos": 0.8202, "teacher_flip": 0.9456, "moved": 0.0697, "sec": 992}
+{"step": 3300, "epoch": 0, "total": 0.375, "distill": 0.2087, "rel": 0.0066, "push": 0.0473, "anchor": 0.0652, "flip_cos": 0.821, "teacher_flip": 0.9454, "moved": 0.0702, "sec": 1026}
+{"step": 3400, "epoch": 0, "total": 0.3733, "distill": 0.208, "rel": 0.0066, "push": 0.0467, "anchor": 0.0653, "flip_cos": 0.8206, "teacher_flip": 0.945, "moved": 0.0703, "sec": 1058}
+{"step": 3500, "epoch": 0, "total": 0.375, "distill": 0.2094, "rel": 0.0066, "push": 0.0471, "anchor": 0.0648, "flip_cos": 0.8219, "teacher_flip": 0.9463, "moved": 0.0705, "sec": 1090, "held_flip": 0.8265, "held_teacher": 0.7893, "hand": [0.76, 0.911, 0.784, 0.765, 0.962, 0.714]}
+{"step": 3600, "epoch": 0, "total": 0.3737, "distill": 0.2104, "rel": 0.0066, "push": 0.0458, "anchor": 0.065, "flip_cos": 0.8201, "teacher_flip": 0.947, "moved": 0.0706, "sec": 1133}
+{"step": 3700, "epoch": 0, "total": 0.3737, "distill": 0.2085, "rel": 0.0067, "push": 0.0467, "anchor": 0.0651, "flip_cos": 0.8212, "teacher_flip": 0.9462, "moved": 0.0706, "sec": 1167}
+{"step": 3800, "epoch": 0, "total": 0.373, "distill": 0.2093, "rel": 0.0065, "push": 0.0464, "anchor": 0.0644, "flip_cos": 0.8207, "teacher_flip": 0.9462, "moved": 0.0705, "sec": 1199}
+{"step": 3900, "epoch": 0, "total": 0.3747, "distill": 0.2091, "rel": 0.0066, "push": 0.0466, "anchor": 0.0658, "flip_cos": 0.821, "teacher_flip": 0.9464, "moved": 0.0707, "sec": 1231}
+{"step": 4000, "epoch": 0, "total": 0.3713, "distill": 0.2094, "rel": 0.0066, "push": 0.0456, "anchor": 0.0641, "flip_cos": 0.8199, "teacher_flip": 0.9475, "moved": 0.0708, "sec": 1263, "held_flip": 0.8228, "held_teacher": 0.7901, "hand": [0.763, 0.914, 0.783, 0.74, 0.962, 0.733]}
+{"step": 4100, "epoch": 0, "total": 0.3661, "distill": 0.2081, "rel": 0.0065, "push": 0.0442, "anchor": 0.063, "flip_cos": 0.8184, "teacher_flip": 0.945, "moved": 0.0706, "sec": 1306}
+final (int4 embeddings): {'held_flip': 0.836, 'held_teacher': 0.7803, 'hand': [0.787, 0.92, 0.811, 0.765, 0.96, 0.675], 'moved': 0.0704}
+wrote reader\role\r3\reader.pt

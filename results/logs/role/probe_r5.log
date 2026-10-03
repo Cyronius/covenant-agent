@@ -1,0 +1,58 @@
+
+== demo: 10 tasks with used and unused constants
+  method                   pair   top1   pair by the used constant's kind (pairs)
+  overlap                  92.2  100.0   id 100 (179)  text 84 (103)  time 50 (14)
+  whole                    83.8   70.0   id 92 (179)  text 81 (103)  time 0 (14)
+  chunk-2                  82.4   60.0   id 96 (179)  text 70 (103)  time 0 (14)
+  chunk-3                  82.8   70.0   id 97 (179)  text 69 (103)  time 0 (14)
+  chunk-4                  83.8   60.0   id 94 (179)  text 77 (103)  time 0 (14)
+  chunk-6                  84.1   70.0   id 92 (179)  text 82 (103)  time 0 (14)
+  overlap+whole            89.2  100.0   id 100 (179)  text 82 (103)  time 0 (14)
+  overlap+chunk-2          85.8  100.0   id 100 (179)  text 73 (103)  time 0 (14)
+  overlap+chunk-3          87.2  100.0   id 100 (179)  text 77 (103)  time 0 (14)
+  overlap+chunk-4          88.9  100.0   id 100 (179)  text 82 (103)  time 0 (14)
+  overlap+chunk-6          89.5  100.0   id 100 (179)  text 84 (103)  time 0 (14)
+
+== plain: 444 tasks with used and unused constants
+  method                   pair   top1   pair by the used constant's kind (pairs)
+  overlap                  64.6   79.0   bool 0 (312)  enum 70 (318)  id 84 (1072)  status 0 (40)  text 61 (1101)  time 88 (154)
+  whole                    60.5   72.7   bool 4 (312)  enum 39 (318)  id 89 (1072)  status 18 (40)  text 58 (1101)  time 54 (154)
+  chunk-2                  60.4   76.6   bool 13 (312)  enum 56 (318)  id 87 (1072)  status 0 (40)  text 47 (1101)  time 92 (154)
+  chunk-3                  64.0   78.2   bool 10 (312)  enum 51 (318)  id 90 (1072)  status 2 (40)  text 56 (1101)  time 94 (154)
+  chunk-4                  65.2   77.5   bool 8 (312)  enum 45 (318)  id 92 (1072)  status 2 (40)  text 60 (1101)  time 94 (154)
+  chunk-6                  64.4   74.3   bool 8 (312)  enum 41 (318)  id 91 (1072)  status 5 (40)  text 60 (1101)  time 83 (154)
+  overlap+whole            64.7   80.2   bool 0 (312)  enum 61 (318)  id 86 (1072)  status 0 (40)  text 62 (1101)  time 92 (154)
+  overlap+chunk-2          65.1   81.5   bool 0 (312)  enum 67 (318)  id 85 (1072)  status 0 (40)  text 62 (1101)  time 91 (154)
+  overlap+chunk-3          64.7   80.0   bool 0 (312)  enum 63 (318)  id 85 (1072)  status 0 (40)  text 62 (1101)  time 92 (154)
+  overlap+chunk-4          64.7   80.2   bool 0 (312)  enum 63 (318)  id 85 (1072)  status 0 (40)  text 62 (1101)  time 92 (154)
+  overlap+chunk-6          64.6   79.5   bool 0 (312)  enum 63 (318)  id 85 (1072)  status 0 (40)  text 62 (1101)  time 92 (154)
+
+== clut: 444 tasks with used and unused constants
+  method                   pair   top1   pair by the used constant's kind (pairs)
+  overlap                  83.1   83.7   bool 40 (563)  enum 90 (825)  id 97 (2065)  status 33 (66)  text 78 (2030)  time 90 (358)
+  whole                    82.5   83.8   bool 41 (563)  enum 90 (825)  id 98 (2065)  status 50 (66)  text 75 (2030)  time 90 (358)
+  chunk-2                  85.9   84.5   bool 74 (563)  enum 90 (825)  id 97 (2065)  status 42 (66)  text 76 (2030)  time 91 (358)
+  chunk-3                  86.4   87.6   bool 71 (563)  enum 89 (825)  id 98 (2065)  status 44 (66)  text 78 (2030)  time 94 (358)
+  chunk-4                  86.2   86.0   bool 61 (563)  enum 90 (825)  id 98 (2065)  status 44 (66)  text 79 (2030)  time 97 (358)
+  chunk-6                  84.9   84.7   bool 47 (563)  enum 88 (825)  id 98 (2065)  status 52 (66)  text 80 (2030)  time 93 (358)
+  overlap+whole            83.5   85.4   bool 39 (563)  enum 92 (825)  id 98 (2065)  status 46 (66)  text 77 (2030)  time 95 (358)
+  overlap+chunk-2          86.5   85.6   bool 68 (563)  enum 93 (825)  id 97 (2065)  status 39 (66)  text 79 (2030)  time 91 (358)
+  overlap+chunk-3          86.3   86.5   bool 66 (563)  enum 91 (825)  id 98 (2065)  status 41 (66)  text 79 (2030)  time 94 (358)
+  overlap+chunk-4          85.9   85.4   bool 58 (563)  enum 92 (825)  id 97 (2065)  status 41 (66)  text 79 (2030)  time 96 (358)
+  overlap+chunk-6          84.8   85.4   bool 45 (563)  enum 92 (825)  id 97 (2065)  status 50 (66)  text 80 (2030)  time 94 (358)
+
+== role pairs (cosine; 1.0 = the reader can't tell them apart)
+  0.779  'move it to bob' vs 'move it from bob'
+  0.855  'assign card 6 to Bob' vs 'assign Bob to card 6'
+  0.783  'cards that are done' vs 'cards that are not done'
+  0.795  'orders placed before March' vs 'orders placed after March'
+  0.926  'send priya the list' vs 'send the list about priya'
+  0.653  'the oldest issue' vs 'the newest issue'
+  0.601  'bob' vs 'Bob Alvarez'
+  0.257  'bob' vs 'Priya Nandan'
+  0.384  'the release notes' vs 'card 2 - Write release notes for v4.2'
+  0.133  'the release notes' vs 'card 4 - Retire legacy webhook handler'
+  0.473  'finished' vs 'the done status'
+  0.402  'finished' vs 'the todo status'
+
+wrote ../../results/logs/role/probe_r5.json

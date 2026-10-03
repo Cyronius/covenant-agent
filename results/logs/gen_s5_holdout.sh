@@ -21,10 +21,29 @@
 # worlds costs zero training data, needs no split change, and may settle that
 # question on its own -- before any injection arm is run.
 #
-# Prep it as a second cache against the unchanged training corpus. Pass the
-# CONCATENATION of the plain and decoyed holdouts, so one training run scores
-# both and their difference is the grounding measurement (models/tiny/README):
+# Prep it as a second cache against the unchanged training corpus. Pass both
+# halves as ONE holdout corpus, so one training run scores both and their
+# difference is the grounding measurement (models/tiny/README).
 #
+# Not `cat`. The two halves are the SAME tasks with the same ids, so the
+# decoyed half is re-identified on the way in -- every scorer in the tree
+# tells the halves apart by that suffix (evaluate.py, run_step1.sh,
+# score_ho42.sh, selftest.sh, test_pipeline.py, ablate_desc.py), and a plain
+# concatenation leaves each id twice, which reads downstream as a broken
+# encoder rather than a broken corpus. prep now refuses it outright.
+#
+#   python - <<'EOF'
+#   import json
+#   from pathlib import Path
+#   with Path("data/s5_holdout_both.jsonl").open("w", encoding="utf-8", newline="\n") as fh:
+#       for src, suf in (("data/s5_holdout.jsonl", ""),
+#                        ("data/s5_holdout_decoy.jsonl", "+decoy")):
+#           for line in Path(src).open(encoding="utf-8"):
+#               if suf:
+#                   r = json.loads(line); r["id"] += suf
+#                   line = json.dumps(r, ensure_ascii=False) + "\n"
+#               fh.write(line)
+#   EOF
 #   cd models/tiny
 #   python prep.py --corpus ../../data/s5_plain.jsonl --limit 30000 \
 #       --max-line 80 --holdout-corpus ../../data/s5_holdout_both.jsonl --out data_cache_ho42

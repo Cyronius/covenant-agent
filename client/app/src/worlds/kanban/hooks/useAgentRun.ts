@@ -8,28 +8,13 @@
 // generation/compile/typecheck/effects/execution/approval-gate are real.
 // See .claude/plans/understory-kanban-frontend.md.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type LoadStage, type Planner } from '../../../../../shared/llm';
-import {
-  createPlannerFor,
-  fetchModels,
-  loadModelPreference,
-  loadPreference,
-  saveModelPreference,
-  savePreference,
-  type InferenceMode,
-  type ModelInfo,
-} from '../../../../../shared/inference';
+import { createPlanner, type Planner } from '../../../../../shared/planner';
 import { buildFullPrompt, STOP, type Registers } from '../../../../../shared/prompt';
 import { validate, type CallLogEntry, type TaskContextJson, type ValidateResponse } from '../../../../../shared/validate';
 import { fetchKanbanPrompt, describeCallSite } from '../lib/kanbanPrompt';
 import { describeCall, describeArg } from '../lib/describe';
 import { initialState, userById, TOOL_EFFECTS, type KanbanState, type Effect } from '../data/board';
 
-// Which checkpoint to load is the server's call (GET /models), not a
-// hardcode here — see client/shared/inference.ts. This was pinned to the S1
-// checkpoint until 2026-09-04, which quietly kept the demo a generation
-// behind the eval suites.
-const APP_KEY = 'kanban-ui';
 const MAX_SEGMENTS = 4; // PAUSE continuations per request (harness MAX_SEGMENTS is the eval-side cap)
 
 export type ChatMessage =
@@ -42,8 +27,8 @@ export type ChatMessage =
   | { kind: 'note'; id: string; text: string };
 
 export type ModelStatus =
-  | { phase: 'loading'; stage: LoadStage }
-  | { phase: 'ready'; backend: 'wasm' | 'webgpu' | 'server'; loadMs: number }
+  | { phase: 'loading' }
+  | { phase: 'ready'; model: string; loadMs: number }
   | { phase: 'error'; message: string };
 
 let nextId = 0;
@@ -120,24 +105,17 @@ function summarize(calls: CallLogEntry[], returnValue: unknown): string {
 export function useAgentRun() {
   const [board, setBoard] = useState<KanbanState>(() => initialState());
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [modelStatus, setModelStatus] = useState<ModelStatus>({ phase: 'loading', stage: 'grammar' });
+  const [modelStatus, setModelStatus] = useState<ModelStatus>({ phase: 'loading' });
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [inference, setInference] = useState<InferenceMode>(() => loadPreference(APP_KEY));
-  const [models, setModels] = useState<ModelInfo[]>([]);
-  const [model, setModel] = useState<string | null>(() => loadModelPreference(APP_KEY));
 
   const plannerRef = useRef<Planner | null>(null);
   const gateResolveRef = useRef<((approved: boolean) => void) | null>(null);
   const toastTimerRef = useRef<number | undefined>(undefined);
   const boardRef = useRef(board);
   boardRef.current = board;
-  // StrictMode double-invokes effects in dev (mount -> cleanup -> mount) on
-  // the same component instance; wllama's OPFS-backed model cache can't
-  // have two concurrent loads open a sync access handle on the same file
-  // ("Access Handles cannot be created if there is another open Access
-  // Handle..."), so createPlanner() must only ever actually start once,
-  // regardless of how many times the effect body runs.
+  // StrictMode double-invokes effects in dev (mount -> cleanup -> mount);
+  // one load per real mount is enough.
   const loadStartedRef = useRef(false);
 
   const append = useCallback((m: ChatMessage) => {
@@ -154,115 +132,24 @@ export function useAgentRun() {
     toastTimerRef.current = window.setTimeout(() => setToast(null), 2400);
   }, []);
 
-  // Shared by the initial mount load and every mode/model switch below: both
-  // want "unload whatever's loaded (if anything), load fresh under this
-  // backend and checkpoint, report loading/ready/error the same way". Both
-  // the backend and n_gpu_layers are load-time settings, so a switch always
-  // means loading again.
-  const loadPlanner = useCallback(async (mode: InferenceMode, name: string) => {
-    try {
-      if (plannerRef.current) {
-        await plannerRef.current.unload();
-        plannerRef.current = null;
-      }
-      setModelStatus({ phase: 'loading', stage: mode === 'server' ? 'model' : 'grammar' });
-      const planner = await createPlannerFor({
-        mode,
-        model: name,
-        onStage: (stage) => setModelStatus({ phase: 'loading', stage }),
-      });
-      plannerRef.current = planner;
-      setModelStatus({ phase: 'ready', backend: planner.backend, loadMs: planner.loadMs });
-    } catch (err) {
-      setModelStatus({ phase: 'error', message: err instanceof Error ? err.message : String(err) });
-    }
-  }, []);
-
   // Loads on mount, no button in the way — see App.tsx's loading view.
   //
   // No cancellation flag: loadStartedRef makes this a true singleton load
-  // for the component's real lifetime (StrictMode's simulated dev-mode
-  // mount->cleanup->mount can only ever start it once), so there's no
-  // second attempt whose result would need to be discarded — and gating
-  // these setState calls on "did the effect that started this get cleaned
-  // up" is wrong for exactly that StrictMode cleanup: it fires immediately
-  // after the first mount despite the singleton load still running, which
-  // silently swallowed every later status update including 'ready' (caught
-  // via an actual browser run: the model finished loading — confirmed in
-  // wllama's own console output — but the UI sat on the loading screen
-  // forever because `cancelled` had already flipped true).
-  //
-  // Which checkpoint to load comes from GET /models, so the first load waits
-  // for that list; a stored preference that the server no longer has falls
-  // back to the server's own default.
+  // for the component's real lifetime, and gating these setState calls on
+  // "did the effect that started this get cleaned up" is wrong for
+  // StrictMode's simulated cleanup, which fires right after the first mount
+  // while the load is still running — it once left the UI on the loading
+  // screen forever after the model had finished loading.
   useEffect(() => {
     if (loadStartedRef.current) return;
     loadStartedRef.current = true;
-    (async () => {
-      let name = model;
-      try {
-        const list = await fetchModels();
-        setModels(list.models);
-        if (!name || !list.models.some((m) => m.name === name)) {
-          name = list.default ?? list.models[0]?.name ?? null;
-          setModel(name);
-        }
-      } catch {
-        // no /models (a plain static host): fall back to whatever is stored
-      }
-      if (!name) {
-        setModelStatus({ phase: 'error', message: 'no model available from GET /models' });
-        return;
-      }
-      loadPlanner(inference, name);
-    })();
-    // Only the first mount's values matter here; the effect below owns every
-    // reload after that, including ones this same state change triggers.
-  }, [loadPlanner]);
-
-  // A separate, empty-deps effect on purpose: the merged app routes between
-  // worlds without a page reload, so this hook can unmount for real while a
-  // model is resident (StrictMode's phantom dev-mode unmount does not count —
-  // it fires before loadPlanner's async work has set plannerRef.current, so
-  // this is a no-op then). Folding this into the mount effect above would
-  // re-run it on every dependency change instead of only on true unmount.
-  // Without it, wllama tries to open a second OPFS access handle on the next
-  // world's model load while this one is still open — the exact failure
-  // the StrictMode comment above documents, just triggered by navigation
-  // instead of a double-invoke.
-  useEffect(() => {
-    return () => {
-      plannerRef.current?.unload().catch(() => {});
-    };
+    createPlanner()
+      .then((planner) => {
+        plannerRef.current = planner;
+        setModelStatus({ phase: 'ready', model: planner.model, loadMs: planner.loadMs });
+      })
+      .catch((err) => setModelStatus({ phase: 'error', message: err instanceof Error ? err.message : String(err) }));
   }, []);
-
-  const setInferenceMode = useCallback((mode: InferenceMode) => {
-    setInference((prev) => {
-      if (prev === mode) return prev;
-      savePreference(APP_KEY, mode);
-      return mode;
-    });
-  }, []);
-
-  const selectModel = useCallback((name: string) => {
-    setModel((prev) => {
-      if (prev === name) return prev;
-      saveModelPreference(APP_KEY, name);
-      return name;
-    });
-  }, []);
-
-  // Reload whenever the backend or the checkpoint changes after the initial
-  // mount. Guarded so this doesn't also fire for the mount effect's own
-  // initial values (that load is already in flight above).
-  const switchMountedRef = useRef(false);
-  useEffect(() => {
-    if (!switchMountedRef.current) {
-      switchMountedRef.current = true;
-      return;
-    }
-    if (model) loadPlanner(inference, model);
-  }, [inference, model, loadPlanner]);
 
   const approveGate = useCallback(() => {
     gateResolveRef.current?.(true);
@@ -317,10 +204,18 @@ export function useAgentRun() {
             maxTokens: 250,
             stop: STOP,
             grammar: kp.grammar,
+            task: { request: trimmed, context: kp.context, registers, pauseTypes },
           });
           prior.push(gen.text);
           totalTokens += gen.tokensOut;
           totalGenMs += gen.genMs;
+          if (gen.truncated && segIdx === 0) {
+            append({
+              kind: 'note',
+              id: mkId(),
+              text: `The planner only read the start of this request (${gen.requestTokens} tokens is past its budget).`,
+            });
+          }
           append({ kind: 'program', id: mkId(), text: gen.text });
 
           let resp: ValidateResponse<KanbanState> = await validate<KanbanState>({
@@ -459,11 +354,6 @@ export function useAgentRun() {
     modelStatus,
     busy,
     toast,
-    inference,
-    setInferenceMode,
-    models,
-    model,
-    selectModel,
     sendMessage,
     approveGate,
     cancelGate,

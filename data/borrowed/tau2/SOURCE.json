@@ -1,0 +1,42 @@
+{
+ "source": "https://github.com/sierra-research/tau2-bench",
+ "commit": "5bfa7e37b36656b37dc6d022156be6563c1007f3",
+ "domains": {
+  "retail": {
+   "train_tasks": 74,
+   "test_tasks_copied": 0,
+   "files": [
+    "data/tau2/domains/retail/split_tasks.json (train ids)",
+    "data/tau2/domains/retail/tasks.json (train tasks)",
+    "data/tau2/domains/retail/policy.md",
+    "data/tau2/domains/retail/db.json (subset)"
+   ],
+   "test_users_denied": 31,
+   "train_users": 43,
+   "template_users": 220
+  },
+  "airline": {
+   "train_tasks": 30,
+   "test_tasks_copied": 0,
+   "files": [
+    "data/tau2/domains/airline/split_tasks.json (train ids)",
+    "data/tau2/domains/airline/tasks.json (train tasks)",
+    "data/tau2/domains/airline/policy.md",
+    "data/tau2/domains/airline/db.json (subset)"
+   ],
+   "test_users_denied": 17,
+   "train_users": 23,
+   "template_users": 220
+  },
+  "telecom": {
+   "train_tasks": 74,
+   "test_tasks_copied": 0,
+   "files": [
+    "data/tau2/domains/telecom/split_tasks.json (train ids)",
+    "data/tau2/domains/telecom/tasks.json (train tasks)",
+    "data/tau2/domains/telecom/main_policy.md",
+    "data/tau2/domains/telecom/db.toml"
+   ]
+  }
+ }
+}

@@ -1,0 +1,109 @@
+{
+ "tagger": "reader/slots/t_electra/tagger.pt",
+ "body": "electra-small[:12]",
+ "mix": [
+  0.079,
+  0.077,
+  0.06,
+  0.061,
+  0.063,
+  0.073,
+  0.086,
+  0.093,
+  0.086,
+  0.077,
+  0.081,
+  0.086,
+  0.078
+ ],
+ "held": {
+  "present_acc": 96.4,
+  "exact": 88.2,
+  "overlap": 0.925,
+  "n_both": 6864
+ },
+ "swap_destination": {
+  "n": 276,
+  "before": 52.5,
+  "after": 45.3,
+  "both": 35.5
+ },
+ "swap_source": {
+  "n": 155,
+  "before": 52.9,
+  "after": 49.0,
+  "both": 40.6
+ },
+ "to_from": {
+  "n": 548,
+  "dest_before": 47.8,
+  "source_after_dest_gone": 44.9,
+  "both": 34.5
+ },
+ "hand": {
+  "move it to bob": {
+   "action": "move",
+   "object": "it",
+   "destination": "bob"
+  },
+  "move it from bob": {
+   "action": "move",
+   "object": "it",
+   "source": "bob"
+  },
+  "assign card 6 to Bob": {
+   "action": "assign",
+   "object": "card 6",
+   "destination": "Bob"
+  },
+  "assign Bob to card 6": {
+   "action": "assign",
+   "object": "Bob",
+   "destination": "card"
+  },
+  "copy the report from the archive to the inbox": {
+   "action": "copy",
+   "object": "the report",
+   "destination": "the inbox",
+   "source": "the archive"
+  },
+  "copy the report from the inbox to the archive": {
+   "action": "copy",
+   "object": "the report",
+   "destination": "the archive",
+   "source": "the inbox"
+  },
+  "send priya the list": {
+   "action": "send",
+   "object": "the list"
+  },
+  "delete the cards that are not done": {
+   "action": "delete",
+   "object": "the cards",
+   "condition": "that are not done"
+  },
+  "list orders placed before March": {
+   "time": "before March"
+  }
+ },
+ "requests": {
+  "present_acc": 92.9,
+  "exact": 74.5,
+  "overlap": 0.817,
+  "n_both": 839
+ },
+ "probe": {
+  "demo": {
+   "slots": 82.4,
+   "slots+chunks": 85.1
+  },
+  "plain": {
+   "slots": 65.4,
+   "slots+chunks": 67.9
+  },
+  "clut": {
+   "slots": 84.4,
+   "slots+chunks": 87.7
+  }
+ }
+}

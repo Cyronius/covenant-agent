@@ -1,0 +1,610 @@
+{
+ "body": "/workspace/repo/models/tiny/reader/tern_electra/e1/model.pt",
+ "tagger": "/workspace/repo/models/tiny/reader/slots/t_tern_e1/tagger.pt",
+ "heads": {
+  "n": "reader/embed/_smoke/n/head.pt"
+ },
+ "held": {
+  "n": {
+   "cos_alone": 0.4639,
+   "cos_context": 0.4511,
+   "names_cos_alone": 0.4599,
+   "names_cos_context": 0.4368,
+   "rank_alone": 0.4462
+  }
+ },
+ "probe": {
+  "demo": {
+   "tasks": 10,
+   "overlap | -": 92.2,
+   "whole | teacher": 87.5,
+   "chunk-4 | teacher": 87.8,
+   "slots | teacher": 83.1,
+   "slots+chunks | teacher": 84.8,
+   "whole | n alone": 68.9,
+   "chunk-4 | n alone": 66.9,
+   "slots | n alone": 59.5,
+   "slots+chunks | n alone": 64.2,
+   "whole | n context": 68.9,
+   "chunk-4 | n context": 70.9,
+   "slots | n context": 63.2,
+   "slots+chunks | n context": 67.6,
+   "by_kind": {
+    "chunk-4 | overlap | id-name": [
+     100.0,
+     103
+    ],
+    "chunk-4 | teacher | id-name": [
+     100.0,
+     103
+    ],
+    "slots+chunks | teacher | id-name": [
+     98.1,
+     103
+    ],
+    "chunk-4 | n alone | id-name": [
+     85.4,
+     103
+    ],
+    "slots+chunks | n alone | id-name": [
+     84.5,
+     103
+    ],
+    "chunk-4 | n context | id-name": [
+     85.4,
+     103
+    ],
+    "slots+chunks | n context | id-name": [
+     83.5,
+     103
+    ],
+    "chunk-4 | overlap | id-title": [
+     100.0,
+     76
+    ],
+    "chunk-4 | overlap | text": [
+     84.5,
+     103
+    ],
+    "chunk-4 | teacher | id-title": [
+     100.0,
+     76
+    ],
+    "chunk-4 | teacher | text": [
+     76.7,
+     103
+    ],
+    "slots+chunks | teacher | id-title": [
+     100.0,
+     76
+    ],
+    "slots+chunks | teacher | text": [
+     70.9,
+     103
+    ],
+    "chunk-4 | n alone | id-title": [
+     51.3,
+     76
+    ],
+    "chunk-4 | n alone | text": [
+     64.1,
+     103
+    ],
+    "slots+chunks | n alone | id-title": [
+     50.0,
+     76
+    ],
+    "slots+chunks | n alone | text": [
+     58.3,
+     103
+    ],
+    "chunk-4 | n context | id-title": [
+     61.8,
+     76
+    ],
+    "chunk-4 | n context | text": [
+     68.9,
+     103
+    ],
+    "slots+chunks | n context | id-title": [
+     61.8,
+     76
+    ],
+    "slots+chunks | n context | text": [
+     61.2,
+     103
+    ],
+    "chunk-4 | overlap | time": [
+     50.0,
+     14
+    ],
+    "chunk-4 | teacher | time": [
+     14.3,
+     14
+    ],
+    "slots+chunks | teacher | time": [
+     7.1,
+     14
+    ],
+    "chunk-4 | n alone | time": [
+     35.7,
+     14
+    ],
+    "slots+chunks | n alone | time": [
+     35.7,
+     14
+    ],
+    "chunk-4 | n context | time": [
+     28.6,
+     14
+    ],
+    "slots+chunks | n context | time": [
+     28.6,
+     14
+    ]
+   }
+  },
+  "plain": {
+   "tasks": 10,
+   "overlap | -": 58.3,
+   "whole | teacher": 44.4,
+   "chunk-4 | teacher": 62.5,
+   "slots | teacher": 51.4,
+   "slots+chunks | teacher": 66.7,
+   "whole | n alone": 73.6,
+   "chunk-4 | n alone": 79.2,
+   "slots | n alone": 83.3,
+   "slots+chunks | n alone": 80.6,
+   "whole | n context": 73.6,
+   "chunk-4 | n context": 76.4,
+   "slots | n context": 81.9,
+   "slots+chunks | n context": 76.4,
+   "by_kind": {
+    "chunk-4 | overlap | time": [
+     100.0,
+     11
+    ],
+    "chunk-4 | teacher | time": [
+     100.0,
+     11
+    ],
+    "slots+chunks | teacher | time": [
+     100.0,
+     11
+    ],
+    "chunk-4 | n alone | time": [
+     100.0,
+     11
+    ],
+    "slots+chunks | n alone | time": [
+     100.0,
+     11
+    ],
+    "chunk-4 | n context | time": [
+     100.0,
+     11
+    ],
+    "slots+chunks | n context | time": [
+     100.0,
+     11
+    ],
+    "chunk-4 | overlap | id-title": [
+     100.0,
+     12
+    ],
+    "chunk-4 | overlap | text": [
+     46.2,
+     26
+    ],
+    "chunk-4 | teacher | id-title": [
+     100.0,
+     12
+    ],
+    "chunk-4 | teacher | text": [
+     50.0,
+     26
+    ],
+    "slots+chunks | teacher | id-title": [
+     100.0,
+     12
+    ],
+    "slots+chunks | teacher | text": [
+     61.5,
+     26
+    ],
+    "chunk-4 | n alone | id-title": [
+     91.7,
+     12
+    ],
+    "chunk-4 | n alone | text": [
+     73.1,
+     26
+    ],
+    "slots+chunks | n alone | id-title": [
+     91.7,
+     12
+    ],
+    "slots+chunks | n alone | text": [
+     73.1,
+     26
+    ],
+    "chunk-4 | n context | id-title": [
+     91.7,
+     12
+    ],
+    "chunk-4 | n context | text": [
+     65.4,
+     26
+    ],
+    "slots+chunks | n context | id-title": [
+     91.7,
+     12
+    ],
+    "slots+chunks | n context | text": [
+     65.4,
+     26
+    ],
+    "chunk-4 | overlap | bool": [
+     0.0,
+     10
+    ],
+    "chunk-4 | teacher | bool": [
+     0.0,
+     10
+    ],
+    "slots+chunks | teacher | bool": [
+     0.0,
+     10
+    ],
+    "chunk-4 | n alone | bool": [
+     70.0,
+     10
+    ],
+    "slots+chunks | n alone | bool": [
+     70.0,
+     10
+    ],
+    "chunk-4 | n context | bool": [
+     60.0,
+     10
+    ],
+    "slots+chunks | n context | bool": [
+     60.0,
+     10
+    ],
+    "chunk-4 | overlap | enum": [
+     0.0,
+     2
+    ],
+    "chunk-4 | teacher | enum": [
+     0.0,
+     2
+    ],
+    "slots+chunks | teacher | enum": [
+     0.0,
+     2
+    ],
+    "chunk-4 | n alone | enum": [
+     0.0,
+     2
+    ],
+    "slots+chunks | n alone | enum": [
+     0.0,
+     2
+    ],
+    "chunk-4 | n context | enum": [
+     0.0,
+     2
+    ],
+    "slots+chunks | n context | enum": [
+     0.0,
+     2
+    ],
+    "chunk-4 | overlap | id-name": [
+     100.0,
+     4
+    ],
+    "chunk-4 | teacher | id-name": [
+     100.0,
+     4
+    ],
+    "slots+chunks | teacher | id-name": [
+     100.0,
+     4
+    ],
+    "chunk-4 | n alone | id-name": [
+     100.0,
+     4
+    ],
+    "slots+chunks | n alone | id-name": [
+     100.0,
+     4
+    ],
+    "chunk-4 | n context | id-name": [
+     100.0,
+     4
+    ],
+    "slots+chunks | n context | id-name": [
+     100.0,
+     4
+    ],
+    "chunk-4 | overlap | id-ref": [
+     42.9,
+     7
+    ],
+    "chunk-4 | teacher | id-ref": [
+     71.4,
+     7
+    ],
+    "slots+chunks | teacher | id-ref": [
+     71.4,
+     7
+    ],
+    "chunk-4 | n alone | id-ref": [
+     71.4,
+     7
+    ],
+    "slots+chunks | n alone | id-ref": [
+     85.7,
+     7
+    ],
+    "chunk-4 | n context | id-ref": [
+     85.7,
+     7
+    ],
+    "slots+chunks | n context | id-ref": [
+     85.7,
+     7
+    ]
+   }
+  },
+  "clut": {
+   "tasks": 10,
+   "overlap | -": 74.6,
+   "whole | teacher": 80.2,
+   "chunk-4 | teacher": 82.8,
+   "slots | teacher": 76.7,
+   "slots+chunks | teacher": 81.9,
+   "whole | n alone": 66.4,
+   "chunk-4 | n alone": 75.9,
+   "slots | n alone": 73.3,
+   "slots+chunks | n alone": 75.9,
+   "whole | n context": 66.4,
+   "chunk-4 | n context": 75.0,
+   "slots | n context": 75.0,
+   "slots+chunks | n context": 75.0,
+   "by_kind": {
+    "chunk-4 | overlap | time": [
+     100.0,
+     19
+    ],
+    "chunk-4 | teacher | time": [
+     100.0,
+     19
+    ],
+    "slots+chunks | teacher | time": [
+     100.0,
+     19
+    ],
+    "chunk-4 | n alone | time": [
+     100.0,
+     19
+    ],
+    "slots+chunks | n alone | time": [
+     100.0,
+     19
+    ],
+    "chunk-4 | n context | time": [
+     100.0,
+     19
+    ],
+    "slots+chunks | n context | time": [
+     100.0,
+     19
+    ],
+    "chunk-4 | overlap | id-title": [
+     100.0,
+     18
+    ],
+    "chunk-4 | overlap | text": [
+     60.0,
+     40
+    ],
+    "chunk-4 | teacher | id-title": [
+     100.0,
+     18
+    ],
+    "chunk-4 | teacher | text": [
+     77.5,
+     40
+    ],
+    "slots+chunks | teacher | id-title": [
+     100.0,
+     18
+    ],
+    "slots+chunks | teacher | text": [
+     77.5,
+     40
+    ],
+    "chunk-4 | n alone | id-title": [
+     94.4,
+     18
+    ],
+    "chunk-4 | n alone | text": [
+     77.5,
+     40
+    ],
+    "slots+chunks | n alone | id-title": [
+     94.4,
+     18
+    ],
+    "slots+chunks | n alone | text": [
+     77.5,
+     40
+    ],
+    "chunk-4 | n context | id-title": [
+     88.9,
+     18
+    ],
+    "chunk-4 | n context | text": [
+     77.5,
+     40
+    ],
+    "slots+chunks | n context | id-title": [
+     88.9,
+     18
+    ],
+    "slots+chunks | n context | text": [
+     77.5,
+     40
+    ],
+    "chunk-4 | overlap | bool": [
+     26.5,
+     17
+    ],
+    "chunk-4 | teacher | bool": [
+     47.1,
+     17
+    ],
+    "slots+chunks | teacher | bool": [
+     41.2,
+     17
+    ],
+    "chunk-4 | n alone | bool": [
+     58.8,
+     17
+    ],
+    "slots+chunks | n alone | bool": [
+     52.9,
+     17
+    ],
+    "chunk-4 | n context | bool": [
+     52.9,
+     17
+    ],
+    "slots+chunks | n context | bool": [
+     47.1,
+     17
+    ],
+    "chunk-4 | overlap | enum": [
+     83.3,
+     6
+    ],
+    "chunk-4 | teacher | enum": [
+     66.7,
+     6
+    ],
+    "slots+chunks | teacher | enum": [
+     66.7,
+     6
+    ],
+    "chunk-4 | n alone | enum": [
+     16.7,
+     6
+    ],
+    "slots+chunks | n alone | enum": [
+     16.7,
+     6
+    ],
+    "chunk-4 | n context | enum": [
+     33.3,
+     6
+    ],
+    "slots+chunks | n context | enum": [
+     33.3,
+     6
+    ],
+    "chunk-4 | overlap | id-name": [
+     100.0,
+     4
+    ],
+    "chunk-4 | teacher | id-name": [
+     100.0,
+     4
+    ],
+    "slots+chunks | teacher | id-name": [
+     100.0,
+     4
+    ],
+    "chunk-4 | n alone | id-name": [
+     100.0,
+     4
+    ],
+    "slots+chunks | n alone | id-name": [
+     100.0,
+     4
+    ],
+    "chunk-4 | n context | id-name": [
+     100.0,
+     4
+    ],
+    "slots+chunks | n context | id-name": [
+     100.0,
+     4
+    ],
+    "chunk-4 | overlap | id-ref": [
+     100.0,
+     12
+    ],
+    "chunk-4 | teacher | id-ref": [
+     100.0,
+     12
+    ],
+    "slots+chunks | teacher | id-ref": [
+     100.0,
+     12
+    ],
+    "chunk-4 | n alone | id-ref": [
+     50.0,
+     12
+    ],
+    "slots+chunks | n alone | id-ref": [
+     58.3,
+     12
+    ],
+    "chunk-4 | n context | id-ref": [
+     50.0,
+     12
+    ],
+    "slots+chunks | n context | id-ref": [
+     58.3,
+     12
+    ]
+   }
+  }
+ },
+ "pairs": {
+  "teacher": {
+   "move it to bob | move it from bob": 0.98,
+   "assign card 6 to Bob | assign Bob to card 6": 0.987,
+   "cards that are done | cards that are not done": 0.921,
+   "orders placed before March | orders placed after March": 0.981,
+   "send priya the list | send the list about priya": 0.929,
+   "the oldest issue | the newest issue": 0.665,
+   "bob | Bob Alvarez": 0.567,
+   "bob | Priya Nandan": 0.186,
+   "the release notes | card 2 - Write release notes for v4.2": 0.652,
+   "the release notes | card 4 - Retire legacy webhook handler": 0.083,
+   "finished | the done status": 0.589,
+   "finished | the todo status": 0.31
+  },
+  "n alone": {
+   "move it to bob | move it from bob": 0.952,
+   "assign card 6 to Bob | assign Bob to card 6": 0.968,
+   "cards that are done | cards that are not done": 0.926,
+   "orders placed before March | orders placed after March": 0.986,
+   "send priya the list | send the list about priya": 0.922,
+   "the oldest issue | the newest issue": 0.91,
+   "bob | Bob Alvarez": 0.911,
+   "bob | Priya Nandan": 0.602,
+   "the release notes | card 2 - Write release notes for v4.2": 0.398,
+   "the release notes | card 4 - Retire legacy webhook handler": 0.192,
+   "finished | the done status": 0.564,
+   "finished | the todo status": 0.219
+  }
+ },
+ "gates": {
+  "n alone chunk-4 within 2 of the teacher": false,
+  "n context chunk-4 within 2 of the teacher": false
+ }
+}

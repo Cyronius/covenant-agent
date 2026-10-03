@@ -1,0 +1,48 @@
+516748 texts tokenized in 4s
+step 0: {'held_flip': 0.9727, 'held_teacher': 0.7426, 'hand': [0.959, 1.0, 0.923, 0.955, 0.954, 0.596]}
+C:\code\covenant-agent\models\tiny\tern_train.py:478: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\torch\csrc\autograd\generated\python_variable_methods.cpp:823.)
+  acc[k] += float(v)
+{"step": 100, "epoch": 0, "total": 0.3988, "distill": 0.2534, "rel": 0.0068, "push": 0.1386, "flip_cos": 0.9248, "teacher_flip": 0.9475, "moved": 0.0, "sec": 29}
+{"step": 200, "epoch": 0, "total": 0.3381, "distill": 0.258, "rel": 0.0086, "push": 0.0716, "flip_cos": 0.8419, "teacher_flip": 0.9455, "moved": 0.0013, "sec": 59}
+{"step": 300, "epoch": 0, "total": 0.3035, "distill": 0.2424, "rel": 0.0088, "push": 0.0522, "flip_cos": 0.8194, "teacher_flip": 0.9455, "moved": 0.006, "sec": 88}
+{"step": 400, "epoch": 0, "total": 0.2887, "distill": 0.2326, "rel": 0.0083, "push": 0.0478, "flip_cos": 0.8181, "teacher_flip": 0.9464, "moved": 0.0126, "sec": 117}
+{"step": 500, "epoch": 0, "total": 0.2767, "distill": 0.2234, "rel": 0.0078, "push": 0.0455, "flip_cos": 0.8162, "teacher_flip": 0.9461, "moved": 0.0198, "sec": 148, "held_flip": 0.819, "held_teacher": 0.7766, "hand": [0.798, 0.962, 0.774, 0.718, 0.923, 0.609]}
+{"step": 600, "epoch": 0, "total": 0.2712, "distill": 0.2187, "rel": 0.0074, "push": 0.0451, "flip_cos": 0.8184, "teacher_flip": 0.9463, "moved": 0.0267, "sec": 189}
+{"step": 700, "epoch": 0, "total": 0.2678, "distill": 0.2158, "rel": 0.0074, "push": 0.0446, "flip_cos": 0.8173, "teacher_flip": 0.9454, "moved": 0.0334, "sec": 221}
+{"step": 800, "epoch": 0, "total": 0.2608, "distill": 0.2093, "rel": 0.0071, "push": 0.0444, "flip_cos": 0.8189, "teacher_flip": 0.9464, "moved": 0.0399, "sec": 253}
+{"step": 900, "epoch": 0, "total": 0.2593, "distill": 0.2092, "rel": 0.007, "push": 0.0431, "flip_cos": 0.8168, "teacher_flip": 0.9462, "moved": 0.0458, "sec": 286}
+{"step": 1000, "epoch": 0, "total": 0.2562, "distill": 0.2053, "rel": 0.0067, "push": 0.0442, "flip_cos": 0.8204, "teacher_flip": 0.9477, "moved": 0.0514, "sec": 317, "held_flip": 0.8274, "held_teacher": 0.7964, "hand": [0.815, 0.969, 0.78, 0.746, 0.915, 0.616]}
+{"step": 1100, "epoch": 0, "total": 0.2549, "distill": 0.2054, "rel": 0.0067, "push": 0.0428, "flip_cos": 0.8174, "teacher_flip": 0.9462, "moved": 0.0568, "sec": 357}
+{"step": 1200, "epoch": 0, "total": 0.2497, "distill": 0.202, "rel": 0.0066, "push": 0.0411, "flip_cos": 0.8163, "teacher_flip": 0.9457, "moved": 0.062, "sec": 386}
+{"step": 1300, "epoch": 0, "total": 0.2497, "distill": 0.2015, "rel": 0.0065, "push": 0.0417, "flip_cos": 0.8169, "teacher_flip": 0.9453, "moved": 0.0667, "sec": 417}
+{"step": 1400, "epoch": 0, "total": 0.246, "distill": 0.199, "rel": 0.0065, "push": 0.0405, "flip_cos": 0.8169, "teacher_flip": 0.9463, "moved": 0.0711, "sec": 444}
+{"step": 1500, "epoch": 0, "total": 0.2442, "distill": 0.1978, "rel": 0.0063, "push": 0.0401, "flip_cos": 0.8162, "teacher_flip": 0.9452, "moved": 0.0752, "sec": 473, "held_flip": 0.8255, "held_teacher": 0.8016, "hand": [0.806, 0.963, 0.823, 0.801, 0.857, 0.574]}
+{"step": 1600, "epoch": 0, "total": 0.2446, "distill": 0.1989, "rel": 0.0064, "push": 0.0394, "flip_cos": 0.8155, "teacher_flip": 0.9457, "moved": 0.079, "sec": 512}
+{"step": 1700, "epoch": 0, "total": 0.2426, "distill": 0.1954, "rel": 0.0062, "push": 0.0411, "flip_cos": 0.8182, "teacher_flip": 0.9456, "moved": 0.0824, "sec": 541}
+{"step": 1800, "epoch": 0, "total": 0.2413, "distill": 0.1952, "rel": 0.0062, "push": 0.0399, "flip_cos": 0.8156, "teacher_flip": 0.9454, "moved": 0.0861, "sec": 569}
+{"step": 1900, "epoch": 0, "total": 0.2402, "distill": 0.1949, "rel": 0.0062, "push": 0.039, "flip_cos": 0.8154, "teacher_flip": 0.9456, "moved": 0.0893, "sec": 599}
+{"step": 2000, "epoch": 0, "total": 0.2389, "distill": 0.1947, "rel": 0.0061, "push": 0.0381, "flip_cos": 0.8151, "teacher_flip": 0.946, "moved": 0.0919, "sec": 626, "held_flip": 0.8202, "held_teacher": 0.805, "hand": [0.774, 0.925, 0.806, 0.767, 0.863, 0.583]}
+{"step": 2100, "epoch": 0, "total": 0.2379, "distill": 0.1918, "rel": 0.0061, "push": 0.0399, "flip_cos": 0.8172, "teacher_flip": 0.9455, "moved": 0.0941, "sec": 663}
+{"step": 2200, "epoch": 0, "total": 0.2364, "distill": 0.1919, "rel": 0.0061, "push": 0.0384, "flip_cos": 0.8149, "teacher_flip": 0.9452, "moved": 0.0963, "sec": 692}
+{"step": 2300, "epoch": 0, "total": 0.2363, "distill": 0.1922, "rel": 0.0061, "push": 0.038, "flip_cos": 0.8139, "teacher_flip": 0.9468, "moved": 0.0983, "sec": 722}
+{"step": 2400, "epoch": 0, "total": 0.2332, "distill": 0.1893, "rel": 0.006, "push": 0.038, "flip_cos": 0.8149, "teacher_flip": 0.9452, "moved": 0.1002, "sec": 750}
+{"step": 2500, "epoch": 0, "total": 0.2334, "distill": 0.1909, "rel": 0.006, "push": 0.0365, "flip_cos": 0.8126, "teacher_flip": 0.945, "moved": 0.1017, "sec": 779, "held_flip": 0.8243, "held_teacher": 0.8112, "hand": [0.769, 0.936, 0.785, 0.796, 0.851, 0.56]}
+{"step": 2600, "epoch": 0, "total": 0.2347, "distill": 0.1882, "rel": 0.006, "push": 0.0405, "flip_cos": 0.818, "teacher_flip": 0.9451, "moved": 0.1031, "sec": 817}
+{"step": 2700, "epoch": 0, "total": 0.2327, "distill": 0.189, "rel": 0.006, "push": 0.0377, "flip_cos": 0.8148, "teacher_flip": 0.9454, "moved": 0.1043, "sec": 846}
+{"step": 2800, "epoch": 0, "total": 0.2327, "distill": 0.1868, "rel": 0.0059, "push": 0.04, "flip_cos": 0.817, "teacher_flip": 0.9452, "moved": 0.1054, "sec": 875}
+{"step": 2900, "epoch": 0, "total": 0.2325, "distill": 0.1881, "rel": 0.0059, "push": 0.0385, "flip_cos": 0.8157, "teacher_flip": 0.9463, "moved": 0.1063, "sec": 903}
+{"step": 3000, "epoch": 0, "total": 0.2307, "distill": 0.1864, "rel": 0.0059, "push": 0.0384, "flip_cos": 0.8162, "teacher_flip": 0.9459, "moved": 0.1074, "sec": 932, "held_flip": 0.8229, "held_teacher": 0.8139, "hand": [0.774, 0.954, 0.786, 0.776, 0.873, 0.574]}
+{"step": 3100, "epoch": 0, "total": 0.2314, "distill": 0.1868, "rel": 0.0058, "push": 0.0388, "flip_cos": 0.8166, "teacher_flip": 0.9455, "moved": 0.108, "sec": 971}
+{"step": 3200, "epoch": 0, "total": 0.2302, "distill": 0.1861, "rel": 0.0058, "push": 0.0383, "flip_cos": 0.8155, "teacher_flip": 0.9456, "moved": 0.1086, "sec": 999}
+{"step": 3300, "epoch": 0, "total": 0.2283, "distill": 0.1838, "rel": 0.0057, "push": 0.0388, "flip_cos": 0.8167, "teacher_flip": 0.9454, "moved": 0.109, "sec": 1028}
+{"step": 3400, "epoch": 0, "total": 0.228, "distill": 0.1836, "rel": 0.0057, "push": 0.0387, "flip_cos": 0.8168, "teacher_flip": 0.945, "moved": 0.1096, "sec": 1055}
+{"step": 3500, "epoch": 0, "total": 0.2291, "distill": 0.1846, "rel": 0.0057, "push": 0.0388, "flip_cos": 0.817, "teacher_flip": 0.9463, "moved": 0.1098, "sec": 1083, "held_flip": 0.8227, "held_teacher": 0.8152, "hand": [0.774, 0.927, 0.793, 0.771, 0.861, 0.58]}
+{"step": 3600, "epoch": 0, "total": 0.2291, "distill": 0.1847, "rel": 0.0057, "push": 0.0387, "flip_cos": 0.8172, "teacher_flip": 0.947, "moved": 0.11, "sec": 1121}
+{"step": 3700, "epoch": 0, "total": 0.2271, "distill": 0.1826, "rel": 0.0057, "push": 0.0388, "flip_cos": 0.8169, "teacher_flip": 0.9462, "moved": 0.1104, "sec": 1151}
+{"step": 3800, "epoch": 0, "total": 0.2282, "distill": 0.184, "rel": 0.0057, "push": 0.0385, "flip_cos": 0.8163, "teacher_flip": 0.9462, "moved": 0.1103, "sec": 1178}
+{"step": 3900, "epoch": 0, "total": 0.2281, "distill": 0.183, "rel": 0.0056, "push": 0.0394, "flip_cos": 0.8177, "teacher_flip": 0.9464, "moved": 0.1104, "sec": 1206}
+{"step": 4000, "epoch": 0, "total": 0.2275, "distill": 0.1835, "rel": 0.0056, "push": 0.0383, "flip_cos": 0.8163, "teacher_flip": 0.9475, "moved": 0.1104, "sec": 1234, "held_flip": 0.8212, "held_teacher": 0.817, "hand": [0.776, 0.936, 0.791, 0.774, 0.871, 0.587]}
+{"step": 4100, "epoch": 0, "total": 0.2248, "distill": 0.1824, "rel": 0.0056, "push": 0.0368, "flip_cos": 0.8151, "teacher_flip": 0.945, "moved": 0.1105, "sec": 1271}
+final (int4 embeddings): {'held_flip': 0.8262, 'held_teacher': 0.8115, 'hand': [0.796, 0.918, 0.814, 0.803, 0.851, 0.589], 'moved': 0.1104}
+wrote reader\role\r1\reader.pt

@@ -1,0 +1,12 @@
+516748 texts tokenized in 4s
+step 0: {'held_flip': 0.9727, 'held_teacher': 0.7426, 'hand': [0.959, 1.0, 0.923, 0.955, 0.954, 0.596]}
+{"step": 100, "epoch": 0, "total": 0.4256, "distill": 0.248, "rel": 0.0061, "push": 0.1698, "anchor": 0.0017, "flip_cos": 0.9659, "teacher_flip": 0.9475, "moved": 0.0, "sec": 35}
+{"step": 200, "epoch": 0, "total": 0.3885, "distill": 0.2353, "rel": 0.0075, "push": 0.1316, "anchor": 0.0141, "flip_cos": 0.9107, "teacher_flip": 0.9455, "moved": 0.0019, "sec": 76}
+{"step": 300, "epoch": 0, "total": 0.359, "distill": 0.2278, "rel": 0.0079, "push": 0.0981, "anchor": 0.0252, "flip_cos": 0.8705, "teacher_flip": 0.9455, "moved": 0.0049, "sec": 112}
+{"step": 400, "epoch": 0, "total": 0.3521, "distill": 0.2226, "rel": 0.0074, "push": 0.0917, "anchor": 0.0304, "flip_cos": 0.8694, "teacher_flip": 0.9464, "moved": 0.0093, "sec": 142}
+{"step": 500, "epoch": 0, "total": 0.3455, "distill": 0.2169, "rel": 0.0072, "push": 0.0881, "anchor": 0.0332, "flip_cos": 0.8674, "teacher_flip": 0.9461, "moved": 0.0143, "sec": 173, "held_flip": 0.8669, "held_teacher": 0.7834, "hand": [0.777, 1.0, 0.776, 0.799, 0.967, 0.695]}
+{"step": 600, "epoch": 0, "total": 0.3427, "distill": 0.2115, "rel": 0.0068, "push": 0.0887, "anchor": 0.0357, "flip_cos": 0.8716, "teacher_flip": 0.9463, "moved": 0.0188, "sec": 212}
+{"step": 700, "epoch": 0, "total": 0.3422, "distill": 0.2113, "rel": 0.0069, "push": 0.0856, "anchor": 0.0383, "flip_cos": 0.8687, "teacher_flip": 0.9454, "moved": 0.0229, "sec": 244}
+{"step": 800, "epoch": 0, "total": 0.3352, "distill": 0.2069, "rel": 0.0067, "push": 0.0829, "anchor": 0.0386, "flip_cos": 0.8667, "teacher_flip": 0.9464, "moved": 0.0272, "sec": 276}
+{"step": 900, "epoch": 0, "total": 0.3374, "distill": 0.2062, "rel": 0.0067, "push": 0.0837, "anchor": 0.0408, "flip_cos": 0.8673, "teacher_flip": 0.9462, "moved": 0.0307, "sec": 306}
+{"step": 1000, "epoch": 0, "total": 0.3352, "distill": 0.2043, "rel": 0.0066, "push": 0.0826, "anchor": 0.0418, "flip_cos": 0.8677, "teacher_flip": 0.9477, "moved": 0.0341, "sec": 337, "held_flip": 0.8667, "held_teacher": 0.7943, "hand": [0.786, 1.0, 0.8, 0.776, 0.968, 0.715]}

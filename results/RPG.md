@@ -302,3 +302,76 @@ action cap, plus a per-turn log with the observation, the raw program, the
 call log and the finish reason — enough to read any episode back move by
 move. The same game is playable in a browser (`client/rpg-ui`), which runs
 the identical rules through the identical sandbox.
+
+## Tiny planner, and saying which way is open (2026-09-29)
+
+Plan: `.claude/plans/rpg-exits-perception.md`. The owner's report: the
+dungeon agent "always fails and just starts running into walls", suspected
+cause the prompt style. Two changes were measured, with the demo moved to
+one planner (`tiny:clt_RD`, R23's newest) at the same time.
+
+- **Exits.** `rpg.observe(exits=True)`: each direction constant says what
+  is one step that way (`north: floor, you can walk here`, `east: wall,
+  blocked`, `east: locked door door_1, blocked until opened`). Before, it
+  said only `direction: east (right on the map, x+1)`, and whether a way
+  was open was only in the ASCII window.
+- **Paths.** `rpg.observe(paths=True)`: each visible thing also says how
+  many moves reach it and the first move, searched inside the 5×5 window.
+- **The brief.** The tiny planner cannot take the full observation: it
+  keeps 128 request tokens, the turn-5 observation is 228, and its line
+  breaks made the input parser reject the task outright. It gets a one-line
+  `brief` (status, quest, remembered items and doors, last turn's events;
+  no grid), capped by construction: the longest over 80 random games and
+  the oracle games is 111 tokens.
+
+6 episodes, seeds 0-5, 20-turn cap, 3 actions a turn unless noted.
+`bash results/logs/rpg_tiny.sh 6 20`; G0 was added after G1 to give it a
+before.
+
+| arm | planner | exits | compiled | calls (refused) | refused moves repeating last turn's | key |
+|---|---|---|---|---|---|---|
+| oracle | scripted | on | 72/72 | 156 (0) | 0 | 6/6, won 6/6 |
+| T0 | tiny clt_RD | off | **0/120** | 0 | - | 0/6 |
+| T1 | tiny clt_RD | on | 50/120 | 50 (50) | 44 | 0/6 |
+| T2 | tiny clt_RD | on + paths | 0/120 | 0 | - | 0/6 |
+| T1, 1 action | tiny clt_RD | on | 59/120 | 59 (59) | 53 | 0/6 |
+| G0 | s5 0.8B GGUF, full observation | off | 114/120 | 142 (**108**) | **102** | 0/6 |
+| G1 | s5 0.8B GGUF, full observation | on | 120/120 | 141 (**3**) | 0 | 0/6 |
+
+**The wall-running was the missing fact, not the prompt's tone.** G0 is
+the reported behaviour: 138 of its 142 moves are `east` - the direction
+the quest, the nearest goblin and the failure message all name - and 102
+of its 108 refusals repeat the previous turn's. Told which way is open
+(G1), the same model on the same seeds is refused 3 times in 141 moves and
+walks north, east and west. It still reaches no key: it walks up to the
+first goblin and steps east and west beside it for the rest of the game.
+The oracle says `attack` on 101 of G1's 120 turns and G1 never calls it.
+The failure moved from perception to deciding.
+
+**The tiny planner does not play the dungeon at all.** Without exits
+nothing it writes compiles (T0: 0/120, 98 of them the same parse error):
+it writes the list-filter-loop shape of the record worlds - `CALL T6 S1
+-> r0`, then a filter condition inside a `CALL` - with a near-random tool,
+and backoff's three decodes do not find a legal one. Exits make about half
+its turns a single legal `move`, and every one of those 109 moves across
+T1 and T1-one-action is `south`, the second constant (`S1`), which at the
+start is labelled `south: wall, blocked`. It passed `S1` in T0 too. That is
+a position habit, not a reading of the description. Paths (T2) put it back
+to 0 compiled: longer entity descriptions were enough to flip it back to
+the list template.
+
+**Why:** the tiny corpus has no observe-then-act task in it. `clt`'s
+27,000 training rows span 104 worlds, all record worlds; none of the
+family-A decision worlds (`warehouse_robot`, `elevator`, `cards`,
+`harness/decision.py`) is among them. A request that describes a situation
+and asks for the next action is a kind of input it has never seen. That is
+the owner's original hypothesis, and it holds for this planner - for the
+tiny one because of the corpus, not the prompt's wording.
+
+**What was not tried:** a tiny checkpoint trained with family-A episodes
+in its corpus. That is the next lever for the dungeon on the tiny planner,
+and it is a corpus build plus a pod run.
+
+**The demo now:** every world runs `tiny:clt_RD`, the dungeon with exits
+on and the brief as its request, so the dungeon demo shows T1's behaviour
+(half the turns do not compile; the rest walk south into the wall).

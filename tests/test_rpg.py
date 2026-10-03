@@ -342,3 +342,79 @@ def test_a_turn_that_runs_nothing_does_not_repeat_last_turns_events():
 
     last = rpg.observe(idle["state"]).request.split("Last turn: ")[1].split("\n")[0]
     assert "moved east" not in last, last
+
+
+# ------------------------------------------- exits, paths and the brief
+# .claude/plans/rpg-exits-perception.md: the tuned planners do not read the
+# ASCII window, so an `exits` observation says in words what is one step
+# away, and `paths` says how many moves reach each visible thing.
+
+def test_exits_say_what_is_one_step_away():
+    st = rpg.new_state()
+    player(st).update(x=6, y=7)                 # the corner the demo got stuck in
+    dirs = {c["value"]: c["desc"] for c in rpg.observe(st, exits=True).constants[:4]}
+    assert dirs == {"north": "north: floor, you can walk here",
+                    "south": "south: wall, blocked",
+                    "east": "east: wall, blocked",
+                    "west": "west: floor, you can walk here"}
+
+
+def test_exits_name_doors_and_enemies_in_the_way():
+    st = rpg.new_state()
+    player(st).update(x=6, y=3)
+    st["entities"]["enemy"][0].update(x=6, y=2)
+    dirs = {c["value"]: c["desc"] for c in rpg.observe(st, exits=True).constants[:4]}
+    assert dirs["east"] == "east: locked door door_1, blocked until opened"
+    assert dirs["north"] == "north: goblin enemy_1, blocked"
+
+
+def test_without_options_directions_describe_only_geometry():
+    # stored E-rpg runs were scored on this observation
+    obs = rpg.observe(rpg.new_state())
+    assert [c["desc"] for c in obs.constants[:4]] == \
+        [rpg.DIR_DESC[d] for d in rpg.DIRECTIONS]
+
+
+def test_paths_go_around_walls_inside_the_window():
+    st = rpg.new_state()
+    player(st).update(x=6, y=7)
+    st["entities"]["enemy"][1].update(x=8, y=7)     # 2 east, a wall between
+    goblin = next(c for c in rpg.observe(st, paths=True).constants
+                  if c["value"] == "enemy_2")
+    assert goblin["desc"].endswith(", 3 moves to reach, first move north")
+
+
+def test_the_brief_is_one_line_without_the_grid():
+    st = rpg.new_state()
+    st.update(turn=11, log=["moved west", "failed: cannot move south: a wall",
+                            "the goblin hits you for 2",
+                            "the goblin hits you for 2"])
+    brief = rpg.observe(st).brief
+    assert "\n" not in brief and "#" not in brief
+    assert brief.startswith("Turn 11, 10/10 HP, carrying nothing. Find the stairs")
+    assert brief.endswith("Last turn: moved west; failed: cannot move south: "
+                          "a wall; the goblin hits you for 2; and 1 more. "
+                          "Up to 3 actions.")
+
+
+def test_movement_tallies():
+    from harness.rpg_suite import _count_moves
+    consts = [{"type": "STR", "value": "east", "desc": "east: wall, blocked"},
+              {"type": "STR", "value": "north",
+               "desc": "north: floor, you can walk here"}]
+    turn = {"calls": [
+        {"name": "move", "args": ["north"], "ok": True, "error": None},
+        # the shape run_sandbox's call log has: the code only
+        {"name": "move", "args": ["east"], "ok": False,
+         "error": "INVALID_ARGUMENT"}]}
+    counters = {"wall_bumps": 0, "repeat_bumps": 0, "moves_into_blocked": 0}
+    assert _count_moves(turn, consts, {"east"}, counters) == {"east"}
+    assert counters == {"wall_bumps": 1, "repeat_bumps": 1,
+                        "moves_into_blocked": 1}
+
+
+def test_oracle_still_wins_with_exits_and_paths_on():
+    from harness.rpg_suite import oracle_planner, run_episode
+    row = run_episode(oracle_planner(3), max_turns=20,
+                      observe_opts={"exits": True, "paths": True})
+    assert row["won"] and row["wall_bumps"] == 0

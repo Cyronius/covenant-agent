@@ -42,6 +42,7 @@ from harness.authoring import resolve  # noqa: E402
 from harness.context import build_context, serialize_context  # noqa: E402
 from harness.run import run_sandbox  # noqa: E402
 from harness.taskbuild import ReferenceError, build_task  # noqa: E402
+from data.gen.brief_budget import check_brief  # noqa: E402
 from runtime.worlds import get_world  # noqa: E402
 
 GENERATOR_VERSION = "0.3.0"
@@ -235,8 +236,15 @@ def run_episode(world: str, seed: int, rng: random.Random, *,
                 symbols: str, enums: bool, kinds: bool,
                 offpath: float, illegal_share: float,
                 predictable_share: float = 1.0,
-                max_turns: Optional[int] = None) -> tuple:
-    """Play one episode; return (task rows, outcome)."""
+                max_turns: Optional[int] = None,
+                brief: bool = False) -> tuple:
+    """Play one episode; return (task rows, outcome).
+
+    `brief`: each row's request is the observation's one-line `brief`, with
+    the situation in the constants (`observe(exits=True)`) - the tiny
+    planner's rendering (.claude/plans/borrowed-worlds.md). A brief over the
+    planner's request budget fails the run rather than ship a row the model
+    cannot read whole."""
     module = decision.world_module(world)
     oracle = decision.oracle_module(world)
     world_dict = get_world(world)
@@ -247,7 +255,11 @@ def run_episode(world: str, seed: int, rng: random.Random, *,
     rows = []
     turn_index = 0
     while state["status"] == "playing" and state["turn"] < cap:
-        obs = module.observe(state)
+        obs = module.observe(state, exits=True) if brief else module.observe(state)
+        request = obs.request
+        if brief:
+            check_brief(obs.brief)
+            request = obs.brief
         constants = obs.constants
         if not kinds:
             constants = [{k: v for k, v in c.items() if k != "kind"}
@@ -257,7 +269,7 @@ def run_episode(world: str, seed: int, rng: random.Random, *,
             symbols=symbols, enums=enums)
         want = oracle.plan_turn(state, budget=budget)
 
-        row = _row(world, seed, turn_index, obs, constants, want, ctx,
+        row = _row(world, seed, turn_index, request, constants, want, ctx,
                    sandbox_ctx, state, symbols)
         if row is not None:
             rows.append(row)
@@ -309,7 +321,8 @@ def run_episode(world: str, seed: int, rng: random.Random, *,
     return rows, module.outcome(state)
 
 
-def _row(world: str, seed: int, turn_index: int, obs, constants: List[dict],
+def _row(world: str, seed: int, turn_index: int, request: str,
+         constants: List[dict],
          want: str, ctx, sandbox_ctx: dict, state: dict,
          symbols: str) -> Optional[dict]:
     """One (situation, oracle move) training pair. The oracle's program runs
@@ -321,7 +334,7 @@ def _row(world: str, seed: int, turn_index: int, obs, constants: List[dict],
         task = build_task(
             task_id=f"{world}_ep{seed}_t{turn_index}",
             level=level_for(world), world_name=world,
-            request=obs.request, constants=constants, segments=segments,
+            request=request, constants=constants, segments=segments,
             seed=seed, expected_status="aborted" if aborts else "ok",
             state=copy.deepcopy(state),
             tags=sorted({"family:A" if world not in PAGE_WORLDS
@@ -339,7 +352,7 @@ def _row(world: str, seed: int, turn_index: int, obs, constants: List[dict],
         # drop the turn rather than ship a row whose label is a guess
         DROPPED.append(f"{world}#{seed}t{turn_index}")
         return None
-    task["input_text"] = serialize_context(obs.request, ctx)
+    task["input_text"] = serialize_context(request, ctx)
     res = build(segments[0], TaskContext.from_json(task["context"]))
     task["effects"] = res.static_effects
     task["spec_version"] = "0.4.0"
@@ -394,6 +407,9 @@ def main() -> None:
                     choices=["classic", "typed"])
     ap.add_argument("--enums", action="store_true")
     ap.add_argument("--kinds", action="store_true")
+    ap.add_argument("--brief", action="store_true",
+                    help="one-line brief requests with the situation in the "
+                         "constants: the tiny planner's rendering")
     ap.add_argument("--holdout", action="store_true",
                     help="allow the reserved worlds (exam building, never a "
                          "corpus)")
@@ -433,7 +449,7 @@ def main() -> None:
                     world, seed, rng, symbols=args.symbols, enums=args.enums,
                     kinds=args.kinds, offpath=args.offpath,
                     illegal_share=args.illegal,
-                    predictable_share=args.predictable)
+                    predictable_share=args.predictable, brief=args.brief)
                 wins[world] += bool(outcome["won"])
                 for row in rows:
                     if args.allow_signature_unique:
@@ -444,6 +460,13 @@ def main() -> None:
                     print(f"{world}: {i + 1}/{args.episodes} episodes, "
                           f"{written} turns", flush=True)
     print(f"wrote {written} turns -> {out}")
+    from data.borrowed.canary_check import find_canaries
+    hits = find_canaries([out])
+    if hits:
+        # borrowed wording must never carry a benchmark's do-not-train marker
+        # (.claude/plans/borrowed-worlds.md "Rules for every borrowed row")
+        out.unlink()
+        raise SystemExit(f"canary strings in the output, file deleted: {hits[:3]}")
     if DROPPED:
         print(f"  {len(DROPPED)} turns dropped (the sandbox refused the "
               f"oracle's program), e.g. {DROPPED[:3]}")
@@ -540,10 +563,18 @@ def report_reaction(out) -> Optional[dict]:
 
 
 def failure_text(request: str) -> str:
-    """The `Last turn:` line of an observation, when it reports a failure."""
+    """The `Last turn:` part of an observation, when it reports a failure: a
+    line of the full observation, or the clause of a one-line brief."""
     for line in request.splitlines():
-        if line.startswith("Last turn:") and "failed:" in line:
-            return line[len("Last turn:"):].strip()
+        at = line.find("Last turn:")
+        if at < 0:
+            continue
+        clause = line[at + len("Last turn:"):]
+        for end in (". Up to", ". Choose"):
+            if end in clause:
+                clause = clause[:clause.index(end)]
+        if "failed:" in clause:
+            return clause.strip()
     return ""
 
 

@@ -1,13 +1,20 @@
-warehouse_robot: 20/20 episodes, 179 turns
-elevator: 20/20 episodes, 330 turns
-cards: 20/20 episodes, 517 turns
-app_settings: 20/20 episodes, 619 turns
-app_checkout: 20/20 episodes, 710 turns
-app_ticket: 20/20 episodes, 773 turns
-wrote 773 turns -> data\fam_shards\episodes_7.jsonl
+warehouse_robot: 20/20 episodes, 222 turns
+elevator: 20/20 episodes, 353 turns
+cards: 20/20 episodes, 523 turns
+app_settings: 20/20 episodes, 596 turns
+app_checkout: 20/20 episodes, 692 turns
+app_ticket: 20/20 episodes, 764 turns
+wrote 764 turns -> data\fam_shards\episodes_7.jsonl
   warehouse_robot: 13/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   elevator: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   cards: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_settings: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
-  app_checkout: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  app_checkout: 19/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_ticket: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+signature uniqueness: 63.8% full, 63.8% types-only, over 1176 reference CALLs (7.9 tools/task)
+--allow-signature-unique passed: the ceiling below was not enforced, and every row's provenance is stamped signature_unique_allowed so this file can never be mistaken for one that passed it.
+reaction: of 40 turns that open with a failure (6, 15.0%, caused by an aimed move), 0 (0.0%) are labelled with the move that just failed, 5 (12.5%) act on the same thing another way, and 7 (17.5%) answer it - by name or on the same object
+    aimed:on_board            3 failures, 3/3 answered
+    aimed:same_obj            3 failures, 3/3 answered
+    legal                     2 failures, 0/2 answered
+    random_illegal           32 failures, 1/32 answered

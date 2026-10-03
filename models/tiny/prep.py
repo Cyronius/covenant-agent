@@ -40,12 +40,16 @@ STRUCT_KEYS = ("tool_tok", "field_tok", "const_tok", "reg_tok", "req_tok",
 # the teacher's embedding table (teacher.pt) for the two extra losses.
 SPLIT_KEYS = ("tool_sig_tok", "tool_desc_tok", "tool_name_tok", "sig_group", "flip_tool",
               "t_desc", "t_name", "t_req")
+# C0's columns (.claude/plans/tiny-general-agent-menu.md), present only in a
+# cache built with --reader-lines: indices into reader.pt for each constant,
+# each field and each chunk of the request.
+READER_KEYS = ("t_const", "t_field", "t_chunk")
 
 
 def cache_keys(d: dict) -> tuple:
     """The column order a cache split loads in: the structural columns, then
-    whichever split columns it carries."""
-    return STRUCT_KEYS + tuple(k for k in SPLIT_KEYS if k in d)
+    whichever split and reader columns it carries."""
+    return STRUCT_KEYS + tuple(k for k in SPLIT_KEYS + READER_KEYS if k in d)
 
 
 def compact_desc(desc: str, desc_chars: int = 60) -> str:
@@ -84,6 +88,29 @@ def split_tool_line(line: str, name_words: bool = False) -> tuple[str, str, str]
     if name_words and name:
         name = teacher_name(name)
     return f"{sym} {rest}", name, desc
+
+
+def reader_text(text: str) -> str:
+    """A field's or constant's value as the reader gets it (C0): the part
+    after ` :: `, identifiers as words (`vendor_booking.stage "confirmed"` ->
+    `vendor booking stage confirmed`). A dot between digits stays (`v4.2`)."""
+    text = text.split(" :: ", 1)[-1]
+    text = re.sub(r"(?<=[A-Za-z_])\.(?=[A-Za-z_])", " ", text.replace('"', ""))
+    return " ".join(text.replace("_", " ").split())
+
+
+def chunk_request(request: str, size: int = 4) -> list[str]:
+    """The request as overlapping windows of `size` words, moving size//2
+    words at a time, the last window ending on the last word (C0). A request
+    of `size` words or fewer is one chunk."""
+    w = request.split()
+    if len(w) <= size:
+        return [" ".join(w)]
+    step = max(1, size // 2)
+    starts = list(range(0, len(w) - size + 1, step))
+    if starts[-1] + size < len(w):
+        starts.append(len(w) - size)
+    return [" ".join(w[s:s + size]) for s in starts]
 
 
 def pad_token_id(tk) -> int:
@@ -309,6 +336,8 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
         # the population a grounding number is quoted on
         flip_tool = torch.zeros((N, MT), dtype=torch.bool)
     teacher_texts = []                    # per kept row: (request, descs, names)
+    chunk_words = int(dims.get("chunk_words") or 0)
+    reader_texts = []                     # C0, per kept row: (consts, fields, chunks)
     tool_tok = torch.full((N, MT, TL), pad_id, dtype=torch.int16)
     field_tok = torch.full((N, MF, TL), pad_id, dtype=torch.int16)
     const_tok = torch.full((N, MC, TL), pad_id, dtype=torch.int16)
@@ -404,6 +433,10 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
                                   [nm for _, nm, _ in tri]))
         else:
             teacher_texts.append(None)
+        reader_texts.append(([reader_text(t) for _, t in ln.consts],
+                             [reader_text(t) for _, t in ln.fields],
+                             chunk_request(ln.request, chunk_words))
+                            if chunk_words else None)
         req_tok[n, :len(req)] = torch.tensor(req, dtype=torch.int16)
         for dest, g in zip((tool_tok, field_tok, const_tok, reg_tok), groups):
             for i, ids in enumerate(g):
@@ -426,7 +459,7 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
         if len(ids) > canvas:
             # Excluded, not truncated, like MAX_PROGRAM_TOKENS. Reported by the caller.
             meta.append(None)
-            teacher_texts[-1] = None
+            teacher_texts[-1] = reader_texts[-1] = None
             continue
         tgt[n, :len(ids)] = torch.tensor(ids, dtype=torch.int16)
         meta.append({"task_id": e.task_id, "level": e.level, "world": e.world, "syms": syms,
@@ -446,6 +479,7 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
             sig_tok, desc_tok, name_tok, sig_group, flip_tool = (
                 t[idx] for t in (sig_tok, desc_tok, name_tok, sig_group, flip_tool))
         teacher_texts = [teacher_texts[i] for i in keep]
+        reader_texts = [reader_texts[i] for i in keep]
         meta = [m for m in meta if m is not None]
     d = {"tool_tok": tool_tok, "field_tok": field_tok, "const_tok": const_tok,
          "reg_tok": reg_tok, "req_tok": req_tok,
@@ -453,6 +487,7 @@ def encode_structural(examples: list[Example], tk, kws: list[str], layout, dims:
          "n_reg_bound": n_reg_bound, "adj": adj, "tgt": tgt,
          "meta": meta,
          "teacher_texts": teacher_texts,
+         "reader_texts": reader_texts,
          "stats": {"max_slots": max_len, "excluded": excluded, "kept": [examples[i] for i in keep],
                    "max_line_seen": max_line_seen, "max_req_seen": max_req_seen}}
     if split:
@@ -578,7 +613,44 @@ def teacher_tables(encoded: dict, model: str, out: Path) -> None:
                     return_tensors="pt")
             rows.append(torch.nn.functional.normalize(
                 enc(**b).last_hidden_state[:, 0], dim=-1).half())
-    torch.save({"table": torch.cat(rows), "model": model}, out / "teacher.pt")
+    # the texts too, in table order, so another reader can embed exactly the
+    # same rows against the same indices (reader_table.py)
+    torch.save({"table": torch.cat(rows), "model": model, "texts": order}, out / "teacher.pt")
+    return len(order)
+
+
+def reader_line_tables(encoded: dict, base: int, out: Path) -> int:
+    """C0's index columns: t_const (N, max_const), t_field (N, max_field) and
+    t_chunk (N, max_chunk), -1 on padding, into the reader table's rows after
+    the teacher's `base` texts. Only the reader embeds these (the teacher
+    never needs them), so their texts go to reader_texts.jsonl in table order
+    for reader_table.py to append. Returns max_chunk."""
+    texts: dict[str, int] = {}
+
+    def tid(t: str) -> int:
+        if t not in texts:
+            texts[t] = len(texts)
+        return base + texts[t]
+
+    MK = max(len(rt[2]) for d in encoded.values() for rt in d["reader_texts"] if rt)
+    for d in encoded.values():
+        N, MC = d["const_tok"].shape[:2]
+        MF = d["field_tok"].shape[1]
+        tc = torch.full((N, MC), -1, dtype=torch.int32)
+        tf = torch.full((N, MF), -1, dtype=torch.int32)
+        tk = torch.full((N, MK), -1, dtype=torch.int32)
+        for n, rt in enumerate(d["reader_texts"]):
+            consts, fields, chunks = rt
+            for dest, items in ((tc, consts), (tf, fields), (tk, chunks)):
+                for i, t in enumerate(items):
+                    dest[n, i] = tid(t)
+        d.update({"t_const": tc, "t_field": tf, "t_chunk": tk})
+    with open(out / "reader_texts.jsonl", "w", encoding="utf-8", newline="\n") as fh:
+        for t in sorted(texts, key=texts.get):
+            fh.write(json.dumps(t, ensure_ascii=False) + "\n")
+    print(f"  reader lines: {len(texts)} distinct constant, field and chunk texts "
+          f"after the teacher's {base}; up to {MK} chunks per request", flush=True)
+    return MK
 
 
 def pick_holdout_worlds(counts: dict[str, int], n: int,
@@ -650,6 +722,14 @@ def main():
                     help="with --split: embed every distinct description, name "
                          "and request with this encoder (unsloth/bge-small-en-"
                          "v1.5) into teacher.pt, for the relational loss")
+    ap.add_argument("--reader-lines", action="store_true",
+                    help="with --split --teacher: also index every constant, "
+                         "every field and the request in chunks for the reader "
+                         "(C0, tiny-general-agent-menu.md); reader_table.py "
+                         "embeds them from reader_texts.jsonl")
+    ap.add_argument("--chunk-words", type=int, default=4,
+                    help="with --reader-lines: words per request chunk; "
+                         "chunks move half that at a time")
     ap.add_argument("--holdout-corpus", default=None, metavar="PATH",
                     help="take the holdout split from a SECOND corpus, "
                          "generated over the reserved eval worlds "
@@ -674,6 +754,9 @@ def main():
                          "from an unlucky world (R8 §5b)")
     ap.add_argument("--out", default=None, help="default data_cache (flat) or data_cache_struct")
     args = ap.parse_args()
+    if args.reader_lines and not (args.split and args.teacher):
+        raise SystemExit("--reader-lines builds on the teacher's text table: "
+                         "it needs --split and --teacher")
 
     out = Path(args.out or (CACHE if args.binding == "flat" else CACHE.with_name("data_cache_struct")))
     out.mkdir(parents=True, exist_ok=True)
@@ -847,6 +930,8 @@ def main():
                          "max_name": args.max_name})
         if args.name_words:
             dims["name_words"] = True
+        if args.reader_lines:
+            dims["chunk_words"] = args.chunk_words
         if args.in_tok or args.tok_extra:
             config["tokenizer"] = args.in_tok or {"trained_on": "themes+" + ",".join(args.tok_extra)}
         config.update({"in_vocab": tk.get_vocab_size(), "in_pad": pad_token_id(tk),
@@ -859,9 +944,12 @@ def main():
             if part:
                 encoded[name] = encode_structural(part, tk, kws, layout, dims, args.canvas)
         if args.split and args.teacher:
-            teacher_tables(encoded, args.teacher, out)
+            base = teacher_tables(encoded, args.teacher, out)
+            if args.reader_lines:
+                config["max_chunk"] = reader_line_tables(encoded, base, out)
         for name, d in encoded.items():
             d.pop("teacher_texts", None)
+            d.pop("reader_texts", None)
             st = d.pop("stats")
             max_slots = max(max_slots, st["max_slots"])
             torch.save({k: v for k, v in d.items() if k != "meta"}, out / f"{name}.pt")

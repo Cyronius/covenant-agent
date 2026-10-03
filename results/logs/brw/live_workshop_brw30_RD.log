@@ -1,0 +1,10 @@
+live_workshop_brw30_RD.jsonl: 6 episodes, world=workshop model=tiny:brw30_RD condition=tiny/brief+letters+enums+exits
+  won            0/6 (0%)
+  died           0/6
+  funnel         crafted_anything 6/6  station_built 6/6  goal_made 0/6
+  per-turn       first tool 72/120 (60%)   first tool+arg 24/120 (20%)   whole turn 12/120 (10%)
+  calls          354 (54 invalid)
+  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+  movement       0 refused moves (0 repeat last turn's), 0 into a direction labelled blocked, 0 turns with a truncated request
+  tokens_out p50 10   gen_ms p50 168
+  finish_reason  {'stop': 120}

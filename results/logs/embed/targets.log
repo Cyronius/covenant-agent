@@ -1,0 +1,16 @@
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 15327.23it/s]
+  teacher 1024/1354541  3853/s
+  teacher 103424/1354541  32632/s
+  teacher 205824/1354541  32614/s
+  teacher 308224/1354541  32591/s
+  teacher 410624/1354541  31601/s
+  teacher 513024/1354541  27774/s
+  teacher 615424/1354541  27982/s
+  teacher 717824/1354541  27583/s
+  teacher 820224/1354541  27331/s
+  teacher 922624/1354541  26865/s
+  teacher 1025024/1354541  25328/s
+  teacher 1127424/1354541  24652/s
+  teacher 1229824/1354541  23600/s
+  teacher 1332224/1354541  21355/s
+1354541 texts (1873603 train pieces in 200000 texts, 100000 names) in 76s -> /workspace/repo/models/tiny/reader/embed/targets.pt

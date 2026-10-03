@@ -1,0 +1,9 @@
+106 files -> pod_brw.tar.gz (707 MB)
+
+on the pod:
+  tar xzf pod_brw.tar.gz && cd tiny
+  pip install torch tokenizers
+  bash selftest.sh data_cache_brw10   # 2 minutes, catches what an hour in would not
+  CACHE=data_cache_brw10 bash run_step2.sh   # or run_step1.sh, run_step3.sh, run_vocab.sh
+
+bring back: out/ (generations and curves/)

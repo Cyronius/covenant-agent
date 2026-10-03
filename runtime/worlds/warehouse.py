@@ -15,7 +15,8 @@ from __future__ import annotations
 import random
 from typing import List, Optional
 
-from runtime.worlds.decision import Observation, last_turn, offset_words
+from runtime.worlds.decision import (Observation, fit_brief, last_turn,
+                                     offset_words)
 
 NOW = 1_760_000_000
 
@@ -234,7 +235,8 @@ def _open_dirs(state: dict) -> List[str]:
             if tile(state, r["x"] + dx, r["y"] + dy) != RACK]
 
 
-def observe(state: dict, vision: Optional[int] = None) -> Observation:
+def observe(state: dict, vision: Optional[int] = None, *,
+            exits: bool = False) -> Observation:
     """The turn, in words. The dock and the pad are fixed plant the robot has
     on its floor plan, so they are always named; totes are only what the
     camera can see, which is the `relevant_cards` rule the kanban demo taught
@@ -250,7 +252,9 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
             and abs(t["y"] - r["y"]) <= vision]
 
     constants: List[dict] = [
-        {"type": "STR", "value": d, "desc": DIR_DESC[d]} for d in DIRECTIONS
+        {"type": "STR", "value": d,
+         "desc": _exit_desc(state, d, seen) if exits else DIR_DESC[d]}
+        for d in DIRECTIONS
     ]
     for t in sorted(seen, key=lambda t: t["id"]):
         dx, dy = t["x"] - r["x"], t["y"] - r["y"]
@@ -281,8 +285,39 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
         f"Last turn: {last_turn(state)}.\n"
         f"Choose up to {state.get('turn_budget', 3)} actions for this turn."
     )
+    brief = fit_brief(
+        f"Warehouse floor, turn {state.get('turn', 0)}, battery "
+        f"{r['battery']} of {r['max_battery']}, carrying "
+        f"{'tote ' + carrying['label'] if carrying else 'nothing'}. "
+        f"{state.get('quest', '')} Dock {_place(dock, here)}; pad "
+        f"{_place(pad, here)}.",
+        state.get("log") or [],
+        f"Up to {state.get('turn_budget', 3)} actions.")
     return Observation(request=request, constants=constants,
-                       extra={"vision": vision})
+                       extra={"vision": vision}, brief=brief)
+
+
+STEP = {"north": (0, -1), "south": (0, 1), "east": (1, 0), "west": (-1, 0)}
+
+
+def _exit_desc(state: dict, direction: str, seen: List[dict]) -> str:
+    """What is one bay away that way, for the direction constant: the words
+    the tiny planner reads instead of the "You can drive ..." line."""
+    r = _robot(state)
+    dx, dy = STEP[direction]
+    x, y = r["x"] + dx, r["y"] + dy
+    if tile(state, x, y) == RACK:
+        return f"{direction}: rack, blocked"
+    dock = state["entities"]["dock"][0]
+    pad = state["entities"]["charger"][0]
+    if (dock["x"], dock["y"]) == (x, y):
+        return f"{direction}: the outbound dock, you can drive here"
+    if (pad["x"], pad["y"]) == (x, y):
+        return f"{direction}: the charging pad, you can drive here"
+    for t in seen:
+        if (t["x"], t["y"]) == (x, y):
+            return f"{direction}: open bay with tote {t['label']}, you can drive here"
+    return f"{direction}: open bay, you can drive here"
 
 
 def _place(rec: dict, here) -> str:

@@ -1,0 +1,9 @@
+  teacher 256/378627  2566/s
+  teacher 51456/378627  1675/s
+  teacher 102656/378627  1470/s
+  teacher 153856/378627  1334/s
+  teacher 205056/378627  1197/s
+  teacher 256256/378627  1061/s
+  teacher 307456/378627  933/s
+  teacher 358656/378627  796/s
+756494 texts (378627 new) in 533s -> C:\code\covenant-agent\models\tiny\reader\role\teacher.pt

@@ -1,1 +1,10 @@
-results/logs/gen_s5_holdout.sh: line 94: /s5_shards/holdout_decoy_7.jsonl: No such file or directory
+registered 143 generated domains
+200/1000 (resamples: 0, noops dropped: 23)
+400/1000 (resamples: 2, noops dropped: 39)
+600/1000 (resamples: 5, noops dropped: 55)
+800/1000 (resamples: 7, noops dropped: 82)
+1000/1000 (resamples: 10, noops dropped: 95)
+wrote 1000 tasks -> data\s5_shards\holdout_decoy_7.jsonl (resamples: 10, noops dropped: 95)
+signature uniqueness: 2.5% full, 2.2% types-only, over 1861 reference CALLs (45.6 tools/task)
+filter grounding: 78/513 of rows with a FILTER (15.2%) filter on something the request never names, over 1000 rows read
+segments: 88/1000 rows (8.8%) pause and decide in a second segment - L5 17/48, L7 13/48, L10 47/47, L11 11/47

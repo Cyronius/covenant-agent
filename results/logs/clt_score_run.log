@@ -1,0 +1,29 @@
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RD_clut.score.log:  goal      61.6%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RD_clut_bk3.score.log:  goal      66.6%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RD_decoy.score.log:  goal      47.1%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RD_flip.score.log:  goal      39.6%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RD_plain.score.log:  goal      67.0%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RD_plain_bk3.score.log:  goal      72.2%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RD_test.score.log:  goal      89.6%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RDs1_clut.score.log:  goal      63.8%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RDs1_clut_bk3.score.log:  goal      67.8%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RDs1_decoy.score.log:  goal      46.6%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RDs1_flip.score.log:  goal      35.2%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RDs1_plain.score.log:  goal      69.1%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RDs1_plain_bk3.score.log:  goal      73.6%
+/c/code/covenant-agent/models/tiny/runs/pod_clt/out/clt_RDs1_test.score.log:  goal      90.6%
+/c/code/covenant-agent/results/logs/clt/demo_clt_RD.log:70 tasks: goal 10/70 (14.3%), compile 60/70, parse 65/70
+/c/code/covenant-agent/results/logs/clt/demo_clt_RDs1.log:70 tasks: goal 10/70 (14.3%), compile 60/70, parse 70/70
+/c/code/covenant-agent/results/logs/clt/s500_clt_clt_RD.log:500 tasks: goal 331/500 (66.2%), compile 447/500, parse 490/500
+/c/code/covenant-agent/results/logs/clt/s500_clt_clt_RD.log:of the 45 that pause: 19/45 got a second segment at all, 20/45 reached the goal
+/c/code/covenant-agent/results/logs/clt/s500_clt_clt_RDs1.log:500 tasks: goal 332/500 (66.4%), compile 452/500, parse 477/500
+/c/code/covenant-agent/results/logs/clt/s500_clt_clt_RDs1.log:of the 45 that pause: 27/45 got a second segment at all, 19/45 reached the goal
+/c/code/covenant-agent/results/logs/clt/s500_clt_fdc25_RD.log:500 tasks: goal 144/500 (28.8%), compile 415/500, parse 478/500
+/c/code/covenant-agent/results/logs/clt/s500_clt_fdc25_RD.log:of the 45 that pause: 29/45 got a second segment at all, 12/45 reached the goal
+/c/code/covenant-agent/results/logs/clt/s500_s6_clt_RD.log:500 tasks: goal 367/500 (73.4%), compile 444/500, parse 486/500
+/c/code/covenant-agent/results/logs/clt/s500_s6_clt_RD.log:of the 45 that pause: 20/45 got a second segment at all, 23/45 reached the goal
+/c/code/covenant-agent/results/logs/clt/s500_s6_clt_RDs1.log:500 tasks: goal 371/500 (74.2%), compile 450/500, parse 478/500
+/c/code/covenant-agent/results/logs/clt/s500_s6_clt_RDs1.log:of the 45 that pause: 25/45 got a second segment at all, 26/45 reached the goal
+/c/code/covenant-agent/results/logs/clt/s500_s6_fdc25_RD.log:500 tasks: goal 435/500 (87.0%), compile 487/500, parse 496/500
+/c/code/covenant-agent/results/logs/clt/s500_s6_fdc25_RD.log:of the 45 that pause: 29/45 got a second segment at all, 36/45 reached the goal
+=== score_clt done Tue Sep 29 12:52:48 CDT 2026

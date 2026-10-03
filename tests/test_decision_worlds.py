@@ -368,3 +368,49 @@ def test_the_held_out_worlds_are_reserved_and_refused_by_the_corpus():
     assert not (set(decision.TRAINABLE) & reserved)
     assert episodes.level_for("warehouse_robot") == episodes.LEVEL_DECISION
     assert episodes.level_for("app_settings") == episodes.LEVEL_PAGE
+
+
+# ------------------------------------------ briefs (the tiny planner's input)
+# .claude/plans/borrowed-worlds.md "Rendering rules": one line, within the
+# tiny planner's request budget, the situation in the constants.
+
+@pytest.mark.parametrize("name", EVERY)
+def test_every_brief_of_a_sampled_episode_fits_the_budget(name):
+    from data.gen.brief_budget import check_brief
+    from data.gen.episodes import run_episode as play
+    rows, _ = play(name, 3, random.Random(3), symbols="typed", enums=True,
+                   kinds=True, offpath=0.25, illegal_share=0.5, brief=True)
+    assert rows
+    for row in rows:
+        check_brief(row["request"])
+        assert row["input_text"].splitlines()[0] == "REQUEST: " + row["request"]
+
+
+def test_warehouse_exits_say_what_is_one_bay_away():
+    st = warehouse.new_state()
+    r = st["entities"]["robot"][0]
+    dirs = {c["value"]: c["desc"]
+            for c in warehouse.observe(st, exits=True).constants[:4]}
+    for d, (dx, dy) in warehouse.STEP.items():
+        blocked = warehouse.tile(st, r["x"] + dx, r["y"] + dy) == warehouse.RACK
+        assert dirs[d].startswith(f"{d}: ")
+        assert dirs[d].endswith("blocked") == blocked
+
+
+def test_elevator_floors_carry_who_is_there():
+    st = elevator.new_state("morning_rush")
+    floors = {c["value"]: c["desc"]
+              for c in elevator.observe(st, exits=True).constants}
+    assert floors[1] == "floor 1 (the car is on it): Otto waiting 0 ticks, " \
+                        "for floor 5; Wren due in 3 ticks, for floor 3"
+    assert floors[4] == "floor 4 (3 up): Priya waiting 0 ticks, for floor 1"
+    assert floors[2].endswith(": nobody")
+
+
+def test_a_failure_in_a_brief_is_read_back_by_the_reaction_report():
+    from data.gen.episodes import failure_text
+    brief = ("Warehouse floor, turn 3, battery 9 of 14, carrying nothing. Go. "
+             "Last turn: moved north; failed: cannot drive east: a rack. "
+             "Up to 3 actions.")
+    assert failure_text(brief) == "moved north; failed: cannot drive east: a rack"
+    assert failure_text("Last turn: moved north. Up to 3 actions.") == ""

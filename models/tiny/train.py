@@ -41,7 +41,9 @@ KIND_NAMES = ("kw", "tool", "field", "const", "reg")
 
 # -- data -----------------------------------------------------------------
 
-def load_split(cache: Path, name: str, binding: str, limit: int | None = None) -> TensorDataset:
+def load_split(cache: Path, name: str, binding: str, limit: int | None = None,
+               types: set | None = None, fold: tuple[int, int] | None = None,
+               xdraft: Path | None = None) -> TensorDataset:
     """Memory-mapped, and sliced before anything is read into RAM.
 
     The training tensors are hundreds of MB. Holding them resident competes
@@ -67,6 +69,23 @@ def load_split(cache: Path, name: str, binding: str, limit: int | None = None) -
         # a split cache (description-reading step 2) carries more columns
         keys = cache_keys(d)
         cols = tuple(d[k] if k in d else empty[k] for k in keys)
+    if xdraft:
+        # cross-fitted drafts, one per row of this split (xdraft.py), as two
+        # more columns the staged refiner reads in training
+        x = torch.load(xdraft)
+        n = cols[0].size(0)
+        if x["tok"].size(0) != n:
+            raise ValueError(f"{xdraft}: {x['tok'].size(0)} drafts for {n} {name} rows")
+        cols, keys = cols + (x["tok"], x["conf"]), tuple(keys) + ("xdraft_tok", "xdraft_conf")
+    if types or fold:
+        from staged import fold_of, task_type
+        meta = json.loads((cache / f"{name}_meta.json").read_text(encoding="utf-8"))
+        # one expert's rows (staged.task_type, from each row's world), and/or
+        # one fold of them (staged.fold_of: a cross-fitting draft model's half)
+        idx = torch.tensor([i for i, m in enumerate(meta)
+                            if (not types or task_type(m["world"]) in types)
+                            and (not fold or fold_of(m["task_id"], fold[1]) == fold[0])])
+        cols = tuple(t[idx] for t in cols)
     if limit:
         cols = tuple(t[:limit].clone() for t in cols)
     ds = TensorDataset(*cols)
@@ -162,6 +181,9 @@ def batch_loss(model, inputs, tgt, arm: str, generator=None, pad_weight: float =
     `aux` ({"nce": w, "rel": w, "teacher": table}) adds the split encoder's
     stage losses to the program loss; the parts land in aux["last"].
     """
+    if hasattr(model, "staged_loss"):
+        # the staged decoder's draft + refiner objective (staged.py)
+        return model.staged_loss(inputs, tgt, pad_weight)
     mem = None
     extra = 0.0
     if aux and getattr(model.c, "split", False) and (aux.get("nce") or aux.get("rel")):
@@ -338,6 +360,54 @@ def main():
     ap.add_argument("--lam-rel", type=float, default=0.0,
                     help="weight of the stages' relational distillation loss "
                          "(needs teacher.pt in the cache)")
+    ap.add_argument("--reader", action="store_true",
+                    help="a frozen external reader's vectors (the cache's "
+                         "reader.pt, reader_table.py) for tool descriptions and "
+                         "the request, and their cosine in the tool pointer "
+                         "(npu-planner.md phase 2)")
+    ap.add_argument("--reader-lines", action="store_true",
+                    help="with --reader: the reader's vectors for every constant, "
+                         "every field and the request in chunks, and a reading "
+                         "term in the constant pointer (C0, tiny-general-agent-"
+                         "menu.md; needs a cache built with prep.py --reader-lines)")
+    ap.add_argument("--reader-file", default="reader.pt",
+                    help="with --reader: which of the cache's reader tables "
+                         "(reader_role.pt: the role-aware reader, role-aware-reader.md)")
+    ap.add_argument("--no-req-words", action="store_true",
+                    help="with --reader-lines: drop the request's own tokens, so "
+                         "the request reaches the planner only as reader vectors")
+    # the staged decoder (staged.py, .claude/plans/staged-decoder-experts.md)
+    ap.add_argument("--stages", default="",
+                    help="draft and refine stages, each kind:LAYERSxLOOPS, e.g. "
+                         "draft:4x4,refine:2x1; replaces --dec-layers/--dec-loops. "
+                         "Needs --arm ar")
+    ap.add_argument("--draft-noise", type=float, default=0.1,
+                    help="share of draft slots swapped for random ones before "
+                         "the refiner reads them, in training")
+    ap.add_argument("--draft-swap", type=float, default=0.0,
+                    help="share of the draft's pointer slots swapped for another of "
+                         "this task's tools/fields/constants/registers (same kind) "
+                         "before the refiner reads them, in training")
+    ap.add_argument("--init-from", default=None, metavar="PT",
+                    help="start from this checkpoint's weights (an expert from "
+                         "the shared model)")
+    ap.add_argument("--freeze-shared", action="store_true",
+                    help="experts: keep the encoder and the output head fixed; "
+                         "train only the stages --train-parts names")
+    ap.add_argument("--train-parts", choices=["decoder", "draft"], default="decoder")
+    ap.add_argument("--types", default=None,
+                    help="comma list of task types (staged.task_type): train and "
+                         "validate on those rows only")
+    ap.add_argument("--fold", default=None, metavar="K/N",
+                    help="train on fold K of N only (staged.fold_of, by episode): "
+                         "a cross-fitting draft model's half (plan step 2b)")
+    ap.add_argument("--xdraft", default=None, metavar="PT",
+                    help="cross-fitted drafts for the training rows (xdraft.py): "
+                         "the staged refiner trains on them instead of its own "
+                         "draft stage's")
+    ap.add_argument("--min-steps", type=int, default=0,
+                    help="raise --epochs until training takes at least this many "
+                         "steps (small experts)")
     ap.add_argument("--pad-weight", type=float, default=1.0,
                     help="weight on padding slots in the diffusion loss")
     ap.add_argument("--limit-train", type=int, default=None,
@@ -384,9 +454,11 @@ def main():
         from canvas import Layout
         layout = Layout.from_dict(meta["layout"])
         out_vocab = layout.size
+        if args.stages and args.arm != "ar":
+            raise SystemExit("--stages needs --arm ar: the staged model's last stage reads left to right")
         cfg = Config(
             in_vocab=meta["in_vocab"], out_vocab=out_vocab, d=args.d, ff=args.ff,
-            enc_layers=args.enc_layers, dec_layers=args.dec_layers,
+            enc_layers=args.enc_layers, dec_layers=0 if args.stages else args.dec_layers,
             line_layers=args.line_layers, graph_layers=args.graph_layers,
             dec_loops=args.dec_loops, dropout=args.dropout, canvas=meta["canvas"],
             loop_emb=args.loop_emb, rand_loops=args.rand_loops,
@@ -400,10 +472,23 @@ def main():
             desc_layers=args.desc_layers, name_w=args.name_w,
             name_layers=args.name_layers, stage_pool=args.stage_pool,
             max_sig=meta.get("max_sig", 48), max_desc=meta.get("max_desc", 64),
-            max_name=meta.get("max_name", 16),
+            max_name=meta.get("max_name", 16), reader=args.reader,
+            reader_lines=args.reader_lines, max_chunk=meta.get("max_chunk", 0),
+            req_words=not args.no_req_words, reader_file=args.reader_file,
+            stages=args.stages, draft_noise=args.draft_noise, draft_swap=args.draft_swap,
+            freeze_shared=args.freeze_shared, train_parts=args.train_parts,
         )
+        if args.freeze_shared and not (args.stages and args.init_from):
+            raise SystemExit("--freeze-shared trains an expert: it needs --stages and --init-from")
         if args.split and not meta.get("split"):
             raise SystemExit("--split needs a cache built with prep.py --split")
+        if args.reader and not (cache / args.reader_file).exists():
+            raise SystemExit(f"--reader needs the cache's {args.reader_file} (reader_table.py)")
+        if args.reader_lines and not (args.reader and meta.get("max_chunk")):
+            raise SystemExit("--reader-lines needs --reader and a cache built with "
+                             "prep.py --reader-lines")
+        if args.no_req_words and not args.reader_lines:
+            raise SystemExit("--no-req-words needs --reader-lines")
         kind_of = layout.kind_tensor
         if args.pointer:
             raise SystemExit("--pointer is the flat binding's head; structural always points")
@@ -419,7 +504,15 @@ def main():
         for p_ in model.stage_params():
             p_.requires_grad_(False)
         model.frozen_stages = True
+    if args.init_from:
+        model.load_state_dict(torch.load(args.init_from, map_location="cpu")["model"])
+    if args.freeze_shared:
+        keep = {id(p_) for p_ in model.trainable_parts()}
+        for p_ in model.parameters():
+            p_.requires_grad_(id(p_) in keep)
     model = model.to(device)
+    if args.reader:
+        model.set_reader_table(torch.load(cache / args.reader_file)["table"].to(device))
     aux = None
     if args.split and (args.lam_nce or args.lam_rel):
         teacher = None
@@ -427,13 +520,22 @@ def main():
             teacher = torch.load(cache / "teacher.pt")["table"].float().to(device)
         aux = {"nce": args.lam_nce, "rel": args.lam_rel, "teacher": teacher}
 
-    train_ds = load_split(cache, "train", binding, args.limit_train)
-    val_ds = load_split(cache, "val", binding, args.limit_val)
+    types = set(args.types.split(",")) if args.types else None
+    fold = tuple(int(v) for v in args.fold.split("/")) if args.fold else None
+    if args.xdraft and not args.stages:
+        ap.error("--xdraft needs --stages with a refine stage")
+    train_ds = load_split(cache, "train", binding, args.limit_train, types, fold,
+                          Path(args.xdraft) if args.xdraft else None)
+    val_ds = load_split(cache, "val", binding, args.limit_val, types)
     train_dl = DataLoader(train_ds, batch_size=args.batch, shuffle=True, drop_last=True)
     val_dl = DataLoader(val_ds, batch_size=args.batch)
 
+    if args.min_steps and len(train_dl) * args.epochs < args.min_steps:
+        args.epochs = math.ceil(args.min_steps / len(train_dl))
     steps = len(train_dl) * args.epochs
-    if args.split:
+    if args.freeze_shared:
+        groups = [p_ for p_ in model.parameters() if p_.requires_grad]
+    elif args.split:
         stage_ids = {id(p_) for p_ in model.stage_params()}
         groups = [{"params": [p_ for p_ in model.parameters()
                               if id(p_) not in stage_ids and p_.requires_grad]},

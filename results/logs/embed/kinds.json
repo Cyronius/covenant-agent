@@ -1,0 +1,500 @@
+{
+ "teacher": {
+  "plain": {
+   "chunk-4": {
+    "pair": 62.8,
+    "top1": 76.6
+   },
+   "by_kind": {
+    "bool": [
+     1.9,
+     312
+    ],
+    "enum": [
+     45.6,
+     318
+    ],
+    "id": [
+     89.0,
+     1072
+    ],
+    "status": [
+     5.0,
+     40
+    ],
+    "text": [
+     57.7,
+     1101
+    ],
+    "time": [
+     90.9,
+     154
+    ]
+   },
+   "overlap_by_kind": {
+    "bool": [
+     0.0,
+     312
+    ],
+    "enum": [
+     70.0,
+     318
+    ],
+    "id": [
+     84.2,
+     1072
+    ],
+    "status": [
+     0.0,
+     40
+    ],
+    "text": [
+     61.4,
+     1101
+    ],
+    "time": [
+     88.3,
+     154
+    ]
+   }
+  },
+  "clut": {
+   "chunk-4": {
+    "pair": 84.8,
+    "top1": 86.0
+   },
+   "by_kind": {
+    "bool": [
+     43.9,
+     563
+    ],
+    "enum": [
+     90.3,
+     825
+    ],
+    "id": [
+     98.5,
+     2065
+    ],
+    "status": [
+     37.9,
+     66
+    ],
+    "text": [
+     79.3,
+     2030
+    ],
+    "time": [
+     97.2,
+     358
+    ]
+   },
+   "overlap_by_kind": {
+    "bool": [
+     39.7,
+     563
+    ],
+    "enum": [
+     90.2,
+     825
+    ],
+    "id": [
+     97.3,
+     2065
+    ],
+    "status": [
+     33.3,
+     66
+    ],
+    "text": [
+     78.2,
+     2030
+    ],
+    "time": [
+     89.5,
+     358
+    ]
+   }
+  },
+  "demo": {
+   "chunk-4": {
+    "pair": 87.8,
+    "top1": 90.0
+   },
+   "by_kind": {
+    "id": [
+     100.0,
+     179
+    ],
+    "text": [
+     76.7,
+     103
+    ],
+    "time": [
+     14.3,
+     14
+    ]
+   },
+   "overlap_by_kind": {
+    "id": [
+     100.0,
+     179
+    ],
+    "text": [
+     84.5,
+     103
+    ],
+    "time": [
+     50.0,
+     14
+    ]
+   }
+  },
+  "pairs": {
+   "move it to bob | move it from bob": 0.98,
+   "assign card 6 to Bob | assign Bob to card 6": 0.987,
+   "cards that are done | cards that are not done": 0.921,
+   "orders placed before March | orders placed after March": 0.981,
+   "send priya the list | send the list about priya": 0.929,
+   "the oldest issue | the newest issue": 0.665,
+   "bob | Bob Alvarez": 0.567,
+   "bob | Priya Nandan": 0.186,
+   "the release notes | card 2 - Write release notes for v4.2": 0.652,
+   "the release notes | card 4 - Retire legacy webhook handler": 0.083,
+   "finished | the done status": 0.589,
+   "finished | the todo status": 0.31
+  }
+ },
+ "a alone": {
+  "plain": {
+   "chunk-4": {
+    "pair": 59.6,
+    "top1": 73.2
+   },
+   "by_kind": {
+    "bool": [
+     3.5,
+     312
+    ],
+    "enum": [
+     44.3,
+     318
+    ],
+    "id": [
+     78.5,
+     1072
+    ],
+    "status": [
+     0.0,
+     40
+    ],
+    "text": [
+     59.1,
+     1101
+    ],
+    "time": [
+     92.2,
+     154
+    ]
+   },
+   "overlap_by_kind": {
+    "bool": [
+     0.0,
+     312
+    ],
+    "enum": [
+     70.0,
+     318
+    ],
+    "id": [
+     84.2,
+     1072
+    ],
+    "status": [
+     0.0,
+     40
+    ],
+    "text": [
+     61.4,
+     1101
+    ],
+    "time": [
+     88.3,
+     154
+    ]
+   }
+  },
+  "clut": {
+   "chunk-4": {
+    "pair": 84.3,
+    "top1": 86.0
+   },
+   "by_kind": {
+    "bool": [
+     51.3,
+     563
+    ],
+    "enum": [
+     90.1,
+     825
+    ],
+    "id": [
+     95.6,
+     2065
+    ],
+    "status": [
+     37.9,
+     66
+    ],
+    "text": [
+     79.0,
+     2030
+    ],
+    "time": [
+     95.5,
+     358
+    ]
+   },
+   "overlap_by_kind": {
+    "bool": [
+     39.7,
+     563
+    ],
+    "enum": [
+     90.2,
+     825
+    ],
+    "id": [
+     97.3,
+     2065
+    ],
+    "status": [
+     33.3,
+     66
+    ],
+    "text": [
+     78.2,
+     2030
+    ],
+    "time": [
+     89.5,
+     358
+    ]
+   }
+  },
+  "demo": {
+   "chunk-4": {
+    "pair": 85.5,
+    "top1": 90.0
+   },
+   "by_kind": {
+    "id": [
+     96.1,
+     179
+    ],
+    "text": [
+     76.7,
+     103
+    ],
+    "time": [
+     14.3,
+     14
+    ]
+   },
+   "overlap_by_kind": {
+    "id": [
+     100.0,
+     179
+    ],
+    "text": [
+     84.5,
+     103
+    ],
+    "time": [
+     50.0,
+     14
+    ]
+   }
+  },
+  "pairs": {
+   "move it to bob | move it from bob": 0.954,
+   "assign card 6 to Bob | assign Bob to card 6": 0.99,
+   "cards that are done | cards that are not done": 0.918,
+   "orders placed before March | orders placed after March": 0.967,
+   "send priya the list | send the list about priya": 0.953,
+   "the oldest issue | the newest issue": 0.772,
+   "bob | Bob Alvarez": 0.784,
+   "bob | Priya Nandan": 0.413,
+   "the release notes | card 2 - Write release notes for v4.2": 0.68,
+   "the release notes | card 4 - Retire legacy webhook handler": 0.144,
+   "finished | the done status": 0.6,
+   "finished | the todo status": 0.362
+  }
+ },
+ "b alone": {
+  "plain": {
+   "chunk-4": {
+    "pair": 58.8,
+    "top1": 74.5
+   },
+   "by_kind": {
+    "bool": [
+     2.6,
+     312
+    ],
+    "enum": [
+     45.9,
+     318
+    ],
+    "id": [
+     78.4,
+     1072
+    ],
+    "status": [
+     5.0,
+     40
+    ],
+    "text": [
+     56.7,
+     1101
+    ],
+    "time": [
+     91.6,
+     154
+    ]
+   },
+   "overlap_by_kind": {
+    "bool": [
+     0.0,
+     312
+    ],
+    "enum": [
+     70.0,
+     318
+    ],
+    "id": [
+     84.2,
+     1072
+    ],
+    "status": [
+     0.0,
+     40
+    ],
+    "text": [
+     61.4,
+     1101
+    ],
+    "time": [
+     88.3,
+     154
+    ]
+   }
+  },
+  "clut": {
+   "chunk-4": {
+    "pair": 83.8,
+    "top1": 85.6
+   },
+   "by_kind": {
+    "bool": [
+     50.4,
+     563
+    ],
+    "enum": [
+     89.3,
+     825
+    ],
+    "id": [
+     95.6,
+     2065
+    ],
+    "status": [
+     43.9,
+     66
+    ],
+    "text": [
+     78.4,
+     2030
+    ],
+    "time": [
+     92.7,
+     358
+    ]
+   },
+   "overlap_by_kind": {
+    "bool": [
+     39.7,
+     563
+    ],
+    "enum": [
+     90.2,
+     825
+    ],
+    "id": [
+     97.3,
+     2065
+    ],
+    "status": [
+     33.3,
+     66
+    ],
+    "text": [
+     78.2,
+     2030
+    ],
+    "time": [
+     89.5,
+     358
+    ]
+   }
+  },
+  "demo": {
+   "chunk-4": {
+    "pair": 86.8,
+    "top1": 90.0
+   },
+   "by_kind": {
+    "id": [
+     96.6,
+     179
+    ],
+    "text": [
+     78.6,
+     103
+    ],
+    "time": [
+     21.4,
+     14
+    ]
+   },
+   "overlap_by_kind": {
+    "id": [
+     100.0,
+     179
+    ],
+    "text": [
+     84.5,
+     103
+    ],
+    "time": [
+     50.0,
+     14
+    ]
+   }
+  },
+  "pairs": {
+   "move it to bob | move it from bob": 0.955,
+   "assign card 6 to Bob | assign Bob to card 6": 0.986,
+   "cards that are done | cards that are not done": 0.926,
+   "orders placed before March | orders placed after March": 0.966,
+   "send priya the list | send the list about priya": 0.953,
+   "the oldest issue | the newest issue": 0.815,
+   "bob | Bob Alvarez": 0.861,
+   "bob | Priya Nandan": 0.446,
+   "the release notes | card 2 - Write release notes for v4.2": 0.656,
+   "the release notes | card 4 - Retire legacy webhook handler": 0.149,
+   "finished | the done status": 0.647,
+   "finished | the todo status": 0.393
+  }
+ }
+}

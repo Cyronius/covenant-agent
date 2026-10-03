@@ -11,39 +11,30 @@
 // program against freshly assigned symbols, so a `paused` result just ends
 // the turn and its registers are dropped. See .claude/plans/rpg-demo-app.md.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { type LoadStage, type Planner } from '../../../../../shared/llm';
-import {
-  createPlannerFor,
-  fetchModels,
-  loadModelPreference,
-  loadPreference,
-  saveModelPreference,
-  savePreference,
-  type InferenceMode,
-  type ModelInfo,
-} from '../../../../../shared/inference';
+import { createPlanner, type Planner } from '../../../../../shared/planner';
 import { buildFullPrompt, STOP } from '../../../../../shared/prompt';
 import { validate, type CallLogEntry, type ValidateResponse } from '../../../../../shared/validate';
 import {
   fetchRpgPrompt,
   newGame,
   player,
-  type NearbyThing,
+  type RpgPromptResponse,
   type RpgState,
 } from '../lib/rpgApi';
 
-const APP_KEY = 'rpg-ui';
-
 export type ModelStatus =
-  | { phase: 'loading'; stage: LoadStage }
-  | { phase: 'ready'; backend: 'wasm' | 'webgpu' | 'server'; loadMs: number }
+  | { phase: 'loading' }
+  | { phase: 'ready'; model: string; loadMs: number }
   | { phase: 'error'; message: string };
 
 export interface TurnRecord {
   id: number;
   turn: number;
-  /** what the model was shown (the observation, verbatim) */
+  /** what the planner read: the one-line brief, then each constant's
+   *  description (the tiny planner never sees the grid) */
   request: string;
+  /** the brief went past the planner's request budget */
+  truncated: boolean;
   /** what it wrote back, verbatim Agent Core */
   program: string;
   status: string;
@@ -63,18 +54,24 @@ const ABORT_COPY: Record<string, string> = {
   NEEDS_INFO: 'It says it needs more information.',
 };
 
+/** What the planner reads this turn, for the side panel. */
+export interface Seen {
+  brief: string;
+  constants: string[];
+}
+
+function seenFrom(kp: RpgPromptResponse): Seen {
+  return { brief: kp.observation.brief, constants: kp.observation.constants };
+}
+
 export function useDungeonRun() {
   const [state, setState] = useState<RpgState | null>(null);
-  const [window_, setWindow] = useState<string[]>([]);
-  const [nearby, setNearby] = useState<NearbyThing[]>([]);
+  const [seen, setSeen] = useState<Seen | null>(null);
   const [turns, setTurns] = useState<TurnRecord[]>([]);
-  const [modelStatus, setModelStatus] = useState<ModelStatus>({ phase: 'loading', stage: 'grammar' });
+  const [modelStatus, setModelStatus] = useState<ModelStatus>({ phase: 'loading' });
   const [busy, setBusy] = useState(false);
   const [auto, setAuto] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-  const [inference, setInference] = useState<InferenceMode>(() => loadPreference(APP_KEY));
-  const [models, setModels] = useState<ModelInfo[]>([]);
-  const [model, setModel] = useState<string | null>(() => loadModelPreference(APP_KEY));
 
   const plannerRef = useRef<Planner | null>(null);
   const stateRef = useRef<RpgState | null>(null);
@@ -83,28 +80,8 @@ export function useDungeonRun() {
   autoRef.current = auto;
   const busyRef = useRef(false);
   const nextTurnId = useRef(0);
-  // StrictMode double-invokes effects in dev; wllama's OPFS model cache
-  // cannot have two loads open on the same file, so this must start once.
+  // StrictMode double-invokes effects in dev; one load per real mount.
   const loadStartedRef = useRef(false);
-
-  const loadPlanner = useCallback(async (mode: InferenceMode, name: string) => {
-    try {
-      if (plannerRef.current) {
-        await plannerRef.current.unload();
-        plannerRef.current = null;
-      }
-      setModelStatus({ phase: 'loading', stage: mode === 'server' ? 'model' : 'grammar' });
-      const planner = await createPlannerFor({
-        mode,
-        model: name,
-        onStage: (stage) => setModelStatus({ phase: 'loading', stage }),
-      });
-      plannerRef.current = planner;
-      setModelStatus({ phase: 'ready', backend: planner.backend, loadMs: planner.loadMs });
-    } catch (err) {
-      setModelStatus({ phase: 'error', message: err instanceof Error ? err.message : String(err) });
-    }
-  }, []);
 
   const restart = useCallback(async (scenario?: string) => {
     setAuto(false);
@@ -113,72 +90,20 @@ export function useDungeonRun() {
     const fresh = await newGame(scenario);
     const kp = await fetchRpgPrompt(fresh);
     setState(kp.state);
-    setWindow(kp.observation.window);
-    setNearby(kp.observation.nearby);
+    setSeen(seenFrom(kp));
   }, []);
 
   useEffect(() => {
     if (loadStartedRef.current) return;
     loadStartedRef.current = true;
-    (async () => {
-      let name = model;
-      try {
-        const list = await fetchModels();
-        setModels(list.models);
-        if (!name || !list.models.some((m) => m.name === name)) {
-          name = list.default ?? list.models[0]?.name ?? null;
-          setModel(name);
-        }
-      } catch {
-        // no /models — fall back to whatever is stored
-      }
-      restart().catch((err) => setNote(err instanceof Error ? err.message : String(err)));
-      if (!name) {
-        setModelStatus({ phase: 'error', message: 'no model available from GET /models' });
-        return;
-      }
-      loadPlanner(inference, name);
-    })();
-  }, [loadPlanner, restart]);
-
-  // A separate, empty-deps effect on purpose: the merged app routes between
-  // worlds without a page reload, so this hook can unmount for real while a
-  // model is resident. Without it, wllama tries to open a second OPFS access
-  // handle on the next world's model load while this one is still open — see
-  // useAgentRun.ts's matching effect for the full story.
-  useEffect(() => {
-    return () => {
-      plannerRef.current?.unload().catch(() => {});
-    };
-  }, []);
-
-  const setInferenceMode = useCallback((mode: InferenceMode) => {
-    setInference((prev) => {
-      if (prev === mode) return prev;
-      savePreference(APP_KEY, mode);
-      return mode;
-    });
-  }, []);
-
-  const selectModel = useCallback((name: string) => {
-    setModel((prev) => {
-      if (prev === name) return prev;
-      saveModelPreference(APP_KEY, name);
-      return name;
-    });
-  }, []);
-
-  // Both the backend and the checkpoint are load-time settings — a switch
-  // means loading again. Guarded against the mount effect's own values.
-  const switchMountedRef = useRef(false);
-  useEffect(() => {
-    if (!switchMountedRef.current) {
-      switchMountedRef.current = true;
-      return;
-    }
-    setAuto(false);
-    if (model) loadPlanner(inference, model);
-  }, [inference, model, loadPlanner]);
+    restart().catch((err) => setNote(err instanceof Error ? err.message : String(err)));
+    createPlanner()
+      .then((planner) => {
+        plannerRef.current = planner;
+        setModelStatus({ phase: 'ready', model: planner.model, loadMs: planner.loadMs });
+      })
+      .catch((err) => setModelStatus({ phase: 'error', message: err instanceof Error ? err.message : String(err) }));
+  }, [restart]);
 
   /** Play exactly one turn. Returns false when the game is over or the turn
    *  could not run, which is also what stops auto-play. */
@@ -196,14 +121,16 @@ export function useDungeonRun() {
     setBusy(true);
     try {
       const kp = await fetchRpgPrompt(current);
-      setWindow(kp.observation.window);
-      setNearby(kp.observation.nearby);
+      setSeen(seenFrom(kp));
 
       const prompt = buildFullPrompt(kp.input_text, null, [], kp.system);
       const gen = await planner.generate(prompt, {
         maxTokens: 250,
         stop: STOP,
         grammar: kp.grammar,
+        // the tiny planner reads the brief and the constants, not the
+        // grid-and-legend observation a GGUF was prompted with
+        task: { request: kp.observation.brief, context: kp.context },
       });
 
       const run = (text: string) =>
@@ -241,7 +168,8 @@ export function useDungeonRun() {
       const record: TurnRecord = {
         id: nextTurnId.current++,
         turn: before.turn,
-        request: kp.observation.request,
+        request: [kp.observation.brief, ...kp.observation.constants].join('\n'),
+        truncated: gen.truncated ?? false,
         program: gen.text,
         status: resp.status,
         calls: resp.calls ?? [],
@@ -254,7 +182,9 @@ export function useDungeonRun() {
       };
       setTurns((prev) => [...prev, record]);
 
-      if (resp.status === 'static_error') {
+      if (record.truncated) {
+        setNote(`The planner only read the start of this turn's brief (${gen.requestTokens} tokens is past its budget).`);
+      } else if (resp.status === 'static_error') {
         setNote("The program didn't compile — the turn passed anyway.");
       } else if (resp.status === 'aborted') {
         setNote(ABORT_COPY[record.reason ?? ''] ?? 'It declined to act.');
@@ -270,8 +200,7 @@ export function useDungeonRun() {
       // `memory` for the next prompt.
       try {
         const next = await fetchRpgPrompt(after);
-        setWindow(next.observation.window);
-        setNearby(next.observation.nearby);
+        setSeen(seenFrom(next));
         setState(next.state);
         stateRef.current = next.state;
       } catch {
@@ -309,18 +238,12 @@ export function useDungeonRun() {
 
   return {
     state,
-    window: window_,
-    nearby,
+    seen,
     turns,
     modelStatus,
     busy,
     auto,
     note,
-    inference,
-    setInferenceMode,
-    models,
-    model,
-    selectModel,
     step,
     startAuto: () => setAuto(true),
     stopAuto: () => setAuto(false),

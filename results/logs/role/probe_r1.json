@@ -1,0 +1,428 @@
+{
+ "demo": {
+  "tasks": 10,
+  "methods": {
+   "overlap": {
+    "pair": 92.2,
+    "top1": 100.0
+   },
+   "whole": {
+    "pair": 87.8,
+    "top1": 90.0
+   },
+   "chunk-4": {
+    "pair": 85.5,
+    "top1": 90.0
+   },
+   "overlap+whole": {
+    "pair": 90.5,
+    "top1": 100.0
+   },
+   "overlap+chunk-4": {
+    "pair": 87.8,
+    "top1": 100.0
+   }
+  },
+  "pair_by_used_kind": {
+   "overlap": {
+    "id": [
+     100.0,
+     179
+    ],
+    "text": [
+     84.5,
+     103
+    ],
+    "time": [
+     50.0,
+     14
+    ]
+   },
+   "whole": {
+    "id": [
+     99.4,
+     179
+    ],
+    "text": [
+     74.8,
+     103
+    ],
+    "time": [
+     35.7,
+     14
+    ]
+   },
+   "chunk-4": {
+    "id": [
+     98.3,
+     179
+    ],
+    "text": [
+     74.8,
+     103
+    ],
+    "time": [
+     0.0,
+     14
+    ]
+   },
+   "overlap+whole": {
+    "id": [
+     100.0,
+     179
+    ],
+    "text": [
+     81.6,
+     103
+    ],
+    "time": [
+     35.7,
+     14
+    ]
+   },
+   "overlap+chunk-4": {
+    "id": [
+     100.0,
+     179
+    ],
+    "text": [
+     78.6,
+     103
+    ],
+    "time": [
+     0.0,
+     14
+    ]
+   }
+  }
+ },
+ "plain": {
+  "tasks": 444,
+  "methods": {
+   "overlap": {
+    "pair": 64.6,
+    "top1": 79.0
+   },
+   "whole": {
+    "pair": 49.8,
+    "top1": 61.5
+   },
+   "chunk-4": {
+    "pair": 50.9,
+    "top1": 64.4
+   },
+   "overlap+whole": {
+    "pair": 63.7,
+    "top1": 78.8
+   },
+   "overlap+chunk-4": {
+    "pair": 64.2,
+    "top1": 79.5
+   }
+  },
+  "pair_by_used_kind": {
+   "overlap": {
+    "bool": [
+     0.0,
+     312
+    ],
+    "enum": [
+     70.0,
+     318
+    ],
+    "id": [
+     84.2,
+     1072
+    ],
+    "status": [
+     0.0,
+     40
+    ],
+    "text": [
+     61.4,
+     1101
+    ],
+    "time": [
+     88.3,
+     154
+    ]
+   },
+   "whole": {
+    "bool": [
+     3.8,
+     312
+    ],
+    "enum": [
+     32.1,
+     318
+    ],
+    "id": [
+     72.8,
+     1072
+    ],
+    "status": [
+     22.5,
+     40
+    ],
+    "text": [
+     47.8,
+     1101
+    ],
+    "time": [
+     41.6,
+     154
+    ]
+   },
+   "chunk-4": {
+    "bool": [
+     7.4,
+     312
+    ],
+    "enum": [
+     34.3,
+     318
+    ],
+    "id": [
+     68.8,
+     1072
+    ],
+    "status": [
+     10.0,
+     40
+    ],
+    "text": [
+     46.8,
+     1101
+    ],
+    "time": [
+     88.3,
+     154
+    ]
+   },
+   "overlap+whole": {
+    "bool": [
+     0.0,
+     312
+    ],
+    "enum": [
+     60.1,
+     318
+    ],
+    "id": [
+     84.8,
+     1072
+    ],
+    "status": [
+     0.0,
+     40
+    ],
+    "text": [
+     61.0,
+     1101
+    ],
+    "time": [
+     88.3,
+     154
+    ]
+   },
+   "overlap+chunk-4": {
+    "bool": [
+     0.0,
+     312
+    ],
+    "enum": [
+     62.6,
+     318
+    ],
+    "id": [
+     84.4,
+     1072
+    ],
+    "status": [
+     0.0,
+     40
+    ],
+    "text": [
+     61.8,
+     1101
+    ],
+    "time": [
+     90.3,
+     154
+    ]
+   }
+  }
+ },
+ "clut": {
+  "tasks": 444,
+  "methods": {
+   "overlap": {
+    "pair": 83.1,
+    "top1": 83.7
+   },
+   "whole": {
+    "pair": 80.7,
+    "top1": 80.0
+   },
+   "chunk-4": {
+    "pair": 84.2,
+    "top1": 82.0
+   },
+   "overlap+whole": {
+    "pair": 83.6,
+    "top1": 85.1
+   },
+   "overlap+chunk-4": {
+    "pair": 86.1,
+    "top1": 85.6
+   }
+  },
+  "pair_by_used_kind": {
+   "overlap": {
+    "bool": [
+     39.7,
+     563
+    ],
+    "enum": [
+     90.2,
+     825
+    ],
+    "id": [
+     97.3,
+     2065
+    ],
+    "status": [
+     33.3,
+     66
+    ],
+    "text": [
+     78.2,
+     2030
+    ],
+    "time": [
+     89.5,
+     358
+    ]
+   },
+   "whole": {
+    "bool": [
+     42.8,
+     563
+    ],
+    "enum": [
+     86.1,
+     825
+    ],
+    "id": [
+     94.3,
+     2065
+    ],
+    "status": [
+     51.5,
+     66
+    ],
+    "text": [
+     75.5,
+     2030
+    ],
+    "time": [
+     84.6,
+     358
+    ]
+   },
+   "chunk-4": {
+    "bool": [
+     63.9,
+     563
+    ],
+    "enum": [
+     88.0,
+     825
+    ],
+    "id": [
+     94.2,
+     2065
+    ],
+    "status": [
+     48.5,
+     66
+    ],
+    "text": [
+     77.9,
+     2030
+    ],
+    "time": [
+     91.6,
+     358
+    ]
+   },
+   "overlap+whole": {
+    "bool": [
+     41.0,
+     563
+    ],
+    "enum": [
+     91.8,
+     825
+    ],
+    "id": [
+     97.6,
+     2065
+    ],
+    "status": [
+     47.0,
+     66
+    ],
+    "text": [
+     78.1,
+     2030
+    ],
+    "time": [
+     89.7,
+     358
+    ]
+   },
+   "overlap+chunk-4": {
+    "bool": [
+     59.0,
+     563
+    ],
+    "enum": [
+     91.2,
+     825
+    ],
+    "id": [
+     97.4,
+     2065
+    ],
+    "status": [
+     45.5,
+     66
+    ],
+    "text": [
+     80.3,
+     2030
+    ],
+    "time": [
+     92.2,
+     358
+    ]
+   }
+  }
+ },
+ "pairs": {
+  "move it to bob | move it from bob": 0.796,
+  "assign card 6 to Bob | assign Bob to card 6": 0.918,
+  "cards that are done | cards that are not done": 0.814,
+  "orders placed before March | orders placed after March": 0.803,
+  "send priya the list | send the list about priya": 0.851,
+  "the oldest issue | the newest issue": 0.589,
+  "bob | Bob Alvarez": 0.691,
+  "bob | Priya Nandan": 0.209,
+  "the release notes | card 2 - Write release notes for v4.2": 0.714,
+  "the release notes | card 4 - Retire legacy webhook handler": 0.118,
+  "finished | the done status": 0.536,
+  "finished | the todo status": 0.379
+ },
+ "reader": "tern-torch:reader.pt"
+}

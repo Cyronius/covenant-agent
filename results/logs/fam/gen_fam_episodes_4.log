@@ -1,13 +1,20 @@
-warehouse_robot: 20/20 episodes, 239 turns
-elevator: 20/20 episodes, 387 turns
-cards: 20/20 episodes, 588 turns
-app_settings: 20/20 episodes, 672 turns
-app_checkout: 20/20 episodes, 799 turns
-app_ticket: 20/20 episodes, 875 turns
-wrote 875 turns -> data\fam_shards\episodes_4.jsonl
-  warehouse_robot: 15/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+warehouse_robot: 20/20 episodes, 244 turns
+elevator: 20/20 episodes, 378 turns
+cards: 20/20 episodes, 566 turns
+app_settings: 20/20 episodes, 644 turns
+app_checkout: 20/20 episodes, 748 turns
+app_ticket: 20/20 episodes, 817 turns
+wrote 817 turns -> data\fam_shards\episodes_4.jsonl
+  warehouse_robot: 16/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   elevator: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   cards: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_settings: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
-  app_checkout: 18/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  app_checkout: 19/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_ticket: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+signature uniqueness: 63.0% full, 63.0% types-only, over 1226 reference CALLs (7.9 tools/task)
+--allow-signature-unique passed: the ceiling below was not enforced, and every row's provenance is stamped signature_unique_allowed so this file can never be mistaken for one that passed it.
+reaction: of 43 turns that open with a failure (16, 37.2%, caused by an aimed move), 0 (0.0%) are labelled with the move that just failed, 14 (32.6%) act on the same thing another way, and 17 (39.5%) answer it - by name or on the same object
+    aimed:on_board            6 failures, 6/6 answered
+    aimed:same_obj           10 failures, 10/10 answered
+    legal                     3 failures, 0/3 answered
+    random_illegal           24 failures, 1/24 answered

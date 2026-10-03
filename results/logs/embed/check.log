@@ -1,0 +1,33 @@
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 14984.85it/s]
+held-out, head a: cosine to the teacher alone 0.8852, in context 0.782; pair-rank agreement alone 0.8741
+held-out, head b: cosine to the teacher alone 0.8824, in context 0.8934; pair-rank agreement alone 0.8702
+
+constant probe, pair accuracy (cluttered / plain / demo):
+  overlap (no model)                  83.1 /  64.6 /  92.2
+  whole | teacher                     81.4 /  56.5 /  87.5
+  chunk-4 | teacher                   84.8 /  62.8 /  87.8
+  slots | teacher                     81.1 /  61.3 /  83.1
+  slots+chunks | teacher              85.0 /  64.6 /  84.8
+  whole | a alone                     81.6 /  52.2 /  85.1
+  chunk-4 | a alone                   84.3 /  59.6 /  85.5
+  slots | a alone                     78.1 /  57.0 /  78.7
+  slots+chunks | a alone              83.8 /  61.2 /  84.8
+  whole | a context                   81.7 /  52.1 /  85.1
+  chunk-4 | a context                 84.4 /  57.4 /  87.8
+  slots | a context                   81.7 /  54.8 /  82.1
+  slots+chunks | a context            84.5 /  58.5 /  87.8
+  whole | b alone                     81.4 /  52.6 /  85.5
+  chunk-4 | b alone                   83.8 /  58.7 /  86.8
+  slots | b alone                     79.4 /  58.0 /  79.7
+  slots+chunks | b alone              83.4 /  60.5 /  85.1
+  whole | b context                   81.3 /  52.5 /  85.5
+  chunk-4 | b context                 83.5 /  59.0 /  86.5
+  slots | b context                   79.3 /  57.9 /  79.4
+  slots+chunks | b context            83.4 /  60.6 /  84.8
+
+gates:
+  miss  a alone chunk-4 within 2 of the teacher
+  miss  b alone chunk-4 within 2 of the teacher
+  PASS  b context chunk-4 within 1 of a alone
+  PASS  b context slots+chunks within 1 of a alone
+wrote ../../results/logs/embed/check.json

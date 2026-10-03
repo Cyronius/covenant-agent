@@ -1,13 +1,20 @@
-warehouse_robot: 20/20 episodes, 216 turns
-elevator: 20/20 episodes, 371 turns
-cards: 20/20 episodes, 530 turns
-app_settings: 20/20 episodes, 620 turns
-app_checkout: 20/20 episodes, 701 turns
-app_ticket: 20/20 episodes, 773 turns
-wrote 773 turns -> data\fam_shards\episodes_3.jsonl
-  warehouse_robot: 11/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+warehouse_robot: 20/20 episodes, 237 turns
+elevator: 20/20 episodes, 387 turns
+cards: 20/20 episodes, 554 turns
+app_settings: 20/20 episodes, 648 turns
+app_checkout: 20/20 episodes, 724 turns
+app_ticket: 20/20 episodes, 804 turns
+wrote 804 turns -> data\fam_shards\episodes_3.jsonl
+  warehouse_robot: 17/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   elevator: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   cards: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_settings: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_checkout: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_ticket: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+signature uniqueness: 64.0% full, 64.0% types-only, over 1239 reference CALLs (7.9 tools/task)
+--allow-signature-unique passed: the ceiling below was not enforced, and every row's provenance is stamped signature_unique_allowed so this file can never be mistaken for one that passed it.
+reaction: of 57 turns that open with a failure (23, 40.4%, caused by an aimed move), 0 (0.0%) are labelled with the move that just failed, 20 (35.1%) act on the same thing another way, and 23 (40.4%) answer it - by name or on the same object
+    aimed:on_board            9 failures, 9/9 answered
+    aimed:same_obj           14 failures, 14/14 answered
+    legal                     1 failures, 0/1 answered
+    random_illegal           33 failures, 0/33 answered

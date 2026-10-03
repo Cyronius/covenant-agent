@@ -1,0 +1,17 @@
+loading 30000 from brw30_train.jsonl ...
+  30000 examples, 114 worlds; 3580 of them segments of a paused task, 1790 first and the rest continuations that start from bound registers
+  holdout corpus: 13633 examples over 42 unseen worlds, 0% of the training data
+  train 27000  val 1500  test 1500  holdout 13633
+  54 keyword rows
+  layout: 228 joint ids = 54 keywords + 56 tools + 51 fields + 35 consts + 32 registers
+input tokenizer: data_cache_s6g/in_tok.json
+  teacher: embedding 55538 distinct texts with unsloth/bge-small-en-v1.5 ...
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 9290.49it/s]
+  train     27000  longest line 78/112  longest request 128/128  longest canvas 53/64
+  val        1500  longest line 78/112  longest request 108/128  longest canvas 51/64
+  test       1500  longest line 78/112  longest request 112/128  longest canvas 51/64
+  holdout   13633  longest line 83/112  longest request 74/128  longest canvas 51/64
+  longest program after splitting rN.Fk: 53 of 64 slots
+
+wrote data_cache_brw30
+data_cache_brw30/reader.pt: 55538 texts, ternlight-mini, norms 1.000-1.000

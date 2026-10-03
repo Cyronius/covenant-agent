@@ -1,0 +1,128 @@
+{
+ "model": "reader/role/r3/reader.pt",
+ "flips": {
+  "swap": {
+   "new": 0.908,
+   "shipped": 1.0,
+   "teacher": 0.965,
+   "n": 1013
+  },
+  "not": {
+   "new": 0.802,
+   "shipped": 0.959,
+   "teacher": 0.925,
+   "n": 913
+  },
+  "word": {
+   "new": 0.789,
+   "shipped": 0.955,
+   "teacher": 0.948,
+   "n": 886
+  },
+  "all": {
+   "new": 0.836,
+   "shipped": 0.973,
+   "teacher": 0.946,
+   "n": 2812
+  },
+  "our requests": {
+   "new": 0.866,
+   "shipped": 0.988,
+   "teacher": 0.973,
+   "n": 366
+  }
+ },
+ "hand": {
+  "move it to bob | move it from bob": {
+   "new": 0.787,
+   "shipped": 0.959
+  },
+  "assign card 6 to Bob | assign Bob to card 6": {
+   "new": 0.92,
+   "shipped": 1.0
+  },
+  "cards that are done | cards that are not done": {
+   "new": 0.811,
+   "shipped": 0.923
+  },
+  "orders placed before March | orders placed after March": {
+   "new": 0.765,
+   "shipped": 0.955
+  },
+  "send priya the list | send the list about priya": {
+   "new": 0.96,
+   "shipped": 0.954
+  },
+  "the oldest issue | the newest issue": {
+   "new": 0.675,
+   "shipped": 0.596
+  }
+ },
+ "shuffled": {
+  "new": 0.969,
+  "shipped": 1.0
+ },
+ "spearman": {
+  "new": 0.7218,
+  "shipped": 0.6838
+ },
+ "teacher_cos": {
+  "new": 0.7914,
+  "shipped": 0.7607
+ },
+ "calibration": {
+  "bob | Bob Alvarez > Priya Nandan": {
+   "new": [
+    0.499,
+    0.243
+   ],
+   "shipped": [
+    0.523,
+    0.217
+   ]
+  },
+  "the release notes | card 2 - Write release notes for v4.2 > card 4 - Retire legacy webhook handler": {
+   "new": [
+    0.389,
+    0.159
+   ],
+   "shipped": [
+    0.583,
+    0.112
+   ]
+  },
+  "finished | the done status > the todo status": {
+   "new": [
+    0.44,
+    0.397
+   ],
+   "shipped": [
+    0.457,
+    0.37
+   ]
+  }
+ },
+ "chunk_probe": {
+  "clut": {
+   "pair": 86.7,
+   "top1": 87.2
+  },
+  "plain": {
+   "pair": 66.4,
+   "top1": 78.6
+  },
+  "demo": {
+   "pair": 81.8,
+   "top1": 70.0
+  }
+ },
+ "gates": {
+  "roles: held flips mean <= 0.85": true,
+  "roles: every hand pair lower than shipped": false,
+  "order: shuffled mean < 0.95": false,
+  "meaning: spearman within 0.02 of shipped": true,
+  "meaning: calibration pairs keep their order": true,
+  "meaning: probe clut >= 86": true,
+  "meaning: probe plain >= 65.5": true
+ }
+}

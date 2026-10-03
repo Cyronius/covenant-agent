@@ -1,7 +1,11 @@
 registered 143 generated domains
-200/1000 (resamples: 7, noops dropped: 27)
-400/1000 (resamples: 13, noops dropped: 45)
-600/1000 (resamples: 15, noops dropped: 56)
-800/1000 (resamples: 19, noops dropped: 90)
-1000/1000 (resamples: 20, noops dropped: 118)
-wrote 1000 tasks -> data\s5_shards\holdout_2.jsonl (resamples: 20, noops dropped: 118)
+200/1000 (resamples: 5, noops dropped: 30)
+400/1000 (resamples: 8, noops dropped: 48)
+600/1000 (resamples: 11, noops dropped: 74)
+800/1000 (resamples: 15, noops dropped: 90)
+1000/1000 (resamples: 19, noops dropped: 113)
+wrote 1000 tasks -> data\s5_shards\holdout_2.jsonl (resamples: 19, noops dropped: 113)
+signature uniqueness: 100.0% full, 94.0% types-only, over 1866 reference CALLs (21.9 tools/task)
+--allow-signature-unique passed: the ceiling below was not enforced, and every row's provenance is stamped signature_unique_allowed so this file can never be mistaken for one that passed it.
+filter grounding: 83/521 of rows with a FILTER (15.9%) filter on something the request never names, over 1000 rows read
+segments: 90/1000 rows (9.0%) pause and decide in a second segment - L5 15/48, L7 17/48, L10 47/47, L11 11/47

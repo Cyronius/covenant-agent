@@ -1,0 +1,5 @@
+
+500 tasks: goal 144/500 (28.8%), compile 415/500, parse 478/500
+of the 45 that pause: 29/45 got a second segment at all, 12/45 reached the goal
+
+wrote 500 rows -> ../../results/logs/clt/s500_clt_fdc25_RD.jsonl

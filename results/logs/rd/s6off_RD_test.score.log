@@ -1,0 +1,44 @@
+
+C:/code/covenant-agent/models/tiny/runs/pod_rd/out/s6off_RD_test.jsonl  (1000 tasks)
+  parse    100.0%
+  compile  100.0%
+  goal      96.3%
+  exact     89.0%
+  of the 1000 scored, 194 are segments of a paused task
+  passes   mean 23.2
+
+  slot accuracy against the reference canvas (same slot):
+    kw      96.7%  (n=12560)
+    tool    98.0%  (n=1685)
+    field   92.6%  (n=1288)
+    const   94.7%  (n=1753)
+    reg     98.1%  (n=4688)
+
+  CALL lines where both reference and generation CALL: 1667
+    same tool     99.2%   chance   4.6%
+      vs shape    99.2%   chance 100.0%  (uniform inside the signature group)
+    same effect   99.5%   chance  31.1%
+
+  by level:
+      0  n=  40  compile  100%  goal  100%
+      1  n=  38  compile  100%  goal  100%
+      2  n=  30  compile  100%  goal  100%
+      3  n=  42  compile  100%  goal   95%
+      4  n=  37  compile  100%  goal  100%
+      5  n=  61  compile  100%  goal   72%
+      6  n=  42  compile  100%  goal   90%
+      7  n=  59  compile  100%  goal   97%
+      8  n=  34  compile  100%  goal  100%
+      9  n=  40  compile  100%  goal   98%
+     10  n= 102  compile  100%  goal   95%
+     11  n=  54  compile  100%  goal   91%
+     12  n=  50  compile  100%  goal  100%
+     13  n=  56  compile  100%  goal   98%
+     14  n=  45  compile  100%  goal  100%
+     15  n=  62  compile  100%  goal  100%
+     16  n=  54  compile  100%  goal  100%
+     17  n=  49  compile  100%  goal  100%
+     18  n=  57  compile  100%  goal  100%
+     19  n=  48  compile  100%  goal  100%
+
+wrote C:\code\covenant-agent\models\tiny\runs\pod_rd\out\s6off_RD_test.score.json

@@ -1,0 +1,117 @@
+{
+ "move it to bob | move it from bob": {
+  "teacher": 0.9803479313850403,
+  "ternlight": 0.9589792490005493
+ },
+ "assign card 6 to Bob | assign Bob to card 6": {
+  "teacher": 0.9868322610855103,
+  "ternlight": 0.9999999403953552
+ },
+ "cards that are done | cards that are not done": {
+  "teacher": 0.9208570718765259,
+  "ternlight": 0.9231454133987427
+ },
+ "orders placed before March | orders placed after March": {
+  "teacher": 0.98108971118927,
+  "ternlight": 0.9547320604324341
+ },
+ "send priya the list | send the list about priya": {
+  "teacher": 0.9294673204421997,
+  "ternlight": 0.9542220234870911
+ },
+ "the oldest issue | the newest issue": {
+  "teacher": 0.6652814149856567,
+  "ternlight": 0.5955645442008972
+ },
+ "bob | Bob Alvarez": {
+  "teacher": 0.5667650103569031,
+  "ternlight": 0.5229474306106567
+ },
+ "bob | Priya Nandan": {
+  "teacher": 0.1857021003961563,
+  "ternlight": 0.21746937930583954
+ },
+ "the release notes | card 2 - Write release notes for v4.2": {
+  "teacher": 0.6521539688110352,
+  "ternlight": 0.5833446979522705
+ },
+ "the release notes | card 4 - Retire legacy webhook handler": {
+  "teacher": 0.08260103315114975,
+  "ternlight": 0.11168771982192993
+ },
+ "finished | the done status": {
+  "teacher": 0.5889236927032471,
+  "ternlight": 0.4573708474636078
+ },
+ "finished | the todo status": {
+  "teacher": 0.31026649475097656,
+  "ternlight": 0.3699299991130829
+ },
+ "summary": {
+  "swap": {
+   "teacher": {
+    "mean": 0.966,
+    "p90": 0.992,
+    "below_0.85": 0.006
+   },
+   "ternlight": {
+    "mean": 1.0,
+    "p90": 1.0,
+    "below_0.85": 0.0
+   },
+   "n": 173
+  },
+  "not": {
+   "teacher": {
+    "mean": 0.93,
+    "p90": 0.995,
+    "below_0.85": 0.156
+   },
+   "ternlight": {
+    "mean": 0.957,
+    "p90": 0.996,
+    "below_0.85": 0.056
+   },
+   "n": 160
+  },
+  "word": {
+   "teacher": {
+    "mean": 0.95,
+    "p90": 0.997,
+    "below_0.85": 0.072
+   },
+   "ternlight": {
+    "mean": 0.956,
+    "p90": 0.997,
+    "below_0.85": 0.054
+   },
+   "n": 167
+  },
+  "all": {
+   "teacher": {
+    "mean": 0.949,
+    "p90": 0.995,
+    "below_0.85": 0.076
+   },
+   "ternlight": {
+    "mean": 0.972,
+    "p90": 1.0,
+    "below_0.85": 0.036
+   },
+   "n": 500
+  },
+  "shuffled": {
+   "teacher": {
+    "mean": 0.894,
+    "p90": 0.964,
+    "below_0.85": 0.218
+   },
+   "ternlight": {
+    "mean": 1.0,
+    "p90": 1.0,
+    "below_0.85": 0.0
+   },
+   "n": 496
+  }
+ }
+}

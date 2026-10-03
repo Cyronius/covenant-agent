@@ -28,10 +28,18 @@ DECISION_WORLDS = {
     "app_checkout": ("runtime.worlds.pages", "harness.oracles.pages"),
     "app_ticket": ("runtime.worlds.pages", "harness.oracles.pages"),
     "app_coursebuilder": ("runtime.worlds.pages", "harness.oracles.pages"),
+    # crafting (.claude/plans/borrowed-worlds.md 2): one module, the boatyard
+    # tree held out as its exam
+    "workshop": ("runtime.worlds.workshop", "harness.oracles.workshop"),
+    "boatyard": ("runtime.worlds.workshop", "harness.oracles.workshop"),
+    # BabyAI-style rooms (borrowed-worlds.md 3): " after you" missions held out
+    "rooms": ("runtime.worlds.rooms", "harness.oracles.rooms"),
+    "rooms_after": ("runtime.worlds.rooms", "harness.oracles.rooms"),
 }
 
 # never in training data (mirrors data/holdout/reserved.json)
-HELD_OUT = {"rpg", "house", "app_coursebuilder"}
+HELD_OUT = {"rpg", "house", "app_coursebuilder", "boatyard",
+            "rooms_after"}
 
 TRAINABLE = [w for w in DECISION_WORLDS if w not in HELD_OUT]
 

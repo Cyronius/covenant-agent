@@ -186,6 +186,63 @@ def test_decoy_called_records_a_grounding_miss_outcome_scoring_cannot_see(themed
     assert run_task(plain, reference_planner(plain))["decoy_called"] is None
 
 
+def _slot_groups():
+    """flip / other: every theme's tool names and their authored decoys,
+    grouped by whether the slot is a flip slot."""
+    from data.gen import domains
+    flip, other = set(), set()
+    for theme in domains.THEMES.values():
+        # other tests register partial themes into the same registry
+        for slot, spec in (theme.get("tools") or {}).items():
+            group = {spec["name"]} | {d["name"] for d in spec.get("decoys") or []}
+            (flip if slot in domains.FLIP_VERBS else other).update(group)
+    return flip, other
+
+
+def _decoyed_rows(decoy_slots, twin_roles=True, n=40):
+    from data.gen.__main__ import gen_one
+    from data.gen import programs
+    rows = []
+    for seed in range(5000, 5000 + 4 * n):
+        try:
+            rows.append(gen_one(5, seed, False, "template", decoys=(1, 2),
+                                twin_roles=twin_roles, decoy_slots=decoy_slots))
+        except (programs.SampleError, ReferenceError):
+            continue
+        if len(rows) >= n:
+            break
+    return rows
+
+
+def test_flip_decoy_slots_put_decoys_only_where_the_request_decides(themed):
+    """--decoy-slots flip (.claude/plans/npu-planner.md phase 2): decoys sit
+    only beside the four flip-slot tools, with twin roles swapping which
+    sibling works, and every called tool that has one is one the request
+    tells apart from its decoys."""
+    import sys
+    sys.path.insert(0, str(ROOT / "results" / "logs"))
+    import decoy_decidable
+    flip, _ = _slot_groups()
+    rows = _decoyed_rows("flip")
+    decided = 0
+    for task in rows:
+        decoys = set(task["provenance"].get("decoys") or [])
+        assert decoys <= flip, decoys - flip
+        for _, slot, ok in decoy_decidable.calls(task):
+            assert ok, (task["id"], slot, task["request"])
+            decided += 1
+    assert decided >= 5, "too few decoyed calls to mean anything"
+
+
+def test_reads_decoy_slots_keep_decoys_off_the_flip_slots(themed):
+    flip, other = _slot_groups()
+    rows = _decoyed_rows("reads", twin_roles=False)
+    assert any(r["provenance"].get("decoys") for r in rows)
+    for task in rows:
+        decoys = set(task["provenance"].get("decoys") or [])
+        assert decoys <= other and not decoys & flip, decoys & flip
+
+
 def test_the_adversarial_names_turn_up_at_the_rate_asked_for():
     world = get_world("kanban")
     _, added = decoy_world(world, random.Random(7), per_tool=(4, 4),
@@ -431,3 +488,64 @@ def test_reserved_worlds_stay_out_of_every_generator():
     assert reserved <= set(gen_reserved["worlds"])
     assert reserved <= set(askact.RESERVED["worlds"])
     assert reserved <= set(recovery.RESERVED["worlds"])
+
+
+# ------------------------------------------------ demo-style clutter
+
+
+def _row_pairs(n=30):
+    """The same seeds with and without --clutter, over every level."""
+    from data.gen.__main__ import gen_one
+    from data.gen import programs
+    from harness.taskbuild import ReferenceError as RefErr
+    pairs = []
+    for seed in range(7000, 7000 + 6 * n):
+        level = seed % 20
+        try:
+            plain = gen_one(level, seed, False, "template", decoys=None,
+                            symbols="typed", enums=True, kinds=True)
+            clut = gen_one(level, seed, False, "template", decoys=None,
+                           symbols="typed", enums=True, kinds=True, clutter=True)
+        except (programs.SampleError, RefErr):
+            continue
+        pairs.append((plain, clut))
+        if len(pairs) >= n:
+            break
+    return pairs
+
+
+def test_clutter_leaves_the_request_and_what_the_program_does_alone(themed):
+    """data/gen/clutter.py shuffles the constants and rewrites the program's
+    $k to follow them; a wrong rewrite still builds a runnable row, just one
+    that does something else. Same seed: same request, same calls with the
+    same arguments, same end state, and the reference still runs green."""
+    pairs = _row_pairs()
+    assert len(pairs) >= 20
+    grew = 0
+    for plain, clut in pairs:
+        assert clut["request"] == plain["request"]
+        strip = lambda log: [(c["name"], c["args"], c["ok"]) for c in log]
+        assert strip(clut["reference"]["call_log"]) == strip(plain["reference"]["call_log"]), clut["id"]
+        assert clut["expected_state"] == plain["expected_state"], clut["id"]
+        assert run_task(clut, reference_planner(clut))["goal_success"], clut["id"]
+        grew += len(clut["context"]["constants"]) > len(plain["context"]["constants"])
+    assert grew >= len(pairs) // 2
+
+
+def test_clutter_words_used_and_unused_enum_values_alike(themed):
+    """Without clutter the enum value a program uses is worded "the done
+    status" and the others `card.status "todo"`, so the wording alone says
+    which to use. With it, every enum constant of a row reads the same once
+    its value is blanked out."""
+    checked = 0
+    for plain, clut in _row_pairs():
+        by_kind = {}
+        for c in clut["context"]["constants"]:
+            if c.get("kind", "").startswith("enum:"):
+                v = str(c["value"])
+                shape = c["desc"].replace(v, "V").replace(v.replace("_", " "), "V")
+                by_kind.setdefault(c["kind"], set()).add(shape)
+        for kind, shapes in by_kind.items():
+            assert len(shapes) == 1, (clut["id"], kind, shapes)
+            checked += 1
+    assert checked >= 10

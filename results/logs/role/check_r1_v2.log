@@ -1,0 +1,31 @@
+flip cosine (mean)                new  shipped  teacher
+  swap           n=  803    0.878    1.000    0.964
+  ant            n= 1187    0.862    0.846    0.865
+  word           n=  750    0.795    0.952    0.946
+  not            n=  725    0.794    0.959    0.925
+  shuf           n=  743    0.919    1.000    0.897
+  all            n= 3465    0.837    0.928    0.918
+  our requests   n=  429    0.870    0.964    0.955
+hand role pairs                new  shipped
+  'move it to bob'               0.796  0.959
+  'assign card 6 to Bob'         0.918  1.000
+  'cards that are done'          0.814  0.923
+  'orders placed before March'   0.803  0.955
+  'send priya the list'          0.851  0.954
+  'the oldest issue'             0.589  0.596
+shuffled (n=1000): new 0.925  shipped 1.000
+spearman vs teacher (held-out general, n=5120): new 0.7678  shipped 0.6838; cosine to teacher new 0.8130 shipped 0.7582
+  calibration 'bob': 'Bob Alvarez' 0.691 > 'Priya Nandan' 0.209   (shipped 0.523 > 0.217)
+  calibration 'the release notes': 'card 2 - Write release n' 0.714 > 'card 4 - Retire legacy w' 0.118   (shipped 0.583 > 0.112)
+  calibration 'finished': 'the done status' 0.536 > 'the todo status' 0.379   (shipped 0.457 > 0.370)
+chunk probe (chunk-4 pair): clut 84.2  plain 50.9  demo 85.5   (shipped: clut 87.1, plain 66.6, demo 84.8)
+
+gates:
+  PASS  roles: held flips mean <= 0.85
+  PASS  roles: every hand pair lower than shipped
+  PASS  order: shuffled mean < 0.95
+  PASS  meaning: spearman within 0.02 of shipped
+  PASS  meaning: calibration pairs keep their order
+  FAIL  meaning: probe clut >= 86
+  FAIL  meaning: probe plain >= 65.5
+wrote ../../results/logs/role/check_r1_v2.json

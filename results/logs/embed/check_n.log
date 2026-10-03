@@ -1,0 +1,43 @@
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 5693.00it/s]
+held-out, head b: cosine to the teacher alone 0.8824, in context 0.8934; pair-rank agreement alone 0.8702; generated names alone 0.742, in context 0.7866
+held-out, head n: cosine to the teacher alone 0.8799, in context 0.8879; pair-rank agreement alone 0.8636; generated names alone 0.8339, in context 0.8458
+
+constant probe, pair accuracy (cluttered / plain / demo):
+  overlap (no model)                  83.1 /  64.6 /  92.2
+  whole | teacher                     81.4 /  56.5 /  87.5
+  chunk-4 | teacher                   84.8 /  62.8 /  87.8
+  slots | teacher                     81.1 /  61.3 /  83.1
+  slots+chunks | teacher              85.0 /  64.6 /  84.8
+  whole | b alone                     81.4 /  52.6 /  85.5
+  chunk-4 | b alone                   83.8 /  58.7 /  86.8
+  slots | b alone                     79.4 /  58.0 /  79.7
+  slots+chunks | b alone              83.4 /  60.5 /  85.1
+  whole | b context                   81.3 /  52.5 /  85.5
+  chunk-4 | b context                 83.5 /  59.0 /  86.5
+  slots | b context                   79.4 /  57.9 /  79.4
+  slots+chunks | b context            83.4 /  60.7 /  84.8
+  whole | n alone                     82.4 /  53.1 /  84.8
+  chunk-4 | n alone                   84.6 /  60.4 /  85.8
+  slots | n alone                     80.9 /  58.5 /  75.3
+  slots+chunks | n alone              84.6 /  62.2 /  84.8
+  whole | n context                   82.4 /  53.2 /  84.8
+  chunk-4 | n context                 84.2 /  60.2 /  85.1
+  slots | n context                   81.0 /  58.1 /  78.0
+  slots+chunks | n context            84.4 /  61.9 /  84.5
+
+chunk-4 by the used constant's kind, plain / cluttered (pairs on plain):
+                                       bool            enum         id-name          id-ref        id-title          status            text            time
+  overlap                      0.0 /   39.7   70.0 /   90.2  100.0 /   99.9   63.1 /   94.0  100.0 /   99.7    0.0 /   33.3   61.4 /   78.2   88.3 /   89.5
+  teacher                      1.9 /   43.9   45.6 /   90.3   99.2 /  100.0   76.2 /   96.6   98.4 /   99.7    5.0 /   37.9   57.7 /   79.3   90.9 /   97.2
+  b alone                      2.6 /   50.8   45.6 /   89.3   96.3 /  100.0   51.3 /   89.8  100.0 /   99.9    5.0 /   43.9   56.7 /   78.3   91.6 /   92.5
+  b context                    3.2 /   50.6   45.9 /   90.1   97.2 /  100.0   52.2 /   88.8  100.0 /  100.0   10.0 /   40.9   56.4 /   77.7   92.2 /   92.5
+  n alone                      1.9 /   49.2   43.1 /   90.1   99.2 /  100.0   61.4 /   93.2   99.7 /  100.0   12.5 /   37.9   57.1 /   79.0   92.2 /   95.5
+  n context                    2.6 /   47.6   41.2 /   90.5   99.2 /  100.0   60.7 /   92.4   99.7 /  100.0   10.0 /   39.4   57.3 /   78.4   92.2 /   95.5
+  pairs (plain): bool 312, enum 318, id-name 246, id-ref 458, id-title 368, status 40, text 1101, time 154
+
+gates:
+  miss  b alone chunk-4 within 2 of the teacher
+  miss  b context chunk-4 within 2 of the teacher
+  miss  n alone chunk-4 within 2 of the teacher
+  miss  n context chunk-4 within 2 of the teacher
+wrote ../../results/logs/embed/check_n.json

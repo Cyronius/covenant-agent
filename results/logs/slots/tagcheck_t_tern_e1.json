@@ -1,0 +1,112 @@
+{
+ "tagger": "reader/slots/t_tern_e1/tagger.pt",
+ "body": "tern-electra:e1",
+ "mix": [
+  0.074,
+  0.071,
+  0.057,
+  0.059,
+  0.061,
+  0.065,
+  0.082,
+  0.093,
+  0.089,
+  0.085,
+  0.085,
+  0.097,
+  0.083
+ ],
+ "held": {
+  "present_acc": 96.3,
+  "exact": 88.3,
+  "overlap": 0.927,
+  "n_both": 6828
+ },
+ "swap_destination": {
+  "n": 276,
+  "before": 54.3,
+  "after": 50.0,
+  "both": 39.9,
+  "points_both": 45.3
+ },
+ "swap_source": {
+  "n": 155,
+  "before": 61.3,
+  "after": 59.4,
+  "both": 49.7,
+  "points_both": 56.1
+ },
+ "to_from": {
+  "n": 548,
+  "dest_before": 47.8,
+  "source_after_dest_gone": 50.2,
+  "both": 40.0,
+  "points_both": 43.2
+ },
+ "hand": {
+  "move it to bob": {
+   "action": "move",
+   "object": "it",
+   "destination": "bob"
+  },
+  "move it from bob": {
+   "action": "move",
+   "object": "it",
+   "source": "bob"
+  },
+  "assign card 6 to Bob": {
+   "action": "assign",
+   "object": "card 6",
+   "destination": "Bob"
+  },
+  "assign Bob to card 6": {
+   "action": "assign",
+   "object": "Bob",
+   "destination": "card"
+  },
+  "copy the report from the archive to the inbox": {
+   "action": "copy",
+   "object": "the report",
+   "destination": "the inbox",
+   "source": "the archive"
+  },
+  "copy the report from the inbox to the archive": {
+   "action": "copy",
+   "object": "the report",
+   "destination": "the archive",
+   "source": "the inbox"
+  },
+  "send priya the list": {
+   "action": "send",
+   "object": "the list"
+  },
+  "delete the cards that are not done": {
+   "action": "delete",
+   "object": "the cards",
+   "condition": "that are not done"
+  },
+  "list orders placed before March": {
+   "time": "before March"
+  }
+ },
+ "requests": {
+  "present_acc": 92.6,
+  "exact": 68.7,
+  "overlap": 0.791,
+  "n_both": 805
+ },
+ "probe": {
+  "demo": {
+   "slots": 79.1,
+   "slots+chunks": 83.8
+  },
+  "plain": {
+   "slots": 63.1,
+   "slots+chunks": 67.7
+  },
+  "clut": {
+   "slots": 84.1,
+   "slots+chunks": 87.6
+  }
+ }
+}

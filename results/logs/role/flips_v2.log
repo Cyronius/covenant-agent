@@ -1,0 +1,28 @@
+408077 flips in 194s -> C:\code\covenant-agent\models\tiny\reader\role\flips.jsonl
+  train: 403869  ant 116948  not 69158  shuf 69684  swap 77346  word 70733
+  held: 4208  ant 1187  not 725  shuf 743  swap 803  word 750
+  kinds: ant:a 89698  shuf: 69684  not:add 61739  swap:for 36645  word:to 27590  ant:v 27250  swap:verb 22944  word:with 17815  word:from 9633  not:drop 7419  swap:to 6253  word:more 5900  swap:with 4423  swap:from 2839  swap:by 2379  word:into 1890  word:last 1864  word:after 1751  word:before 1130  word:first 1118  word:without 961  swap:into 487  swap:after 373  word:less 334  swap:than 298  word:above 274  swap:from-to 271  word:out of 271  swap:before 263  word:below 202  swap:without 135  swap:onto 36
+    [swap:by w] 'in England by the Stuarts' -> 'in the Stuarts by England'
+    [ant:a w] 'inner lists' -> 'outer lists'
+    [word:with w] 'with additional details.' -> 'without additional details.'
+    [word:to] 'The Listing API to use for discovering objects. When not specified, Transfer Service will attempt to determine the right API to use.' -> 'The Listing API from use for discovering objects. When not specified, Transfer Service will attempt to determine the right API to use.'
+    [ant:a] 'eaten fresh as shell beans or dried' -> 'eaten stale as shell beans or dried'
+    [swap:for w] 'The user-friendly name for this table.' -> 'this table for The user-friendly name.'
+    [word:to] 'The list of MessageHeaders for the email. You can have up to 15 Headers.' -> 'The list of MessageHeaders for the email. You can have up from 15 Headers.'
+    [ant:a] 'Identifies what kind of resource this is. Value: the fixed string "walletobjects#loyaltyObject" .' -> 'Identifies what kind of resource this is. Value: the unfixed string "walletobjects#loyaltyObject" .'
+    [word:to w] 'of information equal to 1024' -> 'of information equal from 1024'
+    [swap:for] 'An array of ConfigurationItems Objects. Contatins the configuration history for one or more resources.' -> 'An array of ConfigurationItems Objects. one for Contatins the configuration history or more resources.'
+    [ant:a] 'a grey volcanic rock containing plagioclase and quartz and other crystalline minerals' -> 'a grey volcanic rock containing plagioclase and quartz and same crystalline minerals'
+    [ant:a w] 'a sneer; in an uncomplimentary sneering manner' -> 'a sneer; in an complimentary sneering manner'
+    [ant:a] 'very attractive; capturing interest' -> 'very unattractive; capturing interest'
+    [swap:with w] 'of TargeGroupPairInfo objects with a maximum size of' -> 'of a maximum size with TargeGroupPairInfo objects of'
+    [swap:for] 'Monetization configuration for the developer.' -> 'Monetization the developer for configuration.'
+    [swap:for] 'The resource type for the CloudFormation blue/green deployment.' -> 'the CloudFormation blue/green deployment for The resource type.'
+    [swap:to w] 'the DisableRollback parameter to the ExecuteChangeSet API operation must not' -> 'the ExecuteChangeSet API operation to the DisableRollback parameter must not'
+    [swap:for w] 'A list of translation names for the administrative address component, including name variants and' -> 'A list of the administrative address component for translation names, including name variants and'
+    [not:add] 'What is idempotency?' -> 'What is not idempotency?'
+    [ant:v] 'If the job runs on Fargate resources, then you must not specify nodeProperties ; use containerProperties instead.' -> 'If the job idles on Fargate resources, then you must not specify nodeProperties ; use containerProperties instead.'
+    [swap:for w] 'Search query for recipes (e.g.,' -> 'Search recipes for query (e.g.,'
+    [swap:verb] 'the vast accumulation of knowledge...which we call civilization' -> 'the vast accumulation of civilization call knowledge...which we'
+    [swap:for w] 'An expansion file. The resource for ExpansionFilesService.' -> 'An expansion file. ExpansionFilesService for The resource.'
+    [word:with] '(fencing) an attacking thrust made with one foot forward and the back leg straight and with the sword arm outstretched forward' -> '(fencing) an attacking thrust made with one foot forward and the back leg straight and without the sword arm outstretched forward'

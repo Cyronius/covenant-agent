@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { DungeonView } from './components/DungeonView';
-import { InferenceControls } from './components/InferenceControls';
 import { TurnLog } from './components/TurnLog';
 import { useDungeonRun } from './hooks/useDungeonRun';
 import { carried, player } from './lib/rpgApi';
@@ -22,18 +21,12 @@ function Hearts({ hp, max }: { hp: number; max: number }) {
 export default function App() {
   const {
     state,
-    window: view,
-    nearby,
+    seen,
     turns,
     modelStatus,
     busy,
     auto,
     note,
-    inference,
-    setInferenceMode,
-    models,
-    model,
-    selectModel,
     step,
     startAuto,
     stopAuto,
@@ -51,22 +44,14 @@ export default function App() {
           <Link className="all-demos-link" to="/">
             ← All demos
           </Link>
-          <InferenceControls
-            mode={inference}
-            model={model}
-            models={models}
-            disabled={busy || auto || modelStatus.phase === 'loading'}
-            onMode={setInferenceMode}
-            onModel={selectModel}
-          />
           {ready && (
             <span className="model-status ready">
               <span className="dot" />
-              {modelStatus.backend} · {Math.round(modelStatus.loadMs)}ms load
+              {modelStatus.model} · {Math.round(modelStatus.loadMs)}ms load
             </span>
           )}
           {modelStatus.phase === 'loading' && (
-            <span className="model-status loading">loading {modelStatus.stage}…</span>
+            <span className="model-status loading">loading the planner…</span>
           )}
           {modelStatus.phase === 'error' && (
             <span className="model-status error">{modelStatus.message}</span>
@@ -111,20 +96,17 @@ export default function App() {
               </div>
               {note && <p className="note">{note}</p>}
 
-              <div className="seen">
-                <h2>What the model sees this turn</h2>
-                <pre className="window">{view.join('\n')}</pre>
-                <p className="legend">
-                  # wall · . floor · E stairs · D locked door · g goblin · k key · p potion
-                </p>
-                <p className="nearby">
-                  {nearby.length
-                    ? nearby
-                        .map((n) => `${n.kind ?? 'door'} ${n.here ? 'here' : `${Math.abs(n.dx)}${n.dx > 0 ? 'E' : n.dx < 0 ? 'W' : ''}${Math.abs(n.dy)}${n.dy > 0 ? 'S' : n.dy < 0 ? 'N' : ''}`}`)
-                        .join(' · ')
-                    : 'nothing in view'}
-                </p>
-              </div>
+              {seen && (
+                <div className="seen">
+                  <h2>What the planner reads this turn</h2>
+                  <p className="brief">{seen.brief}</p>
+                  <ul className="constants">
+                    {seen.constants.map((c, i) => (
+                      <li key={i}>{c}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </>
           ) : (
             <p className="empty">Dealing a dungeon…</p>

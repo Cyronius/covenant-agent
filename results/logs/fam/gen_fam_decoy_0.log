@@ -1,9 +1,12 @@
 registered 143 generated domains
-200/1500 (resamples: 3, noops dropped: 25)
-400/1500 (resamples: 6, noops dropped: 60)
-600/1500 (resamples: 10, noops dropped: 92)
-800/1500 (resamples: 13, noops dropped: 106)
-1000/1500 (resamples: 18, noops dropped: 134)
-1200/1500 (resamples: 22, noops dropped: 149)
-1400/1500 (resamples: 26, noops dropped: 171)
-wrote 1500 tasks -> data\fam_shards\decoy_0.jsonl (resamples: 30, noops dropped: 183)
+200/1500 (resamples: 4, noops dropped: 27)
+400/1500 (resamples: 8, noops dropped: 52)
+600/1500 (resamples: 11, noops dropped: 73)
+800/1500 (resamples: 14, noops dropped: 93)
+1000/1500 (resamples: 19, noops dropped: 122)
+1200/1500 (resamples: 21, noops dropped: 145)
+1400/1500 (resamples: 21, noops dropped: 173)
+wrote 1500 tasks -> data\fam_shards\decoy_0.jsonl (resamples: 24, noops dropped: 191)
+signature uniqueness: 1.0% full, 0.8% types-only, over 2749 reference CALLs (64.1 tools/task)
+filter grounding: 131/757 of rows with a FILTER (17.3%) filter on something the request never names, over 1500 rows read
+segments: 159/1500 rows (10.6%) pause and decide in a second segment - L5 27/75, L7 27/75, L10 75/75, L11 30/75

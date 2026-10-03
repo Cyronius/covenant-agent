@@ -1,14 +1,11 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-// Proxies /validate, /kanban_prompt, /rpg_new, /rpg_prompt, /db_prompt, /apps,
-// /plan, /models/*, /agent_core.gbnf to the running `python server/dev_server.py`
+// Proxies /validate, /kanban_prompt, /rpg_new, /rpg_prompt, /db_prompt,
+// /db_new, /apps and /plan to the running `python server/dev_server.py`
 // (default port 8080) so this app is effectively same-origin with the real
-// model/grammar/execution backend — see .claude/plans/example-host-and-new-worlds.md
-// and server/README.md. Also sets the same Cross-Origin-Opener-Policy/
-// Cross-Origin-Embedder-Policy headers dev_server.py sends, required for
-// wllama's multi-threaded WASM path (SharedArrayBuffer) — see
-// src/lib/llm.md's "Multi-threading" note.
+// planner/execution backend — see .claude/plans/example-host-and-new-worlds.md
+// and server/README.md.
 // COVENANT_BACKEND lets a second dev server (another port, another
 // checkpoint) be driven without editing this file.
 const BACKEND = process.env.COVENANT_BACKEND || 'http://localhost:8080';
@@ -21,26 +18,15 @@ export default defineConfig({
     // file, so Vite's default fs allow-list would 403 the /@fs/ request for
     // every shared module.
     fs: { allow: [import.meta.dirname + '/..'] },
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-    },
     proxy: {
       '/validate': BACKEND,
       '/kanban_prompt': BACKEND,
       '/rpg_new': BACKEND,
       '/rpg_prompt': BACKEND,
       '/db_prompt': BACKEND,
+      '/db_new': BACKEND,
       '/apps': BACKEND,
       '/plan': BACKEND,
-      '/models': BACKEND,
-      '/agent_core.gbnf': BACKEND,
-    },
-  },
-  preview: {
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'require-corp',
     },
   },
 });

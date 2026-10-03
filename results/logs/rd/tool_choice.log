@@ -1,0 +1,4 @@
+A0+reader, options-off with a lookalike  87.2%  shape-unique  96.7%   wrong at lookalike pairs: its lookalike 94%, another tool, same entity 2%, another tool, other entity 2%, a generic tool (no entity) 1%
+A0+reader, 25% decoys+twin with a lookalike  66.6%  shape-unique  94.2%   wrong at lookalike pairs: its lookalike 67%, a generic tool (no entity) 18%, another tool, other entity 9%, another tool, same entity 6%
+A0+reader, 25% flip decoys with a lookalike  87.0%  shape-unique  96.9%   wrong at lookalike pairs: its lookalike 98%, another tool, same entity 2%
+A0, 25% flip decoys    with a lookalike  83.7%  shape-unique  96.1%   wrong at lookalike pairs: its lookalike 92%, another tool, same entity 5%, another tool, other entity 3%

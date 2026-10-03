@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "C:\code\covenant-agent\models\tiny\evaluate.py", line 519, in <module>
+    main()
+  File "C:\code\covenant-agent\models\tiny\evaluate.py", line 515, in main
+    score(args)
+  File "C:\code\covenant-agent\models\tiny\evaluate.py", line 339, in score
+    base_id, _, seg_part = g["task_id"].partition("#s")
+                           ~^^^^^^^^^^^
+KeyError: 'task_id'

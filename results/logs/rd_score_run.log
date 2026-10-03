@@ -1,0 +1,25 @@
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/dtw25_RD_decoy.score.log:  goal      51.9%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/dtw25_RD_flip.score.log:  goal      43.0%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/dtw25_RD_plain.score.log:  goal      63.3%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/dtw25_RD_plain_bk3.score.log:  goal      73.8%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/dtw25_RD_test.score.log:  goal      94.1%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/fdc25_A0_decoy.score.log:  goal      40.7%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/fdc25_A0_flip.score.log:  goal      28.6%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/fdc25_A0_plain.score.log:  goal      75.8%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/fdc25_A0_plain_bk3.score.log:  goal      82.4%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/fdc25_A0_test.score.log:  goal      92.1%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/fdc25_RD_decoy.score.log:  goal      51.4%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/fdc25_RD_flip.score.log:  goal      45.8%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/fdc25_RD_plain.score.log:  goal      79.5%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/fdc25_RD_plain_bk3.score.log:  goal      84.0%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/fdc25_RD_test.score.log:  goal      94.5%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/s6off_RD_decoy.score.log:  goal      48.8%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/s6off_RD_flip.score.log:  goal      43.4%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/s6off_RD_plain.score.log:  goal      76.7%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/s6off_RD_plain_bk3.score.log:  goal      82.3%
+/c/code/covenant-agent/models/tiny/runs/pod_rd/out/s6off_RD_test.score.log:  goal      96.3%
+A0+reader, options-off with a lookalike  87.2%  shape-unique  96.7%   wrong at lookalike pairs: its lookalike 94%, another tool, same entity 2%, another tool, other entity 2%, a generic tool (no entity) 1%
+A0+reader, 25% decoys+twin with a lookalike  66.6%  shape-unique  94.2%   wrong at lookalike pairs: its lookalike 67%, a generic tool (no entity) 18%, another tool, other entity 9%, another tool, same entity 6%
+A0+reader, 25% flip decoys with a lookalike  87.0%  shape-unique  96.9%   wrong at lookalike pairs: its lookalike 98%, another tool, same entity 2%
+A0, 25% flip decoys    with a lookalike  83.7%  shape-unique  96.1%   wrong at lookalike pairs: its lookalike 92%, another tool, same entity 5%, another tool, other entity 3%
+=== score_rd done Tue Sep 29 00:19:07 CDT 2026

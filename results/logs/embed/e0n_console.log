@@ -1,0 +1,123 @@
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+cuda ok 51.037864685058594
+  person (900): ['Ruben Sales', 'Juana Tórrez', 'Nathan Fuller', 'Luiz Otávio Brito', 'Fernanda Casa Grande']
+  first (150): ['Anna', 'Oscar', 'Dawn', 'Sian', 'Sören']
+  last (150): ['Fırat', 'Ashe', 'George', 'Groborz', 'Costela']
+  company (450): ['Barber Ltd', 'Gonzalez-Lopez', 'Allen-Scott', 'Staplegun Holdings', 'Dickson-Kelley']
+  ref (750): ["Yurtseven Ülker's ticket id", "Henrik Lauritsen's depositary id", "Iris Sanders's hoist id", "Wright, Hendrix and Stevens's nepotism id", "Kristian Pennanen's id"]
+  title (450): ['Sheller Demure', 'Arcane proviso purulence', 'Adamantly flowing', 'Quart Vinify Gunnysack Seem', 'Gathered wheeler']
+  numbered (150): ['spinner 6162', 'cosine 5598', 'planning 2313', 'insurable 5587', 'matelote 1157 - Roughneck Beats Choline']
+  528 banned words, e.g. ['acme', 'action', 'ada', 'add', 'adler', 'adoption', 'affidavit', 'albuterol', 'alfalfa', 'alvarez', 'analytics', 'ancestral']
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 6679.76it/s]
+  teacher 1024/25425  2890/s
+25425 texts (18791 train pieces in 2000 texts, 2000 names, 2676 generated names, 300 texts with one) in 10s -> reader/embed/_smoke/targets_n.pt
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+{"step": 10, "loss": 0.89338, "cos_a": 0.76411, "rel_a": 0.13363, "cos_b": 0.79031, "rel_b": 0.09872, "sec": 5}
+{"step": 20, "loss": 0.66551, "cos_a": 0.5991, "rel_a": 0.0551, "cos_b": 0.62803, "rel_b": 0.04878, "sec": 10}
+{"step": 30, "loss": 0.59388, "cos_a": 0.54445, "rel_a": 0.04432, "cos_b": 0.55966, "rel_b": 0.03933, "sec": 15}
+{"step": 40, "loss": 0.56877, "cos_a": 0.52493, "rel_a": 0.04051, "cos_b": 0.53716, "rel_b": 0.03494, "sec": 20, "cos_alone": 0.4727, "cos_context": 0.4528, "names_cos_alone": 0.4636, "names_cos_context": 0.4368}
+layer mix: [0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08]
+wrote reader/embed/_smoke/n/head.pt
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 5707.74it/s]
+held-out, head n: cosine to the teacher alone 0.4639, in context 0.4511; pair-rank agreement alone 0.4462; generated names alone 0.4599, in context 0.4368
+
+constant probe, pair accuracy (cluttered / plain / demo):
+  overlap (no model)                  74.6 /  58.3 /  92.2
+  whole | teacher                     80.2 /  44.4 /  87.5
+  chunk-4 | teacher                   82.8 /  62.5 /  87.8
+  slots | teacher                     76.7 /  51.4 /  83.1
+  slots+chunks | teacher              81.9 /  66.7 /  84.8
+  whole | n alone                     66.4 /  73.6 /  68.9
+  chunk-4 | n alone                   75.9 /  79.2 /  66.9
+  slots | n alone                     73.3 /  83.3 /  59.5
+  slots+chunks | n alone              75.9 /  80.6 /  64.2
+  whole | n context                   66.4 /  73.6 /  68.9
+  chunk-4 | n context                 75.0 /  76.4 /  70.9
+  slots | n context                   75.0 /  81.9 /  63.2
+  slots+chunks | n context            75.0 /  76.4 /  67.6
+
+chunk-4 by the used constant's kind, plain / cluttered (pairs on plain):
+                                       bool            enum         id-name          id-ref        id-title            text            time
+  overlap                      0.0 /   26.5    0.0 /   83.3  100.0 /  100.0   42.9 /  100.0  100.0 /  100.0   46.2 /   60.0  100.0 /  100.0
+  teacher                      0.0 /   47.1    0.0 /   66.7  100.0 /  100.0   71.4 /  100.0  100.0 /  100.0   50.0 /   77.5  100.0 /  100.0
+  n alone                     70.0 /   58.8    0.0 /   16.7  100.0 /  100.0   71.4 /   50.0   91.7 /   94.4   73.1 /   77.5  100.0 /  100.0
+  n context                   60.0 /   52.9    0.0 /   33.3  100.0 /  100.0   85.7 /   50.0   91.7 /   88.9   65.4 /   77.5  100.0 /  100.0
+  pairs (plain): bool 10, enum 2, id-name 4, id-ref 7, id-title 12, text 26, time 11
+
+gates:
+  miss  n alone chunk-4 within 2 of the teacher
+  miss  n context chunk-4 within 2 of the teacher
+wrote reader/embed/_smoke/check_n.json
+smoke done
+  person (51000): ['Inkeri Hirvonen', 'Gelu Barbu', 'Tim Petersen', 'Emma Rinaldi', 'Ofelia Voinea']
+  first (8396): ['Baki', 'Gülağa', 'Brunilda', 'Alois', 'Kapagan']
+  last (8500): ['Tofil', 'Lehtimäki', 'Valenta', 'Feely', "O'Shaughnessy"]
+  company (25500): ['Mendez, Rice and Campbell', 'Roost', 'Snakewood', 'Whitehead, Delacruz and Stephens', 'Anaemic Farms']
+  ref (42500): ["Gianni Ostinelli's balmy id", "Jane Vũ's lumper id", "Oldřich Kratochvílová's shrewmouse id", "Caroline Karlsson's id", "Brandon Powell's id"]
+  title (25500): ['Gunsmith Dependency Birdcall Pelt', 'Leniency yeti stillroom', 'The Reallocate', 'Profound attitude-oriented moderator', 'Neritid lineally']
+  numbered (8500): ['infusion 4815 - Re-engineered content-based model', 'hormone 6898 - The Nonwoody', 'mesmerizer 1196', 'rushy 6413 - Stiffen Odiously', 'bumpkinly 9132 - Monandry Crabbed Phosphine Shumac']
+  528 banned words, e.g. ['acme', 'action', 'ada', 'add', 'adler', 'adoption', 'affidavit', 'albuterol', 'alfalfa', 'alvarez', 'analytics', 'ancestral']
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 5651.22it/s]
+  teacher 1024/1726449  2460/s
+  teacher 103424/1726449  22710/s
+  teacher 205824/1726449  22659/s
+  teacher 308224/1726449  22086/s
+  teacher 410624/1726449  21586/s
+  teacher 513024/1726449  19416/s
+  teacher 615424/1726449  19423/s
+  teacher 717824/1726449  19319/s
+  teacher 820224/1726449  19112/s
+  teacher 922624/1726449  18874/s
+  teacher 1025024/1726449  18645/s
+  teacher 1127424/1726449  18390/s
+  teacher 1229824/1726449  18066/s
+  teacher 1332224/1726449  17671/s
+  teacher 1434624/1726449  17163/s
+  teacher 1537024/1726449  16248/s
+  teacher 1639424/1726449  15298/s
+1726449 texts (1873603 train pieces in 200000 texts, 100000 names, 152906 generated names, 40000 texts with one) in 137s -> reader/embed/targets_n.pt
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 5693.00it/s]
+held-out, head b: cosine to the teacher alone 0.8824, in context 0.8934; pair-rank agreement alone 0.8702; generated names alone 0.742, in context 0.7866
+held-out, head n: cosine to the teacher alone 0.8799, in context 0.8879; pair-rank agreement alone 0.8636; generated names alone 0.8339, in context 0.8458
+
+constant probe, pair accuracy (cluttered / plain / demo):
+  overlap (no model)                  83.1 /  64.6 /  92.2
+  whole | teacher                     81.4 /  56.5 /  87.5
+  chunk-4 | teacher                   84.8 /  62.8 /  87.8
+  slots | teacher                     81.1 /  61.3 /  83.1
+  slots+chunks | teacher              85.0 /  64.6 /  84.8
+  whole | b alone                     81.4 /  52.6 /  85.5
+  chunk-4 | b alone                   83.8 /  58.7 /  86.8
+  slots | b alone                     79.4 /  58.0 /  79.7
+  slots+chunks | b alone              83.4 /  60.5 /  85.1
+  whole | b context                   81.3 /  52.5 /  85.5
+  chunk-4 | b context                 83.5 /  59.0 /  86.5
+  slots | b context                   79.4 /  57.9 /  79.4
+  slots+chunks | b context            83.4 /  60.7 /  84.8
+  whole | n alone                     82.4 /  53.1 /  84.8
+  chunk-4 | n alone                   84.6 /  60.4 /  85.8
+  slots | n alone                     80.9 /  58.5 /  75.3
+  slots+chunks | n alone              84.6 /  62.2 /  84.8
+  whole | n context                   82.4 /  53.2 /  84.8
+  chunk-4 | n context                 84.2 /  60.2 /  85.1
+  slots | n context                   81.0 /  58.1 /  78.0
+  slots+chunks | n context            84.4 /  61.9 /  84.5
+
+chunk-4 by the used constant's kind, plain / cluttered (pairs on plain):
+                                       bool            enum         id-name          id-ref        id-title          status            text            time
+  overlap                      0.0 /   39.7   70.0 /   90.2  100.0 /   99.9   63.1 /   94.0  100.0 /   99.7    0.0 /   33.3   61.4 /   78.2   88.3 /   89.5
+  teacher                      1.9 /   43.9   45.6 /   90.3   99.2 /  100.0   76.2 /   96.6   98.4 /   99.7    5.0 /   37.9   57.7 /   79.3   90.9 /   97.2
+  b alone                      2.6 /   50.8   45.6 /   89.3   96.3 /  100.0   51.3 /   89.8  100.0 /   99.9    5.0 /   43.9   56.7 /   78.3   91.6 /   92.5
+  b context                    3.2 /   50.6   45.9 /   90.1   97.2 /  100.0   52.2 /   88.8  100.0 /  100.0   10.0 /   40.9   56.4 /   77.7   92.2 /   92.5
+  n alone                      1.9 /   49.2   43.1 /   90.1   99.2 /  100.0   61.4 /   93.2   99.7 /  100.0   12.5 /   37.9   57.1 /   79.0   92.2 /   95.5
+  n context                    2.6 /   47.6   41.2 /   90.5   99.2 /  100.0   60.7 /   92.4   99.7 /  100.0   10.0 /   39.4   57.3 /   78.4   92.2 /   95.5
+  pairs (plain): bool 312, enum 318, id-name 246, id-ref 458, id-title 368, status 40, text 1101, time 154
+
+gates:
+  miss  b alone chunk-4 within 2 of the teacher
+  miss  b context chunk-4 within 2 of the teacher
+  miss  n alone chunk-4 within 2 of the teacher
+  miss  n context chunk-4 within 2 of the teacher
+wrote ../../results/logs/embed/check_n.json
+E0N DONE

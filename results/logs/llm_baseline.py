@@ -66,6 +66,14 @@ SOURCES = {
     "SPt 50% S6": {"plain": TINY / "pod_s6frac/out/s6d50_SPt_plain",
                    "decoy": TINY / "pod_s6frac/out/s6d50_SPt_decoy",
                    "flip": TINY / "pod_s6frac/out/s6d50_SPt_flip"},
+    "A0 25% decoys+twin (R19)": {e: TINY / f"pod_s6opt/out/dtw25_A0_{e}" for e in EXAMS},
+    # npu-planner.md phase 2: A0 with a frozen Ternlight-mini reader
+    "A0 25% flip decoys": {e: TINY / f"pod_rd/out/fdc25_A0_{e}" for e in EXAMS},
+    "A0+reader options-off": {e: TINY / f"pod_rd/out/s6off_RD_{e}" for e in EXAMS},
+    "A0+reader options-off + backoff": {"plain": TINY / "pod_rd/out/s6off_RD_plain_bk3"},
+    "A0+reader 25% decoys+twin": {e: TINY / f"pod_rd/out/dtw25_RD_{e}" for e in EXAMS},
+    "A0+reader 25% flip decoys": {e: TINY / f"pod_rd/out/fdc25_RD_{e}" for e in EXAMS},
+    "A0+reader 25% flip decoys + backoff": {"plain": TINY / "pod_rd/out/fdc25_RD_plain_bk3"},
 }
 CLASSES = ("unique", "lookalike", "decoy, decidable", "decoy, undecidable", "decoy, unlabelled")
 

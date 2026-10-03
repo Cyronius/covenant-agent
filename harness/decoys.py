@@ -254,16 +254,19 @@ def _warn_bank(world: dict, tool: dict) -> None:
 
 def decoy_world(world: dict, rng: random.Random,
                 per_tool: Tuple[int, int] = (2, 4),
-                nonsense: float = 0.15) -> Tuple[dict, List[str]]:
+                nonsense: float = 0.15,
+                only: Optional[set] = None) -> Tuple[dict, List[str]]:
     """A copy of `world` with description-only siblings beside every tool
-    `_bank_key` can bank. Returns (world, decoy names)."""
+    `_bank_key` can bank, or only beside the tools named in `only`
+    (data.gen --decoy-slots). Returns (world, decoy names)."""
     merged = dict(world)
     merged["tools"] = [copy.deepcopy(t) for t in world["tools"]]
     taken = {t["name"] for t in merged["tools"]}
     added: List[str] = []
 
     targets = [(t, k) for t in world["tools"]
-               if (k := _bank_key(t)) is not None or t.get("authored_decoys")]
+               if ((k := _bank_key(t)) is not None or t.get("authored_decoys"))
+               and (only is None or t["name"] in only)]
     for tool, bank_key in targets:
         noun, entity = _noun_for(tool, world)
         mutating = bool(MUTATING & set(tool["effects"]))

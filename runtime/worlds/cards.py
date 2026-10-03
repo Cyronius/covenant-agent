@@ -15,7 +15,7 @@ from __future__ import annotations
 import random
 from typing import List, Optional
 
-from runtime.worlds.decision import Observation, last_turn
+from runtime.worlds.decision import Observation, fit_brief, last_turn
 
 NOW = 1_760_000_000
 
@@ -174,7 +174,8 @@ CARD_WORD = {1: "an ace", 10: "a ten", 2: "a 2", 3: "a 3", 4: "a 4",
              5: "a 5", 6: "a 6", 7: "a 7", 8: "an 8", 9: "a 9"}
 
 
-def observe(state: dict, vision: Optional[int] = None) -> Observation:
+def observe(state: dict, vision: Optional[int] = None, *,
+            exits: bool = False) -> Observation:
     t = state["entities"]["table"][0]
     constants: List[dict] = [
         {"type": "INT", "value": t["player_total"],
@@ -196,7 +197,17 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
         f"Last turn: {last_turn(state)}.\n"
         f"Choose one action for this turn."
     )
-    return Observation(request=request, constants=constants)
+    brief = fit_brief(
+        f"Card table, turn {state.get('turn', 0)}, hand {t['hand_no']} of "
+        f"{t['hands']}, bankroll {t['bankroll']}, {t['bet']} bet. You hold "
+        f"{t['player_total']} {'soft' if t['player_soft'] else 'hard'} from "
+        f"{t['cards_taken'] + 2} cards; the dealer shows "
+        f"{CARD_WORD.get(t['dealer_up'], t['dealer_up'])}. Doubling "
+        f"{'is' if t['can_double'] and t['cards_taken'] == 0 else 'is not'} "
+        f"available. The dealer draws to 16, stands on 17.",
+        state.get("log") or [],
+        "Choose one action.")
+    return Observation(request=request, constants=constants, brief=brief)
 
 
 def legal_actions(state: dict) -> List[str]:

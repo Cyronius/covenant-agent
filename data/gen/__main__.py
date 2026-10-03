@@ -93,13 +93,68 @@ def gen_one(level: int, seed: int, holdout: bool, teacher: str,
     return task
 
 
+def _decoy_targets(world_name: str, decoy_slots: str, skip: frozenset) -> set | None:
+    """Which world tools get decoys under --decoy-slots: None for all (the
+    default); the four flip-slot tools for `flip`; the other theme slots
+    (list, fetch, set-status) for `reads`; nothing for a world without a
+    theme, whose decoys are bank ones no request wording can decide."""
+    if decoy_slots == "all":
+        return None
+    theme = _theme_of(world_name)
+    if not theme:
+        return set()
+    flip = set().union(*(_siblings(theme, s) for s in theme["tools"] if _is_flip(s)))
+    rest = set().union(*(_siblings(theme, s) for s in theme["tools"] if not _is_flip(s)))
+    return (flip if decoy_slots == "flip" else rest) - set(skip)
+
+
+def _theme_of(world_name: str) -> dict | None:
+    from data.gen import domains as _domains
+    return _domains.THEMES.get(world_name)
+
+
+def _is_flip(slot: str) -> bool:
+    from data.gen import domains as _domains
+    return slot in _domains.FLIP_VERBS
+
+
+def _siblings(theme: dict, slot: str) -> set:
+    """A slot's tool and its authored decoys, by name. THEMES keeps the
+    authored theme while a --twin-roles row generates (register_theme
+    record=False), so the working tool may be any of these: the group, not
+    the slot's `name`, is what stays the same under a swap."""
+    spec = theme["tools"][slot]
+    return {spec["name"]} | {d["name"] for d in spec.get("decoys") or []}
+
+
+def _undecidable_flip_tools(task: dict, theme: dict, decoy_names: set) -> frozenset:
+    """Called flip-slot tools whose request doesn't fit them, or fits one of
+    their decoys present in the row (domains.request_fits). Each sibling's
+    own request templates are on the authored theme, whichever is working."""
+    from data.gen import domains as _domains
+    called = {c["name"] for c in task["reference"]["call_log"]}
+    bad = set()
+    for slot in _domains.FLIP_VERBS:
+        spec = theme["tools"][slot]
+        sibs = {spec["name"]: spec, **{d["name"]: d for d in spec.get("decoys") or []}}
+        for name in called & set(sibs):
+            present = [d for n, d in sibs.items() if n != name and n in decoy_names]
+            if not present:
+                continue
+            if (not _domains.request_fits(task["request"], slot, sibs[name])
+                    or any(_domains.request_fits(task["request"], slot, d) for d in present)):
+                bad.add(name)
+    return frozenset(bad)
+
+
 def _gen_one(level: int, seed: int, holdout: bool, teacher: str,
             crowd: tuple | None = None, symbols: str = "classic",
             enums: bool = False, kinds: bool = False,
             decoys: tuple | None = None, decoy_nonsense: float = 0.15,
             inject_open: tuple | None = None,
             opaque_rate: float = 0.0, world: str | None = None,
-            store_sandbox: bool = False) -> dict:
+            store_sandbox: bool = False, decoy_slots: str = "all",
+            decoy_skip: frozenset = frozenset(), clutter: bool = False) -> dict:
     rng = random.Random(seed)
     if holdout:
         pool = [w for w in RESERVED["worlds"] if w in programs.PROFILES]
@@ -127,7 +182,9 @@ def _gen_one(level: int, seed: int, holdout: bool, teacher: str,
         # between the two scores is the number the family is after
         world, decoy_names = decoy_world(world, random.Random(seed ^ 0xDEC0),
                                          per_tool=decoys,
-                                         nonsense=decoy_nonsense)
+                                         nonsense=decoy_nonsense,
+                                         only=_decoy_targets(world_name, decoy_slots,
+                                                             decoy_skip))
     if crowd:
         from harness.crowding import crowd_world
         pool = (RESERVED["worlds"] if holdout
@@ -173,6 +230,18 @@ def _gen_one(level: int, seed: int, holdout: bool, teacher: str,
         visible = [t["name"] for t in world["tools"]
                    if t["name"] not in holdout_tools]
     constants = sample.constants
+    segments_src = sample.segments
+    cluttered = None
+    if clutter:
+        # the demo host's kind of constants list (data/gen/clutter.py); its
+        # own RNG, so the world, state, program and request are the ones the
+        # run without it draws
+        from data.gen.clutter import clutter as _clutter
+        vis_tools = [t for t in world["tools"]
+                     if visible is None or t["name"] in visible]
+        constants, segments_src, cluttered = _clutter(
+            constants, segments_src, world, vis_tools, state, request,
+            random.Random(seed ^ 0xC1077E))
     if not kinds:
         # the identical-prompt control: enum kinds are what --enums means,
         # name/text are what --kinds adds (spec 0.4.0 §2.2)
@@ -181,7 +250,7 @@ def _gen_one(level: int, seed: int, holdout: bool, teacher: str,
     ctx, sandbox_ctx = build_context(world, constants,
                                      random.Random(seed ^ 0x5EED), visible,
                                      symbols=symbols, enums=enums)
-    segments = [resolve(s, ctx) for s in sample.segments]
+    segments = [resolve(s, ctx) for s in segments_src]
 
     task = build_task(
         task_id=f"{world_name}_L{level}_{seed}", level=level,
@@ -216,6 +285,9 @@ def _gen_one(level: int, seed: int, holdout: bool, teacher: str,
                               | ({"open-injected"} if n_injected else set()))
     if decoy_names:
         task["provenance"]["decoys"] = decoy_names
+    if cluttered is not None:
+        task["provenance"]["clutter"] = cluttered
+        task["tags"] = sorted(set(task["tags"]) | {"cluttered"})
     if n_injected:
         task["provenance"]["open_distractors"] = n_injected
     from data.gen import domains as _domains
@@ -233,6 +305,22 @@ def _gen_one(level: int, seed: int, holdout: bool, teacher: str,
             spec = theme["tools"][slot]
             slot_names |= {spec["name"]} | {d["name"] for d in spec.get("decoys") or []}
         task["provenance"]["flip_slot_tools"] = sorted(slot_names & present)
+    if decoy_slots == "flip" and decoy_names and theme:
+        # keep a flip slot's decoys only where the request can tell the
+        # working tool from them (.claude/plans/npu-planner.md phase 2, from
+        # decidable-decoys.md). A slot whose request can't -- L9's vague and
+        # L12's fixed wording -- is rebuilt from the same seed without that
+        # slot's decoys: decoys draw from their own RNG, so the world,
+        # program and request come back the same, and no level can go FATAL
+        # the way requiring the fit did on 2026-09-24.
+        bad = _undecidable_flip_tools(task, theme, set(decoy_names))
+        if bad:
+            return _gen_one(level, seed, holdout, teacher, crowd=crowd, symbols=symbols,
+                            enums=enums, kinds=kinds, decoys=decoys,
+                            decoy_nonsense=decoy_nonsense, inject_open=inject_open,
+                            opaque_rate=opaque_rate, world=world_name,
+                            store_sandbox=store_sandbox, decoy_slots=decoy_slots,
+                            decoy_skip=decoy_skip | bad, clutter=clutter)
     if opaque_rate and random.Random(seed ^ 0x0A0E).random() < opaque_rate:
         # every tool renamed to something that says nothing
         # (harness/decoys.py `opaque_names`); its own RNG like --decoys, so
@@ -350,6 +438,19 @@ def main():
                          "decoy's text is as likely to be the answer as the "
                          "authored tool's (data/gen/domains.py role_choice). "
                          "Needs themes that author decoys.")
+    ap.add_argument("--decoy-slots", choices=["all", "flip", "reads"], default="all",
+                    help="which theme tools get --decoys: all (default); only "
+                         "the four flip slots, and only where the request can "
+                         "tell the working tool from its decoys (a slot it "
+                         "can't is rebuilt without decoys); or only the list, "
+                         "fetch and set-status slots, whose decoys no request "
+                         "names (.claude/plans/npu-planner.md phase 2)")
+    ap.add_argument("--clutter", action="store_true",
+                    help="constants the way the demo host lists them: every "
+                         "enum value worded alike, unnamed records, true/false, "
+                         "canned messages and the request as a brief added "
+                         "unused, and the list shuffled (data/gen/clutter.py). "
+                         "Tagged `cluttered`.")
     ap.add_argument("--require-collisions", type=float, default=50,
                     metavar="PCT",
                     help="fail (and write nothing) if more than PCT%% of "
@@ -408,7 +509,9 @@ def main():
                                         decoy_nonsense=args.decoy_nonsense,
                                         inject_open=inject_open,
                                         opaque_rate=args.opaque_names,
-                                        twin_roles=args.twin_roles)
+                                        twin_roles=args.twin_roles,
+                                        decoy_slots=args.decoy_slots,
+                                        clutter=args.clutter)
                 except (programs.SampleError, ReferenceError):
                     failures += 1
                     continue

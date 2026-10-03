@@ -1,0 +1,47 @@
+Traceback (most recent call last):
+  File "/workspace/repo/models/tiny/electra_reader.py", line 511, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/workspace/repo/models/tiny/electra_reader.py", line 507, in main
+    return {"targets": cmd_targets, "train": cmd_train, "check": cmd_check}[args.cmd](args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/repo/models/tiny/electra_reader.py", line 278, in cmd_train
+    v2, k2 = read_alone(head, body, [s for *_, s in pieces])
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/repo/models/tiny/electra_reader.py", line 136, in read_alone
+    states, _, offsets = body(texts)
+                         ^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/repo/models/tiny/electra_reader.py", line 103, in __call__
+    states, _ = self.m(ids.to(DEV), mask.to(DEV))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/repo/models/tiny/tern_electra.py", line 136, in forward
+    x, att = layer(x, mask)
+             ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/repo/models/tiny/tern_electra.py", line 98, in forward
+    x = self.ln2(x + self.fc2(F.gelu(self.fc1(x))))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/repo/models/tiny/tern_electra.py", line 73, in forward
+    xq = xq + (xq.round().clamp(-128, 127) - xq).detach()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 622.00 MiB. GPU 0 has a total capacity of 23.56 GiB of which 353.75 MiB is free. Including non-PyTorch memory, this process has 10.81 GiB memory in use. Process 1010 has 12.39 GiB memory in use. Of the allocated memory 8.51 GiB is allocated by PyTorch, and 1.99 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)

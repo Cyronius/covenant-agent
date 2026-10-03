@@ -101,7 +101,12 @@ export interface RpgPromptResponse {
    *  this copy forward, not the one you sent */
   state: RpgState;
   observation: {
+    /** the full observation: grid, legend, nearby — what a GGUF was prompted with */
     request: string;
+    /** the one-line request the tiny planner reads instead */
+    brief: string;
+    /** each constant's description, directions first (their exits) */
+    constants: string[];
     window: string[];
     nearby: NearbyThing[];
     outcome: Outcome;

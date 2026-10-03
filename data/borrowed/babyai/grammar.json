@@ -1,0 +1,51 @@
+{
+  "comment": "BabyAI's mission grammar and Minigrid's object vocabulary, as used by runtime/worlds/rooms.py. Provenance and licences: README.md beside this file. Keys ending in _src cite the upstream file:line the value was taken from.",
+  "colors": ["blue", "green", "grey", "purple", "red", "yellow"],
+  "colors_src": "Minigrid minigrid/core/constants.py:8-17 (COLORS, COLOR_NAMES = sorted keys)",
+  "object_types": ["box", "ball", "key", "door"],
+  "object_types_src": "babyai babyai/levels/verifier.py:7 (OBJ_TYPES)",
+  "pickable_types": ["box", "ball", "key"],
+  "pickable_types_src": "babyai babyai/levels/verifier.py:10 (OBJ_TYPES_NOT_DOOR)",
+  "descriptor": "{color} {type}",
+  "descriptor_color_optional": true,
+  "descriptor_src": "babyai babyai/levels/verifier.py:64-94 (ObjDesc.surface; location phrases dropped here) and levelgen.py:367 (color drawn from [None, *colors])",
+  "article": {"one_match": "the", "several_match": "a"},
+  "article_src": "babyai babyai/levels/verifier.py:88-92 (singular vs plural over every matching object in the level)",
+  "actions": {
+    "goto": "go to {obj}",
+    "pickup": "pick up {obj}",
+    "open": "open {obj}",
+    "putnext": "put {obj} next to {fixed}"
+  },
+  "actions_src": "babyai babyai/levels/verifier.py:288, 319, 249, 367 (GoToInstr, PickupInstr, OpenInstr, PutNextInstr .surface)",
+  "action_targets": {
+    "goto": ["box", "ball", "key", "door"],
+    "pickup": ["box", "ball", "key"],
+    "open": ["door"],
+    "putnext_move": ["box", "ball", "key"],
+    "putnext_fixed": ["box", "ball", "key", "door"]
+  },
+  "action_targets_src": "babyai babyai/levels/levelgen.py:411-423 (rand_instr: which object types each action may name)",
+  "connectives": {
+    "before": "{a}, then {b}",
+    "after": "{a} after you {b}",
+    "and": "{a} and {b}"
+  },
+  "connectives_order": {"before": "a first", "after": "b first", "and": "either order"},
+  "connectives_src": "babyai babyai/levels/verifier.py:440 (BeforeInstr), 481 (AfterInstr), 527 (AndInstr); order semantics 433-545 with strict=False (doing them out of order is not a failure, it just does not count yet)",
+  "next_to": "positions one step apart horizontally or vertically; diagonals do not count",
+  "next_to_src": "babyai babyai/levels/verifier.py:28-38 (pos_next_to)",
+  "locked_door": "a locked door opens only while the agent carries a key of the door's colour; the key stays carried",
+  "locked_door_src": "Minigrid minigrid/core/world_object.py:184-194 (Door.toggle)",
+  "carry": "one object at a time; pickup takes the object in front, drop puts the carried object on the empty cell in front",
+  "carry_src": "Minigrid minigrid/minigrid_env.py:561-573 (pickup / drop)",
+  "examples": [
+    "go to the red ball",
+    "pick up the grey key",
+    "open the blue door",
+    "put the green ball next to the purple box",
+    "open the blue door, then pick up the grey key",
+    "go to a yellow box after you pick up the red key",
+    "go to the purple door and pick up the green ball"
+  ]
+}

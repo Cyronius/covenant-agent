@@ -1,0 +1,19 @@
+                                              teacher  ternlight
+        'move it to bob' vs 'move it from bob'    0.980      0.959
+  'assign card 6 to Bob' vs 'assign Bob to ca'    0.987      1.000
+   'cards that are done' vs 'cards that are n'    0.921      0.923
+  'orders placed before' vs 'orders placed af'    0.981      0.955
+   'send priya the list' vs 'send the list ab'    0.929      0.954
+      'the oldest issue' vs 'the newest issue'    0.665      0.596
+                   'bob' vs 'Bob Alvarez'         0.567      0.523
+                   'bob' vs 'Priya Nandan'        0.186      0.217
+     'the release notes' vs 'card 2 - Write r'    0.652      0.583
+     'the release notes' vs 'card 4 - Retire '    0.083      0.112
+              'finished' vs 'the done status'     0.589      0.457
+              'finished' vs 'the todo status'     0.310      0.370
+  swap       n= 173  teacher mean 0.966 (p90 0.992, 1% < 0.85)   ternlight mean 1.000 (p90 1.000)
+  not        n= 160  teacher mean 0.930 (p90 0.995, 16% < 0.85)   ternlight mean 0.957 (p90 0.996)
+  word       n= 167  teacher mean 0.950 (p90 0.997, 7% < 0.85)   ternlight mean 0.956 (p90 0.997)
+  all        n= 500  teacher mean 0.949 (p90 0.995, 8% < 0.85)   ternlight mean 0.972 (p90 1.000)
+  shuffled   n= 496  teacher mean 0.894 (p90 0.964, 22% < 0.85)   ternlight mean 1.000 (p90 1.000)
+wrote ../../results/logs/role/teacher_probe.json

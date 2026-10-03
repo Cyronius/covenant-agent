@@ -31,13 +31,16 @@ carry the family in training. harness/decision.py is the registry that
 pairs each with its oracle.
 """
 from . import (cards, coursebuilder, crm, elevator, house, kanban, pages,
-               projects, rpg, scheduling, warehouse)
+               projects, rooms, rpg, scheduling, service, warehouse,
+               workshop)
 
 WORLDS = {w["name"]: w for w in (kanban.WORLD, crm.WORLD, projects.WORLD,
                                  coursebuilder.WORLD, rpg.WORLD,
                                  warehouse.WORLD, elevator.WORLD,
                                  cards.WORLD, house.WORLD,
-                                 scheduling.WORLD, *pages.WORLDS)}
+                                 scheduling.WORLD, *pages.WORLDS,
+                                 *workshop.WORLDS, *rooms.WORLDS,
+                                 *service.WORLDS)}
 
 
 def get_world(name: str) -> dict:

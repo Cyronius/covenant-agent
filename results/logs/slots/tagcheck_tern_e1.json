@@ -1,0 +1,105 @@
+{
+ "tagger": "reader/slots/t_electra/tagger.pt",
+ "body": "tern-electra:e1",
+ "mix": [
+  0.079,
+  0.077,
+  0.06,
+  0.061,
+  0.063,
+  0.073,
+  0.086,
+  0.093,
+  0.086,
+  0.077,
+  0.081,
+  0.086,
+  0.078
+ ],
+ "held": {
+  "present_acc": 95.2,
+  "exact": 87.5,
+  "overlap": 0.917,
+  "n_both": 5865
+ },
+ "swap_destination": {
+  "n": 276,
+  "before": 14.9,
+  "after": 9.8,
+  "both": 8.0
+ },
+ "swap_source": {
+  "n": 155,
+  "before": 43.2,
+  "after": 32.3,
+  "both": 24.5
+ },
+ "to_from": {
+  "n": 548,
+  "dest_before": 16.8,
+  "source_after_dest_gone": 33.9,
+  "both": 15.7
+ },
+ "hand": {
+  "move it to bob": {
+   "action": "move",
+   "object": "it"
+  },
+  "move it from bob": {
+   "action": "move",
+   "object": "it",
+   "source": "bob"
+  },
+  "assign card 6 to Bob": {
+   "action": "assign",
+   "destination": "Bob"
+  },
+  "assign Bob to card 6": {
+   "action": "assign",
+   "object": "Bob",
+   "destination": "card"
+  },
+  "copy the report from the archive to the inbox": {
+   "action": "copy",
+   "object": "the report",
+   "source": "the archive"
+  },
+  "copy the report from the inbox to the archive": {
+   "action": "copy",
+   "object": "the report",
+   "source": "the inbox"
+  },
+  "send priya the list": {
+   "action": "send",
+   "object": "the list"
+  },
+  "delete the cards that are not done": {
+   "action": "delete",
+   "object": "the cards",
+   "condition": "that are not done"
+  },
+  "list orders placed before March": {
+   "time": "before March"
+  }
+ },
+ "requests": {
+  "present_acc": 90.2,
+  "exact": 68.7,
+  "overlap": 0.772,
+  "n_both": 684
+ },
+ "probe": {
+  "demo": {
+   "slots": 79.7,
+   "slots+chunks": 83.1
+  },
+  "plain": {
+   "slots": 63.3,
+   "slots+chunks": 67.7
+  },
+  "clut": {
+   "slots": 84.5,
+   "slots+chunks": 87.8
+  }
+ }
+}

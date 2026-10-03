@@ -1,0 +1,10 @@
+tinyA_cards_e.jsonl: 6 episodes, world=cards model=tiny:clt_RD condition=tiny/brief+letters+enums+exits
+  won            0/6 (0%)
+  died           0/6
+  funnel         finished_shoe 0/6  kept_half 6/6  level_or_better 6/6
+  per-turn       first tool 0/120 (0%)   first tool+arg 0/120 (0%)   whole turn 0/120 (0%)
+  calls          0 (0 invalid)
+  turns          120 (120 did not compile, 0 abstained, 0 hit the action budget)
+  movement       0 refused moves (0 repeat last turn's), 0 into a direction labelled blocked, 0 turns with a truncated request
+  tokens_out p50 30   gen_ms p50 1158
+  finish_reason  {'stop': 120}

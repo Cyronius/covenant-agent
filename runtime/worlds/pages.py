@@ -24,7 +24,7 @@ from __future__ import annotations
 import random
 from typing import Dict, List, Optional
 
-from runtime.worlds.decision import Observation, last_turn
+from runtime.worlds.decision import Observation, fit_brief, last_turn
 
 NOW = 1_760_000_000
 
@@ -484,7 +484,8 @@ def _describe(e: dict) -> str:
     return f'"{e["label"]}" label reading {e["value"]}'
 
 
-def observe(state: dict, vision: Optional[int] = None) -> Observation:
+def observe(state: dict, vision: Optional[int] = None, *,
+            exits: bool = False) -> Observation:
     a = _app(state)
     here = screen_by_id(state, a["screen"])
     on_screen = elements_on(state, a["screen"])
@@ -510,7 +511,12 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
         f"Last turn: {last_turn(state)}.\n"
         f"Choose up to {state.get('turn_budget', 3)} actions for this turn."
     )
-    return Observation(request=request, constants=constants)
+    # the screen's elements and the screens it links to are constants already
+    brief = fit_brief(
+        f"{here['name']}, turn {state.get('turn', 0)}. {state.get('task', '')}",
+        state.get("log") or [],
+        f"Up to {state.get('turn_budget', 3)} actions.")
+    return Observation(request=request, constants=constants, brief=brief)
 
 
 def _value_constants(state: dict, on_screen: List[dict]) -> List[dict]:

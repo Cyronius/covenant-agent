@@ -1,0 +1,135 @@
+{
+ "head": "reader/slots/h_electra_t/head.pt",
+ "body": "electra-small[:12]",
+ "target": "ternlight",
+ "mix": [
+  0.11,
+  0.11,
+  0.105,
+  0.091,
+  0.069,
+  0.061,
+  0.068,
+  0.069,
+  0.067,
+  0.062,
+  0.061,
+  0.062,
+  0.065
+ ],
+ "held": {
+  "route": 89.0,
+  "route_n": 6868,
+  "present_acc": 95.5,
+  "cos": {
+   "action": 0.783,
+   "object": 0.607,
+   "condition": 0.57,
+   "time": 0.625,
+   "destination": 0.561,
+   "source": 0.561,
+   "amount": 0.643
+  }
+ },
+ "swap_destination": {
+  "n": 276,
+  "orig": 78.6,
+  "swapped": 75.4,
+  "both": 54.0
+ },
+ "swap_source": {
+  "n": 155,
+  "orig": 83.9,
+  "swapped": 75.5,
+  "both": 60.0
+ },
+ "to_from": {
+  "n": 548,
+  "dest_before": 89.6,
+  "source_after": 87.2,
+  "both": 82.3,
+  "present_dest_before": 59.5,
+  "present_source_after": 55.7
+ },
+ "hand": [
+  {
+   "text": "move it to bob",
+   "flip": "move it from bob",
+   "word": "bob",
+   "dest": [
+    0.537,
+    0.535
+   ],
+   "source": [
+    0.529,
+    0.544
+   ],
+   "object": [
+    0.496,
+    0.505
+   ]
+  },
+  {
+   "text": "assign card 6 to Bob",
+   "flip": "assign Bob to card 6",
+   "word": "Bob",
+   "dest": [
+    0.466,
+    0.312
+   ],
+   "source": [
+    0.502,
+    0.482
+   ],
+   "object": [
+    0.379,
+    0.506
+   ]
+  },
+  {
+   "text": "copy the report from the archive to the inbox",
+   "flip": "copy the report from the inbox to the archive",
+   "word": "the inbox",
+   "dest": [
+    0.346,
+    0.253
+   ],
+   "source": [
+    0.319,
+    0.289
+   ],
+   "object": [
+    0.166,
+    0.177
+   ]
+  }
+ ],
+ "requests": {
+  "route": 82.3,
+  "route_n": 848,
+  "present_acc": 91.3,
+  "cos": {
+   "action": 0.696,
+   "object": 0.488,
+   "destination": 0.441,
+   "time": 0.581,
+   "condition": 0.483,
+   "source": 0.515,
+   "amount": 0.438
+  }
+ },
+ "probe": {
+  "demo": {
+   "whole": 79.1,
+   "slots": 72.0
+  },
+  "plain": {
+   "whole": 44.1,
+   "slots": 56.9
+  },
+  "clut": {
+   "whole": 73.9,
+   "slots": 72.7
+  }
+ }
+}

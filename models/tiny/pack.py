@@ -40,19 +40,27 @@ TEXT_SUFFIXES = {".sh", ".py", ".md", ".json"}
 CRLF, LF = bytes((13, 10)), bytes((10,))
 
 
+def _regular(tar: tarfile.TarFile, src: Path, arcname: str, size: int) -> tarfile.TarInfo:
+    """A regular-file header. A cache file hard-linked from another cache
+    (slot_cache.py) would otherwise get a link header, and data written after
+    a link header is a corrupt archive to GNU tar ("Skipping to next header")."""
+    info = tar.gettarinfo(str(src), arcname=arcname)
+    info.type, info.linkname, info.size = tarfile.REGTYPE, "", size
+    return info
+
+
 def add_text(tar: tarfile.TarFile, src: Path, arcname: str) -> None:
     """Add a text file with LF endings, whatever it looks like on disk."""
     data = src.read_bytes().replace(CRLF, LF)
-    info = tar.gettarinfo(str(src), arcname=arcname)
-    info.size = len(data)
-    tar.addfile(info, io.BytesIO(data))
+    tar.addfile(_regular(tar, src, arcname, len(data)), io.BytesIO(data))
 
 
 def add(tar: tarfile.TarFile, src: Path, arcname: str) -> None:
     if src.suffix in TEXT_SUFFIXES:
         add_text(tar, src, arcname)
     else:
-        tar.add(src, arcname=arcname)
+        with src.open("rb") as fh:
+            tar.addfile(_regular(tar, src, arcname, src.stat().st_size), fh)
 
 
 def add_slim(tar: tarfile.TarFile, src: Path, arcname: str) -> None:
@@ -99,7 +107,7 @@ def main():
             add(tar, py, f"tiny/{py.name}")
             n += 1
         for extra in ("README.md", "pod.md", "run_phase1.sh", "run_step1.sh",
-                      "run_step2.sh", "run_step3.sh", "run_step4.sh", "run_vocab.sh", "run_size.sh", "run_planner.sh", "run_diag.sh", "run_s6split.sh", "run_s6off2.sh", "run_s6frac.sh", "run_s6opt.sh",
+                      "run_step2.sh", "run_step3.sh", "run_step4.sh", "run_vocab.sh", "run_size.sh", "run_planner.sh", "run_diag.sh", "run_s6split.sh", "run_s6off2.sh", "run_s6frac.sh", "run_s6opt.sh", "run_rd.sh", "run_clt.sh", "run_brw.sh", "run_c0.sh", "run_c0s.sh",
                       "selftest.sh"):
             p = HERE / extra
             if p.exists():

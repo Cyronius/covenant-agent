@@ -89,6 +89,33 @@ class Config:
     max_sig: int = 48
     max_desc: int = 64
     max_name: int = 16
+    # a frozen external reader (npu-planner.md phase 2): its vectors for each
+    # tool description and the request, looked up from the cache's reader.pt
+    # by the t_desc / t_req columns. Off builds nothing new.
+    reader: bool = False
+    reader_w: int = 384
+    # which of the cache's reader tables: reader.pt is the shipped Ternlight,
+    # reader_role.pt the role-aware one (role-aware-reader.md, reader_table.py)
+    reader_file: str = "reader.pt"
+    # C0 (tiny-general-agent-menu.md), on top of `reader`: its vectors for
+    # every constant and field (t_const / t_field) and for the request in up
+    # to `max_chunk` chunks (t_chunk), and a reading term in the constant
+    # pointer. `req_words` off drops the request's own tokens, so the request
+    # reaches the planner only as reader vectors.
+    reader_lines: bool = False
+    max_chunk: int = 0
+    req_words: bool = True
+    # the staged decoder (staged.py, .claude/plans/staged-decoder-experts.md):
+    # draft and refine stages, each with its own weights and loop count, e.g.
+    # "draft:4x4,refine:2x1". Empty builds nothing new, so every earlier
+    # checkpoint loads and every forward pass without it is unchanged.
+    stages: str = ""
+    exit_threshold: float | None = None   # skip the refiner at this draft confidence
+    draft_temp: float = 1.0               # the draft's calibration (calibrate.py)
+    draft_noise: float = 0.1              # training: share of draft slots swapped before the refiner reads them
+    draft_swap: float = 0.0               # training: share of pointer slots swapped for another of the same kind
+    freeze_shared: bool = False           # experts: the encoder and the output head stay fixed
+    train_parts: str = "decoder"          # experts: "decoder" (every stage) or "draft"
 
 
 def sinusoids(n: int, d: int) -> torch.Tensor:
@@ -323,6 +350,79 @@ class StructuralModel(nn.Module):
         nn.init.normal_(self.cls, std=0.02)
         if c.split:
             self._build_split(c)
+        if c.reader_lines and not c.reader:
+            raise ValueError("reader_lines extends the reader: it needs reader=True")
+        if not (c.req_words or c.reader_lines):
+            raise ValueError("req_words=False without reader_lines leaves no request at all")
+        if c.reader:
+            self._build_reader(c)
+
+    def _build_reader(self, c: Config) -> None:
+        """The reader's three ways in, built last so every other module draws
+        the same initial weights with the flag on or off:
+          - each tool's description vector, projected and added to its line
+            vector before the graph pass (so the planner can learn what the
+            reader says about a tool, e.g. which of two siblings is the
+            ordinary one);
+          - the request's vector, one more REQUEST-tagged memory row;
+          - their cosine, added to each tool's pointer score with a weight the
+            decoder state sets per slot (so reading turns straight into tool
+            choice where the state says it should)."""
+        d = c.d
+        self.rd_tool = nn.Linear(c.reader_w, d)
+        self.rd_req = nn.Linear(c.reader_w, d)
+        self.rd_gate = nn.Linear(d, 1)
+        for m in (self.rd_tool, self.rd_req, self.rd_gate):
+            _init(m)
+        # start the reading term on: softplus(5) ~ 5 per unit of cosine
+        nn.init.constant_(self.rd_gate.bias, 5.0)
+        self.reader_table = None
+        if c.reader_lines:
+            # C0, built after R22's modules so those draw the same weights:
+            # each constant's and field's vector added to its line vector;
+            # each request chunk one more REQUEST-tagged memory row, with its
+            # position; and each constant's best cosine over the chunks added
+            # to its pointer score, gated like the tool term
+            self.rd_const = nn.Linear(c.reader_w, d)
+            self.rd_field = nn.Linear(c.reader_w, d)
+            self.rd_chunk = nn.Linear(c.reader_w, d)
+            self.chunk_pos = nn.Embedding(c.max_chunk, d)
+            self.rd_cgate = nn.Linear(d, 1)
+            for m in (self.rd_const, self.rd_field, self.rd_chunk, self.chunk_pos, self.rd_cgate):
+                _init(m)
+            nn.init.constant_(self.rd_cgate.bias, 5.0)
+
+    def set_reader_table(self, table: torch.Tensor) -> None:
+        """The cache's reader table (`c.reader_file`, texts x reader_w). Data, not weights:
+        not saved with the checkpoint, set for whichever cache is being run."""
+        self.reader_table = table.float()
+
+    def reader_vectors(self, inputs: dict):
+        """(tool vectors (B, MT, w), request vector (B, w)), zero on padding.
+        A context no cache has seen (the demo, play.py) passes them directly
+        as `rd_tool` / `rd_req` (live_reader.py)."""
+        if "rd_tool" in inputs:
+            return inputs["rd_tool"].float(), inputs["rd_req"].float()
+        tab = self.reader_table
+        if tab is None:
+            raise RuntimeError("reader model without a reader table: call set_reader_table")
+        td, tr = inputs["t_desc"].long(), inputs["t_req"].long()
+        tv = tab[td.clamp(min=0)] * (td >= 0).unsqueeze(-1)
+        rv = tab[tr.clamp(min=0)] * (tr >= 0).unsqueeze(-1)
+        return tv, rv
+
+    def reader_line_vectors(self, inputs: dict):
+        """C0: (constant (B, MC, w), field (B, MF, w), chunk (B, MK, w))
+        reader vectors, zero on padding. A live context passes them as
+        `rd_const` / `rd_field` / `rd_chunk` (live_reader.py)."""
+        if "rd_const" in inputs:
+            return tuple(inputs[k].float() for k in ("rd_const", "rd_field", "rd_chunk"))
+        tab = self.reader_table
+        out = []
+        for k in ("t_const", "t_field", "t_chunk"):
+            i = inputs[k].long()
+            out.append(tab[i.clamp(min=0)] * (i >= 0).unsqueeze(-1))
+        return tuple(out)
 
     def _build_split(self, c: Config) -> None:
         """Three stages per tool line, one vector each, combined late
@@ -405,14 +505,16 @@ class StructuralModel(nn.Module):
             x = layer(x, pad)
         return self.line_norm(x[:, 0]).reshape(B, L, -1)
 
-    def encode_world(self, tool_tok, field_tok, adj, tool_vecs=None):
+    def encode_world(self, tool_tok, field_tok, adj, tool_vecs=None, field_extra=None):
         """Line vectors for every tool and field, then the sparse graph pass.
         Depends only on the world's schema, so it can be computed once per
         world and shipped as data; nothing here reads the request.
         `tool_vecs`: the split encoder's tool vectors, in place of the line
-        encoder's."""
+        encoder's. `field_extra`: C0's reader vectors, added to the fields'."""
         tv = self.encode_lines(tool_tok, TAG_TOOL) if tool_vecs is None else tool_vecs
         fv = self.encode_lines(field_tok, TAG_FIELD)
+        if field_extra is not None:
+            fv = fv + field_extra
         x = torch.cat([tv, fv], 1)                                   # (B, MT+MF, d)
         B, L, _ = x.shape
         # nn.MultiheadAttention takes (B*heads, L, L) with True = blocked.
@@ -428,7 +530,8 @@ class StructuralModel(nn.Module):
 
     def encode_turn(self, tool_vecs, field_vecs, const_tok, req_tok,
                     n_tool, n_field, n_const, reg_tok=None,
-                    n_reg_bound=None, stage=None) -> Memory:
+                    n_reg_bound=None, stage=None, req_extra=None,
+                    req_extra_pad=None, const_extra=None) -> Memory:
         """Region A: tools, fields, constants, the registers a continuation
         starts from, and the request tokens, each tagged.
 
@@ -441,6 +544,8 @@ class StructuralModel(nn.Module):
         """
         c = self.c
         cv = self.encode_lines(const_tok, TAG_CONST)
+        if const_extra is not None:
+            cv = cv + const_extra
         req = req_tok.long()
         rq = (self.in_emb(req) * math.sqrt(c.d) + self.req_pos[:req.size(1)]
               + self.tag_emb.weight[TAG_REQUEST])
@@ -467,8 +572,14 @@ class StructuralModel(nn.Module):
                               self.qn_proj(stage["q_name"])], 1)
             parts.append(qv + self.tag_emb.weight[TAG_REQUEST])
             masks.append(torch.zeros(qv.shape[:2], dtype=torch.bool, device=dev))
-        parts.append(rq)
-        masks.append(req == c.in_pad)
+        if req_extra is not None:
+            # the request as an external reader reads it (C0: and its chunks)
+            parts.append(req_extra + self.tag_emb.weight[TAG_REQUEST])
+            masks.append(torch.zeros(req_extra.shape[:2], dtype=torch.bool, device=dev)
+                         if req_extra_pad is None else req_extra_pad)
+        if c.req_words:
+            parts.append(rq)
+            masks.append(req == c.in_pad)
         x = self.drop(torch.cat(parts, 1))
         pad = torch.cat(masks, 1)
         for layer in self.turn:
@@ -478,15 +589,37 @@ class StructuralModel(nn.Module):
         return mem
 
     def encode_inputs(self, inputs: dict) -> Memory:
-        stage = split_tv = None
+        stage = split_tv = req_extra = read = None
+        req_pad = const_extra = field_extra = read_c = None
         if self.c.split:
             split_tv, stage = self.encode_split_tools(inputs)
+        if self.c.reader:
+            rt, rq = self.reader_vectors(inputs)
+            if split_tv is None:
+                split_tv = self.encode_lines(inputs["tool_tok"], TAG_TOOL)
+            split_tv = split_tv + self.rd_tool(rt)
+            req_extra = self.rd_req(rq).unsqueeze(1)
+            # the reading score: request against each tool's description
+            read = torch.einsum("bw,bjw->bj", F.normalize(rq, dim=-1), F.normalize(rt, dim=-1))
+        if self.c.reader_lines:
+            rc, rf, rk = self.reader_line_vectors(inputs)
+            const_extra, field_extra = self.rd_const(rc), self.rd_field(rf)
+            chunk_pad = rk.abs().sum(-1) == 0                                # (B, MK)
+            kv = self.rd_chunk(rk) + self.chunk_pos.weight[:rk.size(1)]
+            req_extra = torch.cat([req_extra, kv], 1)
+            req_pad = torch.cat([torch.zeros_like(chunk_pad[:, :1]), chunk_pad], 1)
+            # the constant reading score: each constant against its best chunk
+            cos = torch.einsum("bmw,bkw->bmk", F.normalize(rc, dim=-1), F.normalize(rk, dim=-1))
+            read_c = cos.masked_fill(chunk_pad.unsqueeze(1), -1.0).max(-1).values
         tv, fv = self.encode_world(inputs["tool_tok"], inputs["field_tok"], inputs["adj"],
-                                   tool_vecs=split_tv)
-        return self.encode_turn(tv, fv, inputs["const_tok"], inputs["req_tok"],
-                                inputs["n_tool"], inputs["n_field"],
-                                inputs["n_const"], inputs.get("reg_tok"),
-                                inputs.get("n_reg_bound"), stage=stage)
+                                   tool_vecs=split_tv, field_extra=field_extra)
+        mem = self.encode_turn(tv, fv, inputs["const_tok"], inputs["req_tok"],
+                               inputs["n_tool"], inputs["n_field"],
+                               inputs["n_const"], inputs.get("reg_tok"),
+                               inputs.get("n_reg_bound"), stage=stage, req_extra=req_extra,
+                               req_extra_pad=req_pad, const_extra=const_extra)
+        mem.read, mem.read_c = read, read_c
+        return mem
 
     # -- the canvas ------------------------------------------------------
 
@@ -535,12 +668,28 @@ class StructuralModel(nn.Module):
                 x = x + self.loop_emb.weight[min(i, self.loop_emb.num_embeddings - 1)]
             for layer in self.dec:
                 x = layer(x, mem.mem, mem.pad, self.causal_mask)
-        h = self.dec_norm(x)
+        return self.head(self.dec_norm(x), table, mem, inputs)
+
+    def head(self, h, table, mem: Memory, inputs: dict):
+        """Logits (B, C, J) from normed decoder states: the keyword rows and
+        the pointer into this task's table (staged.py reads its draft
+        through the same head)."""
+        c = self.c
         kw_logits = self.kw_head(h)                                      # (B, C, K)
         keys = self.k(table[:, c.n_kw:])                                 # (B, J-K, d)
         ptr_logits = torch.einsum("bcd,bjd->bcj", self.q(h), keys) / math.sqrt(c.d)
         if c.split:
             ptr_logits = self._split_tool_logits(h, ptr_logits, mem.stage)
+        if c.reader:
+            MT = c.max_tool
+            w = F.softplus(self.rd_gate(h))                              # (B, C, 1)
+            tools = ptr_logits[..., :MT] + w * mem.read.unsqueeze(1)
+            ptr_logits = torch.cat([tools, ptr_logits[..., MT:]], -1)
+        if c.reader_lines:
+            o, MC = c.max_tool + c.max_field, c.max_const
+            w = F.softplus(self.rd_cgate(h))
+            consts = ptr_logits[..., o:o + MC] + w * mem.read_c.unsqueeze(1)
+            ptr_logits = torch.cat([ptr_logits[..., :o], consts, ptr_logits[..., o + MC:]], -1)
         logits = torch.cat([kw_logits, ptr_logits], -1)
         present = self.present_mask(inputs, logits.device)
         return logits.masked_fill(~present.unsqueeze(1), float("-inf"))
@@ -569,7 +718,11 @@ class StructuralModel(nn.Module):
 
 
 def build_model(c: Config) -> nn.Module:
-    m = StructuralModel(c) if c.binding == "structural" else CanvasModel(c)
+    if c.stages:
+        from staged import StagedModel
+        m = StagedModel(c)
+    else:
+        m = StructuralModel(c) if c.binding == "structural" else CanvasModel(c)
     if c.weights != "fp":
         # Quantisation is part of the architecture, not a post-processing step:
         # decision 3 trains the block in its deployed format from step zero, and

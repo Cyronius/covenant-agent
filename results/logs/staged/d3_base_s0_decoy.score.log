@@ -1,0 +1,45 @@
+
+runs/pod_staged/out/d3_base_s0_decoy.jsonl  (2000 tasks)
+  parse     97.2%
+  compile   77.4%
+  goal      31.9%
+  exact     23.6%
+  of the 2000 scored, 346 are segments of a paused task
+  decoy called  60.0% of 1548 decoyed tasks  (a signature-identical sibling, never in a reference)
+  passes   mean 23.7
+
+  slot accuracy against the reference canvas (same slot):
+    kw      91.1%  (n=25395)
+    tool    40.7%  (n=3377)
+    field   70.6%  (n=2623)
+    const   83.9%  (n=3544)
+    reg     93.0%  (n=9352)
+
+  CALL lines where both reference and generation CALL: 3331
+    same tool     42.3%   chance   2.1%
+      vs shape    42.3%   chance  41.9%  (uniform inside the signature group)
+    same effect   97.9%   chance  29.1%
+
+  by level:
+      0  n=  88  compile   95%  goal   34%
+      1  n=  93  compile   60%  goal   13%
+      2  n=  84  compile   75%  goal   10%
+      3  n=  89  compile   69%  goal    4%
+      4  n=  90  compile   66%  goal   14%
+      5  n= 117  compile   67%  goal   16%
+      6  n=  88  compile   55%  goal    1%
+      7  n= 124  compile   65%  goal   28%
+      8  n=  87  compile   80%  goal   26%
+      9  n=  89  compile   79%  goal    2%
+     10  n= 174  compile   81%  goal   34%
+     11  n= 108  compile   76%  goal   66%
+     12  n= 101  compile   62%  goal    9%
+     13  n=  99  compile   93%  goal   24%
+     14  n=  95  compile   78%  goal   78%
+     15  n=  97  compile   96%  goal   30%
+     16  n=  97  compile   98%  goal   98%
+     17  n=  97  compile  100%  goal   82%
+     18  n=  99  compile   95%  goal   45%
+     19  n=  84  compile   56%  goal    5%
+
+wrote runs\pod_staged\out\d3_base_s0_decoy.score.json

@@ -47,7 +47,7 @@ const WATCHDOG_MS = 5000;
 // the world registry: harness/run.py honors a task's own `sandbox` payload,
 // impl descriptors included, so the whitelist is what actually guards this.
 const ENGINES = new Set(["rpg", "warehouse", "elevator", "cards", "house",
-                         "page", "compute"]);
+                         "page", "compute", "workshop", "rooms", "service"]);
 
 function loadEngine(name) {
   if (!ENGINES.has(name)) {

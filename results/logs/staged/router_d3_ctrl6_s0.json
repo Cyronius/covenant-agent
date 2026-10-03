@@ -1,0 +1,85 @@
+{
+ "ckpt": "runs/pod_staged/runs/d3_ctrl6_s0/best.pt",
+ "cache": "data_cache_d3",
+ "margin": 0.8,
+ "exclude": null,
+ "train": {
+  "pages": 1680,
+  "data": 2000,
+  "obsact": 2000
+ },
+ "test (template give-away)": {
+  "n": 2000,
+  "top1": 1.0,
+  "unsure": 0.0,
+  "right_expert_tried": 1.0,
+  "confusion": {
+   "data->data": 1590,
+   "obsact->obsact": 304,
+   "pages->pages": 106
+  }
+ },
+ "holdout worlds (data)": {
+  "n": 300,
+  "top1": 1.0,
+  "unsure": 0.0,
+  "right_expert_tried": 1.0,
+  "confusion": {
+   "data->data": 300
+  }
+ },
+ "boatyard": {
+  "n": 267,
+  "top1": 1.0,
+  "unsure": 0.0,
+  "right_expert_tried": 1.0,
+  "confusion": {
+   "obsact->obsact": 267
+  }
+ },
+ "rooms_after": {
+  "n": 202,
+  "top1": 1.0,
+  "unsure": 0.0,
+  "right_expert_tried": 1.0,
+  "confusion": {
+   "obsact->obsact": 202
+  }
+ },
+ "house": {
+  "n": 445,
+  "top1": 1.0,
+  "unsure": 0.0,
+  "right_expert_tried": 1.0,
+  "confusion": {
+   "obsact->obsact": 445
+  }
+ },
+ "coursebuilder": {
+  "n": 193,
+  "top1": 1.0,
+  "unsure": 0.0,
+  "right_expert_tried": 1.0,
+  "confusion": {
+   "pages->pages": 193
+  }
+ },
+ "telecom": {
+  "n": 93,
+  "top1": 1.0,
+  "unsure": 0.0,
+  "right_expert_tried": 1.0,
+  "confusion": {
+   "data->data": 93
+  }
+ },
+ "demo": {
+  "n": 70,
+  "top1": 1.0,
+  "unsure": 0.0,
+  "right_expert_tried": 1.0,
+  "confusion": {
+   "data->data": 70
+  }
+ }
+}

@@ -1,0 +1,125 @@
+{
+ "head": "reader/slots/h_tern/head.pt",
+ "body": "ternlight-mini",
+ "mix": [
+  0.366,
+  0.262,
+  0.177,
+  0.195
+ ],
+ "held": {
+  "route": 81.3,
+  "route_n": 6868,
+  "present_acc": 91.6,
+  "cos": {
+   "action": 0.702,
+   "object": 0.636,
+   "condition": 0.63,
+   "time": 0.664,
+   "destination": 0.632,
+   "source": 0.639,
+   "amount": 0.709
+  }
+ },
+ "swap_destination": {
+  "n": 276,
+  "orig": 64.1,
+  "swapped": 35.9,
+  "both": 0.0
+ },
+ "swap_source": {
+  "n": 155,
+  "orig": 71.6,
+  "swapped": 28.4,
+  "both": 0.0
+ },
+ "to_from": {
+  "n": 548,
+  "dest_before": 76.5,
+  "source_after": 42.9,
+  "both": 27.6,
+  "present_dest_before": 9.5,
+  "present_source_after": 14.6
+ },
+ "hand": [
+  {
+   "text": "move it to bob",
+   "flip": "move it from bob",
+   "word": "bob",
+   "dest": [
+    0.729,
+    0.743
+   ],
+   "source": [
+    0.634,
+    0.752
+   ],
+   "object": [
+    0.755,
+    0.747
+   ]
+  },
+  {
+   "text": "assign card 6 to Bob",
+   "flip": "assign Bob to card 6",
+   "word": "Bob",
+   "dest": [
+    0.682,
+    0.682
+   ],
+   "source": [
+    0.587,
+    0.587
+   ],
+   "object": [
+    0.591,
+    0.591
+   ]
+  },
+  {
+   "text": "copy the report from the archive to the inbox",
+   "flip": "copy the report from the inbox to the archive",
+   "word": "the inbox",
+   "dest": [
+    0.54,
+    0.54
+   ],
+   "source": [
+    0.566,
+    0.566
+   ],
+   "object": [
+    0.578,
+    0.578
+   ]
+  }
+ ],
+ "requests": {
+  "route": 75.0,
+  "route_n": 848,
+  "present_acc": 82.3,
+  "cos": {
+   "action": 0.564,
+   "object": 0.553,
+   "destination": 0.5,
+   "time": 0.584,
+   "condition": 0.555,
+   "source": 0.614,
+   "amount": 0.447
+  }
+ },
+ "probe": {
+  "demo": {
+   "whole": 82.1,
+   "slots": 72.6
+  },
+  "plain": {
+   "whole": 55.8,
+   "slots": 65.3
+  },
+  "clut": {
+   "whole": 82.4,
+   "slots": 82.0
+  }
+ }
+}

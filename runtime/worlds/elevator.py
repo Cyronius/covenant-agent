@@ -13,7 +13,7 @@ from __future__ import annotations
 import random
 from typing import List, Optional
 
-from runtime.worlds.decision import Observation, last_turn
+from runtime.worlds.decision import Observation, fit_brief, last_turn
 
 NOW = 1_760_000_000
 
@@ -163,11 +163,17 @@ def aboard(state: dict) -> List[dict]:
     return [r for r in state["entities"]["rider"] if r["aboard"]]
 
 
-def observe(state: dict, vision: Optional[int] = None) -> Observation:
+def observe(state: dict, vision: Optional[int] = None, *,
+            exits: bool = False) -> Observation:
+    """`exits` puts each floor's riders into that floor's constant (who is
+    waiting there, who is due, who gets off there): the brief has no room
+    for the lists, and the floor is what the model names anyway."""
     c = _car(state)
     tick = state.get("tick", 0)
     constants: List[dict] = [
-        {"type": "INT", "value": f, "desc": _floor_desc(f, c["floor"])}
+        {"type": "INT", "value": f,
+         "desc": (_floor_detail(state, f, c["floor"]) if exits
+                  else _floor_desc(f, c["floor"]))}
         for f in range(1, state["floors"] + 1)
     ]
 
@@ -195,7 +201,32 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
         f"Last turn: {last_turn(state)}.\n"
         f"Choose up to {state.get('turn_budget', 2)} actions for this turn."
     )
-    return Observation(request=request, constants=constants)
+    brief = fit_brief(
+        f"Elevator bank, turn {state.get('turn', 0)}, tick {tick}. Get "
+        f"everyone where they are going. The car is on floor {c['floor']} of "
+        f"{state['floors']}, carrying {riding}. A rider waiting over "
+        f"{state['patience']} ticks gives up.",
+        state.get("log") or [],
+        f"Up to {state.get('turn_budget', 2)} actions.")
+    return Observation(request=request, constants=constants, brief=brief)
+
+
+def _floor_detail(state: dict, floor: int, car_floor: int) -> str:
+    tick = state.get("tick", 0)
+    bits = []
+    for r in sorted(waiting(state), key=lambda r: r["id"]):
+        if r["origin"] == floor:
+            bits.append(f"{r['name']} waiting {tick - r['appears']} ticks, "
+                        f"for floor {r['dest']}")
+    for r in sorted(upcoming(state), key=lambda r: r["id"]):
+        if r["origin"] == floor:
+            bits.append(f"{r['name']} due in {r['appears'] - tick} ticks, "
+                        f"for floor {r['dest']}")
+    for r in sorted(aboard(state), key=lambda r: r["id"]):
+        if r["dest"] == floor:
+            bits.append(f"{r['name']} gets off here")
+    return _floor_desc(floor, car_floor) + (
+        ": " + "; ".join(bits) if bits else ": nobody")
 
 
 def _floor_desc(floor: int, car_floor: int) -> str:

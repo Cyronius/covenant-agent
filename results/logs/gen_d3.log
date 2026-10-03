@@ -1,0 +1,10 @@
+d3_train.jsonl: 39034 rows (30000 clt_train + 9034 new)
+ok: no canaries in data/d3_train.jsonl
+  train 36000  val 2000  test 2000  holdout 13633
+  layout: 228 joint ids = 54 keywords + 56 tools + 51 fields + 35 consts + 32 registers
+  train     36000  longest line 78/112  longest request 127/128  longest canvas 53/64
+  val        2000  longest line 78/112  longest request 119/128  longest canvas 51/64
+  test       2000  longest line 78/112  longest request 109/128  longest canvas 51/64
+  holdout   13633  longest line 83/112  longest request 74/128  longest canvas 51/64
+  longest program after splitting rN.Fk: 53 of 64 slots
+=== gen_d3 done Fri Oct  2 20:08:01 CDT 2026

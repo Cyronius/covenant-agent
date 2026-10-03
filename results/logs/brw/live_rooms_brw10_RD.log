@@ -1,0 +1,10 @@
+live_rooms_brw10_RD.jsonl: 6 episodes, world=rooms model=tiny:brw10_RD condition=tiny/brief+letters+enums+exits
+  won            0/6 (0%)
+  died           0/6
+  funnel         left_start_room 0/6  first_step_done 0/6  mission_done 0/6
+  per-turn       first tool 6/120 (5%)   first tool+arg 6/120 (5%)   whole turn 0/120 (0%)
+  calls          132 (114 invalid)
+  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+  movement       114 refused moves (108 repeat last turn's), 0 into a direction labelled blocked, 0 turns with a truncated request
+  tokens_out p50 4   gen_ms p50 75
+  finish_reason  {'stop': 120}

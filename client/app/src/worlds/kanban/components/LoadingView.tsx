@@ -1,28 +1,21 @@
 import { Fragment } from 'react';
 import type { ModelStatus } from '../hooks/useAgentRun';
 
-const STEPS: { key: 'grammar' | 'model' | 'ready'; label: string }[] = [
-  { key: 'grammar', label: 'Grammar' },
-  { key: 'model', label: 'Model weights' },
+const STEPS: { key: 'model' | 'ready'; label: string }[] = [
+  { key: 'model', label: 'Planner' },
   { key: 'ready', label: 'Ready' },
 ];
 
 function stepState(status: ModelStatus, key: string): 'done' | 'active' | 'pending' {
   if (status.phase === 'ready') return key === 'ready' ? 'active' : 'done';
   if (status.phase !== 'loading') return 'pending';
-  const order = ['grammar', 'model', 'ready'];
-  const cur = order.indexOf(status.stage);
-  const idx = order.indexOf(key);
-  if (idx < cur) return 'done';
-  if (idx === cur) return 'active';
-  return 'pending';
+  return key === 'model' ? 'active' : 'pending';
 }
 
 function stageLine(status: ModelStatus): string {
   if (status.phase === 'error') return status.message;
-  if (status.phase === 'ready') return `Ready · ${status.backend} · ${Math.round(status.loadMs)}ms load`;
-  if (status.stage === 'grammar') return 'Fetching the grammar…';
-  return 'Loading model weights — first run pulls ~800MB from the local dev server, give it a minute.';
+  if (status.phase === 'ready') return `Ready · ${status.model} · ${Math.round(status.loadMs)}ms load`;
+  return 'Loading the planner on the dev server…';
 }
 
 function SproutIcon() {

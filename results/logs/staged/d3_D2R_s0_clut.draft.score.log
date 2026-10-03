@@ -1,0 +1,44 @@
+
+runs/pod_staged/out/d3_D2R_s0_clut.draft.jsonl  (2000 tasks)
+  parse     90.0%
+  compile   69.1%
+  goal      47.2%
+  exact     40.6%
+  of the 2000 scored, 346 are segments of a paused task
+  passes   mean 23.7
+
+  slot accuracy against the reference canvas (same slot):
+    kw      93.0%  (n=25395)
+    tool    87.4%  (n=3377)
+    field   72.2%  (n=2623)
+    const   73.0%  (n=3544)
+    reg     95.1%  (n=9352)
+
+  CALL lines where both reference and generation CALL: 3303
+    same tool     89.6%   chance   4.6%
+      vs shape    89.6%   chance 100.0%  (uniform inside the signature group)
+    same effect   97.9%   chance  31.5%
+
+  by level:
+      0  n=  88  compile   90%  goal   44%
+      1  n=  93  compile   70%  goal   58%
+      2  n=  84  compile   58%  goal   37%
+      3  n=  89  compile   12%  goal    3%
+      4  n=  90  compile   63%  goal   44%
+      5  n= 117  compile   35%  goal   14%
+      6  n=  88  compile   53%  goal   24%
+      7  n= 124  compile   56%  goal   41%
+      8  n=  87  compile   74%  goal   48%
+      9  n=  89  compile   72%  goal   24%
+     10  n= 174  compile   74%  goal   52%
+     11  n= 108  compile   73%  goal   69%
+     12  n= 101  compile   61%  goal   38%
+     13  n=  99  compile   90%  goal   39%
+     14  n=  95  compile   62%  goal   62%
+     15  n=  97  compile   98%  goal   63%
+     16  n=  97  compile   90%  goal   87%
+     17  n=  97  compile  100%  goal   89%
+     18  n=  99  compile   94%  goal   63%
+     19  n=  84  compile   54%  goal   39%
+
+wrote runs\pod_staged\out\d3_D2R_s0_clut.draft.score.json

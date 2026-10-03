@@ -213,12 +213,18 @@ WORLD["default_state"] = new_state()
 class Observation:
     """What one turn looks like to the model, plus the structured form the UI
     draws its fog from. `memory` is the updated seen-set: the caller writes it
-    back to state["memory"] (perception is otherwise pure)."""
+    back to state["memory"] (perception is otherwise pure).
+
+    `brief` is the request for the tiny planner: one line, no grid, short
+    enough for its 128-token request budget (the grid alone would not fit,
+    and it cannot read one). The situation it leaves out reaches that
+    planner through the constants' descriptions instead."""
     request: str
     constants: List[dict]
     window: List[str]
     nearby: List[dict]
     memory: List[str]
+    brief: str = ""
 
 
 def _player(state: dict) -> dict:
@@ -262,6 +268,94 @@ def _visible(state: dict, vision: int) -> dict:
     }
 
 
+STEP = {"north": (0, -1), "south": (0, 1), "east": (1, 0), "west": (-1, 0)}
+
+
+def _exit_desc(state: dict, direction: str, vis: dict) -> str:
+    """What is one step away in `direction`, as a direction constant's
+    description. The ASCII window says the same thing, but only to a reader
+    that lines up columns across three lines of flattened text, and the
+    tuned planners do not (.claude/plans/rpg-exits-perception.md). Kept to
+    one short sentence so a planner that trims descriptions keeps all of it."""
+    p = _player(state)
+    dx, dy = STEP[direction]
+    x, y = p["x"] + dx, p["y"] + dy
+    for e in vis["enemy"]:
+        if (e["x"], e["y"]) == (x, y):
+            return f"{direction}: {e['kind']} {e['id']}, blocked"
+    for d in vis["door"]:
+        if (d["x"], d["y"]) == (x, y):
+            if d["open"]:
+                return f"{direction}: open door, you can walk here"
+            word = "locked" if d["locked"] else "shut"
+            return f"{direction}: {word} door {d['id']}, blocked until opened"
+    tile = _tile(state, x, y)
+    if tile == WALL:
+        return f"{direction}: wall, blocked"
+    if tile == EXIT:
+        return f"{direction}: stairs down, you can walk here"
+    for i in vis["item"]:
+        if (i["x"], i["y"]) == (x, y):
+            return f"{direction}: floor with a {i['kind']}, you can walk here"
+    return f"{direction}: floor, you can walk here"
+
+
+def _paths(state: dict, vis: dict, vision: int) -> dict:
+    """Moves to reach each visible thing, and the first move, found by a
+    breadth-first search over the window only, so nothing outside the view
+    leaks. "Reach" is standing next to an enemy or door and standing on an
+    item. {id: (moves, first direction)}; an id is absent when no path
+    exists inside the window."""
+    p = _player(state)
+    blocked = {(e["x"], e["y"]) for e in vis["enemy"]}
+    blocked |= {(d["x"], d["y"]) for d in vis["door"] if not d["open"]}
+
+    def inside(x, y):
+        return abs(x - p["x"]) <= vision and abs(y - p["y"]) <= vision
+
+    start = (p["x"], p["y"])
+    first = {start: None}
+    dist = {start: 0}
+    frontier = [start]
+    while frontier:
+        nxt = []
+        for x, y in frontier:
+            for name in DIRECTIONS:
+                sx, sy = STEP[name]
+                cell = (x + sx, y + sy)
+                if cell in dist or not inside(*cell) or cell in blocked \
+                        or _tile(state, *cell) == WALL:
+                    continue
+                dist[cell] = dist[(x, y)] + 1
+                first[cell] = first[(x, y)] or name
+                nxt.append(cell)
+        frontier = nxt
+
+    out = {}
+    for e in vis["enemy"] + vis["door"]:
+        goals = [(e["x"] + sx, e["y"] + sy) for sx, sy in STEP.values()]
+        best = min((c for c in goals if c in dist), key=lambda c: dist[c],
+                   default=None)
+        if best is not None:
+            out[e["id"]] = (dist[best], first[best])
+    for i in vis["item"]:
+        cell = (i["x"], i["y"])
+        if cell in dist:
+            out[i["id"]] = (dist[cell], first[cell])
+    return out
+
+
+def _path_words(pid: str, paths: dict) -> str:
+    """", 3 moves to reach, first move north" — or nothing when already
+    there, or ", no path in view"."""
+    if pid not in paths:
+        return ", no path in view"
+    moves, direction = paths[pid]
+    if moves == 0:
+        return ""
+    return f", {moves} move{'s' if moves != 1 else ''} to reach, first move {direction}"
+
+
 def _glyph(state: dict, x: int, y: int, vis: dict) -> str:
     p = _player(state)
     if x == p["x"] and y == p["y"]:
@@ -279,15 +373,26 @@ def _glyph(state: dict, x: int, y: int, vis: dict) -> str:
     return t if t in (WALL, EXIT) else "."
 
 
-def observe(state: dict, vision: Optional[int] = None) -> Observation:
+def observe(state: dict, vision: Optional[int] = None, *, exits: bool = False,
+            paths: bool = False) -> Observation:
     """Render one turn: the request text the model reads and the constants it
     may name. Only things it can see (or carries) become constants — the
     kanban lesson (`relevant_cards`, server/dev_server.py): dumping every
     entity made the tuned model pick the wrong one. Directions come first so
-    the oracle's $0..$3 are stable."""
+    the oracle's $0..$3 are stable.
+
+    `exits`: each direction constant says what is one step that way (wall,
+    floor, door, enemy) instead of only which way it points. `paths`: each
+    visible thing also says how many moves reach it and which move comes
+    first, searched inside the window. Both off reproduces the observation
+    every stored E-rpg run was scored on, byte for byte."""
     p = _player(state)
     vision = state.get("vision", 2) if vision is None else vision
     vis = _visible(state, vision)
+    routes = _paths(state, vis, vision) if paths else None
+
+    def route(pid: str) -> str:
+        return _path_words(pid, routes) if routes is not None else ""
 
     window = []
     for y in range(p["y"] - vision, p["y"] + vision + 1):
@@ -295,7 +400,9 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
                               for x in range(p["x"] - vision, p["x"] + vision + 1)))
 
     constants: List[dict] = [
-        {"type": "STR", "value": d, "desc": DIR_DESC[d]} for d in DIRECTIONS
+        {"type": "STR", "value": d,
+         "desc": _exit_desc(state, d, vis) if exits else DIR_DESC[d]}
+        for d in DIRECTIONS
     ]
     nearby: List[dict] = []
 
@@ -304,7 +411,7 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
         adj = abs(dx) + abs(dy) == 1
         where = _offset_words(dx, dy)
         desc = (f"{e['kind']} {where}, {'adjacent' if adj else 'not adjacent'}"
-                f", {e['hp']} HP")
+                f", {e['hp']} HP{route(e['id']) if not adj else ''}")
         constants.append({"type": "ID:enemy", "value": e["id"], "desc": desc})
         nearby.append({"id": e["id"], "kind": e["kind"], "type": "enemy",
                        "dx": dx, "dy": dy, "adjacent": adj, "hp": e["hp"]})
@@ -313,7 +420,8 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
         dx, dy = i["x"] - p["x"], i["y"] - p["y"]
         here = dx == 0 and dy == 0
         desc = (f"{i['kind']} on the floor "
-                f"{'here, on your tile' if here else _offset_words(dx, dy)}")
+                f"{'here, on your tile' if here else _offset_words(dx, dy)}"
+                f"{route(i['id']) if not here else ''}")
         constants.append({"type": "ID:item", "value": i["id"], "desc": desc})
         nearby.append({"id": i["id"], "kind": i["kind"], "type": "item",
                        "dx": dx, "dy": dy, "here": here})
@@ -324,7 +432,8 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
         state_word = ("open" if d["open"]
                       else "locked" if d["locked"] else "shut")
         desc = (f"{state_word} door {_offset_words(dx, dy)}, "
-                f"{'adjacent' if adj else 'not adjacent'}")
+                f"{'adjacent' if adj else 'not adjacent'}"
+                f"{route(d['id']) if not adj else ''}")
         constants.append({"type": "ID:door", "value": d["id"], "desc": desc})
         nearby.append({"id": d["id"], "type": "door", "dx": dx, "dy": dy,
                        "adjacent": adj, "locked": d["locked"], "open": d["open"]})
@@ -341,6 +450,8 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
 
     visible_ids = {e["id"] for g in ("enemy", "item", "door") for e in vis[g]}
     remembered = _remembered_line(state, memory, visible_ids)
+    remembered_brief = _remembered_line(state, memory, visible_ids,
+                                        groups=("item", "door"))
     carrying = ", ".join(sorted(i["kind"] for i in vis["held"])) or "nothing"
     nearby_line = "; ".join(
         f"{n.get('kind', 'door')} {n['id']} "
@@ -362,12 +473,52 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
         f"Last turn: {last}.\n"
         f"Choose up to {state.get('turn_budget', 3)} actions for this turn."
     )
+    brief = _brief(f"Turn {state.get('turn', 0)}, "
+                   f"{p['hp']}/{p['max_hp']} HP, carrying {carrying}. "
+                   f"{state.get('quest', '')} ",
+                   remembered_brief.split("; ") if remembered_brief != "nothing" else [],
+                   state.get("log") or [],
+                   f"Up to {state.get('turn_budget', 3)} actions.")
     return Observation(request=request, constants=constants, window=window,
-                       nearby=nearby, memory=memory)
+                       nearby=nearby, memory=memory, brief=brief)
+
+
+# The tiny planner keeps 128 request tokens and its tokenizer averages about
+# 2.4 characters a token on this text, so 280 characters leaves headroom.
+# tests/test_tiny_planner_demo.py checks the worst case with the real
+# tokenizer.
+BRIEF_CHARS = 280
+
+
+def _brief(head: str, seen: List[str], log: List[str], tail: str) -> str:
+    """The first version that fits BRIEF_CHARS, giving up detail in this
+    order: last turn's events past the first (a busy turn logs up to six),
+    then the remembered things past the first two."""
+    def events(keep: int) -> str:
+        if not log:
+            return "nothing yet"
+        more = len(log) - keep
+        return "; ".join(log[:keep]) + (f"; and {more} more" if more > 0 else "")
+
+    def compose(n_seen: int, keep: int) -> str:
+        shown = seen[:n_seen]
+        return (head
+                + (f"Seen earlier: {'; '.join(shown)}. " if shown else "")
+                + f"Last turn: {events(keep)}. {tail}")
+
+    tries = [(len(seen), 3), (len(seen), 2), (len(seen), 1), (2, 1), (1, 1), (0, 1)]
+    for n_seen, keep in tries:
+        text = compose(n_seen, keep)
+        if len(text) <= BRIEF_CHARS:
+            return text
+    return text
 
 
 def _remembered_line(state: dict, memory: List[str],
-                     visible_ids: set) -> str:
+                     visible_ids: set, groups=("enemy", "item", "door")) -> str:
+    """Things seen before and out of view now. The brief passes
+    groups=("item", "door"): a goblin's remembered spot is stale by the next
+    turn, and the brief has a fixed token budget."""
     ents = state["entities"]
     by_id = {}
     for group in ("enemy", "item", "door"):
@@ -379,6 +530,8 @@ def _remembered_line(state: dict, memory: List[str],
         if eid in visible_ids or eid not in by_id:
             continue
         group, e = by_id[eid]
+        if group not in groups:
+            continue
         if group == "item" and e.get("held"):
             continue
         if group == "enemy" and e["hp"] <= 0:

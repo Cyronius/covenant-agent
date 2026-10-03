@@ -1,0 +1,5 @@
+
+500 tasks: goal 332/500 (66.4%), compile 452/500, parse 477/500
+of the 45 that pause: 27/45 got a second segment at all, 19/45 reached the goal
+
+wrote 500 rows -> C:/code/covenant-agent/results/logs/clt/s500_clt_clt_RDs1.jsonl

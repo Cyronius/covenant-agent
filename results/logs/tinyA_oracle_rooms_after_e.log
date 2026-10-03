@@ -1,0 +1,11 @@
+tinyA_oracle_rooms_after_e.jsonl: 6 episodes, world=rooms_after model=oracle condition=oracle+exits
+  won            6/6 (100%)
+  died           0/6
+  turns to win   p50 7
+  funnel         left_start_room 6/6  first_step_done 6/6  mission_done 6/6
+  per-turn       first tool 42/42 (100%)   first tool+arg 42/42 (100%)   whole turn 42/42 (100%)
+  calls          108 (0 invalid)
+  turns          42 (0 did not compile, 0 abstained, 0 hit the action budget)
+  movement       0 refused moves (0 repeat last turn's), 6 into a direction labelled blocked, 0 turns with a truncated request
+  tokens_out p50 0   gen_ms p50 0
+  finish_reason  {'oracle': 42}

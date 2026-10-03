@@ -1,0 +1,7 @@
+rooms: 20/20 episodes, 81 turns
+wrote 81 turns -> data\rmb_shards\episodes_4.jsonl
+  rooms: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+signature uniqueness: 0.0% full, 0.0% types-only, over 196 reference CALLs (9.0 tools/task)
+reaction: of 5 turns that open with a failure (4, 80.0%, caused by an aimed move), 0 (0.0%) are labelled with the move that just failed, 4 (80.0%) act on the same thing another way, and 4 (80.0%) answer it - by name or on the same object
+    aimed:same_obj            4 failures, 4/4 answered
+    random_illegal            1 failures, 0/1 answered

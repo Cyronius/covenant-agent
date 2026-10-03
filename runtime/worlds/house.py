@@ -12,7 +12,7 @@ from __future__ import annotations
 import random
 from typing import List, Optional
 
-from runtime.worlds.decision import Observation, last_turn
+from runtime.worlds.decision import Observation, fit_brief, last_turn
 
 NOW = 1_760_000_000
 
@@ -192,7 +192,10 @@ def ways_from(state: dict, rid: str) -> List[dict]:
     return [w for w in state["entities"]["way"] if w["room"] == rid]
 
 
-def observe(state: dict, vision: Optional[int] = None) -> Observation:
+def observe(state: dict, vision: Optional[int] = None, *,
+            exits: bool = False) -> Observation:
+    """`exits` adds where each way leads to its constant, which the brief
+    leaves out of the request."""
     p = _explorer(state)
     room = room_by_id(state, p["room"])
     ways = sorted(ways_from(state, p["room"]), key=lambda w: w["id"])
@@ -203,9 +206,10 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
     constants: List[dict] = []
     for w in ways:
         shut = ("locked" if w["locked"] else "shut" if w["shut"] else "open")
+        to = (f", to the {room_by_id(state, w['to'])['name']}" if exits else "")
         constants.append({"type": "ID:way", "value": w["id"],
                           "desc": f"the {w['heading']} way out of the "
-                                  f"{room['name']}, {shut}"})
+                                  f"{room['name']}{to}, {shut}"})
     for t in sorted(here, key=lambda t: t["id"]):
         constants.append({"type": "ID:thing", "value": t["id"],
                           "desc": f"{t['name']}, lying in the {room['name']}"})
@@ -233,7 +237,13 @@ def observe(state: dict, vision: Optional[int] = None) -> Observation:
         f"Last turn: {last_turn(state)}.\n"
         f"Choose up to {state.get('turn_budget', 3)} actions for this turn."
     )
-    return Observation(request=request, constants=constants)
+    brief = fit_brief(
+        f"You are in the {room['name']}. Turn {state.get('turn', 0)}. "
+        f"{state.get('quest', '')} Carrying: {carrying}. Dark rooms need a "
+        f"lit lamp in hand; the {goal_name} is dark.",
+        state.get("log") or [],
+        f"Up to {state.get('turn_budget', 3)} actions.")
+    return Observation(request=request, constants=constants, brief=brief)
 
 
 def legal_actions(state: dict) -> List[str]:

@@ -29,10 +29,16 @@ from typing import List
 @dataclass
 class Observation:
     """One turn as the model sees it. `extra` carries whatever a world's UI
-    or suite wants alongside (the RPG's window and nearby list)."""
+    or suite wants alongside (the RPG's window and nearby list).
+
+    `brief` is the same turn for the tiny planner: one line, within its
+    request budget (data/gen/brief_budget.py), with the situation carried by
+    the constants' descriptions rather than the request
+    (.claude/plans/borrowed-worlds.md, "Rendering rules")."""
     request: str
     constants: List[dict]
     extra: dict = field(default_factory=dict)
+    brief: str = ""
 
 
 def offset_words(dx: int, dy: int, axes=("east", "west", "south", "north"),
@@ -59,3 +65,33 @@ def turn_header(state: dict, title: str) -> str:
 
 def last_turn(state: dict) -> str:
     return "; ".join(state.get("log") or []) or "nothing yet"
+
+
+# The tiny planner keeps 128 request tokens; its tokenizer averages about 2.4
+# characters a token on these observations, so 280 characters leaves headroom
+# (runtime/worlds/rpg.py BRIEF_CHARS; data/gen/brief_budget.py checks it).
+BRIEF_CHARS = 280
+
+
+def fit_brief(head: str, log: List[str], tail: str,
+              cap: int = BRIEF_CHARS) -> str:
+    """`head` + "Last turn: <events>. " + `tail`, within `cap` characters.
+    A busy turn logs several events; when they do not all fit, the others
+    go first and every `failed:` event stays, in order, because the failure
+    is what the next move has to answer."""
+    def events(keep: int) -> str:
+        if not log:
+            return "nothing yet"
+        kept, others = [], 0
+        for e in log:
+            if str(e).startswith("failed:") or others < keep:
+                kept.append(str(e))
+                others += not str(e).startswith("failed:")
+        more = len(log) - len(kept)
+        return "; ".join(kept) + (f"; and {more} more" if more > 0 else "")
+
+    for keep in (len(log), 3, 2, 1, 0):
+        text = f"{head} Last turn: {events(keep)}. {tail}"
+        if len(text) <= cap:
+            return text
+    return text

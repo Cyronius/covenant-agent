@@ -1,13 +1,21 @@
-warehouse_robot: 20/20 episodes, 200 turns
-elevator: 20/20 episodes, 364 turns
-cards: 20/20 episodes, 545 turns
-app_settings: 20/20 episodes, 621 turns
-app_checkout: 20/20 episodes, 727 turns
-app_ticket: 20/20 episodes, 797 turns
-wrote 797 turns -> data\fam_shards\episodes_0.jsonl
-  warehouse_robot: 9/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+warehouse_robot: 20/20 episodes, 203 turns
+elevator: 20/20 episodes, 339 turns
+cards: 20/20 episodes, 495 turns
+app_settings: 20/20 episodes, 576 turns
+app_checkout: 20/20 episodes, 680 turns
+app_ticket: 20/20 episodes, 765 turns
+wrote 765 turns -> data\fam_shards\episodes_0.jsonl
+  7 turns dropped (the sandbox refused the oracle's program), e.g. ['warehouse_robot#20260925t11', 'warehouse_robot#20260925t12', 'warehouse_robot#20260925t13']
+  warehouse_robot: 14/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   elevator: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   cards: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_settings: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_checkout: 19/20 episodes finished (off-path detours make a clean finish the exception, not the target)
   app_ticket: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+signature uniqueness: 64.4% full, 64.4% types-only, over 1170 reference CALLs (8.0 tools/task)
+--allow-signature-unique passed: the ceiling below was not enforced, and every row's provenance is stamped signature_unique_allowed so this file can never be mistaken for one that passed it.
+reaction: of 53 turns that open with a failure (20, 37.7%, caused by an aimed move), 0 (0.0%) are labelled with the move that just failed, 15 (28.3%) act on the same thing another way, and 20 (37.7%) answer it - by name or on the same object
+    aimed:on_board           14 failures, 14/14 answered
+    aimed:same_obj            6 failures, 6/6 answered
+    legal                     2 failures, 0/2 answered
+    random_illegal           31 failures, 0/31 answered

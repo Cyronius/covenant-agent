@@ -1,0 +1,16 @@
+tern-electra:e1: held-out spans vs the parser: presence 95.2%, exact 87.5%, overlap 0.917 (n=5865)
+swap object<->destination (n=276): the destination span is exactly the right words 14.9% before, 9.8% after, both 8.0%
+swap object<->source (n=155): the source span is exactly the right words 43.2% before, 32.3% after, both 24.5%
+to->from (n=548): destination exact before 16.8%, source exact and no destination after 33.9%, both 15.7%
+  'move it to bob': {'action': 'move', 'object': 'it'}
+  'move it from bob': {'action': 'move', 'object': 'it', 'source': 'bob'}
+  'assign card 6 to Bob': {'action': 'assign', 'destination': 'Bob'}
+  'assign Bob to card 6': {'action': 'assign', 'object': 'Bob', 'destination': 'card'}
+  'copy the report from the archive to the inbox': {'action': 'copy', 'object': 'the report', 'source': 'the archive'}
+  'copy the report from the inbox to the archive': {'action': 'copy', 'object': 'the report', 'source': 'the inbox'}
+  'send priya the list': {'action': 'send', 'object': 'the list'}
+  'delete the cards that are not done': {'action': 'delete', 'object': 'the cards', 'condition': 'that are not done'}
+  'list orders placed before March': {'time': 'before March'}
+our requests (never trained on) vs the parser: presence 90.2%, exact 68.7%, overlap 0.772
+constant probe (pair): demo slots 79.7 (+chunks 83.1)  plain slots 63.3 (+chunks 67.7)  clut slots 84.5 (+chunks 87.8)   (Ternlight 4-word chunks: clut 87.1, plain 66.6, demo 84.8; parser spans 85.1 / 66.0 / 82.1)
+wrote ../../results/logs/slots/tagcheck_tern_e1.json

@@ -1,0 +1,12 @@
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 36120.24it/s]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|##########| 103/103 [00:00<00:00, 3502.51it/s]
+electra-small[:12]: held-out role routing 96.0% (n=6868), presence 96.9%, slot cosine {'action': 0.853, 'object': 0.7, 'condition': 0.676, 'time': 0.743, 'destination': 0.677, 'source': 0.689, 'amount': 0.771}
+swap object<->destination (n=276): the destination slot follows its words 94.9% before, 86.6% after, both 81.5%  (chance 25% for both)
+swap object<->source (n=155): the source slot follows its words 93.5% before, 93.5% after, both 87.1%  (chance 25% for both)
+to->from (n=548): words in the destination slot before 97.1%, in the source slot after 91.1%, both 88.9%; present: destination before 75.2%, source after 75.9%
+  'move it to bob' / 'move it from bob': 'bob' vs destination [0.5, 0.474], source [0.468, 0.503], object [0.371, 0.369]
+  'assign card 6 to Bob' / 'assign Bob to card 6': 'Bob' vs destination [0.484, 0.341], source [0.439, 0.385], object [0.397, 0.498]
+  'copy the report from the archive to the inbox' / 'copy the report from the inbox to the archive': 'the inbox' vs destination [0.581, 0.436], source [0.514, 0.587], object [0.416, 0.418]
+our requests (parsed, never trained on): routing 93.0% (n=848), presence 92.8%
+constant probe (pair): demo whole 72.3 slots 72.6  plain whole 43.5 slots 57.9  clut whole 72.8 slots 73.0   (Ternlight 4-word chunks: clut 87.1, plain 66.6, demo 84.8)
+wrote ../../results/logs/slots/check_electra.json

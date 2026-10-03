@@ -1,0 +1,24 @@
+base 30000 rows; new 9034 rows: famb 6385, wsb 916, rmb 933, svr 400, sva 400
+brw10_train.jsonl: 30000 rows, 3000 new (10.0%)
+brw20_train.jsonl: 30000 rows, 6001 new (20.0%)
+brw30_train.jsonl: 30000 rows, 9034 new (30.1%)
+ok: no canaries in data/brw10_train.jsonl, data/brw20_train.jsonl, data/brw30_train.jsonl
+  layout: 224 joint ids = 54 keywords + 56 tools + 51 fields + 31 consts + 32 registers
+  train     27000  longest line 78/112  longest request 126/128  longest canvas 53/64
+  val        1500  longest line 78/112  longest request 124/128  longest canvas 53/64
+  test       1500  longest line 78/112  longest request 107/128  longest canvas 51/64
+  holdout   13633  longest line 83/112  longest request 74/128  longest canvas 51/64
+  longest program after splitting rN.Fk: 53 of 64 slots
+  layout: 222 joint ids = 54 keywords + 56 tools + 51 fields + 29 consts + 32 registers
+  train     27000  longest line 78/112  longest request 128/128  longest canvas 53/64
+  val        1500  longest line 78/112  longest request 117/128  longest canvas 51/64
+  test       1501  longest line 78/112  longest request 126/128  longest canvas 51/64
+  holdout   13633  longest line 83/112  longest request 74/128  longest canvas 51/64
+  longest program after splitting rN.Fk: 53 of 64 slots
+  layout: 228 joint ids = 54 keywords + 56 tools + 51 fields + 35 consts + 32 registers
+  train     27000  longest line 78/112  longest request 128/128  longest canvas 53/64
+  val        1500  longest line 78/112  longest request 108/128  longest canvas 51/64
+  test       1500  longest line 78/112  longest request 112/128  longest canvas 51/64
+  holdout   13633  longest line 83/112  longest request 74/128  longest canvas 51/64
+  longest program after splitting rN.Fk: 53 of 64 slots
+=== gen_brw done Tue Sep 29 21:43:56 CDT 2026

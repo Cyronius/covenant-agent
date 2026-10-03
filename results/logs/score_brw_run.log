@@ -1,0 +1,77 @@
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw10_RD_clut.score.log:  goal      58.2%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw10_RD_decoy.score.log:  goal      43.4%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw10_RD_flip.score.log:  goal      36.4%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw10_RD_plain.score.log:  goal      64.4%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw10_RD_test.score.log:  goal      85.1%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw20_RD_clut.score.log:  goal      55.5%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw20_RD_decoy.score.log:  goal      43.1%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw20_RD_flip.score.log:  goal      35.2%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw20_RD_plain.score.log:  goal      64.6%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw20_RD_test.score.log:  goal      78.6%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw30_RD_clut.score.log:  goal      51.2%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw30_RD_decoy.score.log:  goal      43.9%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw30_RD_flip.score.log:  goal      33.9%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw30_RD_plain.score.log:  goal      63.3%
+/c/code/covenant-agent/models/tiny/runs/pod_brw/out/brw30_RD_test.score.log:  goal      70.7%
+/c/code/covenant-agent/results/logs/brw/demo_brw10_RD.log:70 tasks: goal 10/70 (14.3%), compile 46/70, parse 70/70
+/c/code/covenant-agent/results/logs/brw/demo_brw20_RD.log:70 tasks: goal 15/70 (21.4%), compile 65/70, parse 70/70
+/c/code/covenant-agent/results/logs/brw/demo_brw30_RD.log:70 tasks: goal 15/70 (21.4%), compile 65/70, parse 70/70
+/c/code/covenant-agent/results/logs/brw/e_brief_boatyard_brw10_RD.log:267 tasks: goal 25/267 (9.4%), compile 267/267, parse 267/267
+/c/code/covenant-agent/results/logs/brw/e_brief_boatyard_brw20_RD.log:267 tasks: goal 30/267 (11.2%), compile 267/267, parse 267/267
+/c/code/covenant-agent/results/logs/brw/e_brief_boatyard_brw30_RD.log:267 tasks: goal 35/267 (13.1%), compile 267/267, parse 267/267
+/c/code/covenant-agent/results/logs/brw/e_brief_boatyard_clt_RD.log:267 tasks: goal 1/267 (0.4%), compile 209/267, parse 209/267
+/c/code/covenant-agent/results/logs/brw/e_brief_house_brw10_RD.log:445 tasks: goal 103/445 (23.1%), compile 359/445, parse 445/445
+/c/code/covenant-agent/results/logs/brw/e_brief_house_brw20_RD.log:445 tasks: goal 66/445 (14.8%), compile 404/445, parse 445/445
+/c/code/covenant-agent/results/logs/brw/e_brief_house_brw30_RD.log:445 tasks: goal 40/445 (9.0%), compile 325/445, parse 445/445
+/c/code/covenant-agent/results/logs/brw/e_brief_house_clt_RD.log:445 tasks: goal 0/445 (0.0%), compile 5/445, parse 445/445
+/c/code/covenant-agent/results/logs/brw/e_brief_rooms_after_brw10_RD.log:202 tasks: goal 24/202 (11.9%), compile 202/202, parse 202/202
+/c/code/covenant-agent/results/logs/brw/e_brief_rooms_after_brw20_RD.log:202 tasks: goal 25/202 (12.4%), compile 202/202, parse 202/202
+/c/code/covenant-agent/results/logs/brw/e_brief_rooms_after_brw30_RD.log:202 tasks: goal 38/202 (18.8%), compile 202/202, parse 202/202
+/c/code/covenant-agent/results/logs/brw/e_brief_rooms_after_clt_RD.log:202 tasks: goal 0/202 (0.0%), compile 146/202, parse 191/202
+/c/code/covenant-agent/results/logs/brw/e_service_telecom_brw10_RD.log:93 tasks: goal 0/93 (0.0%), compile 0/93, parse 86/93
+/c/code/covenant-agent/results/logs/brw/e_service_telecom_brw20_RD.log:93 tasks: goal 0/93 (0.0%), compile 0/93, parse 93/93
+/c/code/covenant-agent/results/logs/brw/e_service_telecom_brw30_RD.log:93 tasks: goal 0/93 (0.0%), compile 11/93, parse 93/93
+/c/code/covenant-agent/results/logs/brw/e_service_telecom_clt_RD.log:93 tasks: goal 0/93 (0.0%), compile 0/93, parse 86/93
+/c/code/covenant-agent/results/logs/brw/s500_clt_brw10_RD.log:500 tasks: goal 308/500 (61.6%), compile 444/500, parse 490/500
+/c/code/covenant-agent/results/logs/brw/s500_clt_brw20_RD.log:500 tasks: goal 296/500 (59.2%), compile 438/500, parse 489/500
+/c/code/covenant-agent/results/logs/brw/s500_clt_brw30_RD.log:500 tasks: goal 270/500 (54.0%), compile 443/500, parse 492/500
+/c/code/covenant-agent/results/logs/brw/s500_s6_brw10_RD.log:500 tasks: goal 350/500 (70.0%), compile 438/500, parse 483/500
+/c/code/covenant-agent/results/logs/brw/s500_s6_brw20_RD.log:500 tasks: goal 345/500 (69.0%), compile 436/500, parse 484/500
+/c/code/covenant-agent/results/logs/brw/s500_s6_brw30_RD.log:500 tasks: goal 350/500 (70.0%), compile 443/500, parse 489/500
+/c/code/covenant-agent/results/logs/brw/live_boatyard_brw10_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_boatyard_brw10_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_boatyard_brw20_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_boatyard_brw20_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_boatyard_brw30_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_boatyard_brw30_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_house_brw10_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_house_brw10_RD.log:  turns          120 (7 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_house_brw20_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_house_brw20_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_house_brw30_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_house_brw30_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_rooms_after_brw10_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_rooms_after_brw10_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_rooms_after_brw20_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_rooms_after_brw20_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_rooms_after_brw30_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_rooms_after_brw30_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_rooms_brw10_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_rooms_brw10_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_rooms_brw20_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_rooms_brw20_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_rooms_brw30_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_rooms_brw30_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_rpg_brw10_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_rpg_brw10_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_rpg_brw20_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_rpg_brw20_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_rpg_brw30_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_rpg_brw30_RD.log:  turns          78 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_workshop_brw10_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_workshop_brw10_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_workshop_brw20_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_workshop_brw20_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+/c/code/covenant-agent/results/logs/brw/live_workshop_brw30_RD.log:  won            0/6 (0%)
+/c/code/covenant-agent/results/logs/brw/live_workshop_brw30_RD.log:  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+=== score_brw done Wed Sep 30 09:54:37 CDT 2026

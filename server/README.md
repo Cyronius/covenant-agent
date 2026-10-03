@@ -8,13 +8,9 @@ rpg, db) and the browser-inference stand-in
 It does these things:
 
 1. **Static file server** for the built app — `client/app/dist`
-   (index.html, `assets/*.js`, `vendor/wllama/*.wasm`, ...), with an SPA
-   fallback to `index.html` for any unmatched GET so `react-router`'s
-   client-side routes (`/kanban`, `/rpg`, `/db`) work on a hard refresh —
-   plus the large GGUF model file served in place from
-   `baselines/qwen/models/` (never copied — it's ~0.8–2GB and gitignored)
-   with `Range:` request support, and the grammar file at
-   `baselines/qwen/agent_core.gbnf`.
+   (index.html, `assets/*.js`, ...), with an SPA fallback to `index.html`
+   for any unmatched GET so `react-router`'s client-side routes (`/kanban`,
+   `/rpg`, `/db`) work on a hard refresh.
 2. **`POST /validate`** — runs generated Agent Core program text through
    the existing Python pipeline (`core.pipeline.build`) and sandbox
    (`harness.run.run_sandbox`), the same path `harness/run.py`'s
@@ -29,7 +25,11 @@ It does these things:
    the map so the client never carries a second copy. `/rpg_prompt {state}`
    is that world's analogue of `/kanban_prompt`: instead of a typed request,
    the request text *is* the rendered observation (`runtime/worlds/rpg.py`'s
-   `observe`), and the constants are the things currently in view. It
+   `observe`, with `exits` on: each direction constant says what is one
+   step that way), and the constants are the things currently in view.
+   `observation.brief` is the one-line request the tiny planner reads (no
+   grid; it fits the planner's 128-token request budget), and
+   `observation.constants` lists each constant's description. It
    returns `{input_text, context, grammar, system, world: "rpg", now, state,
    observation}` (`grammar`/`system` as for `/kanban_prompt` above) —
    feed `input_text` to `buildFullPrompt()`, send `context`/`world`/`now` to
@@ -38,15 +38,11 @@ It does these things:
    window and the relative offsets so a UI can draw the same fog the prompt
    describes rather than reimplementing the rule.
 
-4. **`GET /models` and model switching** — `GET /models` lists the GGUFs in
-   `baselines/qwen/models/` as `{default, loaded, models: [{name, template,
-   tuned, size_mb}]}`. `template` says how a checkpoint wants to be
-   prompted: `qwen` for our own tuned ones (the client builds the ChatML
-   markup they were SFT'd on, byte-identical to the browser path), `chat`
-   for anything else (send `{system, user}` and llama-cpp-python applies the
-   GGUF's own `tokenizer.chat_template`). `POST /plan {"model": name}`
-   switches checkpoint; one planner is loaded at a time and the previous is
-   dropped, since a 2B Q8 is ~2.5 GB.
+4. **`POST /plan` — one planner, no picker.** The server runs one planner
+   for every world: `DEMO_PLANNER` in `dev_server.py`, the newest tiny
+   checkpoint. `--model` or `COVENANT_PLANNER` names another (`tiny:<run>`,
+   or a GGUF path for an experiment) at startup; nothing switches it while
+   the server runs. See "Tiny planners" below.
 
 5. **`POST /kanban_prompt`** — for `client/app/src/worlds/kanban`'s free-typed chat:
    given `{"request": "<anything>", "state": <a kanban board>}`, builds a
@@ -104,8 +100,8 @@ Runnable from any working directory — it resolves the repo root relative
 to its own file location (`server/dev_server.py` → repo root is
 3 levels up), the same convention `harness/run.py` uses.
 
-Startup prints the resolved repo root, static root, models dir, grammar
-file path, and how many tasks were indexed from
+Startup prints the resolved repo root, static root, the planner and writer
+it will load, the grammar file path, and how many tasks were indexed from
 `data/curriculum_tasks.jsonl`.
 
 `index.html` and `src/*` are owned by a parallel workstream and may not
@@ -119,16 +115,10 @@ crashing the server.
   `react-router` owns `/kanban`, `/rpg`, `/db` client-side, so a refresh on
   any of them needs this fallback to work (directory traversal outside
   `client/app/dist/` is rejected with 403)
-- `GET /models/<filename>` → `baselines/qwen/models/<filename>`, served in
-  place with full `Range:` support (`206 Partial Content` +
-  `Content-Range`/`Accept-Ranges`, or a normal `200` whole-file response for
-  a non-range GET)
-- `GET /agent_core.gbnf` → `baselines/qwen/agent_core.gbnf` as `text/plain`
 
-Content-Type is set by extension: `.wasm` → `application/wasm`, `.js`/
-`.mjs` → `text/javascript`, `.json` → `application/json`, `.html` →
-`text/html`, `.gbnf`/unknown → `text/plain`, `.gguf` →
-`application/octet-stream`.
+Content-Type is set by extension: `.js`/`.mjs` → `text/javascript`,
+`.json` → `application/json`, `.html` → `text/html`, unknown →
+`text/plain`.
 
 ## `POST /validate`
 
@@ -268,21 +258,33 @@ Also spot-checked: malformed program text returns
 200, not a crash), and an unknown `task_id` returns
 `{"status": "server_error", "error": {"code": "UNKNOWN_TASK", ...}}`.
 
-## `POST /plan` and `GET /plan/status` — server-side inference
+## `POST /plan` and `GET /plan/status` — the planner
 
-Added 2026-09-02 (plan `s2-consolidated-program` §A7). Runs the same GGUF
-and `agent_core.gbnf` the browser path uses, through llama-cpp-python on
-this machine's CPU. The client builds the prompt exactly as it does for
-the browser path and posts it, so both paths send byte-identical text.
+One planner serves every world, chosen at startup: `DEMO_PLANNER` in
+`dev_server.py` (the newest tiny checkpoint, `tiny:clt_RD` as of
+2026-09-29), overridden by `--model` or `COVENANT_PLANNER` with another
+`tiny:<run>` or a GGUF path. There is no model list and no switching while
+the server runs (plan `rpg-exits-perception` part 1). The client
+(`client/shared/planner.ts`) sends the task and the prompt text together;
+the server uses whichever its planner reads.
 
-- `GET /plan/status` → `{available, model, loaded, reason?}`
-- `POST /plan {"warm": true}` → loads the model (first call), returns status
-- `POST /plan {"prompt": "<full chat-formatted prompt>", "max_tokens"?: 250, "stop"?: ["<|im_end|>"]}`
-  → `{text, finish_reason, tokens_out, tokens_in, gen_ms, model}`
+- `GET /plan/status` → `{available, model, backend: "tiny" | "gguf", loaded, reason?}`
+- `POST /plan {"warm": true}` → loads the planner (first call), returns status
+- a tiny planner: `POST /plan {"request", "context", "registers"?, "pause_types"?}`
+  → `{text, gen_ms, tries, model, source, request_tokens, truncated}`.
+  `registers` / `pause_types` are what `/validate` returned at the last
+  PAUSE; `source` is the serialized input the planner read; `tries` is how
+  many decodes backoff used (1 = greedy compiled). Line breaks in `request`
+  become spaces (the serialized input is line-oriented), and `truncated`
+  says the request went past the planner's 128-token budget, whose tail it
+  never reads. The demo shows a note when that happens.
+- a GGUF planner: `POST /plan {"prompt", "grammar"?, "max_tokens"?: 250, "stop"?}`
+  → `{text, finish_reason, tokens_out, tokens_in, gen_ms, model}`. `--ctx N`
+  sets its context size; generation is serialized with a lock.
 
-`--model PATH` picks the checkpoint (default `qwen3.5-0.8b-s1-q8.gguf`);
-`--ctx N` sets the context size. Generation is serialized with a lock
-(llama.cpp contexts are not thread-safe).
+Tiny checkpoints are listed in `server/tiny_planner.py` (`TINY_MODELS`). A
+`--reader` checkpoint (`clt_RD`, `fdc25_RD`) runs Ternlight live, which
+needs node and a one-time `cd models/tiny/reader && npm install`.
 
 ## `POST /write` — the writer tool's backend
 
@@ -294,4 +296,6 @@ no server (the eval harness), the sandbox returns a deterministic stub
 Backed by `--writer-model` (default: the untuned `Qwen3.5-0.8B-Q8_0.gguf`,
 a second llama.cpp instance). The merged S1 planner checkpoint was tried
 first and just echoes the data list back; the base weights write a proper
-short message. Falls back to the planner weights if the file is missing.
+short message. Falls back to a GGUF planner's weights if the file is
+missing; with a tiny planner there is nothing to fall back to, and `/write`
+answers `NO_MODEL`.

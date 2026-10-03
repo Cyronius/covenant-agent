@@ -175,6 +175,30 @@ def server_planner(url: str, grammar_path: Optional[str], max_tokens: int,
     return plan
 
 
+def tiny_planner(name: str) -> Planner:
+    """A models/tiny checkpoint through the demo's own `TinyPlanner`
+    (server/tiny_planner.py), so the suite and the app run the same code.
+    It reads the task, not a prompt: the request is the serialized input's
+    first line, which is why the dungeon hands it the one-line brief."""
+    sys.path.insert(0, str(ROOT / "server"))
+    from tiny_planner import TinyPlanner
+
+    planner = TinyPlanner(name)
+
+    def plan(input_text, turn_idx, state, task_ctx):
+        request = input_text.split("\n", 1)[0][len("REQUEST: "):]
+        t0 = time.perf_counter()
+        out = planner.plan(request, task_ctx.to_json())
+        return {"text": out["text"], "authoring": False,
+                "tokens_in": out["request_tokens"],
+                "tokens_out": out["tokens_out"],
+                "gen_ms": (time.perf_counter() - t0) * 1000,
+                "finish_reason": "stop", "truncated": out["truncated"],
+                "tries": out["tries"]}
+
+    return plan
+
+
 def oracle_move(state: dict, constants: list, world: str,
                 budget: int) -> dict:
     """What the oracle would do from *this* state: {tool, args, calls}, where
@@ -239,8 +263,13 @@ def run_episode(planner: Planner, *, scenario: Optional[str] = None,
                 seed: int = 0, max_turns: int = DEFAULT_MAX_TURNS,
                 max_actions: int = 3, verbose: bool = False,
                 symbols: str = "classic", enums: bool = False,
-                world: str = "rpg") -> dict:
-    """Play one game. Returns the episode row (JSONL-ready)."""
+                world: str = "rpg", observe_opts: Optional[dict] = None,
+                brief: bool = False) -> dict:
+    """Play one game. Returns the episode row (JSONL-ready).
+
+    `observe_opts` go to the world's `observe` (the dungeon's `exits` and
+    `paths`); `brief` sends the observation's one-line `brief` as the
+    request instead of the full text (the tiny planner's input)."""
     module = decision.world_module(world)
     WORLD = get_world(world)
     scenario = scenario or decision.scenarios(world)[0]
@@ -251,16 +280,19 @@ def run_episode(planner: Planner, *, scenario: Optional[str] = None,
     turns = []
     counters = {"calls": 0, "invalid_calls": 0, "compile_failures": 0,
                 "abstains": 0, "pauses": 0, "runtime_errors": 0,
-                "budget_hits": 0}
+                "budget_hits": 0, "wall_bumps": 0, "repeat_bumps": 0,
+                "moves_into_blocked": 0, "truncated_turns": 0}
+    last_bumps: set = set()
     uses = {"TRY": 0, "PARALLEL": 0, "FOREACH": 0, "IF": 0}
 
     while state["status"] == "playing" and state["turn"] < max_turns:
-        obs = module.observe(state)
+        obs = module.observe(state, **(observe_opts or {}))
         if hasattr(obs, "memory"):
             state["memory"] = obs.memory
         ctx, sandbox_ctx = build_context(WORLD, obs.constants, rng,
                                          symbols=symbols, enums=enums)
-        input_text = serialize_context(obs.request, ctx)
+        request = obs.brief if brief else obs.request
+        input_text = serialize_context(request, ctx)
         want = oracle_move(state, obs.constants, world, max_actions)
 
         gen = planner(input_text, state["turn"], state, ctx)
@@ -275,7 +307,8 @@ def run_episode(planner: Planner, *, scenario: Optional[str] = None,
         # robot's battery, the bankroll): what a breakdown reads afterwards
         before = {k: v for k, v in module.outcome(state).items()
                   if k != "funnel"}
-        turn = {"turn": state["turn"], "request": obs.request,
+        counters["truncated_turns"] += bool(gen.get("truncated"))
+        turn = {"turn": state["turn"], "request": request,
                 "program": gen["text"], "tokens_in": gen.get("tokens_in", 0),
                 "tokens_out": gen.get("tokens_out", 0),
                 "gen_ms": round(gen.get("gen_ms", 0.0), 1),
@@ -320,6 +353,7 @@ def run_episode(planner: Planner, *, scenario: Optional[str] = None,
                     calls=[{"name": c["name"], "args": c["args"],
                             "ok": c["ok"], "error": c["error"]} for c in calls],
                     error=sres.get("error"), reason=sres.get("reason"))
+        last_bumps = _count_moves(turn, obs.constants, last_bumps, counters)
         _score_turn(turn, want)
         turns.append(turn)
         if verbose:
@@ -354,6 +388,30 @@ def run_episode(planner: Planner, *, scenario: Optional[str] = None,
         if key in out:
             row["hp_end" if key == "hp" else key] = out[key]
     return row
+
+
+def _count_moves(turn: dict, constants: list, last_bumps: set,
+                 counters: dict) -> set:
+    """The dungeon's movement tallies for one executed turn: moves the
+    engine refused (a wall, a shut door, an enemy in the way), refusals in a
+    direction that was also refused the turn before, and moves in a
+    direction the observation had labelled blocked (only an `exits`
+    observation labels them). Returns this turn's refused directions."""
+    blocked = {c["value"] for c in constants
+               if c.get("type") == "STR" and "blocked" in c.get("desc", "")}
+    bumps = set()
+    for c in turn["calls"]:
+        if c["name"] != "move" or not c["args"]:
+            continue
+        direction = c["args"][0]
+        counters["moves_into_blocked"] += direction in blocked
+        # a call record carries only the error code; the grammar admits only
+        # the four direction constants, so a failed move is a refused one
+        if not c["ok"]:
+            counters["wall_bumps"] += 1
+            counters["repeat_bumps"] += direction in last_bumps
+            bumps.add(direction)
+    return bumps
 
 
 def _idle_turn(state: dict, ctx, sandbox_ctx: dict, WORLD: dict) -> dict:
@@ -448,6 +506,12 @@ def report(path: Path) -> None:
           f"({sum(r['compile_failures'] for r in rows)} did not compile, "
           f"{sum(r['abstains'] for r in rows)} abstained, "
           f"{sum(r['budget_hits'] for r in rows)} hit the action budget)")
+    if "wall_bumps" in rows[0]:
+        print(f"  movement       {sum(r['wall_bumps'] for r in rows)} refused moves "
+              f"({sum(r['repeat_bumps'] for r in rows)} repeat last turn's), "
+              f"{sum(r['moves_into_blocked'] for r in rows)} into a direction "
+              f"labelled blocked, {sum(r['truncated_turns'] for r in rows)} "
+              f"turns with a truncated request")
     print(f"  tokens_out p50 {statistics.median(r['tokens_out_p50'] for r in rows):.0f}"
           f"   gen_ms p50 {statistics.median(r['gen_ms_p50'] for r in rows):.0f}")
     reasons: dict = {}
@@ -464,8 +528,19 @@ def main() -> None:
                     help="which decision world to play; rpg is the dungeon "
                          "and stays the default so stored E-rpg commands "
                          "mean what they always did")
-    ap.add_argument("--planner", default="model", choices=["model", "oracle"])
+    ap.add_argument("--planner", default="model",
+                    choices=["model", "oracle", "tiny"])
     ap.add_argument("--model", help="GGUF path (planner=model)")
+    ap.add_argument("--tiny", default="tiny:clt_RD",
+                    help="tiny checkpoint (planner=tiny), a TINY_MODELS name "
+                         "in server/tiny_planner.py. It reads the brief, on "
+                         "the demo's typed+enums surface.")
+    ap.add_argument("--exits", action="store_true",
+                    help="dungeon: direction constants say what is one step "
+                         "away (.claude/plans/rpg-exits-perception.md A)")
+    ap.add_argument("--paths", action="store_true",
+                    help="dungeon: visible things say how many moves reach "
+                         "them and the first move (plan B)")
     ap.add_argument("--server", metavar="URL",
                     help="generate through a llama.cpp server at URL instead "
                          "of in process (the GPU path on this box; qwen "
@@ -509,6 +584,11 @@ def main() -> None:
     if args.planner == "oracle":
         planner = oracle_planner(args.max_actions, args.world)
         model_name, condition = "oracle", "oracle"
+    elif args.planner == "tiny":
+        # the surface the demo serves it (typed_prompt_fields)
+        args.symbols, args.enums = "typed", True
+        planner = tiny_planner(args.tiny)
+        model_name, condition = args.tiny, "tiny/brief"
     else:
         if not args.model:
             ap.error("--model is required unless --planner oracle")
@@ -529,12 +609,15 @@ def main() -> None:
         condition = ("grammar-task" if not args.no_grammar
                      else "unconstrained") + f"/{args.template}"
     condition += ("+letters" if args.symbols == "typed" else "") + (
-        "+enums" if args.enums else "") + ("+kinds" if args.kinds else "")
+        "+enums" if args.enums else "") + ("+kinds" if args.kinds else "") + (
+        "+exits" if args.exits else "") + ("+paths" if args.paths else "")
+    observe_opts = {k: True for k in ("exits", "paths") if getattr(args, k)}
 
     meta = {"model": model_name, "condition": condition,
             "git_sha": git_sha(), "world": args.world,
             "max_turns": args.max_turns, "template": args.template,
-            "symbols": args.symbols, "enums": args.enums, "kinds": args.kinds}
+            "symbols": args.symbols, "enums": args.enums, "kinds": args.kinds,
+            "exits": args.exits, "paths": args.paths}
     out_f = None
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
@@ -549,7 +632,9 @@ def main() -> None:
                           max_turns=args.max_turns,
                           max_actions=args.max_actions,
                           verbose=not args.quiet, world=args.world,
-                          symbols=args.symbols, enums=args.enums)
+                          symbols=args.symbols, enums=args.enums,
+                          observe_opts=observe_opts,
+                          brief=args.planner == "tiny")
         row.update(meta)
         rows.append(row)
         if not args.quiet:

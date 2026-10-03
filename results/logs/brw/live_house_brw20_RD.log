@@ -1,0 +1,10 @@
+live_house_brw20_RD.jsonl: 6 episodes, world=house model=tiny:brw20_RD condition=tiny/brief+letters+enums+exits
+  won            0/6 (0%)
+  died           0/6
+  funnel         lamp_lit 0/6  way_open 0/6  arrived 0/6
+  per-turn       first tool 120/120 (100%)   first tool+arg 0/120 (0%)   whole turn 0/120 (0%)
+  calls          120 (120 invalid)
+  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+  movement       0 refused moves (0 repeat last turn's), 0 into a direction labelled blocked, 0 turns with a truncated request
+  tokens_out p50 4   gen_ms p50 133
+  finish_reason  {'stop': 120}

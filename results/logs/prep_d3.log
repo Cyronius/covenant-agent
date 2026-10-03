@@ -1,0 +1,20 @@
+loading 40000 from d3_train.jsonl ...
+  40000 examples, 114 worlds; 5238 of them segments of a paused task, 2619 first and the rest continuations that start from bound registers
+  holdout corpus: 13633 examples over 42 unseen worlds, 0% of the training data
+  train 36000  val 2000  test 2000  holdout 13633
+  54 keyword rows
+  layout: 228 joint ids = 54 keywords + 56 tools + 51 fields + 35 consts + 32 registers
+input tokenizer: data_cache_s6g/in_tok.json
+  teacher: embedding 63865 distinct texts with unsloth/bge-small-en-v1.5 ...
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 4814.70it/s]
+  train     36000  longest line 78/112  longest request 127/128  longest canvas 53/64
+  val        2000  longest line 78/112  longest request 119/128  longest canvas 51/64
+  test       2000  longest line 78/112  longest request 109/128  longest canvas 51/64
+  holdout   13633  longest line 83/112  longest request 74/128  longest canvas 51/64
+  longest program after splitting rN.Fk: 53 of 64 slots
+
+wrote data_cache_d3
+83/112  longest request 74/128  longest canvas 51/64
+  longest program after splitting rN.Fk: 53 of 64 slots
+
+wrote data_cache_d3

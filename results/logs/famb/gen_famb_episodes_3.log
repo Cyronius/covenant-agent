@@ -1,0 +1,19 @@
+warehouse_robot: 20/20 episodes, 238 turns
+elevator: 20/20 episodes, 407 turns
+cards: 20/20 episodes, 581 turns
+app_settings: 20/20 episodes, 658 turns
+app_checkout: 20/20 episodes, 743 turns
+app_ticket: 20/20 episodes, 808 turns
+wrote 808 turns -> data\famb_shards\episodes_3.jsonl
+  warehouse_robot: 15/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  elevator: 19/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  cards: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  app_settings: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  app_checkout: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+  app_ticket: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+signature uniqueness: 62.5% full, 62.5% types-only, over 1263 reference CALLs (7.9 tools/task)
+--allow-signature-unique passed: the ceiling below was not enforced, and every row's provenance is stamped signature_unique_allowed so this file can never be mistaken for one that passed it.
+reaction: of 44 turns that open with a failure (14, 31.8%, caused by an aimed move), 0 (0.0%) are labelled with the move that just failed, 12 (27.3%) act on the same thing another way, and 16 (36.4%) answer it - by name or on the same object
+    aimed:on_board            5 failures, 5/5 answered
+    aimed:same_obj            9 failures, 9/9 answered
+    random_illegal           30 failures, 2/30 answered

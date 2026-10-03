@@ -2,28 +2,28 @@
 the eval harness's browser-parity checks. Pure Python stdlib.
 
 Jobs:
-  1. Serves the GGUF model files straight out of baselines/qwen/models/
-     (Range requests, never copied), the grammar at
-     baselines/qwen/agent_core.gbnf, and — when it exists — the built app
-     from client/app/dist (SPA fallback to index.html; react-router owns
-     /kanban, /rpg, /db client-side). In development Vite serves the app
-     itself and proxies to this server (client/app/vite.config.ts).
+  1. Serves the built app from client/app/dist when it exists (SPA
+     fallback to index.html; react-router owns /kanban, /rpg, /db
+     client-side). In development Vite serves the app itself and proxies to
+     this server (client/app/vite.config.ts).
   2. POST /kanban_prompt / /db_prompt: builds a real TOOLS/FIELDS/CONSTANTS
      context for a free-typed request against the client's board
      (handle_kanban_prompt / handle_db_prompt).
-  3. POST /plan (+ GET /plan/status): server-side inference — the same GGUF
-     and grammar the browser path uses, run through llama-cpp-python on
-     this machine's CPU (plan s2-consolidated-program §A7). --model picks
-     the checkpoint; it loads lazily on first use.
+  3. POST /plan (+ GET /plan/status): the demo's one planner. The newest
+     tiny checkpoint by default (DEMO_PLANNER); --model or COVENANT_PLANNER
+     names another `tiny:<run>` or a GGUF path for an experiment. There is
+     no picker: every world always runs the same planner
+     (.claude/plans/rpg-exits-perception.md part 1).
   4. POST /validate: takes generated Agent Core program text and round-trips
      it through the *existing* Python pipeline (core.pipeline.build) and
      sandbox executor (harness.run.run_sandbox) — the same path
      harness/run.py's run_task() uses. Not a reimplementation.
 
-Pure Python stdlib, plus llama-cpp-python for /plan only.
+Pure Python stdlib, plus torch for the tiny planner and llama-cpp-python for
+a GGUF planner or the writer.
 
 Run (from the repo root):
-    python server/dev_server.py --port 8080 [--model baselines/qwen/models/<gguf>]
+    python server/dev_server.py --port 8080 [--model tiny:<run> | <gguf path>]
 
 See server/README.md for the request/response contracts.
 """
@@ -33,6 +33,7 @@ import argparse
 import difflib
 import json
 import mimetypes
+import os
 import re
 import sys
 import threading
@@ -70,13 +71,10 @@ APPS = [
 MODELS_DIR = ROOT / "baselines" / "qwen" / "models"
 GRAMMAR_FILE = ROOT / "baselines" / "qwen" / "agent_core.gbnf"
 TASKS_FILE = ROOT / "data" / "curriculum_tasks.jsonl"
-# Unpruned on purpose: the same planner serves the dungeon, and the pruned
-# vocabulary never saw map glyphs or words like "goblin" (results/RPG.md).
-DEFAULT_PLAN_MODEL = MODELS_DIR / "qwen3.5-0.8b-s5-q8.gguf"
-# Our own tuned checkpoints were SFT'd against the hand-rolled ChatML markup
-# in baselines/qwen/run_a.py; any other GGUF gets its own chat template
-# applied by llama-cpp-python instead (see ServerPlanner.generate_chat).
-TUNED_PREFIXES = ("qwen3.5-0.8b-s", "qwen3.5-2b-cond", "qwen3.5-0.8b-cond")
+# The planner every world runs: the newest tiny checkpoint (R23's clt_RD,
+# trained on cluttered constants lists like the demo's). One name to change
+# when a newer one lands; COVENANT_PLANNER / --model override it for a run.
+DEMO_PLANNER = "tiny:clt_RD"
 # The writer uses the UNTUNED base weights: the merged S1 checkpoint has lost
 # its general writing (it echoes the data list back; measured 2026-09-02,
 # plan s2-consolidated-program §A8), while the base 0.8B writes a proper
@@ -89,13 +87,14 @@ BULK_WRITE_LIMIT = 2
 
 
 class ServerPlanner:
-    """Lazily-loaded llama-cpp-python model + grammar behind POST /plan.
-    llama.cpp contexts are not thread-safe and ThreadingHTTPServer is
-    threaded, so generation is serialized with a lock."""
+    """The one planner behind POST /plan: a models/tiny checkpoint
+    (server/tiny_planner.py) or, for an experiment, a GGUF through
+    llama-cpp-python. Both load lazily. llama.cpp contexts are not
+    thread-safe and ThreadingHTTPServer is threaded, so generation is
+    serialized with a lock."""
 
-    def __init__(self, model_path: Path | None, n_ctx: int = 4096,
+    def __init__(self, planner: str, n_ctx: int = 4096,
                  writer_path: Path | None = None):
-        self.model_path = model_path
         self.writer_path = writer_path
         self.n_ctx = n_ctx
         self._llm = None
@@ -105,19 +104,43 @@ class ServerPlanner:
         # table only changes when the board does, and from_string is not free
         self._grammar_cache: dict = {}
         self._lock = threading.Lock()
+        self._tiny = None
+        self.select(planner)
+
+    def select(self, planner: str) -> None:
+        """`tiny:<run>` (a TINY_MODELS name) or a GGUF path. Startup only:
+        the demo has no picker, so nothing switches a running server."""
+        self._llm = self._grammar = self._tiny = None
+        if planner.startswith("tiny:"):
+            self.tiny_name, self.model_path = planner, None
+        else:
+            self.tiny_name, self.model_path = None, Path(planner)
+
+    @property
+    def name(self) -> str:
+        return self.tiny_name or self.model_path.name
 
     @property
     def available(self) -> bool:
-        return bool(self.model_path and self.model_path.exists())
+        if self.tiny_name:
+            from tiny_planner import available
+            return any(m["name"] == self.tiny_name for m in available())
+        return self.model_path.exists()
+
+    @property
+    def writer_available(self) -> bool:
+        """The writer is its own GGUF; only a GGUF planner can stand in for
+        it when that file is missing."""
+        if self.writer_path and self.writer_path.exists():
+            return True
+        return not self.tiny_name and self.available
 
     def status(self) -> dict:
-        return {"available": self.available,
-                "model": self.model_path.name if self.model_path else None,
-                "loaded": self._llm is not None,
-                "writer_model": (self.writer_path.name if self.writer_path and self.writer_path.exists()
-                                 else (self.model_path.name if self.model_path else None)),
+        return {"available": self.available, "model": self.name,
+                "backend": "tiny" if self.tiny_name else "gguf",
+                "loaded": (self._tiny if self.tiny_name else self._llm) is not None,
                 **({} if self.available else
-                   {"reason": f"model file not found: {self.model_path}"})}
+                   {"reason": f"planner not found: {self.name}"})}
 
     def _ensure(self):
         if self._llm is None:
@@ -126,21 +149,6 @@ class ServerPlanner:
                 GRAMMAR_FILE.read_text(encoding="utf-8"), verbose=False)
             self._llm = Llama(model_path=str(self.model_path), n_ctx=self.n_ctx,
                               verbose=False)
-
-    def switch(self, name: str) -> dict:
-        """Load a different checkpoint from MODELS_DIR. One planner at a time:
-        a 2B Q8 is ~2.5 GB, so the previous model is dropped rather than
-        cached. The writer instance is untouched."""
-        target = MODELS_DIR / name
-        if "/" in name or "\\" in name or not target.exists():
-            raise ValueError(f"no such model: {name}")
-        with self._lock:
-            if self.model_path and target.samefile(self.model_path) and self._llm:
-                return self.status()
-            self._llm = None
-            self._grammar = None
-            self.model_path = target
-        return self.status()
 
     def grammar_for(self, text: str | None):
         """Compile a caller-supplied grammar, cached. None means the static
@@ -176,28 +184,9 @@ class ServerPlanner:
                 "tokens_in": res.get("usage", {}).get("prompt_tokens", 0),
                 "gen_ms": gen_ms, "model": self.model_path.name}
 
-    def generate_chat(self, system: str, user: str, max_tokens: int) -> dict:
-        """For a model that is not one of ours: llama-cpp-python applies the
-        GGUF's own tokenizer.chat_template, so the client does not have to
-        know the markup. Same grammar, same greedy decoding."""
-        with self._lock:
-            self._ensure()
-            t0 = time.perf_counter()
-            res = self._llm.create_chat_completion(
-                messages=[{"role": "system", "content": system},
-                          {"role": "user", "content": user}],
-                grammar=self._grammar, temperature=0.0, max_tokens=max_tokens)
-            gen_ms = (time.perf_counter() - t0) * 1000
-        choice = res["choices"][0]
-        return {"text": choice["message"].get("content") or "",
-                "finish_reason": choice.get("finish_reason"),
-                "tokens_out": res.get("usage", {}).get("completion_tokens", 0),
-                "tokens_in": res.get("usage", {}).get("prompt_tokens", 0),
-                "gen_ms": gen_ms, "model": self.model_path.name}
-
     def _ensure_writer(self):
         """Base weights if present (separate llama.cpp instance, ~0.8 GB more
-        RAM); otherwise the planner weights."""
+        RAM); otherwise a GGUF planner's weights (`writer_available`)."""
         if self.writer_path and self.writer_path.exists():
             if self._writer is None:
                 from llama_cpp import Llama
@@ -209,8 +198,31 @@ class ServerPlanner:
 
     def warm(self) -> dict:
         with self._lock:
-            self._ensure()
+            if self.tiny_name:
+                self._ensure_tiny()
+            else:
+                self._ensure()
         return self.status()
+
+    def _ensure_tiny(self):
+        if self._tiny is None:
+            from tiny_planner import TinyPlanner
+            self._tiny = TinyPlanner(self.tiny_name)
+        return self._tiny
+
+    def plan_tiny(self, req: dict) -> dict:
+        """POST /plan while a tiny checkpoint is selected: it reads the task
+        (context, request, and a continuation's registers and their types),
+        not the prompt text a GGUF reads."""
+        context, request = req.get("context"), req.get("request")
+        if not isinstance(context, dict) or not isinstance(request, str) or not request:
+            return {"error": {"code": "BAD_REQUEST",
+                              "message": f"{self.tiny_name} needs the task's 'context' and "
+                                         "'request' (client/shared/planner.ts sends them)"}}
+        with self._lock:
+            tiny = self._ensure_tiny()
+        return tiny.plan(request, context, req.get("registers") or None,
+                         req.get("pause_types") or None)
 
     WRITER_SYSTEM = ("You write short, plain workplace messages. Output only the "
                      "message text — no greeting line, no sign-off, no markdown.")
@@ -248,20 +260,18 @@ class ServerPlanner:
                 "tokens_out": res.get("usage", {}).get("completion_tokens", 0)}
 
 
-PLANNER = ServerPlanner(DEFAULT_PLAN_MODEL, writer_path=DEFAULT_WRITER_MODEL)
+PLANNER = ServerPlanner(os.environ.get("COVENANT_PLANNER") or DEMO_PLANNER,
+                        writer_path=DEFAULT_WRITER_MODEL)
 SELF_URL: str | None = None  # set in main(); lets the sandbox call back for EXTERNAL tools
 
 EXTRA_MIME_TYPES = {
-    ".wasm": "application/wasm",
     ".js": "text/javascript",
     ".mjs": "text/javascript",
     ".json": "application/json",
     ".html": "text/html",
     ".gbnf": "text/plain",
-    ".gguf": "application/octet-stream",
 }
 
-RANGE_RE = re.compile(r"bytes=(\d*)-(\d*)")
 
 
 def guess_content_type(path: Path) -> str:
@@ -329,71 +339,13 @@ class DevHandler(BaseHTTPRequestHandler):
             candidate = root / "index.html"
         return candidate
 
-    def _serve_file(self, path: Path, support_range: bool = False) -> None:
+    def _serve_file(self, path: Path) -> None:
         if not path.exists() or not path.is_file():
             self._send_text(404, f"Not found: {path.name}\n")
             return
         content_type = guess_content_type(path)
         size = path.stat().st_size
 
-        if support_range:
-            range_header = self.headers.get("Range")
-            if range_header:
-                m = RANGE_RE.match(range_header.strip())
-                if not m:
-                    self._send_text(416, "Invalid Range header\n")
-                    return
-                start_s, end_s = m.groups()
-                if start_s == "" and end_s == "":
-                    self._send_text(416, "Invalid Range header\n")
-                    return
-                if start_s == "":
-                    # suffix range: last N bytes
-                    length = int(end_s)
-                    start = max(0, size - length)
-                    end = size - 1
-                else:
-                    start = int(start_s)
-                    end = int(end_s) if end_s != "" else size - 1
-                end = min(end, size - 1)
-                if start > end or start >= size:
-                    self.send_response(416)
-                    self.send_header("Content-Range", f"bytes */{size}")
-                    self.end_headers()
-                    return
-                chunk_len = end - start + 1
-                self.send_response(206)
-                self.send_header("Content-Type", content_type)
-                self.send_header("Content-Length", str(chunk_len))
-                self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
-                self.send_header("Accept-Ranges", "bytes")
-                self.end_headers()
-                with open(path, "rb") as f:
-                    f.seek(start)
-                    remaining = chunk_len
-                    while remaining > 0:
-                        block = f.read(min(1 << 20, remaining))
-                        if not block:
-                            break
-                        self.wfile.write(block)
-                        remaining -= len(block)
-                return
-            # Non-range GET on a range-capable resource: whole file, but
-            # advertise Range support.
-            self.send_response(200)
-            self.send_header("Content-Type", content_type)
-            self.send_header("Content-Length", str(size))
-            self.send_header("Accept-Ranges", "bytes")
-            self.end_headers()
-            with open(path, "rb") as f:
-                while True:
-                    block = f.read(1 << 20)
-                    if not block:
-                        break
-                    self.wfile.write(block)
-            return
-
-        # Plain static file, no range support needed.
         self.send_response(200)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(size))
@@ -405,26 +357,8 @@ class DevHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         path = self.path.split("?", 1)[0]
         try:
-            if path.startswith("/models/"):
-                filename = path[len("/models/"):]
-                if "/" in filename or "\\" in filename or filename in ("", "."):
-                    self._send_text(400, "Bad model filename\n")
-                    return
-                self._serve_file(MODELS_DIR / filename, support_range=True)
-                return
-
-            if path == "/agent_core.gbnf":
-                self._serve_file(GRAMMAR_FILE)
-                return
-
             if path == "/plan/status":
                 self._send_json(200, PLANNER.status())
-                return
-
-            if path == "/models":
-                # matched before the static fallback below, which would
-                # otherwise answer a bare /models with index.html
-                self._send_json(200, list_models())
                 return
 
             if path == "/apps":
@@ -438,49 +372,6 @@ class DevHandler(BaseHTTPRequestHandler):
             self._serve_file(static_path)
         except Exception:
             self._send_text(500, f"Internal error:\n{traceback.format_exc()}\n")
-
-    def do_HEAD(self) -> None:
-        """Headers only. wllama sends a HEAD for the GGUF before it starts
-        ranged GETs; without this, BaseHTTPRequestHandler answers 501 and the
-        browser console shows an error on every model load (it still works —
-        wllama falls back — but the error is noise, and Content-Length is
-        what lets it show real download progress).
-
-        A HEAD response carries no body, error paths included, so this sends
-        a bare status rather than going through _send_text."""
-        def status_only(code: int) -> None:
-            self.send_response(code)
-            self.send_header("Content-Length", "0")
-            self.end_headers()
-
-        path = self.path.split("?", 1)[0]
-        try:
-            if path.startswith("/models/"):
-                filename = path[len("/models/"):]
-                if "/" in filename or "\\" in filename or filename in ("", "."):
-                    status_only(400)
-                    return
-                target = MODELS_DIR / filename
-            elif path == "/agent_core.gbnf":
-                target = GRAMMAR_FILE
-            elif path in ("/plan/status", "/models", "/apps"):
-                status_only(200)
-                return
-            else:
-                target = self._resolve_static_path(path)
-            if target is None:
-                status_only(403)
-                return
-            if not target.exists() or not target.is_file():
-                status_only(404)
-                return
-            self.send_response(200)
-            self.send_header("Content-Type", guess_content_type(target))
-            self.send_header("Content-Length", str(target.stat().st_size))
-            self.send_header("Accept-Ranges", "bytes")
-            self.end_headers()
-        except Exception:
-            status_only(500)
 
     def do_POST(self) -> None:
         path = self.path.split("?", 1)[0]
@@ -510,16 +401,6 @@ class DevHandler(BaseHTTPRequestHandler):
 
     def log_message(self, fmt, *args):  # quieter default logging
         sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
-
-    def end_headers(self) -> None:
-        # Required for wllama's multi-threaded WASM path (SharedArrayBuffer):
-        # without these, isSupportMultiThread() is false and generation
-        # silently falls back to a single thread. See client/shared/llm.md's
-        # "Multi-threading" note. Applied to every response; harmless
-        # elsewhere since this is a same-origin, single-page dev server.
-        self.send_header("Cross-Origin-Opener-Policy", "same-origin")
-        self.send_header("Cross-Origin-Embedder-Policy", "require-corp")
-        super().end_headers()
 
 
 # A handful of reusable message bodies for `send_message`-style calls.
@@ -880,51 +761,21 @@ def preflight_people(request: str, state: dict) -> dict | None:
     return None
 
 
-def list_models() -> dict:
-    """GET /models — the checkpoints on this machine, and how each one wants
-    to be prompted. `template: "qwen"` means the client builds the prompt
-    itself (byte-identical to the browser path); `"chat"` means it sends
-    system/user and the server applies the GGUF's own template."""
-    models = []
-    for path in sorted(MODELS_DIR.glob("*.gguf")):
-        # LoRA adapters live here too (run_a.py --lora) and are not loadable
-        # as a planner — they'd be offered in the picker and fail on select.
-        if "lora" in path.name.lower():
-            continue
-        tuned = path.name.lower().startswith(TUNED_PREFIXES)
-        models.append({"name": path.name,
-                       "template": "qwen" if tuned else "chat",
-                       "tuned": tuned,
-                       "size_mb": round(path.stat().st_size / 1e6)})
-    return {"default": PLANNER.model_path.name if PLANNER.model_path else None,
-            "loaded": PLANNER.model_path.name if (
-                PLANNER.model_path and PLANNER._llm is not None) else None,
-            "models": models}
-
-
 def handle_plan(req: dict) -> dict:
-    """POST /plan -> {text, tokens_out, gen_ms, ...}. Either
-    {prompt} (client-templated, our tuned checkpoints) or {system, user}
-    (server-templated, any other GGUF). {warm: true} just loads the model;
-    {model: name} switches checkpoint first."""
-    name = req.get("model")
-    if name:
-        try:
-            PLANNER.switch(str(name))
-        except ValueError as exc:
-            return {"error": {"code": "NO_MODEL", "message": str(exc)}}
+    """POST /plan -> {text, tokens_out, gen_ms, ...}. A tiny planner reads
+    {request, context, registers?, pause_types?}; a GGUF planner reads
+    {prompt, grammar?} (the client builds the ChatML markup our checkpoints
+    were tuned on). The client sends both. {warm: true} just loads it."""
     if not PLANNER.available:
         return {"error": {"code": "NO_MODEL", "message": PLANNER.status().get("reason")}}
     if req.get("warm"):
         return PLANNER.warm()
+    if PLANNER.tiny_name:
+        return PLANNER.plan_tiny(req)
     max_tokens = int(req.get("max_tokens") or 250)
-    user = req.get("user")
-    if isinstance(user, str) and user:
-        return PLANNER.generate_chat(req.get("system") or "", user, max_tokens)
     prompt = req.get("prompt")
     if not isinstance(prompt, str) or not prompt:
-        return {"error": {"code": "BAD_REQUEST",
-                          "message": "plan needs 'prompt' or 'user'"}}
+        return {"error": {"code": "BAD_REQUEST", "message": "plan needs 'prompt'"}}
     stop = req.get("stop") or ["<|im_end|>"]
     grammar = req.get("grammar")
     return PLANNER.generate(prompt, max_tokens, list(stop),
@@ -934,8 +785,9 @@ def handle_plan(req: dict) -> dict:
 def handle_write(req: dict) -> dict:
     """POST /write — the sandbox's EXTERNAL callback: {kind, params} ->
     {text}. Only kind 'write_text' exists today."""
-    if not PLANNER.available:
-        return {"error": {"code": "NO_MODEL", "message": PLANNER.status().get("reason")}}
+    if not PLANNER.writer_available:
+        return {"error": {"code": "NO_MODEL",
+                          "message": f"writer model not found: {PLANNER.writer_path}"}}
     if req.get("kind") != "write_text":
         return {"error": {"code": "BAD_REQUEST", "message": f"unknown external kind {req.get('kind')!r}"}}
     params = req.get("params") or []
@@ -1094,7 +946,10 @@ def handle_rpg_prompt(req: dict) -> dict:
     if not isinstance(state, dict):
         return {"error": {"code": "BAD_REQUEST", "message": "rpg_prompt needs 'state'"}}
     world = get_world("rpg")
-    obs = rpg.observe(state)
+    # Exits on: the tiny planner gets the brief, which has no grid, so the
+    # direction constants are its only word on where the walls are
+    # (.claude/plans/rpg-exits-perception.md step 8).
+    obs = rpg.observe(state, exits=True)
     state = dict(state, memory=obs.memory)
     fields = typed_prompt_fields(world, obs.constants, obs.request)
     return {
@@ -1105,8 +960,9 @@ def handle_rpg_prompt(req: dict) -> dict:
         "world": "rpg",
         "now": world["now"],
         "state": state,
-        "observation": {"request": obs.request, "window": obs.window,
-                        "nearby": obs.nearby,
+        "observation": {"request": obs.request, "brief": obs.brief,
+                        "window": obs.window, "nearby": obs.nearby,
+                        "constants": [c["desc"] for c in obs.constants],
                         "outcome": rpg.outcome(state)},
     }
 
@@ -1207,7 +1063,7 @@ def handle_validate(req: dict) -> dict:
         "preview": preview,
         "bulk_write_limit": bulk_write_limit,
     }
-    if SELF_URL and PLANNER.available:
+    if SELF_URL and PLANNER.writer_available:
         payload["external_url"] = SELF_URL + "/write"  # EXTERNAL tools call back here
     if world.get("post_hook"):
         # worlds with a per-turn phase (the rpg enemy turn) — the sandbox runs
@@ -1235,13 +1091,15 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--host", default="127.0.0.1")
-    ap.add_argument("--model", default=str(DEFAULT_PLAN_MODEL),
-                    help="GGUF for POST /plan server-side inference (loaded lazily)")
+    ap.add_argument("--model", default=None,
+                    help="the planner: tiny:<run> or a GGUF path (default: "
+                         "COVENANT_PLANNER, else DEMO_PLANNER). Loaded lazily.")
     ap.add_argument("--ctx", type=int, default=4096, help="n_ctx for /plan")
     ap.add_argument("--writer-model", default=str(DEFAULT_WRITER_MODEL),
-                    help="GGUF for POST /write (base weights; falls back to --model if missing)")
+                    help="GGUF for POST /write (base weights; falls back to a GGUF --model if missing)")
     args = ap.parse_args()
-    PLANNER.model_path = Path(args.model) if args.model else None
+    if args.model:
+        PLANNER.select(args.model)
     PLANNER.n_ctx = args.ctx
     PLANNER.writer_path = Path(args.writer_model) if args.writer_model else None
     global SELF_URL
@@ -1252,8 +1110,8 @@ def main() -> None:
     print(f"covenant-agent dev server")
     print(f"  repo root:      {ROOT}")
     print(f"  app (if built): {APP_DIST}")
-    print(f"  /plan model:    {PLANNER.model_path} (available={PLANNER.available})")
-    print(f"  models dir:     {MODELS_DIR}")
+    print(f"  /plan planner:  {PLANNER.name} (available={PLANNER.available})")
+    print(f"  /write model:   {PLANNER.writer_path} (available={PLANNER.writer_available})")
     print(f"  grammar file:   {GRAMMAR_FILE}")
     print(f"  tasks indexed:  {len(TASKS)} (from {TASKS_FILE})")
     print(f"  listening on:   http://{args.host}:{args.port}")

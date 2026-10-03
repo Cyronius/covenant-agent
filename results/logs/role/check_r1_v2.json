@@ -1,0 +1,140 @@
+{
+ "model": "reader/role/r1/reader.pt",
+ "flips": {
+  "swap": {
+   "new": 0.878,
+   "shipped": 1.0,
+   "teacher": 0.964,
+   "n": 803
+  },
+  "ant": {
+   "new": 0.862,
+   "shipped": 0.846,
+   "teacher": 0.865,
+   "n": 1187
+  },
+  "word": {
+   "new": 0.795,
+   "shipped": 0.952,
+   "teacher": 0.946,
+   "n": 750
+  },
+  "not": {
+   "new": 0.794,
+   "shipped": 0.959,
+   "teacher": 0.925,
+   "n": 725
+  },
+  "shuf": {
+   "new": 0.919,
+   "shipped": 1.0,
+   "teacher": 0.897,
+   "n": 743
+  },
+  "all": {
+   "new": 0.837,
+   "shipped": 0.928,
+   "teacher": 0.918,
+   "n": 3465
+  },
+  "our requests": {
+   "new": 0.87,
+   "shipped": 0.964,
+   "teacher": 0.955,
+   "n": 429
+  }
+ },
+ "hand": {
+  "move it to bob | move it from bob": {
+   "new": 0.796,
+   "shipped": 0.959
+  },
+  "assign card 6 to Bob | assign Bob to card 6": {
+   "new": 0.918,
+   "shipped": 1.0
+  },
+  "cards that are done | cards that are not done": {
+   "new": 0.814,
+   "shipped": 0.923
+  },
+  "orders placed before March | orders placed after March": {
+   "new": 0.803,
+   "shipped": 0.955
+  },
+  "send priya the list | send the list about priya": {
+   "new": 0.851,
+   "shipped": 0.954
+  },
+  "the oldest issue | the newest issue": {
+   "new": 0.589,
+   "shipped": 0.596
+  }
+ },
+ "shuffled": {
+  "new": 0.925,
+  "shipped": 1.0
+ },
+ "spearman": {
+  "new": 0.7678,
+  "shipped": 0.6838
+ },
+ "teacher_cos": {
+  "new": 0.813,
+  "shipped": 0.7582
+ },
+ "calibration": {
+  "bob | Bob Alvarez > Priya Nandan": {
+   "new": [
+    0.691,
+    0.209
+   ],
+   "shipped": [
+    0.523,
+    0.217
+   ]
+  },
+  "the release notes | card 2 - Write release notes for v4.2 > card 4 - Retire legacy webhook handler": {
+   "new": [
+    0.714,
+    0.118
+   ],
+   "shipped": [
+    0.583,
+    0.112
+   ]
+  },
+  "finished | the done status > the todo status": {
+   "new": [
+    0.536,
+    0.379
+   ],
+   "shipped": [
+    0.457,
+    0.37
+   ]
+  }
+ },
+ "chunk_probe": {
+  "clut": {
+   "pair": 84.2,
+   "top1": 82.0
+  },
+  "plain": {
+   "pair": 50.9,
+   "top1": 64.4
+  },
+  "demo": {
+   "pair": 85.5,
+   "top1": 90.0
+  }
+ },
+ "gates": {
+  "roles: held flips mean <= 0.85": true,
+  "roles: every hand pair lower than shipped": true,
+  "order: shuffled mean < 0.95": true,
+  "meaning: spearman within 0.02 of shipped": true,
+  "meaning: calibration pairs keep their order": true,
+  "meaning: probe clut >= 86": false,
+  "meaning: probe plain >= 65.5": false
+ }
+}

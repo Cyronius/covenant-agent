@@ -1,0 +1,6 @@
+     30000 data/clt_train.jsonl
+      4000 data/clt_holdout.jsonl
+     12400 data/clt_holdout_both.jsonl
+     46400 total
+data_cache_clt/reader.pt: 54767 texts, ternlight-mini, norms 1.000-1.000
+=== gen_clt done Tue Sep 29 10:41:54 CDT 2026

@@ -1,0 +1,51 @@
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+cuda ok 51.072914123535156
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 17370.16it/s]
+  teacher 1024/20584  4397/s
+20584 texts (18791 train pieces in 2000 texts, 2000 names) in 20s -> reader/embed/_smoke/targets.pt
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+{"step": 10, "loss": 0.89198, "cos_a": 0.76452, "rel_a": 0.13373, "cos_b": 0.78642, "rel_b": 0.09929, "sec": 3}
+{"step": 20, "loss": 0.65544, "cos_a": 0.59227, "rel_a": 0.05294, "cos_b": 0.61741, "rel_b": 0.04826, "sec": 6}
+{"step": 30, "loss": 0.57654, "cos_a": 0.53187, "rel_a": 0.04165, "cos_b": 0.54232, "rel_b": 0.03724, "sec": 9}
+{"step": 40, "loss": 0.55173, "cos_a": 0.51238, "rel_a": 0.03667, "cos_b": 0.52063, "rel_b": 0.03378, "sec": 12, "cos_alone": 0.4805, "cos_context": 0.4613}
+layer mix: [0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08]
+wrote reader/embed/_smoke/b/head.pt
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 18788.09it/s]
+held-out, head b: cosine to the teacher alone 0.4724, in context 0.4599; pair-rank agreement alone 0.4438
+
+constant probe, pair accuracy (cluttered / plain / demo):
+  overlap (no model)                  74.6 /  58.3 /  92.2
+  whole | teacher                     80.2 /  44.4 /  87.5
+  chunk-4 | teacher                   82.8 /  62.5 /  87.8
+  slots | teacher                     76.7 /  51.4 /  83.1
+  slots+chunks | teacher              81.9 /  66.7 /  84.8
+  whole | b alone                     65.5 /  69.4 /  69.3
+  chunk-4 | b alone                   75.9 /  77.8 /  72.3
+  slots | b alone                     74.1 /  81.9 /  62.8
+  slots+chunks | b alone              75.0 /  77.8 /  66.9
+  whole | b context                   65.5 /  69.4 /  68.9
+  chunk-4 | b context                 75.9 /  76.4 /  73.6
+  slots | b context                   70.7 /  75.0 /  65.9
+  slots+chunks | b context            75.0 /  76.4 /  69.3
+
+gates:
+  miss  b alone chunk-4 within 2 of the teacher
+wrote reader/embed/_smoke/check.json
+smoke done
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 15327.23it/s]
+  teacher 1024/1354541  3853/s
+  teacher 103424/1354541  32632/s
+  teacher 205824/1354541  32614/s
+  teacher 308224/1354541  32591/s
+  teacher 410624/1354541  31601/s
+  teacher 513024/1354541  27774/s
+  teacher 615424/1354541  27982/s
+  teacher 717824/1354541  27583/s
+  teacher 820224/1354541  27331/s
+  teacher 922624/1354541  26865/s
+  teacher 1025024/1354541  25328/s
+  teacher 1127424/1354541  24652/s
+  teacher 1229824/1354541  23600/s
+  teacher 1332224/1354541  21355/s
+1354541 texts (1873603 train pieces in 200000 texts, 100000 names) in 76s -> /workspace/repo/models/tiny/reader/embed/targets.pt

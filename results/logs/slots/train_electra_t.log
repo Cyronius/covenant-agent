@@ -1,0 +1,17 @@
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 28372.65it/s]
+{"step": 50, "loss": 0.8568, "vec": 0.752, "bce": 0.2095, "sec": 53}
+{"step": 100, "loss": 0.5988, "vec": 0.5466, "bce": 0.1044, "sec": 119}
+{"step": 150, "loss": 0.5012, "vec": 0.4555, "bce": 0.0915, "sec": 190}
+{"step": 200, "loss": 0.4538, "vec": 0.4085, "bce": 0.0906, "sec": 257}
+{"step": 250, "loss": 0.4157, "vec": 0.3755, "bce": 0.0803, "sec": 320}
+{"step": 300, "loss": 0.3971, "vec": 0.3579, "bce": 0.0785, "sec": 375}
+{"step": 350, "loss": 0.3785, "vec": 0.3385, "bce": 0.0801, "sec": 427}
+{"step": 400, "loss": 0.3665, "vec": 0.3274, "bce": 0.0783, "sec": 491}
+{"step": 450, "loss": 0.354, "vec": 0.3182, "bce": 0.0716, "sec": 559}
+{"step": 500, "loss": 0.3458, "vec": 0.3107, "bce": 0.07, "sec": 616, "route": 90.9, "route_n": 615, "present_acc": 96.6, "cos": {"action": 0.779, "object": 0.597, "condition": 0.579, "time": 0.581, "destination": 0.53, "source": 0.511, "amount": 0.774}}
+{"step": 550, "loss": 0.3416, "vec": 0.3065, "bce": 0.0702, "sec": 691}
+{"step": 600, "loss": 0.3368, "vec": 0.3025, "bce": 0.0684, "sec": 765}
+{"step": 650, "loss": 0.3383, "vec": 0.3022, "bce": 0.0723, "sec": 833}
+{"step": 651, "loss": 0.0074, "vec": 0.0064, "bce": 0.002, "sec": 834, "route": 91.7, "route_n": 615, "present_acc": 96.6, "cos": {"action": 0.784, "object": 0.601, "condition": 0.588, "time": 0.591, "destination": 0.539, "source": 0.51, "amount": 0.772}}
+layer mix: [0.11, 0.11, 0.1, 0.09, 0.07, 0.06, 0.07, 0.07, 0.07, 0.06, 0.06, 0.06, 0.07]
+wrote reader\slots\h_electra_t\head.pt

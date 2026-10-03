@@ -1,0 +1,10 @@
+ternlight-mini: held-out role routing 81.3% (n=6868), presence 91.6%, slot cosine {'action': 0.702, 'object': 0.636, 'condition': 0.63, 'time': 0.664, 'destination': 0.632, 'source': 0.639, 'amount': 0.709}
+swap object<->destination (n=276): the destination slot follows its words 64.1% before, 35.9% after, both 0.0%  (chance 25% for both)
+swap object<->source (n=155): the source slot follows its words 71.6% before, 28.4% after, both 0.0%  (chance 25% for both)
+to->from (n=548): words in the destination slot before 76.5%, in the source slot after 42.9%, both 27.6%; present: destination before 9.5%, source after 14.6%
+  'move it to bob' / 'move it from bob': 'bob' vs destination [0.729, 0.743], source [0.634, 0.752], object [0.755, 0.747]
+  'assign card 6 to Bob' / 'assign Bob to card 6': 'Bob' vs destination [0.682, 0.682], source [0.587, 0.587], object [0.591, 0.591]
+  'copy the report from the archive to the inbox' / 'copy the report from the inbox to the archive': 'the inbox' vs destination [0.54, 0.54], source [0.566, 0.566], object [0.578, 0.578]
+our requests (parsed, never trained on): routing 75.0% (n=848), presence 82.3%
+constant probe (pair): demo whole 82.1 slots 72.6  plain whole 55.8 slots 65.3  clut whole 82.4 slots 82.0   (Ternlight 4-word chunks: clut 87.1, plain 66.6, demo 84.8)
+wrote ../../results/logs/slots/check_tern.json

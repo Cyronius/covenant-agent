@@ -1,0 +1,44 @@
+
+runs/pod_staged/out/d3_base_s0_clut.jsonl  (2000 tasks)
+  parse     97.5%
+  compile   76.6%
+  goal      53.6%
+  exact     45.2%
+  of the 2000 scored, 346 are segments of a paused task
+  passes   mean 23.6
+
+  slot accuracy against the reference canvas (same slot):
+    kw      88.6%  (n=25395)
+    tool    81.3%  (n=3377)
+    field   67.9%  (n=2623)
+    const   73.8%  (n=3544)
+    reg     89.6%  (n=9352)
+
+  CALL lines where both reference and generation CALL: 3314
+    same tool     85.5%   chance   4.6%
+      vs shape    85.5%   chance 100.0%  (uniform inside the signature group)
+    same effect   97.6%   chance  31.5%
+
+  by level:
+      0  n=  88  compile   97%  goal   61%
+      1  n=  93  compile   60%  goal   45%
+      2  n=  84  compile   67%  goal   32%
+      3  n=  89  compile   65%  goal   16%
+      4  n=  90  compile   57%  goal   46%
+      5  n= 117  compile   68%  goal   32%
+      6  n=  88  compile   56%  goal   23%
+      7  n= 124  compile   68%  goal   57%
+      8  n=  87  compile   83%  goal   60%
+      9  n=  89  compile   75%  goal   20%
+     10  n= 174  compile   80%  goal   62%
+     11  n= 108  compile   78%  goal   68%
+     12  n= 101  compile   62%  goal   34%
+     13  n=  99  compile   96%  goal   66%
+     14  n=  95  compile   77%  goal   77%
+     15  n=  97  compile   94%  goal   67%
+     16  n=  97  compile   99%  goal   96%
+     17  n=  97  compile  100%  goal  100%
+     18  n=  99  compile   96%  goal   59%
+     19  n=  84  compile   50%  goal   37%
+
+wrote runs\pod_staged\out\d3_base_s0_clut.score.json

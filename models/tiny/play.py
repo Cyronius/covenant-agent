@@ -36,7 +36,7 @@ if str(COVENANT) not in sys.path:
 from canvas import Layout, TaskCodec, context_symbols, load_keywords
 from evaluate import load_model
 from prep import encode_one
-from sample import ar_sample, diffusion_sample, to_text
+from sample import ar_backoff, ar_sample, diffusion_sample, to_text
 
 from harness.context import serialize_context  # noqa: E402
 from harness.run import run_task  # noqa: E402
@@ -47,8 +47,12 @@ class ModelPlanner:
     registers) -> program text. Keeps what it wrote, for the report."""
 
     def __init__(self, model, tk, keywords, layout, dims, row, device,
-                 steps=8, max_segments=4):
+                 steps=8, max_segments=4, reader=None, backoff=0):
         self.model, self.tk, self.device = model, tk, device
+        # a reader model (train.py --reader) reads a context no cache has
+        # seen through live_reader.py; `backoff` is evaluate.py --backoff
+        self.reader, self.backoff = reader, backoff
+        self.tries: list[int] = []
         self.keywords, self.layout, self.dims = keywords, layout, dims
         self.syms = context_symbols(row["context"])
         self.request = row["request"]
@@ -64,9 +68,19 @@ class ModelPlanner:
         self.inputs.append(source)
         inputs = encode_one(source, self.syms, self.tk, self.layout,
                             self.dims, self.device)
+        if getattr(self.model.c, "reader", False):
+            from live_reader import reader_inputs
+            inputs.update(reader_inputs(source, self.dims, self.layout.max_tool,
+                                        self.reader, self.device, self.model.c))
         codec = TaskCodec(self.keywords, self.layout, **self.syms)
         with torch.no_grad():
-            if self.model.c.causal:
+            if self.model.c.causal and self.backoff:
+                from core.pipeline import build
+                canvas, tr = ar_backoff(self.model, inputs, codec,
+                                        lambda text: bool(build(text, ctx).compile_ok),
+                                        tries=self.backoff)
+                self.tries.append(tr.tries)
+            elif self.model.c.causal:
                 canvas, _ = ar_sample(self.model, inputs, codec)
             else:
                 canvas, _ = diffusion_sample(self.model, inputs, codec,
@@ -92,6 +106,29 @@ def main() -> int:
     ap.add_argument("--out", default=None, help="write per-task rows here")
     ap.add_argument("--show", type=int, default=3,
                     help="print this many programs in full")
+    ap.add_argument("--reader-live", default=None, metavar="DIR|FILE",
+                    help="a --reader checkpoint: run its reader live for contexts "
+                         "no cache has: a dir with node_modules/@ternlight (the "
+                         "shipped Ternlight), or a TernReader file (tern_reader.py; "
+                         "the role-aware reader for a --reader-file reader_role.pt "
+                         "checkpoint)")
+    ap.add_argument("--backoff", type=int, default=0, metavar="K",
+                    help="evaluate.py --backoff: on a compile failure, up to K "
+                         "runner-up tools at CALL slots")
+    ap.add_argument("--max-const", type=int, default=None, metavar="N",
+                    help="widen the constant slots at inference. Constants reach "
+                         "the pointer as a set of line vectors, so nothing learned "
+                         "depends on the count; the demo's kanban board has 16, "
+                         "the S6 caches' layout 10")
+    ap.add_argument("--max-field", type=int, default=None, metavar="N",
+                    help="widen the field slots at inference, as --max-const "
+                         "does: field pointers are this task's own line "
+                         "vectors too. The service worlds carry up to 51 "
+                         "fields against the clt layout's 28")
+    ap.add_argument("--retype", action="store_true",
+                    help="re-render rows not written typed under the S6 surface "
+                         "(symbols typed, enums, kinds), as run_a.py and the demo "
+                         "server do")
     args = ap.parse_args()
 
     # the generated theme worlds are registered at generation time, not baked
@@ -115,8 +152,24 @@ def main() -> int:
             "max_reg": cfg.get("max_reg", 8),
             # a split / named cache re-serializes and re-encodes the same way
             **{k: cfg[k] for k in ("names", "split", "desc_chars", "max_sig",
-                                   "max_desc", "max_name") if k in cfg}}
+                                   "max_desc", "max_name", "name_words", "chunk_words", "slot_reader")
+               if k in cfg}}
     model = load_model(Path(args.ckpt), device)
+    if args.max_const and args.max_const > layout.max_const:
+        import dataclasses
+        layout = dataclasses.replace(layout, max_const=args.max_const)
+        model.c.max_const = args.max_const
+    if args.max_field and args.max_field > layout.max_field:
+        import dataclasses
+        layout = dataclasses.replace(layout, max_field=args.max_field)
+        model.c.max_field = args.max_field
+    reader = None
+    if getattr(model.c, "reader", False):
+        if not args.reader_live:
+            raise SystemExit("a --reader checkpoint needs --reader-live DIR|FILE")
+        from live_reader import check_reader, open_reader
+        reader = open_reader(args.reader_live)
+        check_reader(reader, args.cache, model.c)
 
     rows = []
     with open(args.tasks, encoding="utf-8") as fh:
@@ -126,6 +179,11 @@ def main() -> int:
                 continue
             if args.id_contains and args.id_contains not in row["id"]:
                 continue
+            if args.retype and row.get("symbols") != "typed":
+                from harness.retype import retype_task
+                from runtime.worlds import get_world
+                row = retype_task(row, get_world(row["world"]), symbols="typed",
+                                  enums=True, kinds=True)
             rows.append(row)
             if args.limit and len(rows) >= args.limit:
                 break
@@ -135,7 +193,7 @@ def main() -> int:
     out, stat = [], Counter()
     for row in rows:
         planner = ModelPlanner(model, tk, keywords, layout, dims, row, device,
-                               steps=args.steps)
+                               steps=args.steps, reader=reader, backoff=args.backoff)
         try:
             result = run_task(row, planner)
         except Exception as exc:                       # noqa: BLE001
@@ -157,7 +215,7 @@ def main() -> int:
             "goal_success": result["goal_success"],
             "status": result["status"], "segments": result["segments"],
             "segments_expected": segments_expected,
-            "programs": planner.programs,
+            "programs": planner.programs, "tries": planner.tries,
             "reference": row["reference"]["segments"],
         })
 

@@ -1,0 +1,8 @@
+registered 143 generated domains
+200/500 (resamples: 40, noops dropped: 34)
+400/500 (resamples: 89, noops dropped: 62)
+wrote 500 tasks -> data\clt_shards\holdout_0.jsonl (resamples: 123, noops dropped: 82)
+signature uniqueness: 100.0% full, 93.1% types-only, over 912 reference CALLs (21.9 tools/task)
+--allow-signature-unique passed: the ceiling below was not enforced, and every row's provenance is stamped signature_unique_allowed so this file can never be mistaken for one that passed it.
+filter grounding: 39/251 of rows with a FILTER (15.5%) filter on something the request never names, over 500 rows read
+segments: 49/500 rows (9.8%) pause and decide in a second segment - L5 8/24, L7 11/24, L10 24/24, L11 6/24

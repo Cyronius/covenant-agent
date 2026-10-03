@@ -1,0 +1,97 @@
+{
+ "body": "/workspace/repo/models/tiny/reader/tern_electra/e1/model.pt",
+ "tagger": "/workspace/repo/models/tiny/reader/slots/t_tern_e1/tagger.pt",
+ "heads": {
+  "b": "reader/embed/_smoke/b/head.pt"
+ },
+ "held": {
+  "b": {
+   "cos_alone": 0.4724,
+   "cos_context": 0.4599,
+   "rank_alone": 0.4438
+  }
+ },
+ "probe": {
+  "demo": {
+   "tasks": 10,
+   "overlap | -": 92.2,
+   "whole | teacher": 87.5,
+   "chunk-4 | teacher": 87.8,
+   "slots | teacher": 83.1,
+   "slots+chunks | teacher": 84.8,
+   "whole | b alone": 69.3,
+   "chunk-4 | b alone": 72.3,
+   "slots | b alone": 62.8,
+   "slots+chunks | b alone": 66.9,
+   "whole | b context": 68.9,
+   "chunk-4 | b context": 73.6,
+   "slots | b context": 65.9,
+   "slots+chunks | b context": 69.3
+  },
+  "plain": {
+   "tasks": 10,
+   "overlap | -": 58.3,
+   "whole | teacher": 44.4,
+   "chunk-4 | teacher": 62.5,
+   "slots | teacher": 51.4,
+   "slots+chunks | teacher": 66.7,
+   "whole | b alone": 69.4,
+   "chunk-4 | b alone": 77.8,
+   "slots | b alone": 81.9,
+   "slots+chunks | b alone": 77.8,
+   "whole | b context": 69.4,
+   "chunk-4 | b context": 76.4,
+   "slots | b context": 75.0,
+   "slots+chunks | b context": 76.4
+  },
+  "clut": {
+   "tasks": 10,
+   "overlap | -": 74.6,
+   "whole | teacher": 80.2,
+   "chunk-4 | teacher": 82.8,
+   "slots | teacher": 76.7,
+   "slots+chunks | teacher": 81.9,
+   "whole | b alone": 65.5,
+   "chunk-4 | b alone": 75.9,
+   "slots | b alone": 74.1,
+   "slots+chunks | b alone": 75.0,
+   "whole | b context": 65.5,
+   "chunk-4 | b context": 75.9,
+   "slots | b context": 70.7,
+   "slots+chunks | b context": 75.0
+  }
+ },
+ "pairs": {
+  "teacher": {
+   "move it to bob | move it from bob": 0.98,
+   "assign card 6 to Bob | assign Bob to card 6": 0.987,
+   "cards that are done | cards that are not done": 0.921,
+   "orders placed before March | orders placed after March": 0.981,
+   "send priya the list | send the list about priya": 0.929,
+   "the oldest issue | the newest issue": 0.665,
+   "bob | Bob Alvarez": 0.567,
+   "bob | Priya Nandan": 0.186,
+   "the release notes | card 2 - Write release notes for v4.2": 0.652,
+   "the release notes | card 4 - Retire legacy webhook handler": 0.083,
+   "finished | the done status": 0.589,
+   "finished | the todo status": 0.31
+  },
+  "b alone": {
+   "move it to bob | move it from bob": 0.945,
+   "assign card 6 to Bob | assign Bob to card 6": 0.955,
+   "cards that are done | cards that are not done": 0.924,
+   "orders placed before March | orders placed after March": 0.989,
+   "send priya the list | send the list about priya": 0.915,
+   "the oldest issue | the newest issue": 0.905,
+   "bob | Bob Alvarez": 0.87,
+   "bob | Priya Nandan": 0.494,
+   "the release notes | card 2 - Write release notes for v4.2": 0.366,
+   "the release notes | card 4 - Retire legacy webhook handler": 0.118,
+   "finished | the done status": 0.544,
+   "finished | the todo status": 0.201
+  }
+ },
+ "gates": {
+  "b alone chunk-4 within 2 of the teacher": false
+ }
+}

@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { InferenceControls } from './components/InferenceControls';
 import ChatPanel from './components/ChatPanel';
 import LoadingView from './components/LoadingView';
 import SchemaPanel from './components/SchemaPanel';
@@ -15,11 +14,6 @@ export default function App() {
     messages,
     modelStatus,
     busy,
-    inference,
-    setInferenceMode,
-    models,
-    model,
-    selectModel,
     sendMessage,
     approveGate,
     cancelGate,
@@ -35,18 +29,10 @@ export default function App() {
           <Link className="all-demos-link" to="/">
             ← All demos
           </Link>
-          <InferenceControls
-            mode={inference}
-            model={model}
-            models={models}
-            disabled={busy || modelStatus.phase === 'loading'}
-            onMode={setInferenceMode}
-            onModel={selectModel}
-          />
           {ready && (
             <span className="model-status ready">
               <span className="dot" />
-              {modelStatus.backend} · {Math.round(modelStatus.loadMs)}ms load
+              {modelStatus.model} · {Math.round(modelStatus.loadMs)}ms load
             </span>
           )}
         </div>

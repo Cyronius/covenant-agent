@@ -1,0 +1,11 @@
+tinyA_oracle_workshop_e.jsonl: 6 episodes, world=workshop model=oracle condition=oracle+exits
+  won            6/6 (100%)
+  died           0/6
+  turns to win   p50 6
+  funnel         crafted_anything 6/6  station_built 6/6  goal_made 6/6
+  per-turn       first tool 36/36 (100%)   first tool+arg 36/36 (100%)   whole turn 36/36 (100%)
+  calls          102 (0 invalid)
+  turns          36 (0 did not compile, 0 abstained, 0 hit the action budget)
+  movement       0 refused moves (0 repeat last turn's), 0 into a direction labelled blocked, 0 turns with a truncated request
+  tokens_out p50 0   gen_ms p50 0
+  finish_reason  {'oracle': 36}

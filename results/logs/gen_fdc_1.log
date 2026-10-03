@@ -1,0 +1,24 @@
+registered 143 generated domains
+200/3750 (resamples: 91, noops dropped: 26)
+400/3750 (resamples: 147, noops dropped: 73)
+600/3750 (resamples: 236, noops dropped: 131)
+800/3750 (resamples: 343, noops dropped: 166)
+1000/3750 (resamples: 451, noops dropped: 209)
+1200/3750 (resamples: 520, noops dropped: 230)
+1400/3750 (resamples: 625, noops dropped: 286)
+1600/3750 (resamples: 687, noops dropped: 333)
+1800/3750 (resamples: 769, noops dropped: 358)
+2000/3750 (resamples: 846, noops dropped: 396)
+2200/3750 (resamples: 903, noops dropped: 450)
+2400/3750 (resamples: 962, noops dropped: 481)
+2600/3750 (resamples: 1035, noops dropped: 513)
+2800/3750 (resamples: 1114, noops dropped: 554)
+3000/3750 (resamples: 1158, noops dropped: 579)
+3200/3750 (resamples: 1221, noops dropped: 611)
+3400/3750 (resamples: 1266, noops dropped: 642)
+3600/3750 (resamples: 1328, noops dropped: 680)
+wrote 3750 tasks -> data\s6opt_shards\fdc_1.jsonl (resamples: 1404, noops dropped: 719)
+signature uniqueness: 73.1% full, 66.1% types-only, over 6892 reference CALLs (27.6 tools/task)
+--allow-signature-unique passed: the ceiling below was not enforced, and every row's provenance is stamped signature_unique_allowed so this file can never be mistaken for one that passed it.
+filter grounding: 144/1012 of rows with a FILTER (14.2%) filter on something the request never names, over 2000 rows read
+segments: 358/3750 rows (9.5%) pause and decide in a second segment - L5 70/179, L7 53/179, L10 179/179, L11 56/178

@@ -1,0 +1,8 @@
+{
+  "name": "covenant-tiny-reader",
+  "private": true,
+  "description": "Ternlight for the tiny planner's live reader (models/tiny/live_reader.py, reader_table.py)",
+  "dependencies": {
+    "@ternlight/mini": "0.1.1"
+  }
+}

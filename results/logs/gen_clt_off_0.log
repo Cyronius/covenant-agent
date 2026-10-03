@@ -1,0 +1,24 @@
+registered 143 generated domains
+200/3750 (resamples: 4, noops dropped: 29)
+400/3750 (resamples: 6, noops dropped: 52)
+600/3750 (resamples: 9, noops dropped: 83)
+800/3750 (resamples: 12, noops dropped: 101)
+1000/3750 (resamples: 16, noops dropped: 132)
+1200/3750 (resamples: 19, noops dropped: 170)
+1400/3750 (resamples: 20, noops dropped: 187)
+1600/3750 (resamples: 26, noops dropped: 202)
+1800/3750 (resamples: 29, noops dropped: 233)
+2000/3750 (resamples: 38, noops dropped: 251)
+2200/3750 (resamples: 41, noops dropped: 273)
+2400/3750 (resamples: 43, noops dropped: 296)
+2600/3750 (resamples: 47, noops dropped: 312)
+2800/3750 (resamples: 49, noops dropped: 336)
+3000/3750 (resamples: 54, noops dropped: 349)
+3200/3750 (resamples: 58, noops dropped: 386)
+3400/3750 (resamples: 60, noops dropped: 401)
+3600/3750 (resamples: 61, noops dropped: 430)
+wrote 3750 tasks -> data\clt_shards\off_0.jsonl (resamples: 63, noops dropped: 449)
+signature uniqueness: 100.0% full, 93.6% types-only, over 6974 reference CALLs (21.9 tools/task)
+--allow-signature-unique passed: the ceiling below was not enforced, and every row's provenance is stamped signature_unique_allowed so this file can never be mistaken for one that passed it.
+filter grounding: 155/1025 of rows with a FILTER (15.1%) filter on something the request never names, over 2000 rows read
+segments: 363/3750 rows (9.7%) pause and decide in a second segment - L5 73/179, L7 59/179, L10 179/179, L11 52/178

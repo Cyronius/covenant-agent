@@ -1,0 +1,10 @@
+router: 5680 training rows {'pages': 1680, 'data': 2000, 'obsact': 2000}
+  test (template give-away)    n= 2000  top1 100.0%  unsure  0.3%  right expert tried 100.0%  {'data->data': 1590, 'obsact->obsact': 304, 'pages->pages': 106}
+  holdout worlds (data)        n=  300  top1 100.0%  unsure  0.0%  right expert tried 100.0%  {'data->data': 300}
+  boatyard                     n=  267  top1 100.0%  unsure  0.0%  right expert tried 100.0%  {'obsact->obsact': 267}
+  rooms_after                  n=  202  top1 100.0%  unsure  0.5%  right expert tried 100.0%  {'obsact->obsact': 202}
+  house                        n=  445  top1 100.0%  unsure  0.0%  right expert tried 100.0%  {'obsact->obsact': 445}
+  coursebuilder                n=  193  top1 100.0%  unsure  0.0%  right expert tried 100.0%  {'pages->pages': 193}
+  telecom                      n=   93  top1  81.7%  unsure 82.8%  right expert tried 100.0%  {'data->data': 76, 'data->pages': 17}
+  demo                         n=   70  top1 100.0%  unsure  0.0%  right expert tried 100.0%  {'data->data': 70}
+wrote runs/pod_staged/router_d3_DR_s0.pt

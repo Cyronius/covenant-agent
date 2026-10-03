@@ -1,0 +1,14 @@
+     3750 data/s6opt_shards/fdc_1.jsonl
+     3750 data/s6opt_shards/fdc_2.jsonl
+    30000 data/fdc25_train.jsonl
+    37500 total
+fdc_1.jsonl: rows with a decoyed call 1649, decidable 1649 (100%), undecidable 0
+   flip slot call, decidable: 2801 (100% of decoyed calls)
+fdc_2.jsonl: rows with a decoyed call 1591, decidable 1591 (100%), undecidable 0
+   flip slot call, decidable: 2781 (100% of decoyed calls)
+s6off: rebuilt cache identical on every tensor; teacher.pt now carries its 52475 texts
+dtw25: rebuilt cache identical on every tensor; teacher.pt now carries its 62872 texts
+data_cache_s6off/reader.pt: 52475 texts, ternlight-mini, norms 1.000-1.000
+data_cache_dtw25/reader.pt: 62872 texts, ternlight-mini, norms 1.000-1.000
+data_cache_fdc25/reader.pt: 54767 texts, ternlight-mini, norms 1.000-1.000
+=== gen_fdc done Mon Sep 28 21:48:11 CDT 2026

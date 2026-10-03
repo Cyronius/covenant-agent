@@ -1,0 +1,35 @@
+
+C:/code/covenant-agent/models/tiny/runs/pod_staged/out/d3_base_s1_flip.jsonl  (472 tasks)
+  parse     95.6%
+  compile   75.4%
+  goal      21.2%
+  exact     14.6%
+  of the 472 scored, 144 are segments of a paused task
+  decoy called  63.5% of 356 decoyed tasks  (a signature-identical sibling, never in a reference)
+  passes   mean 28.2
+
+  slot accuracy against the reference canvas (same slot):
+    kw      89.6%  (n=7254)
+    tool    45.9%  (n=907)
+    field   62.6%  (n=674)
+    const   76.5%  (n=816)
+    reg     92.6%  (n=2590)
+
+  CALL lines where both reference and generation CALL: 896
+    same tool     47.7%   chance   2.0%
+      vs shape    47.7%   chance  41.7%  (uniform inside the signature group)
+    same effect   96.5%   chance  30.1%
+
+  by level:
+      1  n=  49  compile   76%  goal   20%
+      2  n=  50  compile   78%  goal   10%
+      3  n=  48  compile   71%  goal   15%
+      4  n=  28  compile   68%  goal   18%
+      5  n=  50  compile   78%  goal   16%
+      6  n=  54  compile   67%  goal    7%
+      7  n=  38  compile   58%  goal   26%
+      8  n=  37  compile   86%  goal   41%
+     10  n= 108  compile   82%  goal   31%
+     13  n=  10  compile   90%  goal   20%
+
+wrote C:\code\covenant-agent\models\tiny\runs\pod_staged\out\d3_base_s1_flip.score.json

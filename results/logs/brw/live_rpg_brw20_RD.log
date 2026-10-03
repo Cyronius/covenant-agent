@@ -1,0 +1,10 @@
+live_rpg_brw20_RD.jsonl: 6 episodes, world=rpg model=tiny:brw20_RD condition=tiny/brief+letters+enums+exits
+  won            0/6 (0%)
+  died           0/6
+  funnel         key 0/6  door 0/6  exit 0/6
+  per-turn       first tool 120/120 (100%)   first tool+arg 56/120 (47%)   whole turn 22/120 (18%)
+  calls          359 (7 invalid)
+  turns          120 (0 did not compile, 0 abstained, 0 hit the action budget)
+  movement       7 refused moves (0 repeat last turn's), 0 into a direction labelled blocked, 0 turns with a truncated request
+  tokens_out p50 10   gen_ms p50 134
+  finish_reason  {'stop': 120}

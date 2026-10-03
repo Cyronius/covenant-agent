@@ -1,0 +1,134 @@
+{
+ "head": "reader/slots/h_electra/head.pt",
+ "body": "electra-small[:12]",
+ "mix": [
+  0.167,
+  0.139,
+  0.098,
+  0.06,
+  0.042,
+  0.048,
+  0.081,
+  0.077,
+  0.07,
+  0.052,
+  0.05,
+  0.06,
+  0.057
+ ],
+ "held": {
+  "route": 96.0,
+  "route_n": 6868,
+  "present_acc": 96.9,
+  "cos": {
+   "action": 0.853,
+   "object": 0.7,
+   "condition": 0.676,
+   "time": 0.743,
+   "destination": 0.677,
+   "source": 0.689,
+   "amount": 0.771
+  }
+ },
+ "swap_destination": {
+  "n": 276,
+  "orig": 94.9,
+  "swapped": 86.6,
+  "both": 81.5
+ },
+ "swap_source": {
+  "n": 155,
+  "orig": 93.5,
+  "swapped": 93.5,
+  "both": 87.1
+ },
+ "to_from": {
+  "n": 548,
+  "dest_before": 97.1,
+  "source_after": 91.1,
+  "both": 88.9,
+  "present_dest_before": 75.2,
+  "present_source_after": 75.9
+ },
+ "hand": [
+  {
+   "text": "move it to bob",
+   "flip": "move it from bob",
+   "word": "bob",
+   "dest": [
+    0.5,
+    0.474
+   ],
+   "source": [
+    0.468,
+    0.503
+   ],
+   "object": [
+    0.371,
+    0.369
+   ]
+  },
+  {
+   "text": "assign card 6 to Bob",
+   "flip": "assign Bob to card 6",
+   "word": "Bob",
+   "dest": [
+    0.484,
+    0.341
+   ],
+   "source": [
+    0.439,
+    0.385
+   ],
+   "object": [
+    0.397,
+    0.498
+   ]
+  },
+  {
+   "text": "copy the report from the archive to the inbox",
+   "flip": "copy the report from the inbox to the archive",
+   "word": "the inbox",
+   "dest": [
+    0.581,
+    0.436
+   ],
+   "source": [
+    0.514,
+    0.587
+   ],
+   "object": [
+    0.416,
+    0.418
+   ]
+  }
+ ],
+ "requests": {
+  "route": 93.0,
+  "route_n": 848,
+  "present_acc": 92.8,
+  "cos": {
+   "action": 0.728,
+   "object": 0.575,
+   "destination": 0.508,
+   "time": 0.694,
+   "condition": 0.546,
+   "source": 0.641,
+   "amount": 0.555
+  }
+ },
+ "probe": {
+  "demo": {
+   "whole": 72.3,
+   "slots": 72.6
+  },
+  "plain": {
+   "whole": 43.5,
+   "slots": 57.9
+  },
+  "clut": {
+   "whole": 72.8,
+   "slots": 73.0
+  }
+ }
+}

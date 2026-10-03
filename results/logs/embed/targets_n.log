@@ -1,0 +1,27 @@
+  person (51000): ['Inkeri Hirvonen', 'Gelu Barbu', 'Tim Petersen', 'Emma Rinaldi', 'Ofelia Voinea']
+  first (8396): ['Baki', 'Gülağa', 'Brunilda', 'Alois', 'Kapagan']
+  last (8500): ['Tofil', 'Lehtimäki', 'Valenta', 'Feely', "O'Shaughnessy"]
+  company (25500): ['Mendez, Rice and Campbell', 'Roost', 'Snakewood', 'Whitehead, Delacruz and Stephens', 'Anaemic Farms']
+  ref (42500): ["Gianni Ostinelli's balmy id", "Jane Vũ's lumper id", "Oldřich Kratochvílová's shrewmouse id", "Caroline Karlsson's id", "Brandon Powell's id"]
+  title (25500): ['Gunsmith Dependency Birdcall Pelt', 'Leniency yeti stillroom', 'The Reallocate', 'Profound attitude-oriented moderator', 'Neritid lineally']
+  numbered (8500): ['infusion 4815 - Re-engineered content-based model', 'hormone 6898 - The Nonwoody', 'mesmerizer 1196', 'rushy 6413 - Stiffen Odiously', 'bumpkinly 9132 - Monandry Crabbed Phosphine Shumac']
+  528 banned words, e.g. ['acme', 'action', 'ada', 'add', 'adler', 'adoption', 'affidavit', 'albuterol', 'alfalfa', 'alvarez', 'analytics', 'ancestral']
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 5651.22it/s]
+  teacher 1024/1726449  2460/s
+  teacher 103424/1726449  22710/s
+  teacher 205824/1726449  22659/s
+  teacher 308224/1726449  22086/s
+  teacher 410624/1726449  21586/s
+  teacher 513024/1726449  19416/s
+  teacher 615424/1726449  19423/s
+  teacher 717824/1726449  19319/s
+  teacher 820224/1726449  19112/s
+  teacher 922624/1726449  18874/s
+  teacher 1025024/1726449  18645/s
+  teacher 1127424/1726449  18390/s
+  teacher 1229824/1726449  18066/s
+  teacher 1332224/1726449  17671/s
+  teacher 1434624/1726449  17163/s
+  teacher 1537024/1726449  16248/s
+  teacher 1639424/1726449  15298/s
+1726449 texts (1873603 train pieces in 200000 texts, 100000 names, 152906 generated names, 40000 texts with one) in 137s -> reader/embed/targets_n.pt

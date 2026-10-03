@@ -1,0 +1,6 @@
+workshop: 20/20 episodes, 145 turns
+wrote 145 turns -> data\wsb_shards\episodes_1.jsonl
+  workshop: 20/20 episodes finished (off-path detours make a clean finish the exception, not the target)
+signature uniqueness: 0.0% full, 0.0% types-only, over 408 reference CALLs (7.0 tools/task)
+reaction: of 14 turns that open with a failure (14, 100.0%, caused by an aimed move), 0 (0.0%) are labelled with the move that just failed, 14 (100.0%) act on the same thing another way, and 14 (100.0%) answer it - by name or on the same object
+    aimed:same_obj           14 failures, 14/14 answered

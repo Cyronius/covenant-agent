@@ -1,0 +1,44 @@
+
+C:/code/covenant-agent/models/tiny/runs/pod_staged/out/d3_DR_s1_clut.draft.jsonl  (2000 tasks)
+  parse     88.4%
+  compile   69.8%
+  goal      45.8%
+  exact     39.7%
+  of the 2000 scored, 346 are segments of a paused task
+  passes   mean 23.6
+
+  slot accuracy against the reference canvas (same slot):
+    kw      91.5%  (n=25395)
+    tool    86.4%  (n=3377)
+    field   72.2%  (n=2623)
+    const   70.1%  (n=3544)
+    reg     93.6%  (n=9352)
+
+  CALL lines where both reference and generation CALL: 3302
+    same tool     89.4%   chance   4.6%
+      vs shape    89.4%   chance 100.0%  (uniform inside the signature group)
+    same effect   97.9%   chance  31.5%
+
+  by level:
+      0  n=  88  compile   90%  goal   44%
+      1  n=  93  compile   74%  goal   56%
+      2  n=  84  compile   62%  goal   37%
+      3  n=  89  compile    8%  goal    0%
+      4  n=  90  compile   51%  goal   40%
+      5  n= 117  compile   38%  goal   19%
+      6  n=  88  compile   52%  goal   23%
+      7  n= 124  compile   59%  goal   39%
+      8  n=  87  compile   76%  goal   41%
+      9  n=  89  compile   69%  goal   21%
+     10  n= 174  compile   73%  goal   51%
+     11  n= 108  compile   79%  goal   63%
+     12  n= 101  compile   78%  goal   37%
+     13  n=  99  compile   86%  goal   42%
+     14  n=  95  compile   67%  goal   67%
+     15  n=  97  compile   94%  goal   55%
+     16  n=  97  compile   90%  goal   88%
+     17  n=  97  compile  100%  goal   93%
+     18  n=  99  compile   94%  goal   52%
+     19  n=  84  compile   54%  goal   39%
+
+wrote C:\code\covenant-agent\models\tiny\runs\pod_staged\out\d3_DR_s1_clut.draft.score.json

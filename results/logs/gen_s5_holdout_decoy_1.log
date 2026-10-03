@@ -1,8 +1,10 @@
 registered 143 generated domains
-200/1000 (resamples: 4, noops dropped: 23)
-400/1000 (resamples: 9, noops dropped: 57)
-600/1000 (resamples: 11, noops dropped: 79)
-800/1000 (resamples: 16, noops dropped: 97)
-1000/1000 (resamples: 25, noops dropped: 115)
-wrote 1000 tasks -> data\s5_shards\holdout_decoy_1.jsonl (resamples: 25, noops dropped: 115)
-signature uniqueness: 2.6% full, 2.1% types-only, over 1892 reference CALLs (41.4 tools/task)
+200/1000 (resamples: 2, noops dropped: 22)
+400/1000 (resamples: 4, noops dropped: 51)
+600/1000 (resamples: 8, noops dropped: 65)
+800/1000 (resamples: 11, noops dropped: 98)
+1000/1000 (resamples: 14, noops dropped: 114)
+wrote 1000 tasks -> data\s5_shards\holdout_decoy_1.jsonl (resamples: 14, noops dropped: 114)
+signature uniqueness: 2.8% full, 2.4% types-only, over 1866 reference CALLs (45.3 tools/task)
+filter grounding: 71/508 of rows with a FILTER (14.0%) filter on something the request never names, over 1000 rows read
+segments: 95/1000 rows (9.5%) pause and decide in a second segment - L5 22/48, L7 17/48, L10 47/47, L11 9/47

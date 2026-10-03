@@ -1,0 +1,35 @@
+
+runs/pod_staged/out/d3_D2R_s1_flip.jsonl  (472 tasks)
+  parse     94.1%
+  compile   73.7%
+  goal      16.3%
+  exact     11.9%
+  of the 472 scored, 144 are segments of a paused task
+  decoy called  71.8% of 348 decoyed tasks  (a signature-identical sibling, never in a reference)
+  passes   mean 27.0
+
+  slot accuracy against the reference canvas (same slot):
+    kw      86.8%  (n=7254)
+    tool    38.0%  (n=907)
+    field   59.9%  (n=674)
+    const   75.0%  (n=816)
+    reg     89.9%  (n=2590)
+
+  CALL lines where both reference and generation CALL: 865
+    same tool     40.3%   chance   2.0%
+      vs shape    40.3%   chance  41.7%  (uniform inside the signature group)
+    same effect   97.2%   chance  30.3%
+
+  by level:
+      1  n=  49  compile   63%  goal   12%
+      2  n=  50  compile   66%  goal   12%
+      3  n=  48  compile   83%  goal    8%
+      4  n=  28  compile   71%  goal   11%
+      5  n=  50  compile   70%  goal    6%
+      6  n=  54  compile   56%  goal    6%
+      7  n=  38  compile   71%  goal   16%
+      8  n=  37  compile   84%  goal   38%
+     10  n= 108  compile   84%  goal   29%
+     13  n=  10  compile  100%  goal   10%
+
+wrote runs\pod_staged\out\d3_D2R_s1_flip.score.json

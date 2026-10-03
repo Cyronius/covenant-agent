@@ -1,0 +1,814 @@
+arm=ar binding=structural params=11.49M device=cuda train=36000 steps=6744
+weights=fp act_bits=0 loops=1 loop_body=6.32M params = 24.12 MB resident of 4.00 MB  OVER BUDGET
+  step    20/6744 loss 9.1453 lr 3.00e-05  1.50s/step
+  step    40/6744 loss 7.1154 lr 6.00e-05  1.39s/step
+  step    60/6744 loss 5.8883 lr 9.00e-05  1.36s/step
+  step    80/6744 loss 4.7661 lr 1.20e-04  1.34s/step
+  step   100/6744 loss 4.0461 lr 1.50e-04  1.33s/step
+  step   120/6744 loss 3.5141 lr 1.80e-04  1.33s/step
+  step   140/6744 loss 3.1479 lr 2.10e-04  1.32s/step
+  step   160/6744 loss 2.7371 lr 2.40e-04  1.31s/step
+  step   180/6744 loss 2.4769 lr 2.70e-04  1.31s/step
+  step   200/6744 loss 2.2735 lr 3.00e-04  1.31s/step
+  == step 200 val_loss 2.0613  acc: kw 0.86 tool 0.47 field 0.38 const 0.48 reg 0.92
+  step   220/6744 loss 2.0792 lr 3.00e-04  1.32s/step
+  step   240/6744 loss 1.8697 lr 3.00e-04  1.32s/step
+  step   260/6744 loss 1.7909 lr 3.00e-04  1.31s/step
+  step   280/6744 loss 1.6228 lr 3.00e-04  1.31s/step
+  step   300/6744 loss 1.5022 lr 3.00e-04  1.31s/step
+  step   320/6744 loss 1.3941 lr 3.00e-04  1.31s/step
+  step   340/6744 loss 1.3019 lr 3.00e-04  1.31s/step
+  step   360/6744 loss 1.1408 lr 3.00e-04  1.31s/step
+  step   380/6744 loss 1.0881 lr 2.99e-04  1.30s/step
+  step   400/6744 loss 1.0051 lr 2.99e-04  1.30s/step
+  == step 400 val_loss 0.8025  acc: kw 0.96 tool 0.78 field 0.64 const 0.66 reg 1.00
+  step   420/6744 loss 0.9215 lr 2.99e-04  1.31s/step
+  step   440/6744 loss 0.8795 lr 2.99e-04  1.31s/step
+  step   460/6744 loss 0.8190 lr 2.99e-04  1.31s/step
+  step   480/6744 loss 0.7846 lr 2.99e-04  1.30s/step
+  step   500/6744 loss 0.7185 lr 2.98e-04  1.30s/step
+  step   520/6744 loss 0.7223 lr 2.98e-04  1.30s/step
+  step   540/6744 loss 0.6694 lr 2.98e-04  1.30s/step
+  step   560/6744 loss 0.6233 lr 2.98e-04  1.30s/step
+  step   580/6744 loss 0.5897 lr 2.98e-04  1.30s/step
+  step   600/6744 loss 0.5864 lr 2.97e-04  1.30s/step
+  == step 600 val_loss 0.4587  acc: kw 0.98 tool 0.81 field 0.70 const 0.67 reg 1.00
+  step   620/6744 loss 0.5539 lr 2.97e-04  1.30s/step
+  step   640/6744 loss 0.5408 lr 2.97e-04  1.30s/step
+  step   660/6744 loss 0.5257 lr 2.96e-04  1.30s/step
+  step   680/6744 loss 0.5072 lr 2.96e-04  1.30s/step
+  step   700/6744 loss 0.4966 lr 2.96e-04  1.30s/step
+  step   720/6744 loss 0.4971 lr 2.95e-04  1.30s/step
+  step   740/6744 loss 0.4685 lr 2.95e-04  1.30s/step
+  step   760/6744 loss 0.4673 lr 2.95e-04  1.30s/step
+  step   780/6744 loss 0.4609 lr 2.94e-04  1.30s/step
+  step   800/6744 loss 0.4336 lr 2.94e-04  1.30s/step
+  == step 800 val_loss 0.3903  acc: kw 0.99 tool 0.82 field 0.74 const 0.67 reg 1.00
+  step   820/6744 loss 0.4381 lr 2.93e-04  1.30s/step
+  step   840/6744 loss 0.4191 lr 2.93e-04  1.30s/step
+  step   860/6744 loss 0.4117 lr 2.93e-04  1.30s/step
+  step   880/6744 loss 0.4158 lr 2.92e-04  1.30s/step
+  step   900/6744 loss 0.4036 lr 2.92e-04  1.30s/step
+  step   920/6744 loss 0.4095 lr 2.91e-04  1.30s/step
+  step   940/6744 loss 0.3908 lr 2.91e-04  1.30s/step
+  step   960/6744 loss 0.3952 lr 2.90e-04  1.30s/step
+  step   980/6744 loss 0.3703 lr 2.90e-04  1.30s/step
+  step  1000/6744 loss 0.3884 lr 2.89e-04  1.30s/step
+  == step 1000 val_loss 0.3316  acc: kw 0.99 tool 0.86 field 0.82 const 0.70 reg 1.00
+  step  1020/6744 loss 0.3527 lr 2.89e-04  1.30s/step
+  step  1040/6744 loss 0.3536 lr 2.88e-04  1.30s/step
+  step  1060/6744 loss 0.3548 lr 2.87e-04  1.30s/step
+  step  1080/6744 loss 0.3670 lr 2.87e-04  1.30s/step
+  step  1100/6744 loss 0.3626 lr 2.86e-04  1.30s/step
+  step  1120/6744 loss 0.3601 lr 2.86e-04  1.30s/step
+  step  1140/6744 loss 0.3430 lr 2.85e-04  1.30s/step
+  step  1160/6744 loss 0.3283 lr 2.84e-04  1.30s/step
+  step  1180/6744 loss 0.3251 lr 2.84e-04  1.30s/step
+  step  1200/6744 loss 0.3088 lr 2.83e-04  1.30s/step
+  == step 1200 val_loss 0.2839  acc: kw 0.99 tool 0.87 field 0.86 const 0.70 reg 1.00
+  step  1220/6744 loss 0.3090 lr 2.82e-04  1.30s/step
+  step  1240/6744 loss 0.3261 lr 2.82e-04  1.30s/step
+  step  1260/6744 loss 0.3171 lr 2.81e-04  1.30s/step
+  step  1280/6744 loss 0.3162 lr 2.80e-04  1.30s/step
+  step  1300/6744 loss 0.3108 lr 2.80e-04  1.30s/step
+  step  1320/6744 loss 0.2917 lr 2.79e-04  1.30s/step
+  step  1340/6744 loss 0.2952 lr 2.78e-04  1.30s/step
+  step  1360/6744 loss 0.2882 lr 2.77e-04  1.30s/step
+  step  1380/6744 loss 0.3001 lr 2.77e-04  1.30s/step
+  step  1400/6744 loss 0.2984 lr 2.76e-04  1.30s/step
+  == step 1400 val_loss 0.2601  acc: kw 0.99 tool 0.89 field 0.86 const 0.69 reg 1.00
+  step  1420/6744 loss 0.2835 lr 2.75e-04  1.30s/step
+  step  1440/6744 loss 0.2921 lr 2.74e-04  1.30s/step
+  step  1460/6744 loss 0.3004 lr 2.73e-04  1.30s/step
+  step  1480/6744 loss 0.2856 lr 2.73e-04  1.30s/step
+  step  1500/6744 loss 0.2893 lr 2.72e-04  1.30s/step
+  step  1520/6744 loss 0.2859 lr 2.71e-04  1.30s/step
+  step  1540/6744 loss 0.2724 lr 2.70e-04  1.29s/step
+  step  1560/6744 loss 0.2673 lr 2.69e-04  1.29s/step
+  step  1580/6744 loss 0.2838 lr 2.68e-04  1.29s/step
+  step  1600/6744 loss 0.2859 lr 2.67e-04  1.29s/step
+  == step 1600 val_loss 0.2485  acc: kw 0.99 tool 0.91 field 0.90 const 0.70 reg 1.00
+  step  1620/6744 loss 0.2698 lr 2.66e-04  1.29s/step
+  step  1640/6744 loss 0.2394 lr 2.66e-04  1.29s/step
+  step  1660/6744 loss 0.2515 lr 2.65e-04  1.29s/step
+  step  1680/6744 loss 0.2829 lr 2.64e-04  1.29s/step
+  step  1700/6744 loss 0.2505 lr 2.63e-04  1.29s/step
+  step  1720/6744 loss 0.2420 lr 2.62e-04  1.29s/step
+  step  1740/6744 loss 0.2204 lr 2.61e-04  1.29s/step
+  step  1760/6744 loss 0.2439 lr 2.60e-04  1.29s/step
+  step  1780/6744 loss 0.2441 lr 2.59e-04  1.29s/step
+  step  1800/6744 loss 0.2496 lr 2.58e-04  1.29s/step
+  == step 1800 val_loss 0.2287  acc: kw 0.99 tool 0.91 field 0.89 const 0.72 reg 1.00
+  step  1820/6744 loss 0.2312 lr 2.57e-04  1.29s/step
+  step  1840/6744 loss 0.2446 lr 2.56e-04  1.29s/step
+  step  1860/6744 loss 0.2305 lr 2.55e-04  1.29s/step
+  step  1880/6744 loss 0.2360 lr 2.54e-04  1.29s/step
+  step  1900/6744 loss 0.2450 lr 2.53e-04  1.29s/step
+  step  1920/6744 loss 0.2339 lr 2.52e-04  1.29s/step
+  step  1940/6744 loss 0.2225 lr 2.51e-04  1.29s/step
+  step  1960/6744 loss 0.2397 lr 2.50e-04  1.29s/step
+  step  1980/6744 loss 0.2442 lr 2.48e-04  1.29s/step
+  step  2000/6744 loss 0.2439 lr 2.47e-04  1.29s/step
+  == step 2000 val_loss 0.2184  acc: kw 0.99 tool 0.91 field 0.88 const 0.71 reg 1.00
+  step  2020/6744 loss 0.2490 lr 2.46e-04  1.29s/step
+  step  2040/6744 loss 0.2457 lr 2.45e-04  1.29s/step
+  step  2060/6744 loss 0.2183 lr 2.44e-04  1.29s/step
+  step  2080/6744 loss 0.2246 lr 2.43e-04  1.29s/step
+  step  2100/6744 loss 0.2206 lr 2.42e-04  1.29s/step
+  step  2120/6744 loss 0.2182 lr 2.41e-04  1.29s/step
+  step  2140/6744 loss 0.2177 lr 2.40e-04  1.29s/step
+  step  2160/6744 loss 0.2151 lr 2.38e-04  1.29s/step
+  step  2180/6744 loss 0.2073 lr 2.37e-04  1.29s/step
+  step  2200/6744 loss 0.2079 lr 2.36e-04  1.29s/step
+  == step 2200 val_loss 0.2046  acc: kw 0.99 tool 0.93 field 0.89 const 0.72 reg 1.00
+  step  2220/6744 loss 0.2294 lr 2.35e-04  1.29s/step
+  step  2240/6744 loss 0.2102 lr 2.34e-04  1.29s/step
+  step  2260/6744 loss 0.2072 lr 2.32e-04  1.29s/step
+  step  2280/6744 loss 0.1978 lr 2.31e-04  1.29s/step
+  step  2300/6744 loss 0.2127 lr 2.30e-04  1.29s/step
+  step  2320/6744 loss 0.2189 lr 2.29e-04  1.29s/step
+  step  2340/6744 loss 0.1985 lr 2.28e-04  1.29s/step
+  step  2360/6744 loss 0.2013 lr 2.26e-04  1.29s/step
+  step  2380/6744 loss 0.2021 lr 2.25e-04  1.29s/step
+  step  2400/6744 loss 0.2058 lr 2.24e-04  1.29s/step
+  == step 2400 val_loss 0.2027  acc: kw 0.99 tool 0.91 field 0.93 const 0.72 reg 1.00
+  step  2420/6744 loss 0.1920 lr 2.23e-04  1.29s/step
+  step  2440/6744 loss 0.2030 lr 2.21e-04  1.29s/step
+  step  2460/6744 loss 0.2085 lr 2.20e-04  1.29s/step
+  step  2480/6744 loss 0.1995 lr 2.19e-04  1.29s/step
+  step  2500/6744 loss 0.1957 lr 2.17e-04  1.29s/step
+  step  2520/6744 loss 0.2030 lr 2.16e-04  1.29s/step
+  step  2540/6744 loss 0.1774 lr 2.15e-04  1.29s/step
+  step  2560/6744 loss 0.1843 lr 2.14e-04  1.29s/step
+  step  2580/6744 loss 0.1928 lr 2.12e-04  1.29s/step
+  step  2600/6744 loss 0.2095 lr 2.11e-04  1.29s/step
+  == step 2600 val_loss 0.1943  acc: kw 1.00 tool 0.92 field 0.91 const 0.70 reg 1.00
+  step  2620/6744 loss 0.1923 lr 2.10e-04  1.29s/step
+  step  2640/6744 loss 0.1895 lr 2.08e-04  1.29s/step
+  step  2660/6744 loss 0.1873 lr 2.07e-04  1.29s/step
+  step  2680/6744 loss 0.1826 lr 2.06e-04  1.29s/step
+  step  2700/6744 loss 0.1979 lr 2.04e-04  1.29s/step
+  step  2720/6744 loss 0.1928 lr 2.03e-04  1.29s/step
+  step  2740/6744 loss 0.1988 lr 2.02e-04  1.29s/step
+  step  2760/6744 loss 0.2036 lr 2.00e-04  1.29s/step
+  step  2780/6744 loss 0.1999 lr 1.99e-04  1.29s/step
+  step  2800/6744 loss 0.1768 lr 1.98e-04  1.29s/step
+  == step 2800 val_loss 0.1757  acc: kw 0.99 tool 0.93 field 0.91 const 0.72 reg 1.00
+  step  2820/6744 loss 0.1880 lr 1.96e-04  1.29s/step
+  step  2840/6744 loss 0.1897 lr 1.95e-04  1.29s/step
+  step  2860/6744 loss 0.1778 lr 1.93e-04  1.29s/step
+  step  2880/6744 loss 0.1704 lr 1.92e-04  1.29s/step
+  step  2900/6744 loss 0.1707 lr 1.91e-04  1.29s/step
+  step  2920/6744 loss 0.1732 lr 1.89e-04  1.29s/step
+  step  2940/6744 loss 0.1691 lr 1.88e-04  1.29s/step
+  step  2960/6744 loss 0.1742 lr 1.86e-04  1.29s/step
+  step  2980/6744 loss 0.1750 lr 1.85e-04  1.29s/step
+  step  3000/6744 loss 0.1731 lr 1.84e-04  1.29s/step
+  == step 3000 val_loss 0.1708  acc: kw 0.99 tool 0.93 field 0.93 const 0.72 reg 1.00
+  step  3020/6744 loss 0.1694 lr 1.82e-04  1.29s/step
+  step  3040/6744 loss 0.1907 lr 1.81e-04  1.29s/step
+  step  3060/6744 loss 0.1729 lr 1.79e-04  1.29s/step
+  step  3080/6744 loss 0.1814 lr 1.78e-04  1.29s/step
+  step  3100/6744 loss 0.1856 lr 1.77e-04  1.29s/step
+  step  3120/6744 loss 0.1809 lr 1.75e-04  1.29s/step
+  step  3140/6744 loss 0.1548 lr 1.74e-04  1.29s/step
+  step  3160/6744 loss 0.1713 lr 1.72e-04  1.29s/step
+  step  3180/6744 loss 0.1737 lr 1.71e-04  1.29s/step
+  step  3200/6744 loss 0.1717 lr 1.70e-04  1.29s/step
+  == step 3200 val_loss 0.1775  acc: kw 0.99 tool 0.93 field 0.92 const 0.72 reg 1.00
+  step  3220/6744 loss 0.1544 lr 1.68e-04  1.29s/step
+  step  3240/6744 loss 0.1812 lr 1.67e-04  1.29s/step
+  step  3260/6744 loss 0.1739 lr 1.65e-04  1.29s/step
+  step  3280/6744 loss 0.1536 lr 1.64e-04  1.29s/step
+  step  3300/6744 loss 0.1717 lr 1.62e-04  1.29s/step
+  step  3320/6744 loss 0.1694 lr 1.61e-04  1.29s/step
+  step  3340/6744 loss 0.1734 lr 1.59e-04  1.29s/step
+  step  3360/6744 loss 0.1612 lr 1.58e-04  1.29s/step
+  step  3380/6744 loss 0.1769 lr 1.57e-04  1.29s/step
+  step  3400/6744 loss 0.1559 lr 1.55e-04  1.29s/step
+  == step 3400 val_loss 0.1673  acc: kw 1.00 tool 0.93 field 0.92 const 0.72 reg 1.00
+  step  3420/6744 loss 0.1557 lr 1.54e-04  1.29s/step
+  step  3440/6744 loss 0.1568 lr 1.52e-04  1.29s/step
+  step  3460/6744 loss 0.1543 lr 1.51e-04  1.29s/step
+  step  3480/6744 loss 0.1768 lr 1.49e-04  1.29s/step
+  step  3500/6744 loss 0.1594 lr 1.48e-04  1.29s/step
+  step  3520/6744 loss 0.1482 lr 1.47e-04  1.29s/step
+  step  3540/6744 loss 0.1538 lr 1.45e-04  1.29s/step
+  step  3560/6744 loss 0.1629 lr 1.44e-04  1.29s/step
+  step  3580/6744 loss 0.1495 lr 1.42e-04  1.29s/step
+  step  3600/6744 loss 0.1478 lr 1.41e-04  1.29s/step
+  == step 3600 val_loss 0.1684  acc: kw 0.99 tool 0.93 field 0.93 const 0.73 reg 1.00
+  step  3620/6744 loss 0.1558 lr 1.39e-04  1.29s/step
+  step  3640/6744 loss 0.1546 lr 1.38e-04  1.29s/step
+  step  3660/6744 loss 0.1528 lr 1.36e-04  1.29s/step
+  step  3680/6744 loss 0.1622 lr 1.35e-04  1.29s/step
+  step  3700/6744 loss 0.1543 lr 1.34e-04  1.29s/step
+  step  3720/6744 loss 0.1585 lr 1.32e-04  1.29s/step
+  step  3740/6744 loss 0.1623 lr 1.31e-04  1.29s/step
+  step  3760/6744 loss 0.1563 lr 1.29e-04  1.29s/step
+  step  3780/6744 loss 0.1413 lr 1.28e-04  1.29s/step
+  step  3800/6744 loss 0.1442 lr 1.26e-04  1.29s/step
+  == step 3800 val_loss 0.1631  acc: kw 1.00 tool 0.94 field 0.94 const 0.74 reg 1.00
+  step  3820/6744 loss 0.1529 lr 1.25e-04  1.29s/step
+  step  3840/6744 loss 0.1471 lr 1.24e-04  1.29s/step
+  step  3860/6744 loss 0.1472 lr 1.22e-04  1.29s/step
+  step  3880/6744 loss 0.1542 lr 1.21e-04  1.29s/step
+  step  3900/6744 loss 0.1579 lr 1.19e-04  1.29s/step
+  step  3920/6744 loss 0.1518 lr 1.18e-04  1.29s/step
+  step  3940/6744 loss 0.1463 lr 1.17e-04  1.29s/step
+  step  3960/6744 loss 0.1309 lr 1.15e-04  1.29s/step
+  step  3980/6744 loss 0.1345 lr 1.14e-04  1.29s/step
+  step  4000/6744 loss 0.1325 lr 1.12e-04  1.29s/step
+  == step 4000 val_loss 0.1648  acc: kw 1.00 tool 0.93 field 0.94 const 0.75 reg 1.00
+  step  4020/6744 loss 0.1456 lr 1.11e-04  1.29s/step
+  step  4040/6744 loss 0.1373 lr 1.10e-04  1.29s/step
+  step  4060/6744 loss 0.1453 lr 1.08e-04  1.29s/step
+  step  4080/6744 loss 0.1492 lr 1.07e-04  1.29s/step
+  step  4100/6744 loss 0.1471 lr 1.05e-04  1.29s/step
+  step  4120/6744 loss 0.1421 lr 1.04e-04  1.29s/step
+  step  4140/6744 loss 0.1384 lr 1.03e-04  1.29s/step
+  step  4160/6744 loss 0.1428 lr 1.01e-04  1.29s/step
+  step  4180/6744 loss 0.1433 lr 1.00e-04  1.29s/step
+  step  4200/6744 loss 0.1343 lr 9.86e-05  1.29s/step
+  == step 4200 val_loss 0.1545  acc: kw 1.00 tool 0.95 field 0.95 const 0.74 reg 1.00
+  step  4220/6744 loss 0.1405 lr 9.73e-05  1.29s/step
+  step  4240/6744 loss 0.1519 lr 9.59e-05  1.29s/step
+  step  4260/6744 loss 0.1400 lr 9.46e-05  1.29s/step
+  step  4280/6744 loss 0.1382 lr 9.33e-05  1.29s/step
+  step  4300/6744 loss 0.1343 lr 9.19e-05  1.29s/step
+  step  4320/6744 loss 0.1428 lr 9.06e-05  1.29s/step
+  step  4340/6744 loss 0.1375 lr 8.93e-05  1.29s/step
+  step  4360/6744 loss 0.1376 lr 8.80e-05  1.29s/step
+  step  4380/6744 loss 0.1415 lr 8.67e-05  1.29s/step
+  step  4400/6744 loss 0.1483 lr 8.54e-05  1.29s/step
+  == step 4400 val_loss 0.1449  acc: kw 1.00 tool 0.95 field 0.95 const 0.75 reg 1.00
+  step  4420/6744 loss 0.1358 lr 8.41e-05  1.29s/step
+  step  4440/6744 loss 0.1394 lr 8.28e-05  1.29s/step
+  step  4460/6744 loss 0.1291 lr 8.15e-05  1.29s/step
+  step  4480/6744 loss 0.1362 lr 8.02e-05  1.29s/step
+  step  4500/6744 loss 0.1326 lr 7.89e-05  1.29s/step
+  step  4520/6744 loss 0.1288 lr 7.77e-05  1.29s/step
+  step  4540/6744 loss 0.1191 lr 7.64e-05  1.29s/step
+  step  4560/6744 loss 0.1221 lr 7.52e-05  1.29s/step
+  step  4580/6744 loss 0.1283 lr 7.39e-05  1.29s/step
+  step  4600/6744 loss 0.1442 lr 7.27e-05  1.29s/step
+  == step 4600 val_loss 0.1348  acc: kw 1.00 tool 0.95 field 0.96 const 0.74 reg 1.00
+  step  4620/6744 loss 0.1356 lr 7.15e-05  1.29s/step
+  step  4640/6744 loss 0.1308 lr 7.02e-05  1.29s/step
+  step  4660/6744 loss 0.1325 lr 6.90e-05  1.29s/step
+  step  4680/6744 loss 0.1263 lr 6.78e-05  1.29s/step
+  step  4700/6744 loss 0.1280 lr 6.66e-05  1.29s/step
+  step  4720/6744 loss 0.1264 lr 6.54e-05  1.29s/step
+  step  4740/6744 loss 0.1241 lr 6.42e-05  1.29s/step
+  step  4760/6744 loss 0.1213 lr 6.30e-05  1.29s/step
+  step  4780/6744 loss 0.1294 lr 6.19e-05  1.29s/step
+  step  4800/6744 loss 0.1272 lr 6.07e-05  1.29s/step
+  == step 4800 val_loss 0.1435  acc: kw 1.00 tool 0.95 field 0.95 const 0.76 reg 1.00
+  step  4820/6744 loss 0.1235 lr 5.96e-05  1.29s/step
+  step  4840/6744 loss 0.1266 lr 5.84e-05  1.29s/step
+  step  4860/6744 loss 0.1268 lr 5.73e-05  1.29s/step
+  step  4880/6744 loss 0.1346 lr 5.62e-05  1.29s/step
+  step  4900/6744 loss 0.1269 lr 5.50e-05  1.29s/step
+  step  4920/6744 loss 0.1299 lr 5.39e-05  1.29s/step
+  step  4940/6744 loss 0.1333 lr 5.28e-05  1.29s/step
+  step  4960/6744 loss 0.1230 lr 5.17e-05  1.29s/step
+  step  4980/6744 loss 0.1257 lr 5.06e-05  1.29s/step
+  step  5000/6744 loss 0.1302 lr 4.96e-05  1.29s/step
+  == step 5000 val_loss 0.1332  acc: kw 1.00 tool 0.96 field 0.95 const 0.76 reg 1.00
+  step  5020/6744 loss 0.1191 lr 4.85e-05  1.29s/step
+  step  5040/6744 loss 0.1263 lr 4.75e-05  1.29s/step
+  step  5060/6744 loss 0.1276 lr 4.64e-05  1.29s/step
+  step  5080/6744 loss 0.1273 lr 4.54e-05  1.29s/step
+  step  5100/6744 loss 0.1236 lr 4.43e-05  1.29s/step
+  step  5120/6744 loss 0.1217 lr 4.33e-05  1.29s/step
+  step  5140/6744 loss 0.1132 lr 4.23e-05  1.29s/step
+  step  5160/6744 loss 0.1209 lr 4.13e-05  1.29s/step
+  step  5180/6744 loss 0.1151 lr 4.03e-05  1.29s/step
+  step  5200/6744 loss 0.1180 lr 3.94e-05  1.29s/step
+  == step 5200 val_loss 0.1437  acc: kw 1.00 tool 0.95 field 0.95 const 0.77 reg 1.00
+  step  5220/6744 loss 0.1174 lr 3.84e-05  1.29s/step
+  step  5240/6744 loss 0.1322 lr 3.74e-05  1.29s/step
+  step  5260/6744 loss 0.1217 lr 3.65e-05  1.29s/step
+  step  5280/6744 loss 0.1137 lr 3.55e-05  1.29s/step
+  step  5300/6744 loss 0.1226 lr 3.46e-05  1.29s/step
+  step  5320/6744 loss 0.1252 lr 3.37e-05  1.29s/step
+  step  5340/6744 loss 0.1159 lr 3.28e-05  1.29s/step
+  step  5360/6744 loss 0.1188 lr 3.19e-05  1.29s/step
+  step  5380/6744 loss 0.1171 lr 3.10e-05  1.28s/step
+  step  5400/6744 loss 0.1151 lr 3.02e-05  1.28s/step
+  == step 5400 val_loss 0.1389  acc: kw 0.99 tool 0.95 field 0.94 const 0.77 reg 1.00
+  step  5420/6744 loss 0.1156 lr 2.93e-05  1.28s/step
+  step  5440/6744 loss 0.1133 lr 2.84e-05  1.28s/step
+  step  5460/6744 loss 0.1225 lr 2.76e-05  1.28s/step
+  step  5480/6744 loss 0.1184 lr 2.68e-05  1.28s/step
+  step  5500/6744 loss 0.1144 lr 2.60e-05  1.28s/step
+  step  5520/6744 loss 0.1186 lr 2.52e-05  1.28s/step
+  step  5540/6744 loss 0.1125 lr 2.44e-05  1.28s/step
+  step  5560/6744 loss 0.1195 lr 2.36e-05  1.28s/step
+  step  5580/6744 loss 0.1149 lr 2.28e-05  1.28s/step
+  step  5600/6744 loss 0.1201 lr 2.21e-05  1.27s/step
+  == step 5600 val_loss 0.1339  acc: kw 1.00 tool 0.95 field 0.94 const 0.78 reg 1.00
+  step  5620/6744 loss 0.1126 lr 2.13e-05  1.27s/step
+  step  5640/6744 loss 0.1128 lr 2.06e-05  1.27s/step
+  step  5660/6744 loss 0.1134 lr 1.99e-05  1.27s/step
+  step  5680/6744 loss 0.1152 lr 1.91e-05  1.27s/step
+  step  5700/6744 loss 0.1168 lr 1.84e-05  1.27s/step
+  step  5720/6744 loss 0.1134 lr 1.78e-05  1.27s/step
+  step  5740/6744 loss 0.1111 lr 1.71e-05  1.27s/step
+  step  5760/6744 loss 0.1100 lr 1.64e-05  1.27s/step
+  step  5780/6744 loss 0.1140 lr 1.58e-05  1.27s/step
+  step  5800/6744 loss 0.1131 lr 1.51e-05  1.27s/step
+  == step 5800 val_loss 0.1394  acc: kw 0.99 tool 0.95 field 0.94 const 0.78 reg 1.00
+  step  5820/6744 loss 0.1156 lr 1.45e-05  1.26s/step
+  step  5840/6744 loss 0.1072 lr 1.39e-05  1.26s/step
+  step  5860/6744 loss 0.1078 lr 1.33e-05  1.26s/step
+  step  5880/6744 loss 0.1230 lr 1.27e-05  1.26s/step
+  step  5900/6744 loss 0.1049 lr 1.21e-05  1.26s/step
+  step  5920/6744 loss 0.1141 lr 1.16e-05  1.26s/step
+  step  5940/6744 loss 0.1095 lr 1.10e-05  1.26s/step
+  step  5960/6744 loss 0.1176 lr 1.05e-05  1.26s/step
+  step  5980/6744 loss 0.1086 lr 9.98e-06  1.26s/step
+  step  6000/6744 loss 0.1105 lr 9.47e-06  1.26s/step
+  == step 6000 val_loss 0.1348  acc: kw 1.00 tool 0.96 field 0.94 const 0.78 reg 1.00
+  step  6020/6744 loss 0.1138 lr 8.97e-06  1.26s/step
+  step  6040/6744 loss 0.1148 lr 8.49e-06  1.26s/step
+  step  6060/6744 loss 0.1065 lr 8.01e-06  1.25s/step
+  step  6080/6744 loss 0.1064 lr 7.56e-06  1.25s/step
+  step  6100/6744 loss 0.1112 lr 7.11e-06  1.25s/step
+  step  6120/6744 loss 0.1073 lr 6.68e-06  1.25s/step
+  step  6140/6744 loss 0.1117 lr 6.26e-06  1.25s/step
+  step  6160/6744 loss 0.1203 lr 5.86e-06  1.25s/step
+  step  6180/6744 loss 0.1071 lr 5.46e-06  1.25s/step
+  step  6200/6744 loss 0.1098 lr 5.09e-06  1.25s/step
+  == step 6200 val_loss 0.1376  acc: kw 1.00 tool 0.95 field 0.95 const 0.78 reg 1.00
+  step  6220/6744 loss 0.1144 lr 4.72e-06  1.25s/step
+  step  6240/6744 loss 0.1080 lr 4.37e-06  1.25s/step
+  step  6260/6744 loss 0.1049 lr 4.03e-06  1.25s/step
+  step  6280/6744 loss 0.1118 lr 3.71e-06  1.25s/step
+  step  6300/6744 loss 0.1095 lr 3.39e-06  1.25s/step
+  step  6320/6744 loss 0.1052 lr 3.10e-06  1.24s/step
+  step  6340/6744 loss 0.1095 lr 2.81e-06  1.24s/step
+  step  6360/6744 loss 0.1024 lr 2.54e-06  1.24s/step
+  step  6380/6744 loss 0.1061 lr 2.28e-06  1.24s/step
+  step  6400/6744 loss 0.1036 lr 2.04e-06  1.24s/step
+  == step 6400 val_loss 0.1368  acc: kw 1.00 tool 0.95 field 0.95 const 0.79 reg 1.00
+  step  6420/6744 loss 0.1057 lr 1.81e-06  1.24s/step
+  step  6440/6744 loss 0.1088 lr 1.59e-06  1.24s/step
+  step  6460/6744 loss 0.1082 lr 1.39e-06  1.23s/step
+  step  6480/6744 loss 0.1123 lr 1.20e-06  1.23s/step
+  step  6500/6744 loss 0.1072 lr 1.03e-06  1.23s/step
+  step  6520/6744 loss 0.1081 lr 8.66e-07  1.23s/step
+  step  6540/6744 loss 0.1088 lr 7.19e-07  1.23s/step
+  step  6560/6744 loss 0.1053 lr 5.85e-07  1.23s/step
+  step  6580/6744 loss 0.1011 lr 4.65e-07  1.22s/step
+  step  6600/6744 loss 0.1175 lr 3.58e-07  1.22s/step
+  == step 6600 val_loss 0.1360  acc: kw 1.00 tool 0.95 field 0.95 const 0.79 reg 1.00
+  step  6620/6744 loss 0.1173 lr 2.66e-07  1.22s/step
+  step  6640/6744 loss 0.1114 lr 1.87e-07  1.22s/step
+  step  6660/6744 loss 0.1106 lr 1.22e-07  1.22s/step
+  step  6680/6744 loss 0.1110 lr 7.08e-08  1.22s/step
+  step  6700/6744 loss 0.1117 lr 3.35e-08  1.22s/step
+  step  6720/6744 loss 0.1139 lr 9.96e-09  1.21s/step
+  step  6740/6744 loss 0.1109 lr 2.77e-10  1.21s/step
+  == step 6744 val_loss 0.1360  acc: kw 1.00 tool 0.95 field 0.95 const 0.78 reg 1.00
+done. best val_loss 0.1332 -> runs/d3_DR_s1
+loops=1 dec_layers=0 weights=fp
+id filter (+None -+): 4387 of 13633 tasks
+  25/2000  0.98s/example
+  50/2000  1.05s/example
+  75/2000  1.03s/example
+  100/2000  0.97s/example
+  125/2000  0.98s/example
+  150/2000  0.97s/example
+  175/2000  0.96s/example
+  200/2000  0.96s/example
+  225/2000  0.96s/example
+  250/2000  0.96s/example
+  275/2000  0.97s/example
+  300/2000  0.97s/example
+  325/2000  0.97s/example
+  350/2000  0.98s/example
+  375/2000  0.97s/example
+  400/2000  0.97s/example
+  425/2000  0.97s/example
+  450/2000  0.97s/example
+  475/2000  0.97s/example
+  500/2000  0.97s/example
+  525/2000  0.97s/example
+  550/2000  0.97s/example
+  575/2000  0.97s/example
+  600/2000  0.96s/example
+  625/2000  0.97s/example
+  650/2000  0.97s/example
+  675/2000  0.97s/example
+  700/2000  0.97s/example
+  725/2000  0.97s/example
+  750/2000  0.97s/example
+  775/2000  0.97s/example
+  800/2000  0.97s/example
+  825/2000  0.97s/example
+  850/2000  0.97s/example
+  875/2000  0.97s/example
+  900/2000  0.97s/example
+  925/2000  0.97s/example
+  950/2000  0.97s/example
+  975/2000  0.97s/example
+  1000/2000  0.96s/example
+  1025/2000  0.96s/example
+  1050/2000  0.97s/example
+  1075/2000  0.97s/example
+  1100/2000  0.97s/example
+  1125/2000  0.97s/example
+  1150/2000  0.97s/example
+  1175/2000  0.97s/example
+  1200/2000  0.98s/example
+  1225/2000  0.97s/example
+  1250/2000  0.97s/example
+  1275/2000  0.97s/example
+  1300/2000  0.98s/example
+  1325/2000  0.98s/example
+  1350/2000  0.98s/example
+  1375/2000  0.98s/example
+  1400/2000  0.98s/example
+  1425/2000  0.98s/example
+  1450/2000  0.97s/example
+  1475/2000  0.97s/example
+  1500/2000  0.97s/example
+  1525/2000  0.97s/example
+  1550/2000  0.97s/example
+  1575/2000  0.97s/example
+  1600/2000  0.97s/example
+  1625/2000  0.97s/example
+  1650/2000  0.97s/example
+  1675/2000  0.98s/example
+  1700/2000  0.98s/example
+  1725/2000  0.98s/example
+  1750/2000  0.98s/example
+  1775/2000  0.97s/example
+  1800/2000  0.97s/example
+  1825/2000  0.97s/example
+  1850/2000  0.98s/example
+  1875/2000  0.98s/example
+  1900/2000  0.98s/example
+  1925/2000  0.98s/example
+  1950/2000  0.98s/example
+  1975/2000  0.97s/example
+  2000/2000  0.97s/example
+wrote 2000 programs -> out/d3_DR_s1_plain.jsonl
+wrote 2000 drafts -> out/d3_DR_s1_plain.draft.jsonl
+loops=1 dec_layers=0 weights=fp
+id filter (++decoy -None): 4387 of 13633 tasks
+  25/2000  0.98s/example
+  50/2000  1.05s/example
+  75/2000  1.03s/example
+  100/2000  0.97s/example
+  125/2000  0.98s/example
+  150/2000  0.97s/example
+  175/2000  0.96s/example
+  200/2000  0.96s/example
+  225/2000  0.96s/example
+  250/2000  0.97s/example
+  275/2000  0.97s/example
+  300/2000  0.97s/example
+  325/2000  0.98s/example
+  350/2000  0.98s/example
+  375/2000  0.98s/example
+  400/2000  0.97s/example
+  425/2000  0.97s/example
+  450/2000  0.98s/example
+  475/2000  0.97s/example
+  500/2000  0.97s/example
+  525/2000  0.98s/example
+  550/2000  0.97s/example
+  575/2000  0.97s/example
+  600/2000  0.96s/example
+  625/2000  0.97s/example
+  650/2000  0.97s/example
+  675/2000  0.97s/example
+  700/2000  0.97s/example
+  725/2000  0.97s/example
+  750/2000  0.97s/example
+  775/2000  0.97s/example
+  800/2000  0.97s/example
+  825/2000  0.97s/example
+  850/2000  0.97s/example
+  875/2000  0.97s/example
+  900/2000  0.97s/example
+  925/2000  0.97s/example
+  950/2000  0.97s/example
+  975/2000  0.97s/example
+  1000/2000  0.97s/example
+  1025/2000  0.97s/example
+  1050/2000  0.97s/example
+  1075/2000  0.97s/example
+  1100/2000  0.97s/example
+  1125/2000  0.97s/example
+  1150/2000  0.98s/example
+  1175/2000  0.97s/example
+  1200/2000  0.98s/example
+  1225/2000  0.98s/example
+  1250/2000  0.97s/example
+  1275/2000  0.97s/example
+  1300/2000  0.98s/example
+  1325/2000  0.98s/example
+  1350/2000  0.98s/example
+  1375/2000  0.98s/example
+  1400/2000  0.98s/example
+  1425/2000  0.98s/example
+  1450/2000  0.97s/example
+  1475/2000  0.97s/example
+  1500/2000  0.97s/example
+  1525/2000  0.97s/example
+  1550/2000  0.97s/example
+  1575/2000  0.97s/example
+  1600/2000  0.97s/example
+  1625/2000  0.97s/example
+  1650/2000  0.97s/example
+  1675/2000  0.98s/example
+  1700/2000  0.98s/example
+  1725/2000  0.98s/example
+  1750/2000  0.97s/example
+  1775/2000  0.97s/example
+  1800/2000  0.97s/example
+  1825/2000  0.97s/example
+  1850/2000  0.98s/example
+  1875/2000  0.98s/example
+  1900/2000  0.98s/example
+  1925/2000  0.98s/example
+  1950/2000  0.97s/example
+  1975/2000  0.97s/example
+  2000/2000  0.97s/example
+wrote 2000 programs -> out/d3_DR_s1_decoy.jsonl
+wrote 2000 drafts -> out/d3_DR_s1_decoy.draft.jsonl
+loops=1 dec_layers=0 weights=fp
+id filter (++flip -None): 472 of 13633 tasks
+  25/472  1.02s/example
+  50/472  1.08s/example
+  75/472  1.10s/example
+  100/472  1.14s/example
+  125/472  1.19s/example
+  150/472  1.17s/example
+  175/472  1.18s/example
+  200/472  1.16s/example
+  225/472  1.17s/example
+  250/472  1.16s/example
+  275/472  1.13s/example
+  300/472  1.14s/example
+  325/472  1.21s/example
+  350/472  1.36s/example
+  375/472  1.44s/example
+  400/472  1.54s/example
+  425/472  1.66s/example
+  450/472  1.79s/example
+wrote 472 programs -> out/d3_DR_s1_flip.jsonl
+wrote 472 drafts -> out/d3_DR_s1_flip.draft.jsonl
+loops=1 dec_layers=0 weights=fp
+id filter (++clut -None): 4387 of 13633 tasks
+  25/2000  2.76s/example
+  50/2000  3.04s/example
+  75/2000  2.98s/example
+  100/2000  2.84s/example
+  125/2000  2.85s/example
+  150/2000  2.82s/example
+  175/2000  2.81s/example
+  200/2000  2.79s/example
+  225/2000  2.78s/example
+  250/2000  2.77s/example
+  275/2000  2.77s/example
+  300/2000  2.76s/example
+  325/2000  2.75s/example
+  350/2000  2.75s/example
+  375/2000  2.70s/example
+  400/2000  2.68s/example
+  425/2000  2.68s/example
+  450/2000  2.69s/example
+  475/2000  2.67s/example
+  500/2000  2.66s/example
+  525/2000  2.67s/example
+  550/2000  2.61s/example
+  575/2000  2.53s/example
+  600/2000  2.45s/example
+  625/2000  2.39s/example
+  650/2000  2.33s/example
+  675/2000  2.27s/example
+  700/2000  2.22s/example
+  725/2000  2.17s/example
+  750/2000  2.22s/example
+  775/2000  2.32s/example
+  800/2000  2.44s/example
+  825/2000  2.53s/example
+  850/2000  2.64s/example
+  875/2000  2.72s/example
+  900/2000  2.78s/example
+  925/2000  2.87s/example
+  950/2000  2.93s/example
+  975/2000  2.98s/example
+  1000/2000  3.03s/example
+  1025/2000  3.09s/example
+  1050/2000  3.17s/example
+  1075/2000  3.24s/example
+  1100/2000  3.30s/example
+  1125/2000  3.34s/example
+  1150/2000  3.40s/example
+  1175/2000  3.45s/example
+  1200/2000  3.50s/example
+  1225/2000  3.54s/example
+  1250/2000  3.56s/example
+  1275/2000  3.60s/example
+  1300/2000  3.66s/example
+  1325/2000  3.71s/example
+  1350/2000  3.75s/example
+  1375/2000  3.79s/example
+  1400/2000  3.79s/example
+  1425/2000  3.74s/example
+  1450/2000  3.79s/example
+  1475/2000  3.83s/example
+  1500/2000  3.91s/example
+  1525/2000  3.99s/example
+  1550/2000  4.08s/example
+  1575/2000  4.12s/example
+  1600/2000  4.15s/example
+  1625/2000  4.18s/example
+  1650/2000  4.21s/example
+  1675/2000  4.25s/example
+  1700/2000  4.28s/example
+  1725/2000  4.31s/example
+  1750/2000  4.32s/example
+  1775/2000  4.33s/example
+  1800/2000  4.36s/example
+  1825/2000  4.38s/example
+  1850/2000  4.42s/example
+  1875/2000  4.45s/example
+  1900/2000  4.47s/example
+  1925/2000  4.48s/example
+  1950/2000  4.50s/example
+  1975/2000  4.50s/example
+  2000/2000  4.52s/example
+wrote 2000 programs -> out/d3_DR_s1_clut.jsonl
+wrote 2000 drafts -> out/d3_DR_s1_clut.draft.jsonl
+loops=1 dec_layers=0 weights=fp
+  25/2000  5.86s/example
+  50/2000  5.50s/example
+  75/2000  5.49s/example
+  100/2000  5.33s/example
+  125/2000  5.28s/example
+  150/2000  5.24s/example
+  175/2000  5.33s/example
+  200/2000  5.44s/example
+  225/2000  5.41s/example
+  250/2000  5.41s/example
+  275/2000  5.42s/example
+  300/2000  5.43s/example
+  325/2000  5.29s/example
+  350/2000  5.00s/example
+  375/2000  4.74s/example
+  400/2000  4.52s/example
+  425/2000  4.31s/example
+  450/2000  4.14s/example
+  475/2000  3.97s/example
+  500/2000  3.82s/example
+  525/2000  3.69s/example
+  550/2000  3.57s/example
+  575/2000  3.48s/example
+  600/2000  3.37s/example
+  625/2000  3.28s/example
+  650/2000  3.19s/example
+  675/2000  3.11s/example
+  700/2000  3.04s/example
+  725/2000  2.98s/example
+  750/2000  2.91s/example
+  775/2000  2.85s/example
+  800/2000  2.80s/example
+  825/2000  2.75s/example
+  850/2000  2.71s/example
+  875/2000  2.66s/example
+  900/2000  2.62s/example
+  925/2000  2.58s/example
+  950/2000  2.54s/example
+  975/2000  2.50s/example
+  1000/2000  2.47s/example
+  1025/2000  2.44s/example
+  1050/2000  2.41s/example
+  1075/2000  2.38s/example
+  1100/2000  2.36s/example
+  1125/2000  2.33s/example
+  1150/2000  2.30s/example
+  1175/2000  2.28s/example
+  1200/2000  2.26s/example
+  1225/2000  2.23s/example
+  1250/2000  2.21s/example
+  1275/2000  2.18s/example
+  1300/2000  2.16s/example
+  1325/2000  2.14s/example
+  1350/2000  2.11s/example
+  1375/2000  2.09s/example
+  1400/2000  2.07s/example
+  1425/2000  2.06s/example
+  1450/2000  2.04s/example
+  1475/2000  2.02s/example
+  1500/2000  2.00s/example
+  1525/2000  1.99s/example
+  1550/2000  1.97s/example
+  1575/2000  1.95s/example
+  1600/2000  1.94s/example
+  1625/2000  1.92s/example
+  1650/2000  1.91s/example
+  1675/2000  1.89s/example
+  1700/2000  1.88s/example
+  1725/2000  1.86s/example
+  1750/2000  1.85s/example
+  1775/2000  1.84s/example
+  1800/2000  1.82s/example
+  1825/2000  1.81s/example
+  1850/2000  1.80s/example
+  1875/2000  1.78s/example
+  1900/2000  1.77s/example
+  1925/2000  1.76s/example
+  1950/2000  1.75s/example
+  1975/2000  1.74s/example
+  2000/2000  1.73s/example
+wrote 2000 programs -> out/d3_DR_s1_test.jsonl
+wrote 2000 drafts -> out/d3_DR_s1_test.draft.jsonl
+loops=1 dec_layers=0 weights=fp
+  25/2000  0.99s/example
+  50/2000  1.03s/example
+  75/2000  1.04s/example
+  100/2000  1.04s/example
+  125/2000  1.06s/example
+  150/2000  1.07s/example
+  175/2000  1.08s/example
+  200/2000  1.06s/example
+  225/2000  1.06s/example
+  250/2000  1.05s/example
+  275/2000  1.04s/example
+  300/2000  1.03s/example
+  325/2000  1.02s/example
+  350/2000  1.02s/example
+  375/2000  1.03s/example
+  400/2000  1.02s/example
+  425/2000  1.02s/example
+  450/2000  1.01s/example
+  475/2000  1.01s/example
+  500/2000  1.01s/example
+  525/2000  1.01s/example
+  550/2000  1.01s/example
+  575/2000  1.02s/example
+  600/2000  1.01s/example
+  625/2000  1.01s/example
+  650/2000  1.01s/example
+  675/2000  1.02s/example
+  700/2000  1.01s/example
+  725/2000  1.01s/example
+  750/2000  1.02s/example
+  775/2000  1.01s/example
+  800/2000  1.01s/example
+  825/2000  1.01s/example
+  850/2000  1.00s/example
+  875/2000  1.01s/example
+  900/2000  1.01s/example
+  925/2000  1.01s/example
+  950/2000  1.01s/example
+  975/2000  1.00s/example
+  1000/2000  1.00s/example
+  1025/2000  1.00s/example
+  1050/2000  1.00s/example
+  1075/2000  1.00s/example
+  1100/2000  1.00s/example
+  1125/2000  1.00s/example
+  1150/2000  1.00s/example
+  1175/2000  1.00s/example
+  1200/2000  1.00s/example
+  1225/2000  1.00s/example
+  1250/2000  0.99s/example
+  1275/2000  0.99s/example
+  1300/2000  0.99s/example
+  1325/2000  0.98s/example
+  1350/2000  0.98s/example
+  1375/2000  0.98s/example
+  1400/2000  0.97s/example
+  1425/2000  0.97s/example
+  1450/2000  0.96s/example
+  1475/2000  0.96s/example
+  1500/2000  0.96s/example
+  1525/2000  0.96s/example
+  1550/2000  0.96s/example
+  1575/2000  0.96s/example
+  1600/2000  0.95s/example
+  1625/2000  0.95s/example
+  1650/2000  0.95s/example
+  1675/2000  0.95s/example
+  1700/2000  0.94s/example
+  1725/2000  0.94s/example
+  1750/2000  0.94s/example
+  1775/2000  0.94s/example
+  1800/2000  0.94s/example
+  1825/2000  0.94s/example
+  1850/2000  0.94s/example
+  1875/2000  0.94s/example
+  1900/2000  0.94s/example
+  1925/2000  0.94s/example
+  1950/2000  0.94s/example
+  1975/2000  0.94s/example
+  2000/2000  0.93s/example
+wrote 2000 programs -> out/d3_DR_s1_val.jsonl
+wrote 2000 drafts -> out/d3_DR_s1_val.draft.jsonl

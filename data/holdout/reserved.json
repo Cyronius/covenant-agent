@@ -1,12 +1,15 @@
 {
- "comment": "Reserved at generation time; never enters training data (F4/R5, and .claude/plans/archive/task-families.md for the decision families). Each family reserves an instance of its own: the dungeon and the house for family A, the coursebuilder app for family C, the scheduling probe for family G.",
+ "comment": "Reserved at generation time; never enters training data (F4/R5, and .claude/plans/archive/task-families.md for the decision families). Each family reserves an instance of its own: the dungeon and the house for family A, the coursebuilder app for family C, the scheduling probe for family G, the boatyard recipe tree for the crafting world and \" after you\" missions for the rooms world (.claude/plans/borrowed-worlds.md), and the telecom domain for the tau2-bench service worlds.",
  "worlds": [
   "projects",
   "coursebuilder",
   "rpg",
   "house",
   "app_coursebuilder",
-  "scheduling"
+  "scheduling",
+  "boatyard",
+  "rooms_after",
+  "service_telecom"
  ],
  "tools": {
   "kanban": [

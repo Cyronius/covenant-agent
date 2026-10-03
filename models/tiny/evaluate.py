@@ -64,6 +64,10 @@ def compile_check(cache: Path, split: str):
 
 def load_model(ckpt_path: Path, device, ov=None):
     ck = torch.load(ckpt_path, map_location=device)
+    if ck.get("bundle"):
+        # per-type experts and their router (staged.py, plan step 3)
+        from staged import load_bundle
+        return load_bundle(ck, device)
     cfg = Config(**ck["cfg"])
     m = build_model(cfg)
     if cfg.binding == "flat" and cfg.pointer and ov is not None:
@@ -111,6 +115,10 @@ class Split:
             if "sym" in d and getattr(model.c, "pointer", False):
                 out["sym"] = d["sym"][i:i + 1].to(self.device)
             return out
+        if getattr(model.c, "reader", False) and getattr(model, "reader_cache", None) != self.cache:
+            # the reader's table belongs to the cache being run, not the checkpoint
+            model.set_reader_table(torch.load(self.cache / model.c.reader_file)["table"].to(self.device))
+            model.reader_cache = self.cache
         return {k: d[k][i:i + 1].to(self.device) for k in cache_keys(d) if k != "tgt"}
 
     def target(self, i: int) -> torch.Tensor:
@@ -196,6 +204,8 @@ def generate(args):
         inputs = split.inputs(i, model)
         ov = split.codec(i)
         tr = Trace()
+        if args.oracle_route:
+            model.set_oracle(split.meta[i]["world"])
         if arm == "diffusion":
             canvas, tr = diffusion_sample(model, inputs, ov, steps=args.steps,
                                           temperature=args.temperature, trace=tr,
@@ -219,6 +229,20 @@ def generate(args):
                     if check(split.meta[i]["task_id"], to_text(cand, ov)):
                         canvas = cand
                         break
+        staged = {}
+        if hasattr(model, "exiting"):
+            # the staged decoder (staged.py): what the draft alone would have
+            # written, its confidence, and whether the threshold exited there,
+            # so any threshold can be scored offline from one generation
+            info = dict(model.last)
+            with model.exiting():
+                dcanvas, _ = ar_sample(model, inputs, ov)
+            staged = {"draft_program": to_text(dcanvas, ov), "draft_conf": info["conf"],
+                      "cal_conf": info.get("cal_conf"),
+                      "exited": info["exit"], "stages": model.c.stages,
+                      "draft_canvas_tokens": ov.decode(dcanvas[0].tolist())}
+            if "expert" in info:
+                staged.update(expert=info["expert"], tried=info["tried"])
         tgt = split.target(i)
         meta = {k: v for k, v in split.meta[i].items() if k != "syms"}
         out.append({
@@ -238,6 +262,7 @@ def generate(args):
             # The compute this program cost, for the axis report.py draws:
             # one forward pass applies the block dec_layers x loops times.
             "loops": model.c.dec_loops, "dec_layers": model.c.dec_layers,
+            **staged,
         })
         if (k + 1) % 25 == 0:
             print(f"  {k+1}/{len(which)}  {(time.time()-t0)/(k+1):.2f}s/example", flush=True)
@@ -248,6 +273,14 @@ def generate(args):
         for r in out:
             fh.write(json.dumps(r) + "\n")
     print(f"wrote {len(out)} programs -> {dest}")
+    if out and "draft_program" in out[0]:
+        # the drafts as programs of their own, for --score
+        ddest = dest.with_suffix(".draft.jsonl")
+        with open(ddest, "w", encoding="utf-8") as fh:
+            for r in out:
+                fh.write(json.dumps({**r, "program": r["draft_program"],
+                                     "canvas_tokens": r["draft_canvas_tokens"]}) + "\n")
+        print(f"wrote {len(out)} drafts -> {ddest}")
 
 
 def slot_kind(tok: str) -> str:
@@ -458,6 +491,12 @@ def main():
                     help="generate only this curriculum level, for re-measuring "
                          "one level without regenerating the split")
     ap.add_argument("--gen-out", default="runs/gen.jsonl")
+    ap.add_argument("--exit", default=None, metavar="never|always|P",
+                    help="staged models: override the checkpoint's early-exit "
+                         "threshold (staged.py, STAGED_EXIT)")
+    ap.add_argument("--oracle-route", action="store_true",
+                    help="expert bundles: route each task to its true type's "
+                         "expert instead of asking the router")
     ap.add_argument("--generate", action="store_true")
     ap.add_argument("--score", action="store_true")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -465,6 +504,9 @@ def main():
 
     if not (args.generate or args.score):
         args.generate = args.score = True
+    if args.exit:
+        import os
+        os.environ["STAGED_EXIT"] = args.exit
     if args.generate:
         if not args.ckpt:
             raise SystemExit("--generate needs --ckpt")
