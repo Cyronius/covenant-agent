@@ -1,8 +1,9 @@
 """The tiny planner in the demo app (.claude/plans/tiny-planner-demo.md step 5).
 
 Both checks need local artifacts that are not in git -- a tiny checkpoint
-and its cache (models/tiny/runs/, data_cache_*), and Ternlight installed
-under models/tiny/reader -- and skip where those are missing.
+and its cache (models/tiny/runs/, data_cache_*), and the ELECTRA reader's
+files under models/tiny/reader (electra_reader.py) -- and skip where those
+are missing.
 """
 import sys
 from pathlib import Path
@@ -11,7 +12,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 TINY = ROOT / "models" / "tiny"
-READER = TINY / "reader" / "node_modules" / "@ternlight" / "mini"
+READER = TINY / "reader" / "embed" / "n" / "head.pt"
 sys.path.insert(0, str(ROOT / "server"))
 sys.path.insert(0, str(TINY))
 
@@ -27,20 +28,17 @@ def test_the_live_reader_reproduces_the_cache_table():
     reader.pt. If the two disagree the planner sees different inputs in the
     app than it was trained on, and nothing would say so."""
     import torch
-    from live_reader import LiveReader
+    from live_reader import open_reader
     from prep import QUERY_PREFIX
-    cache = TINY / "data_cache_fdc25"
+    cache = TINY / "data_cache_c0e"
     _need(READER, cache / "reader.pt", cache / "teacher.pt")
     table = torch.load(cache / "reader.pt")["table"].float()
     texts = torch.load(cache / "teacher.pt")["texts"]
     idx = [0, 1, 7, 1000, len(texts) - 1]
-    live = LiveReader(TINY / "reader")
-    try:
-        got = live.vectors([t[len(QUERY_PREFIX):] if t.startswith(QUERY_PREFIX) else t
-                            for t in (texts[i] for i in idx)])
-    finally:
-        live.close()
-    assert (got - table[idx]).abs().max().item() < 1e-3
+    got = open_reader("electra").vectors([t[len(QUERY_PREFIX):] if t.startswith(QUERY_PREFIX) else t
+                                          for t in (texts[i] for i in idx)])
+    # the table was read on a GPU (TF32), the live path on the CPU
+    assert (got * table[idx]).sum(-1).min().item() > 0.995
 
 
 @pytest.mark.parametrize("request_text", ["list all the cards",
@@ -51,7 +49,7 @@ def test_the_server_backend_returns_a_program_that_compiles(request_text):
     prompt in, a program the compiler accepts out (backoff's compile check
     runs inside, so a failure here is a wiring fault, not a model miss)."""
     import tiny_planner
-    ckpt, cache = tiny_planner.TINY_MODELS["tiny:fdc25_RD"]
+    ckpt, cache = tiny_planner.TINY_MODELS["tiny:c0_ESC"]
     _need(READER, TINY / ckpt, TINY / cache / "config.json")
     import dev_server
     from core.ir import TaskContext
@@ -59,7 +57,7 @@ def test_the_server_backend_returns_a_program_that_compiles(request_text):
     from harness.demo_suite import demo_state
     kp = dev_server.handle_kanban_prompt({"request": request_text, "state": demo_state()})
     before = dev_server.PLANNER.tiny_name or str(dev_server.PLANNER.model_path)
-    dev_server.PLANNER.select("tiny:fdc25_RD")
+    dev_server.PLANNER.select("tiny:c0_ESC")
     try:
         out = dev_server.handle_plan({"request": request_text, "context": kp["context"]})
     finally:
@@ -73,13 +71,13 @@ def test_a_request_with_line_breaks_is_read_as_one_line():
     reach the parser as schema lines and kill the turn
     (.claude/plans/rpg-exits-perception.md part 2)."""
     import tiny_planner
-    ckpt, cache = tiny_planner.TINY_MODELS["tiny:clt_RD"]
+    ckpt, cache = tiny_planner.TINY_MODELS["tiny:c0_ESC"]
     _need(READER, TINY / ckpt, TINY / cache / "config.json")
     import dev_server
     from harness.demo_suite import demo_state
     kp = dev_server.handle_kanban_prompt({"request": "list all the cards",
                                           "state": demo_state()})
-    out = tiny_planner.TinyPlanner("tiny:clt_RD").plan(
+    out = tiny_planner.TinyPlanner("tiny:c0_ESC").plan(
         "list all\n  the cards\n", kp["context"])
     assert out["source"].splitlines()[0] == "REQUEST: list all the cards"
     assert out["truncated"] is False

@@ -106,12 +106,10 @@ def main() -> int:
     ap.add_argument("--out", default=None, help="write per-task rows here")
     ap.add_argument("--show", type=int, default=3,
                     help="print this many programs in full")
-    ap.add_argument("--reader-live", default=None, metavar="DIR|FILE",
+    ap.add_argument("--reader-live", default=None, metavar="SPEC",
                     help="a --reader checkpoint: run its reader live for contexts "
-                         "no cache has: a dir with node_modules/@ternlight (the "
-                         "shipped Ternlight), or a TernReader file (tern_reader.py; "
-                         "the role-aware reader for a --reader-file reader_role.pt "
-                         "checkpoint)")
+                         "no cache has: `electra` (electra_reader.py; the reader "
+                         "of an electra_cache.py cache), or an embedding head's head.pt")
     ap.add_argument("--backoff", type=int, default=0, metavar="K",
                     help="evaluate.py --backoff: on a compile failure, up to K "
                          "runner-up tools at CALL slots")
@@ -152,7 +150,7 @@ def main() -> int:
             "max_reg": cfg.get("max_reg", 8),
             # a split / named cache re-serializes and re-encodes the same way
             **{k: cfg[k] for k in ("names", "split", "desc_chars", "max_sig",
-                                   "max_desc", "max_name", "name_words", "chunk_words", "slot_reader")
+                                   "max_desc", "max_name", "name_words", "chunk_words", "electra_reader")
                if k in cfg}}
     model = load_model(Path(args.ckpt), device)
     if args.max_const and args.max_const > layout.max_const:

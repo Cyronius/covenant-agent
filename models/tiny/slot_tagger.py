@@ -1,15 +1,14 @@
-"""Slots by tagging: ELECTRA marks which words fill each role, Ternlight reads
-them (.claude/plans/electra-slot-reader.md, step 2, as changed 2026-10-01).
+"""Slots by tagging: ELECTRA marks which words fill each role
+(.claude/plans/electra-slot-reader.md, step 2, as changed 2026-10-01).
 
 The regressing slot head (slot_reader.py) learned roles but approximated its
-target vectors too loosely to match constants (probe 57.9 plain against
-Ternlight's 4-word chunks' 66.6). Reading the parser's own spans with the
-shipped Ternlight matches constants about as well as the chunks (66.0;
-results/logs/slots/probe_oracle_spans.json). So here the head only tags:
-per role, a start word and an end word, or "absent" (the [CLS] position), as
-an extractive question-answering head does. Each slot's vector is the shipped
-Ternlight's vector of the tagged words; the whole slot is Ternlight's vector of
-the whole text. The planner gets 8 vectors per text.
+target vectors too loosely to match constants (probe 57.9 plain). Reading
+the tagged words as a short text of their own does match them, so here the
+head only tags: per role, a start word and an end word, or "absent" (the
+[CLS] position), as an extractive question-answering head does. Each slot's
+vector is the reader's vector of the tagged words, pooled out of one pass
+over the text (electra_reader.py, R27); the whole slot is the whole text's.
+The planner gets 8 vectors per text.
 
   python slot_tagger.py train --body electra --out reader/slots/t_electra [--limit 120000]
   python slot_tagger.py check --tagger reader/slots/t_electra/tagger.pt [--body tern-electra:...]
@@ -208,15 +207,13 @@ def span_scores(tagger, body, tok, rows: list[dict]) -> dict:
 
 
 def cmd_check(args) -> int:
-    from chunk_probe import SUITES, rank_stats, tasks as probe_tasks
-    from prep import chunk_request, reader_text
-    from tern_reader import TERN_DIR, TorchReader
+    """Tagging against the parser, swaps and to/from flips, and our requests.
+    The constant probe over the tagged spans is electra_reader.py check."""
     ck = torch.load(args.tagger)
     body = make_body(args.body or ck["body"], None)
     tagger = SpanTagger(**ck["cfg"])
     tagger.load_state_dict(ck["state"])
     tok = Tok()
-    rd = TorchReader(TERN_DIR / "model-int4.bin")
     held = load_roles("held")
     D, S, O = TAGGED.index("destination"), TAGGED.index("source"), TAGGED.index("object")
     rep = {"tagger": args.tagger, "body": body.name, "mix": [round(x, 3) for x in ck["mix"]]}
@@ -292,27 +289,6 @@ def cmd_check(args) -> int:
     rep["requests"] = span_scores(tagger, body, tok, rrows)
     print(f"our requests (never trained on) vs the parser: presence {rep['requests']['present_acc']}%, "
           f"exact {rep['requests']['exact']}%, overlap {rep['requests']['overlap']}")
-
-    # the constant probe: each tagged span read by the shipped Ternlight
-    rep["probe"] = {}
-    for suite, path in SUITES.items():
-        agg = defaultdict(lambda: [0.0, 0])
-        for tid, request, consts, used in probe_tasks(path, dedupe=(suite == "demo")):
-            syms = [x for x, _, _ in consts]
-            if not (set(syms) & used) or not (set(syms) - used):
-                continue
-            cv = rd.vectors([reader_text(v) for _, _, v in consts])
-            spans = [request[s[0]:s[1]] for s in tag(tagger, body, tok, [request])[0] if s is not None]
-            slots = rd.vectors([request] + spans)
-            chunks = rd.vectors(chunk_request(request, 4))
-            for mname, M in (("slots", slots), ("slots+chunks", torch.cat([slots, chunks]))):
-                w, p, _ = rank_stats((cv @ M.T).max(1).values.tolist(), used, syms)
-                agg[mname][0] += w
-                agg[mname][1] += p
-        rep["probe"][suite] = {m: round(100 * a / b, 1) for m, (a, b) in agg.items()}
-    print("constant probe (pair): " + "  ".join(f"{s} slots {v['slots']} (+chunks {v['slots+chunks']})"
-                                               for s, v in rep["probe"].items())
-          + "   (Ternlight 4-word chunks: clut 87.1, plain 66.6, demo 84.8; parser spans 85.1 / 66.0 / 82.1)")
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(json.dumps(rep, indent=1), encoding="utf-8")

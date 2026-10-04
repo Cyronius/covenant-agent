@@ -39,15 +39,18 @@ models/tiny/out_*/**/*.jsonl
 models/tiny/out_*/*.jsonl
 !models/tiny/out_*/curves/**/log.jsonl
 models/tiny/*.log
-# role-aware reader (tern_reader.py, tern_train.py): the downloaded Ternlight
-# weights (tern_reader.py --fetch) and the generated flips, teacher vectors and
-# trained readers are regenerable
-models/tiny/reader/ternlight-mini/
-models/tiny/reader/role/
-# slot reader (slot_reader.py, tern_electra.py): parsed role corpora (~75 MB),
-# packed .bin readers and run dirs are regenerable; curated logs live in results/logs
+# the ELECTRA reader (tern_electra.py, slot_reader.py, slot_tagger.py,
+# electra_reader.py, electra_cache.py, pack_reader.py): parsed role corpora
+# (~75 MB), teacher targets, embedding heads, cache patches, packed .bin
+# readers and run dirs are regenerable; curated logs live in results/logs
 models/tiny/reader/slots/
 models/tiny/reader/tern_electra/
+models/tiny/reader/embed/
+models/tiny/reader/*.bin
+# Ternlight leftovers on disk (R25's role readers, the downloaded weights):
+# nothing reads them since 2026-10-04; delete when convenient
+models/tiny/reader/role/
+models/tiny/reader/ternlight-mini/
 
 # NPU tooling (models/npu): build output and the driver link library we
 # reconstruct from the installed driver. Vendored headers and the shim are tracked.

@@ -124,51 +124,21 @@ def _need(*paths):
 
 
 def test_packed_reader_reads_back_exactly():
-    """pack_reader.py: the packed body and tagger give the trained model's
-    word states and tags."""
-    from pack_reader import pack, unpack
-    from slot_tagger import SpanTagger, Tok, decode
-    from tern_electra import TernElectra
-    body_p, tag_p = HERE / "reader/tern_electra/e1/model.pt", HERE / "reader/slots/t_tern_e1/tagger.pt"
-    _need(body_p, tag_p)
-    body = TernElectra.load(body_p).eval()
-    ck = torch.load(tag_p)
-    tagger = SpanTagger(**ck["cfg"])
-    tagger.load_state_dict(ck["state"])
-    tagger.eval()
-    b2, t2 = unpack(pack(body, tagger))
-    b2.eval(), t2.eval()
+    """pack_reader.py: the packed body, tagger and embedding head give the
+    trained model's word states, tags and (to fp16 rounding) vectors."""
+    from pack_reader import BODY, HEAD, TAGGER, _load, pack, unpack
+    from slot_tagger import Tok, decode
+    _need(BODY, TAGGER, HEAD)
+    body, tagger, head = _load(BODY, TAGGER, HEAD)
+    b2, t2, h2 = unpack(pack(body, tagger, head))
+    b2.eval(), t2.eval(), h2.eval()
     ids, mask, offsets = Tok()(["move it to bob", "copy the report from the archive to the inbox"])
     with torch.no_grad():
         s1, _ = body(ids, mask)
         s2, _ = b2(ids, mask)
         assert all(torch.equal(a[mask], b[mask]) for a, b in zip(s1, s2))
         assert decode(*tagger(torch.stack(s1), mask), offsets) == decode(*t2(torch.stack(s2), mask), offsets)
-
-
-def test_slot_cache_live_matches_cache():
-    """slot_cache.py: for holdout rows, the live path (live_reader.request_pieces,
-    what play.py and the demo run) gives exactly the slot texts the cache
-    indexed in t_chunk."""
-    import json
-    import pickle
-    from corpus import COVENANT  # noqa: F401
-    from harness.context import TaskContext, serialize_context
-    from live_reader import request_pieces
-    from prep import Lines
-    cache = HERE / "data_cache_c0sc"
-    _need(cache / "config.json", cache / "reader.pt")
-    cfg = json.loads((cache / "config.json").read_text())
-    texts = [json.loads(line) for line in (cache / "reader_texts.jsonl").open(encoding="utf-8")]
-    base = torch.load(cache / "reader.pt", mmap=True)["base"]
-    d = torch.load(cache / "holdout.pt", mmap=True)
-    rows = pickle.load(open(cache / "rows.pkl", "rb"))["holdout"]
-    checked = 0
-    for n in range(0, len(rows), max(1, len(rows) // 25)):
-        r = rows[n]
-        src = serialize_context(r["request"], TaskContext.from_json(r["context"]), names=bool(cfg.get("names")))
-        live = request_pieces(Lines(src, cfg["desc_chars"]).request, cfg)
-        cached = [texts[int(i) - base] if i >= 0 else None for i in d["t_chunk"][n]]
-        assert cached[:len(live)] == live[:cfg["max_chunk"]], n
-        checked += 1
-    assert checked >= 20
+        word = offsets[..., 1] > offsets[..., 0]
+        rows = torch.arange(2)
+        v1, v2 = head(torch.stack(s1), rows, word), h2(torch.stack(s2), rows, word)
+        assert float((v1 * v2).sum(-1).min()) > 0.999

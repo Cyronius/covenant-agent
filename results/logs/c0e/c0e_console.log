@@ -1,0 +1,52 @@
+cuda ok 49766.609375
+=== smoke: every run builds and steps ===
+arm=ar binding=structural params=9.88M device=cuda train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+  == step 4 val_loss 5.4132  acc: kw 0.00 tool 0.04 field 0.00 const 0.38 reg 0.00
+  == step 8 val_loss 5.2735  acc: kw 0.00 tool 0.04 field 0.00 const 0.38 reg 0.00
+done. best val_loss 5.2735 -> runs/_smoke_c0_EL
+loops=1 dec_layers=4 weights=fp
+id filter (+None -+): 4387 of 13633 tasks
+wrote 4 programs -> runs/_smoke_c0_EL/gen.jsonl
+arm=ar binding=structural params=9.88M device=cuda train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+  == step 4 val_loss 5.5409  acc: kw 0.00 tool 0.02 field 0.00 const 0.36 reg 0.00
+  == step 8 val_loss 5.3781  acc: kw 0.00 tool 0.02 field 0.00 const 0.36 reg 0.00
+done. best val_loss 5.3781 -> runs/_smoke_c0_ELs1
+loops=1 dec_layers=4 weights=fp
+id filter (+None -+): 4387 of 13633 tasks
+wrote 4 programs -> runs/_smoke_c0_ELs1/gen.jsonl
+arm=ar binding=structural params=9.88M device=cuda train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+  == step 4 val_loss 5.4634  acc: kw 0.00 tool 0.04 field 0.00 const 0.36 reg 0.00
+  == step 8 val_loss 5.3166  acc: kw 0.00 tool 0.04 field 0.00 const 0.36 reg 0.00
+done. best val_loss 5.3166 -> runs/_smoke_c0_ESC
+loops=1 dec_layers=4 weights=fp
+id filter (+None -+): 4387 of 13633 tasks
+wrote 4 programs -> runs/_smoke_c0_ESC/gen.jsonl
+arm=ar binding=structural params=9.88M device=cuda train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+  == step 4 val_loss 5.4935  acc: kw 0.00 tool 0.02 field 0.00 const 0.34 reg 0.00
+  == step 8 val_loss 5.3388  acc: kw 0.00 tool 0.02 field 0.00 const 0.34 reg 0.00
+done. best val_loss 5.3388 -> runs/_smoke_c0_ESCs1
+loops=1 dec_layers=4 weights=fp
+id filter (+None -+): 4387 of 13633 tasks
+wrote 4 programs -> runs/_smoke_c0_ESCs1/gen.jsonl
+arm=ar binding=structural params=9.88M device=cuda train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+  == step 4 val_loss 5.4596  acc: kw 0.00 tool 0.04 field 0.00 const 0.36 reg 0.00
+  == step 8 val_loss 5.3048  acc: kw 0.00 tool 0.04 field 0.00 const 0.34 reg 0.00
+done. best val_loss 5.3048 -> runs/_smoke_c0_ESCV
+loops=1 dec_layers=4 weights=fp
+id filter (+None -+): 4387 of 13633 tasks
+wrote 4 programs -> runs/_smoke_c0_ESCV/gen.jsonl
+arm=ar binding=structural params=9.88M device=cuda train=128 steps=8
+weights=fp act_bits=0 loops=1 loop_body=4.21M params = 16.07 MB resident of 4.00 MB  OVER BUDGET
+  == step 4 val_loss 5.4840  acc: kw 0.00 tool 0.02 field 0.00 const 0.34 reg 0.00
+  == step 8 val_loss 5.3204  acc: kw 0.00 tool 0.02 field 0.00 const 0.34 reg 0.00
+done. best val_loss 5.3204 -> runs/_smoke_c0_ESCVs1
+loops=1 dec_layers=4 weights=fp
+id filter (+None -+): 4387 of 13633 tasks
+wrote 4 programs -> runs/_smoke_c0_ESCVs1/gen.jsonl
+-rw-rw-rw- 1 root root 444524015 Oct  4 15:23 c0e_all.tar.gz
+=== run_c0e done Sun Oct  4 15:23:54 UTC 2026

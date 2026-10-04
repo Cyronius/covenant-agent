@@ -4,18 +4,17 @@ The student has ELECTRA-small's exact shape: a 128-wide word / position / type
 embedding, a layer norm, a 128->256 projection, then post-norm layers
 (attention, add, norm; feed-forward, add, norm). Its matrices (q, k, v, out
 and the two feed-forward ones) are ternary: weights -1/0/+1 times one scale
-per matrix (1 / median |W|, as Ternlight's BitLinear), activations rounded to
-int8 per word (127 / max |x|), rounding passed straight through to the
-gradient. ELECTRA already normalizes after each sublayer, so unlike
-Ternlight's BitLinear there is no extra norm at each matrix's input; the bias
-is added after the rescale. The word table trains as int4 rows (per row:
-scale = max |row| / 7), as Ternlight ships its table. Norms, biases, the
-position and type tables and the 128->256 projection stay full precision.
+per matrix (1 / median |W|), activations rounded to int8 per word
+(127 / max |x|), rounding passed straight through to the gradient. ELECTRA
+already normalizes after each sublayer, so there is no extra norm at each
+matrix's input; the bias is added after the rescale. The word table trains as
+int4 rows (per row: scale = max |row| / 7). Norms, biases, the position and
+type tables and the 128->256 projection stay full precision. (The weight and
+table scheme is the one Ternlight-mini used, R21; nothing here depends on it.)
 
 Training copies full-precision ELECTRA at every word and every layer: the
 states (mean squared error) and the attention patterns (KL), as TernaryBERT
-did for BERT. Ternlight copied only its teacher's final average, which is why
-it kept no word order.
+did for BERT. Copying only a teacher's final average loses word order.
 
   python tern_electra.py train --out reader/tern_electra/e1 [--layers 12] [--n-texts 150000]
   python tern_electra.py check --model reader/tern_electra/e1/model.pt
@@ -222,7 +221,7 @@ def distill_loss(s_states, s_atts, t_states, t_atts, mask, lam_att: float):
 def texts_for(n: int, seed: int) -> tuple[list[str], list[str]]:
     """Training and held-out texts from data/general (the same crc32 split as
     R25 and the slot reader)."""
-    from tern_train import GENERAL, held_out
+    from slot_reader import GENERAL, held_out
     rng = random.Random(seed)
     texts = [json.loads(line)["text"] for line in GENERAL.open(encoding="utf-8")]
     texts = [t for t in texts if 3 <= len(t.split()) <= 40]

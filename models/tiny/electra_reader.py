@@ -44,7 +44,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from slot_reader import ROOT, held_out, load_roles
-from slot_tagger import SpanTagger, Tok, decode
+from slot_tagger import TAGGED, SpanTagger, Tok, decode
 
 HERE = Path(__file__).parent
 EMBED = HERE / "reader" / "embed"
@@ -459,7 +459,10 @@ def cmd_train(args) -> int:
     return 0
 
 
-# ── checks ────────────────────────────────────────────────────────────────────
+# ── the reader as the planner pipeline uses it ───────────────────────────────
+
+HEAD = EMBED / "n" / "head.pt"        # R27's one-pass head, trained with names
+
 
 def load_head(path: str | Path) -> EmbedHead:
     ck = torch.load(path, map_location="cpu")
@@ -468,6 +471,98 @@ def load_head(path: str | Path) -> EmbedHead:
     return h.to(DEV).eval()
 
 
+def load_tagger(path: str | Path = TAGGER) -> SpanTagger:
+    ck = torch.load(path, map_location="cpu")
+    t = SpanTagger(**ck["cfg"])
+    t.load_state_dict(ck["state"])
+    return t.to(DEV).eval()
+
+
+@torch.no_grad()
+def tag_spans(tagger: SpanTagger, body: Body, texts: list[str], bs: int = 256) -> list[list]:
+    """Per text, per role (slot_tagger.TAGGED): (char start, char end) or None."""
+    out = []
+    for s in range(0, len(texts), bs):
+        st, mask, offsets = body(texts[s:s + bs])
+        a, b = tagger(st, mask)
+        out += decode(a.cpu(), b.cpu(), offsets)
+    return out
+
+
+@torch.no_grad()
+def embed_alone(head: EmbedHead, body: Body, texts: list[str], bs: int = 512) -> torch.Tensor:
+    """(n, out) on the CPU, each text read by itself; zero for a text with no words."""
+    out = torch.zeros(len(texts), head.cfg["out"])
+    for s in range(0, len(texts), bs):
+        v, k = read_alone(head, body, texts[s:s + bs])
+        out[[s + i for i in k]] = v.float().cpu()
+    return out
+
+
+@torch.no_grad()
+def embed_in_context(head: EmbedHead, body: Body, texts: list[str], spans: list[list[tuple[int, int]]],
+                     bs: int = 128) -> list[torch.Tensor]:
+    """Per text, (len(spans[i]), out) on the CPU: each span pooled out of one
+    pass over its text; zero for a span with no words."""
+    out = [torch.zeros(len(sp), head.cfg["out"]) for sp in spans]
+    for s in range(0, len(texts), bs):
+        pieces = [(i - s, a, b) for i in range(s, min(s + bs, len(texts))) for a, b in spans[i]]
+        where = [(i, j) for i in range(s, min(s + bs, len(texts))) for j in range(len(spans[i]))]
+        if not pieces:
+            continue
+        v, k = read_context(head, body, texts[s:s + bs], pieces)
+        v = v.float().cpu()
+        for row, p in enumerate(k):
+            i, j = where[p]
+            out[i][j] = v[row]
+    return out
+
+
+class ElectraReader:
+    """The reader behind live_reader's interface (.vectors, .name, .sha):
+    descriptions, constants and fields read alone; a request's role slots and
+    4-word chunks pooled out of one pass over it (request_pieces)."""
+
+    def __init__(self, head: str | Path = HEAD, body: str | Path = BODY, tagger: str | Path = TAGGER):
+        import hashlib
+        self.body, self.head, self.tagger = Body(body), load_head(head), load_tagger(tagger)
+        self.files = {"body": str(body), "head": str(head), "tagger": str(tagger)}
+        h = hashlib.sha256()
+        for p in (body, head, tagger):
+            h.update(Path(p).read_bytes())
+        self.sha = h.hexdigest()
+        self.name = f"electra-{Path(head).parent.name}"
+
+    def vectors(self, texts: list[str]) -> torch.Tensor:
+        return embed_alone(self.head, self.body, texts)
+
+    def request_pieces(self, requests: list[str], chunk_words: int, max_chunk: int, slots: bool) -> list[torch.Tensor]:
+        """Per request, (7 * slots + max_chunk, out): the role slots in
+        slot_tagger.TAGGED order (zero when absent), then the 4-word chunks
+        (zero past the last)."""
+        tags = tag_spans(self.tagger, self.body, requests) if slots else [[] for _ in requests]
+        spans, layout = [], []
+        for req, tg in zip(requests, tags):
+            ch = [(a, b) for a, b, _ in chunk_spans(req, chunk_words)[:max_chunk]]
+            present = [k for k, s in enumerate(tg) if s is not None]
+            spans.append([tg[k] for k in present] + ch)
+            layout.append([k for k in present] + [len(tg) + i for i in range(len(ch))])
+        vecs = embed_in_context(self.head, self.body, requests, spans)
+        width = (len(TAGGED) if slots else 0) + max_chunk
+        out = []
+        for v, rows in zip(vecs, layout):
+            t = torch.zeros(width, self.head.cfg["out"])
+            for r, pos in enumerate(rows):
+                t[pos] = v[r]
+            out.append(t)
+        return out
+
+    def close(self) -> None:
+        pass
+
+
+# ── checks ────────────────────────────────────────────────────────────────────
+
 class Reading:
     """One way of turning a request's pieces and a task's constants into
     vectors: the teacher alone, or a head alone or in context."""
@@ -475,24 +570,15 @@ class Reading:
     def __init__(self, name: str, body: Body | None, head: EmbedHead | None, mode: str, teacher: MiniLM | None):
         self.name, self.body, self.head, self.mode, self.teacher = name, body, head, mode, teacher
 
-    @torch.no_grad()
     def alone(self, texts: list[str]) -> torch.Tensor:
         if self.teacher is not None:
             return self.teacher.vectors(texts)
-        out = torch.zeros(len(texts), self.head.cfg["out"])
-        for s in range(0, len(texts), 512):
-            v, k = read_alone(self.head, self.body, texts[s:s + 512])
-            out[[s + i for i in k]] = v.float().cpu()
-        return out
+        return embed_alone(self.head, self.body, texts)
 
-    @torch.no_grad()
     def pieces(self, text: str, spans: list[tuple[int, int, str]]) -> torch.Tensor:
         if self.mode == "alone":
             return self.alone([s for _, _, s in spans])
-        out = torch.zeros(len(spans), self.head.cfg["out"])
-        v, k = read_context(self.head, self.body, [text], [(0, a, b) for a, b, _ in spans])
-        out[k] = v.float().cpu()
-        return out
+        return embed_in_context(self.head, self.body, [text], [[(a, b) for a, b, _ in spans]])[0]
 
 
 def spearman(a: torch.Tensor, b: torch.Tensor) -> float:

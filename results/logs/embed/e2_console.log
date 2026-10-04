@@ -1,0 +1,10 @@
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+cuda ok 51.061214447021484
+3000 texts read alone (54767 the teacher's) in 1s
+1162 requests tagged and read in one pass each, 10134 pieces, in 2s; slots present: action 94%  object 69%  destination 5%  source 2%  condition 6%  time 11%  amount 0%
+reader/embed/_smoke/c0_patch.pt: table (13134, 384), reader electra-n sha e8ace0410799
+smoke done
+180698 texts read alone (54767 the teacher's) in 32s
+29579 requests tagged and read in one pass each, 260951 pieces, in 26s; slots present: action 95%  object 69%  destination 4%  source 2%  condition 7%  time 10%  amount 0%
+/workspace/repo/models/tiny/reader/embed/c0_patch.pt: table (441649, 384), reader electra-n sha e8ace0410799
+E2 DONE

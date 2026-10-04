@@ -1,6 +1,8 @@
-"""C0's $0 probe (.claude/plans/tiny-general-agent-menu.md, C0): does
-Ternlight, reading the request in chunks, pick the constants a task's
-reference program uses over the ones it doesn't? No training.
+"""C0's $0 probe (.claude/plans/tiny-general-agent-menu.md, C0): does a
+reader, reading the request in chunks, pick the constants a task's
+reference program uses over the ones it doesn't? No training. (The numbers
+in results/R25-R27 were first measured with the dropped Ternlight reader;
+electra_reader.py check runs this probe for the ELECTRA reader.)
 
 For every task with at least one used and one unused constant, each
 constant gets a score from each method, and the probe reports:
@@ -11,17 +13,16 @@ constant gets a score from each method, and the probe reports:
 Methods:
   overlap     share of the constant's content words that appear in the
               request (lower case, a trailing s dropped). No model.
-  whole       Ternlight: cosine of the whole request with the constant
+  whole       the reader: cosine of the whole request with the constant
               (what R22's reader has, except R22 never reads constants).
-  chunk-K     Ternlight: best cosine over the request's windows of K words,
-              moving K/2 words at a time (C0's input).
+  chunk-K     the reader: best cosine over the request's windows of K words,
+              moving K/2 words at a time (C0's input), each read alone.
   overlap+X   overlap first, X breaking its ties: what X adds beyond
               matching words.
 
-  python chunk_probe.py --reader reader [--out ../../results/logs/c0/probe.json]
-  python chunk_probe.py --reader reader/role/r1/reader.pt --sizes 4   # a TernReader file
+  python chunk_probe.py [--reader electra] [--out ../../results/logs/c0/probe.json]
 
---reader is live_reader.open_reader's spec: the node dir, or a TernReader file.
+--reader is live_reader.open_reader's spec: `electra` or an embedding head's head.pt.
 """
 from __future__ import annotations
 
@@ -189,12 +190,11 @@ def probe(rd, sizes: list[int], quiet: bool = False) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--reader", required=True, metavar="DIR|FILE")
-    ap.add_argument("--tier", default="mini")
+    ap.add_argument("--reader", default="electra", metavar="SPEC")
     ap.add_argument("--sizes", default="2,3,4,6")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
-    rd = open_reader(args.reader, args.tier)
+    rd = open_reader(args.reader)
     report = probe(rd, [int(k) for k in args.sizes.split(",")])
     report["reader"] = rd.name
     rd.close()

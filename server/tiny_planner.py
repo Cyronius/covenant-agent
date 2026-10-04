@@ -1,6 +1,6 @@
 """The tiny planner behind POST /plan (.claude/plans/tiny-planner-demo.md
 step 3): a models/tiny checkpoint, and for a --reader checkpoint the
-Ternlight reader run live (models/tiny/live_reader.py).
+ELECTRA reader run live (models/tiny/live_reader.py, electra_reader.py).
 
 A GGUF planner reads the prompt text the client built. This one reads the
 task itself -- the context JSON /kanban_prompt or /db_prompt returned, the
@@ -25,15 +25,13 @@ TINY = ROOT / "models" / "tiny"
 if str(TINY) not in sys.path:
     sys.path.insert(0, str(TINY))
 
-# name -> (checkpoint, the cache it trained on: tokenizer, keywords, layout)
+# name -> (checkpoint, the cache it trained on: tokenizer, keywords, layout).
+# The reader checkpoints read with ELECTRA (results/R29.md); the planners
+# trained on Ternlight's vectors (clt_RD, fdc25_RD, brw*_RD, s6off_RD) went
+# with it on 2026-10-04.
 TINY_MODELS = {
-    "tiny:clt_RD": ("runs/pod_clt/runs/clt_RD/best.pt", "data_cache_clt"),
-    # borrowed worlds (results/BORROWED.md): clt_train + the new kinds at ~10/20/30%
-    "tiny:brw10_RD": ("runs/pod_brw/runs/brw10_RD/best.pt", "data_cache_brw10"),
-    "tiny:brw20_RD": ("runs/pod_brw/runs/brw20_RD/best.pt", "data_cache_brw20"),
-    "tiny:brw30_RD": ("runs/pod_brw/runs/brw30_RD/best.pt", "data_cache_brw30"),
-    "tiny:fdc25_RD": ("runs/pod_rd/runs/fdc25_RD/best.pt", "data_cache_fdc25"),
-    "tiny:s6off_RD": ("runs/pod_rd/runs/s6off_RD/best.pt", "data_cache_s6off"),
+    "tiny:c0_ESC": ("runs/pod_c0e/runs/c0_ESC/best.pt", "data_cache_c0esc"),
+    "tiny:c0_EL": ("runs/pod_c0e/runs/c0_EL/best.pt", "data_cache_c0e"),
     "tiny:s6off_A0": ("runs/pod_s6split/runs/s6off_A0/best.pt", "data_cache_s6off"),
 }
 # Constants reach the pointer as a set of line vectors, so nothing learned
@@ -43,7 +41,6 @@ TINY_MODELS = {
 # widen a checkpoint's own layout, never narrow it.
 MAX_CONST = 32
 MAX_FIELD = 56
-TERNLIGHT_DIR = TINY / "reader"          # npm install there (package.json)
 
 
 def available() -> list[dict]:
@@ -80,19 +77,18 @@ class TinyPlanner:
                      "max_reg": cfg.get("max_reg", 8),
                      **{k: cfg[k] for k in ("names", "split", "desc_chars", "max_sig",
                                             "max_desc", "max_name", "name_words",
-                                            "chunk_words", "slot_reader") if k in cfg}}
+                                            "chunk_words", "electra_reader") if k in cfg}}
         self.model = load_model(ckpt, self.device)
         self.model.c.max_const = self.layout.max_const
         self.model.c.max_field = self.layout.max_field
         self.reader = None
         if getattr(self.model.c, "reader", False):
-            from live_reader import LiveReader
-            if not (TERNLIGHT_DIR / "node_modules" / "@ternlight" / "mini").exists():
-                raise RuntimeError(f"{name} needs Ternlight: cd {TERNLIGHT_DIR} && npm install")
-            if getattr(self.model.c, "reader_file", "reader.pt") != "reader.pt":
-                raise RuntimeError(f"{name} reads {self.model.c.reader_file}; the demo "
-                                   "server runs only the shipped Ternlight")
-            self.reader = LiveReader(TERNLIGHT_DIR)
+            from live_reader import check_reader, open_reader
+            self.reader = open_reader("electra")
+            try:
+                check_reader(self.reader, cache, self.model.c)
+            except SystemExit as exc:
+                raise RuntimeError(f"{name}: {exc}") from None
         self._lock = threading.Lock()
 
     def plan(self, request: str, context: dict, registers: dict | None = None,

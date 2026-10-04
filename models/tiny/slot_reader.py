@@ -20,6 +20,7 @@ import math
 import random
 import re
 import time
+import zlib
 from collections import defaultdict
 from pathlib import Path
 
@@ -27,9 +28,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from tern_train import GENERAL, ROOT, Teacher, held_out
-
 HERE = Path(__file__).parent
+ROOT = HERE.parents[1]
+GENERAL = ROOT / "data" / "general" / "texts.jsonl"
 SLOTS = HERE / "reader" / "slots"
 ROLES = ("whole", "action", "object", "destination", "source", "condition", "time", "amount")
 R = {r: i for i, r in enumerate(ROLES)}
@@ -172,23 +173,24 @@ def load_roles(split: str | None = None) -> list[dict]:
     return [r for r in rows if split is None or r["split"] == split]
 
 
-TARGETS = {"teacher": "teacher.pt", "ternlight": "target_tern.pt"}
+def held_out(text: str) -> bool:
+    """The general corpus's held-out tenth (crc32), the same split since R25."""
+    return zlib.crc32(text.encode("utf-8")) % 10 == 0
+
+
+def teacher():
+    """all-MiniLM-L6-v2, whose vectors the slots copy (electra_reader.MiniLM)."""
+    from electra_reader import MiniLM      # electra_reader imports this module
+    return MiniLM()
 
 
 def cmd_teacher(args) -> int:
-    """Target vectors for every text and span: the teacher's (step 0), or the
-    shipped Ternlight's (step 2: it matches constants to request words
-    better than its teacher, and a span is a short phrase, where its
-    order-blindness hardly matters)."""
+    """The teacher's vector for every text and span."""
     rows = load_roles()
     texts = list(dict.fromkeys(t for r in rows for t in span_texts(r["text"], r["roles"]).values()))
     t0 = time.time()
-    if args.target == "teacher":
-        table = Teacher().embed(texts, log_every=200)
-    else:
-        from tern_reader import TERN_DIR, TorchReader
-        table = TorchReader(TERN_DIR / "model-int4.bin", batch=1024).embed(texts)
-    path = SLOTS / TARGETS[args.target]
+    table = teacher().vectors(texts, log_every=200)
+    path = SLOTS / "teacher.pt"
     torch.save({"texts": texts, "table": table.half()}, path)
     print(f"{len(texts)} texts in {time.time() - t0:.0f}s -> {path}")
     return 0
@@ -228,29 +230,6 @@ class ElectraBody:
         return torch.stack(hs), enc["attention_mask"].bool()
 
 
-class TernBody:
-    """Frozen shipped Ternlight-mini: its word states after the embeddings,
-    each layer and the final norm (what it averages)."""
-
-    def __init__(self):
-        from tern_reader import TERN_DIR, TernReader, Tokenizer
-        self.m = TernReader.from_bin(TERN_DIR / "model-int4.bin").eval()
-        self.tk = Tokenizer()
-        self.n_states, self.d, self.name = 4, 256, "ternlight-mini"
-
-    @torch.no_grad()
-    def states(self, texts: list[str]) -> tuple[torch.Tensor, torch.Tensor]:
-        from tern_reader import Tokenizer
-        ids, mask = Tokenizer.batch(self.tk.ids(texts))
-        x = self.m.emb(ids)
-        out = [x]
-        for layer in self.m.layers:
-            x = layer(x, mask)
-            out.append(x)
-        out.append(self.m.ln_f(x))
-        return torch.stack(out), mask
-
-
 class TernElectraBody:
     """Frozen ternary ELECTRA (tern_electra.py): the same list of states as
     ElectraBody, from the ternary student."""
@@ -271,10 +250,12 @@ class TernElectraBody:
 
 
 def make_body(name: str, layers: int | None = None):
-    """electra | ternlight | tern-electra:<path to tern_electra.py's model.pt>"""
+    """electra | tern-electra:<path to tern_electra.py's model.pt>"""
     if name.startswith("tern-electra:"):
         return TernElectraBody(name.split(":", 1)[1])
-    return ElectraBody(layers) if name == "electra" else TernBody()
+    if name != "electra":
+        raise SystemExit(f"unknown body {name!r}: electra | tern-electra:<model.pt>")
+    return ElectraBody(layers)
 
 
 # ── the slot head ─────────────────────────────────────────────────────────────
@@ -330,7 +311,7 @@ def cmd_train(args) -> int:
     rng = random.Random(args.seed)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    tt = torch.load(SLOTS / TARGETS[args.target])
+    tt = torch.load(SLOTS / "teacher.pt")
     index = {t: i for i, t in enumerate(tt["texts"])}
     T = tt["table"].float()
     train = load_roles("train")[:args.limit]
@@ -371,7 +352,7 @@ def cmd_train(args) -> int:
                 print(json.dumps(row), flush=True)
                 log.write(json.dumps(row) + "\n")
                 log.flush()
-    torch.save({"cfg": head.cfg, "state": head.state_dict(), "body": args.body, "target": args.target,
+    torch.save({"cfg": head.cfg, "state": head.state_dict(), "body": args.body, "target": "teacher",
                 "layers": args.layers, "mix": F.softmax(head.mix, 0).tolist()}, out / "head.pt")
     print(f"layer mix: {[round(x, 2) for x in F.softmax(head.mix, 0).tolist()]}")
     print(f"wrote {out / 'head.pt'}")
@@ -459,17 +440,12 @@ def cmd_check(args) -> int:
     body = make_body(args.body or ck["body"], ck["layers"])
     head = SlotHead(**ck["cfg"])
     head.load_state_dict(ck["state"])
-    target = ck.get("target", "teacher")
-    tt = torch.load(SLOTS / TARGETS[target])
+    tt = torch.load(SLOTS / "teacher.pt")
     index = {t: i for i, t in enumerate(tt["texts"])}
     T = tt["table"].float()
-    if target == "teacher":
-        teacher = Teacher()
-    else:                           # the slots copy the shipped Ternlight: measure in its space
-        from tern_reader import TERN_DIR, TorchReader
-        teacher = TorchReader(TERN_DIR / "model-int4.bin")
+    tch = teacher()
     held = load_roles("held")
-    rep = {"head": args.head, "body": body.name, "target": target, "mix": [round(x, 3) for x in ck["mix"]]}
+    rep = {"head": args.head, "body": body.name, "target": "teacher", "mix": [round(x, 3) for x in ck["mix"]]}
 
     rep["held"] = routing(head, body, held, index, T)
     print(f"{body.name}: held-out role routing {rep['held']['route']}% (n={rep['held']['route_n']}), "
@@ -482,7 +458,7 @@ def cmd_check(args) -> int:
             continue
         texts = [p[0] for p in pairs] + [p[1] for p in pairs]
         sl, _ = read(head, body, texts)
-        ta, tb = teacher.embed([p[2] for p in pairs]), teacher.embed([p[3] for p in pairs])
+        ta, tb = tch.vectors([p[2] for p in pairs]), tch.vectors([p[3] for p in pairs])
         n = len(pairs)
         k = R[b_role]
         orig = ((sl[:n, k] * tb).sum(1) > (sl[:n, k] * ta).sum(1)).float().mean()
@@ -499,7 +475,7 @@ def cmd_check(args) -> int:
     pairs = tofrom_pairs(held)
     texts = [p[0] for p in pairs] + [p[1] for p in pairs]
     sl, pr = read(head, body, texts)
-    tx = teacher.embed([p[2] for p in pairs])
+    tx = tch.vectors([p[2] for p in pairs])
     n = len(pairs)
     d, s = R["destination"], R["source"]
     before = ((sl[:n, d] * tx).sum(1) > (sl[:n, s] * tx).sum(1)).float()
@@ -521,7 +497,7 @@ def cmd_check(args) -> int:
     rep["hand"] = []
     for a, b, w in hand:
         sl, pr = read(head, body, [a, b])
-        tw = teacher.embed([w])[0]
+        tw = tch.vectors([w])[0]
         row = {"text": a, "flip": b, "word": w,
                "dest": [round(float(sl[i, d] @ tw), 3) for i in (0, 1)],
                "source": [round(float(sl[i, s] @ tw), 3) for i in (0, 1)],
@@ -539,7 +515,7 @@ def cmd_check(args) -> int:
     reqs = list(dict.fromkeys(reqs))[:600]
     rrows = [{"text": t, "roles": roles_of(doc)} for t, doc in zip(reqs, nlp.pipe(reqs))]
     spans = list(dict.fromkeys(s for r in rrows for s in span_texts(r["text"], r["roles"]).values()))
-    tv = teacher.embed(spans)
+    tv = tch.vectors(spans)
     idx2 = {t: i for i, t in enumerate(spans)}
     rep["requests"] = routing(head, body, rrows, idx2, tv)
     print(f"our requests (parsed, never trained on): routing {rep['requests']['route']}% "
@@ -567,7 +543,7 @@ def cmd_check(args) -> int:
         rep["probe"][suite] = {m: round(100 * a[0] / a[1], 1) for m, a in agg.items()}
     print("constant probe (pair): " + "  ".join(f"{s} whole {v['whole']} slots {v['slots']}"
                                                for s, v in rep["probe"].items())
-          + "   (Ternlight 4-word chunks: clut 87.1, plain 66.6, demo 84.8)")
+          + "   (the teacher's 4-word chunks: clut 84.8, plain 62.8, demo 87.8)")
     if args.out:
         Path(args.out).parent.mkdir(parents=True, exist_ok=True)
         Path(args.out).write_text(json.dumps(rep, indent=1), encoding="utf-8")
@@ -585,12 +561,9 @@ def main() -> int:
     p.add_argument("--cue", action="store_true",
                    help="append texts with a direction or time word not parsed yet")
     p = sub.add_parser("teacher")
-    p.add_argument("--target", choices=list(TARGETS), default="teacher")
     p = sub.add_parser("train")
     p.add_argument("--body", required=True,
-                   help="electra | ternlight | tern-electra:<tern_electra.py model.pt>")
-    p.add_argument("--target", choices=list(TARGETS), default="teacher",
-                   help="whose vectors the slots copy (teacher: step 0; ternlight: step 2)")
+                   help="electra | tern-electra:<tern_electra.py model.pt>")
     p.add_argument("--span-rows", type=int, default=0,
                    help="also train on this many role spans as texts of their own")
     p.add_argument("--layers", type=int, default=None, help="ELECTRA layers kept (default all 12)")

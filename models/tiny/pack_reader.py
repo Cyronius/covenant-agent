@@ -1,22 +1,19 @@
-"""Pack the slot reader's ternary ELECTRA body and span tagger into one file
-(.claude/plans/electra-slot-reader.md, step 3).
+"""Pack the whole ELECTRA reader into one file: the ternary ELECTRA body, the
+span tagger and the embedding head (.claude/plans/electra-slot-reader.md
+step 3; electra-only-reader.md step 2 added the head as version 2).
 
-The layout follows Ternlight's .bin v1 (tern_reader.read_bin): a fixed
-header, sections in a fixed order, a trailing sha256 of everything before
-it. What it adds for ELECTRA: a position table, the type-0 row, the
-embedding norm and 128->256 projection, post-sublayer norms, a bias on every
-ternary matrix (added after the rescale), and the tagger. The word table is
-int4 (per row: codes in [-7, 7], scale = max |row| / 7, two codes per byte,
-low nibble first); ternary matrices are 2-bit codes (00 = 0, 01 = +1,
-10 = -1, four per byte, lowest bits first) with one fp32 scale each.
-Everything else is fp32; the tagger is fp16.
+A fixed header, sections in a fixed order, a trailing sha256 of everything
+before it: the word table, the position table, the type-0 row, the embedding
+norm and 128->256 projection, each layer's ternary matrices (with a bias
+added after the rescale) and post-sublayer norms, then the tagger's tensors
+and the head's. The word table is int4 (per row: codes in [-7, 7], scale =
+max |row| / 7, two codes per byte, low nibble first); ternary matrices are
+2-bit codes (00 = 0, 01 = +1, 10 = -1, four per byte, lowest bits first)
+with one fp32 scale each. The tagger and the head are fp16; everything else
+is fp32.
 
-Ternlight-mini (model-int4.bin) is the other half of the reader and ships as
-it is.
-
-  python pack_reader.py pack --body reader/tern_electra/e1/model.pt \
-      --tagger reader/slots/t_tern_e1/tagger.pt --out reader/slot_reader.bin
-  python pack_reader.py verify --bin reader/slot_reader.bin --body ... --tagger ...
+  python pack_reader.py pack --out reader/electra_reader.bin     # e1, t_tern_e1, head n
+  python pack_reader.py verify --bin reader/electra_reader.bin
 """
 from __future__ import annotations
 
@@ -28,9 +25,14 @@ from pathlib import Path
 import torch
 
 MAGIC = b"TSLR"
-VERSION = 1
-# magic, version, vocab, emb, d, heads, ffn, layers, max_pos, n_states, n_roles, tagger heads, reserved
-HEADER = struct.Struct("<4sHIHHBHBHBBB9s")
+VERSION = 2
+# magic, version, vocab, emb, d, heads, ffn, layers, max_pos, n_states, n_roles, tagger heads,
+# head heads, head ffn, head out, reserved
+HEADER = struct.Struct("<4sHIHHBHBHBBBBHH4s")
+HERE = Path(__file__).parent
+BODY = HERE / "reader" / "tern_electra" / "e1" / "model.pt"
+TAGGER = HERE / "reader" / "slots" / "t_tern_e1" / "tagger.pt"
+HEAD = HERE / "reader" / "embed" / "n" / "head.pt"
 
 
 def _f32(t: torch.Tensor) -> bytes:
@@ -63,15 +65,16 @@ def _norm(ln) -> bytes:
     return _f32(ln.weight) + _f32(ln.bias)
 
 
-def tagger_tensors(tagger) -> list[tuple[str, torch.Tensor]]:
-    """The tagger's tensors in a fixed order (its state dict, names sorted)."""
-    return sorted(tagger.state_dict().items())
+def tagger_tensors(module) -> list[tuple[str, torch.Tensor]]:
+    """A tagger's or head's tensors in a fixed order (its state dict, names sorted)."""
+    return sorted(module.state_dict().items())
 
 
-def pack(body, tagger) -> bytes:
-    dm = body.dims
+def pack(body, tagger, head) -> bytes:
+    dm, hc = body.dims, head.cfg
     parts = [HEADER.pack(MAGIC, VERSION, dm["vocab"], dm["emb"], dm["d"], dm["heads"], dm["ffn"],
-                         dm["layers"], dm["max_pos"], tagger.cfg["n_states"], 7, tagger.cfg["heads"], b"\0" * 9)]
+                         dm["layers"], dm["max_pos"], tagger.cfg["n_states"], 7, tagger.cfg["heads"],
+                         hc["heads"], hc["ffn"], hc["out"], b"\0" * 4)]
     with torch.no_grad():
         parts += [_int4(body.word.weight), _f32(body.pos.weight), _f32(body.tok_type.weight[0]),
                   _norm(body.ln_e), _f32(body.proj.weight), _f32(body.proj.bias)]
@@ -79,22 +82,25 @@ def pack(body, tagger) -> bytes:
             parts += [_ternary(m) for m in (L.q, L.k, L.v, L.o)]
             parts += [_norm(L.ln1), _ternary(L.fc1), _ternary(L.fc2), _norm(L.ln2)]
         parts += [_f16(t) for _, t in tagger_tensors(tagger)]
+        parts += [_f16(t) for _, t in tagger_tensors(head)]
     body_bytes = b"".join(parts)
     return body_bytes + hashlib.sha256(body_bytes).digest()
 
 
 def unpack(blob: bytes):
-    """-> (TernElectra, SpanTagger) rebuilt from the file: ternary training
-    weights = code / scale, so the forward pass rounds back to the same codes."""
+    """-> (TernElectra, SpanTagger, EmbedHead) rebuilt from the file: ternary
+    training weights = code / scale, so the forward pass rounds back to the
+    same codes."""
+    from electra_reader import EmbedHead
     from slot_tagger import SpanTagger
     from tern_electra import TernElectra
     body_b, sha = blob[:-32], blob[-32:]
     if hashlib.sha256(body_b).digest() != sha:
         raise ValueError("sha256 does not match")
-    magic, ver, vocab, emb, d, heads, ffn, layers, max_pos, n_states, n_roles, t_heads, _ = HEADER.unpack(
-        body_b[:HEADER.size])
+    (magic, ver, vocab, emb, d, heads, ffn, layers, max_pos, n_states, n_roles, t_heads,
+     h_heads, h_ffn, h_out, _) = HEADER.unpack(body_b[:HEADER.size])
     if magic != MAGIC or ver != VERSION:
-        raise ValueError("not a slot reader v1 file")
+        raise ValueError(f"not an ELECTRA reader v{VERSION} file")
     off = HEADER.size
 
     def take(n: int, dtype) -> torch.Tensor:
@@ -144,36 +150,46 @@ def unpack(blob: bytes):
         for name, ref in tagger_tensors(t):
             state[name] = take(ref.numel(), torch.float16).view(ref.shape).float()
         t.load_state_dict(state)
+        h = EmbedHead(n_states, d, h_heads, h_ffn, h_out)
+        state = {}
+        for name, ref in tagger_tensors(h):
+            state[name] = take(ref.numel(), torch.float16).view(ref.shape).float()
+        h.load_state_dict(state)
     if off != len(body_b):
         raise ValueError(f"{len(body_b) - off} trailing bytes")
-    return m, t
+    return m, t, h
 
 
-def _load(body_path: str, tagger_path: str):
+def _load(body_path, tagger_path, head_path):
+    from electra_reader import EmbedHead
     from slot_tagger import SpanTagger
     from tern_electra import TernElectra
     body = TernElectra.load(Path(body_path)).eval()
     ck = torch.load(tagger_path)
     tagger = SpanTagger(**ck["cfg"])
     tagger.load_state_dict(ck["state"])
-    return body, tagger.eval()
+    ck = torch.load(head_path, map_location="cpu")
+    head = EmbedHead(**ck["cfg"])
+    head.load_state_dict(ck["state"])
+    return body, tagger.eval(), head.eval()
 
 
 def cmd_pack(args) -> int:
-    body, tagger = _load(args.body, args.tagger)
-    blob = pack(body, tagger)
+    body, tagger, head = _load(args.body, args.tagger, args.head)
+    blob = pack(body, tagger, head)
     Path(args.out).write_bytes(blob)
     print(f"{args.out}: {len(blob):,} bytes")
     return 0
 
 
 def cmd_verify(args) -> int:
-    """The file read back tags exactly as the trained model does, and its
-    word states match to float rounding."""
+    """The file read back tags exactly as the trained model does, its word
+    states match to float rounding, and its head's vectors (each text read
+    alone) to fp16 rounding."""
     from slot_tagger import Tok, decode
-    body, tagger = _load(args.body, args.tagger)
-    b2, t2 = unpack(Path(args.bin).read_bytes())
-    b2.eval(), t2.eval()
+    body, tagger, head = _load(args.body, args.tagger, args.head)
+    b2, t2, h2 = unpack(Path(args.bin).read_bytes())
+    b2.eval(), t2.eval(), h2.eval()
     texts = ["move it to bob", "copy the report from the archive to the inbox",
              "delete the cards that are not done", "list orders placed before March",
              "Returns the number of records created after the given date"]
@@ -184,8 +200,12 @@ def cmd_verify(args) -> int:
         diff = max(float((a - b)[mask].abs().max()) for a, b in zip(s1, s2))
         d1 = decode(*tagger(torch.stack(s1), mask), offsets)
         d2 = decode(*t2(torch.stack(s2), mask), offsets)
-    print(f"states max diff {diff:.2e}; tags identical: {d1 == d2}")
-    return 0 if d1 == d2 and diff < 1e-3 else 1
+        word = offsets[..., 1] > offsets[..., 0]
+        rows = torch.arange(len(texts))
+        v1, v2 = head(torch.stack(s1), rows, word), h2(torch.stack(s2), rows, word)
+        vcos = float((v1 * v2).sum(-1).min())
+    print(f"states max diff {diff:.2e}; tags identical: {d1 == d2}; head vectors min cosine {vcos:.5f}")
+    return 0 if d1 == d2 and diff < 1e-3 and vcos > 0.999 else 1
 
 
 def main() -> int:
@@ -193,12 +213,13 @@ def main() -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("pack", "verify"):
         p = sub.add_parser(name)
-        p.add_argument("--body", required=True)
-        p.add_argument("--tagger", required=True)
+        p.add_argument("--body", default=str(BODY))
+        p.add_argument("--tagger", default=str(TAGGER))
+        p.add_argument("--head", default=str(HEAD))
         if name == "pack":
-            p.add_argument("--out", required=True)
+            p.add_argument("--out", default=str(HERE / "reader" / "electra_reader.bin"))
         else:
-            p.add_argument("--bin", required=True)
+            p.add_argument("--bin", default=str(HERE / "reader" / "electra_reader.bin"))
     args = ap.parse_args()
     return {"pack": cmd_pack, "verify": cmd_verify}[args.cmd](args)
 

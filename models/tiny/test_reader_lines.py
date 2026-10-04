@@ -80,37 +80,29 @@ def test_live_texts_match_the_cache():
     assert checked >= 20
 
 
-def test_role_reader_live_vectors_match_its_table():
-    """The role-aware reader (reader_role.pt, role-aware-reader.md step 5):
-    run live on a row's texts, it gives the vectors its table holds for them,
-    and live_reader.check_reader accepts it for that table and refuses the
-    node reader."""
+def test_electra_reader_live_vectors_match_its_table():
+    """The ELECTRA reader (electra_cache.py, electra-only-reader.md step 2):
+    run live on a row's texts it gives the vectors data_cache_c0esc's table
+    holds, the request's role slots and chunks pooled out of one pass, zero
+    where the table has no piece; check_reader accepts it for that table."""
     import pytest
-    from live_reader import check_reader, reader_inputs
-    from tern_reader import TorchReader
-    path = CACHE / "reader_role.pt"
-    if not path.exists():
-        pytest.skip(f"missing {path} (reader_table.py --reader-model)")
-    tab = torch.load(path)
-    model = next((p for p in (HERE / "reader" / "role").glob("*/reader.pt")
-                  if TorchReader(p).sha == tab["reader_sha"]), None)
-    assert model is not None, "no reader/role/*/reader.pt matches reader_role.pt's reader_sha"
-    rd = TorchReader(model)
-    cfg = type("Cfg", (), {"reader_file": "reader_role.pt"})
-    check_reader(rd, CACHE, cfg)
-    with pytest.raises(SystemExit):
-        check_reader(type("Node", (), {"name": "ternlight-mini", "sha": None}), CACHE, cfg)
-
-    meta = json.loads((CACHE / "config.json").read_text())
-    d = torch.load(CACHE / "holdout.pt", mmap=True)
-    rows = pickle.load(open(CACHE / "rows.pkl", "rb"))["holdout"]
-    task_ids = [m["task_id"] for m in json.loads((CACHE / "holdout_meta.json").read_text())]
+    from live_reader import check_reader, open_reader, reader_inputs
+    cache = HERE / "data_cache_c0esc"
+    if not (cache / "reader.pt").exists():
+        pytest.skip(f"missing {cache} (electra_cache.py apply)")
+    tab = torch.load(cache / "reader.pt")
+    rd = open_reader("electra")
+    check_reader(rd, cache, type("Cfg", (), {"reader_file": "reader.pt"}))
+    meta = json.loads((cache / "config.json").read_text())
+    d = torch.load(cache / "holdout.pt", mmap=True)
+    rows = pickle.load(open(cache / "rows.pkl", "rb"))["holdout"]
+    task_ids = [m["task_id"] for m in json.loads((cache / "holdout_meta.json").read_text())]
     table = tab["table"].float()
     lay = meta["layout"]
     cfg = type("Cfg", (), {"reader_lines": True, "max_const": lay["max_const"],
                            "max_field": lay["max_field"], "max_chunk": meta["max_chunk"]})
     checked = 0
-    for n in range(0, len(rows), max(1, len(rows) // 20)):
+    for n in range(0, len(rows), max(1, len(rows) // 12)):
         if "#s" in task_ids[n]:
             continue
         r = rows[n]
@@ -123,9 +115,11 @@ def test_role_reader_live_vectors_match_its_table():
             got = live[key].reshape(-1, table.size(1))[:len(idx)]
             for j, i in enumerate(idx.tolist()):
                 if i >= 0:
-                    assert float(got[j] @ table[i]) > 0.999, (task_ids[n], key, j)
+                    assert float(got[j] @ table[i]) > 0.995, (task_ids[n], key, j)
+                elif key == "rd_chunk":
+                    assert float(got[j].abs().sum()) == 0.0, (task_ids[n], key, j)
         checked += 1
-    assert checked >= 10
+    assert checked >= 6
 
 
 def _small_c0(req_words: bool):

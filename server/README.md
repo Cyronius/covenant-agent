@@ -283,8 +283,8 @@ the server uses whichever its planner reads.
   sets its context size; generation is serialized with a lock.
 
 Tiny checkpoints are listed in `server/tiny_planner.py` (`TINY_MODELS`). A
-`--reader` checkpoint (`clt_RD`, `fdc25_RD`) runs Ternlight live, which
-needs node and a one-time `cd models/tiny/reader && npm install`.
+`--reader` checkpoint (`c0_ESC`, `c0_EL`) runs the ELECTRA reader live in
+PyTorch (`models/tiny/electra_reader.py`; results/R29.md).
 
 ## `POST /write` — the writer tool's backend
 

@@ -1,0 +1,35 @@
+
+C:/code/covenant-agent/models/tiny/runs/pod_c0e/out/c0_ESCV_flip.jsonl  (472 tasks)
+  parse     98.5%
+  compile   83.1%
+  goal      36.7%
+  exact     30.3%
+  of the 472 scored, 144 are segments of a paused task
+  decoy called  41.3% of 392 decoyed tasks  (a signature-identical sibling, never in a reference)
+  passes   mean 27.4
+
+  slot accuracy against the reference canvas (same slot):
+    kw      92.5%  (n=7254)
+    tool    63.5%  (n=907)
+    field   72.3%  (n=674)
+    const   78.9%  (n=816)
+    reg     95.0%  (n=2590)
+
+  CALL lines where both reference and generation CALL: 900
+    same tool     64.9%   chance   2.0%
+      vs shape    64.9%   chance  41.6%  (uniform inside the signature group)
+    same effect   97.9%   chance  30.1%
+
+  by level:
+      1  n=  49  compile   71%  goal   51%
+      2  n=  50  compile   88%  goal   32%
+      3  n=  48  compile   88%  goal   10%
+      4  n=  28  compile   86%  goal   21%
+      5  n=  50  compile   80%  goal   24%
+      6  n=  54  compile   70%  goal   11%
+      7  n=  38  compile   74%  goal   32%
+      8  n=  37  compile   84%  goal   65%
+     10  n= 108  compile   94%  goal   58%
+     13  n=  10  compile   90%  goal   40%
+
+wrote C:\code\covenant-agent\models\tiny\runs\pod_c0e\out\c0_ESCV_flip.score.json
