@@ -1,0 +1,7 @@
+model 0 (runs/d3_half0_s1/best.pt): rows 17934 stored, 18066 its own
+model 1 (runs/d3_half1_s1/best.pt): rows 18066 stored, 17934 its own
+  model 0 on the other fold (stored)   program 0.408  keyword 0.945  tool 0.885  field 0.794  constant 0.640
+  model 0 on its own fold              program 0.473  keyword 0.972  tool 0.912  field 0.822  constant 0.683
+  model 1 on the other fold (stored)   program 0.441  keyword 0.949  tool 0.905  field 0.828  constant 0.646
+  model 1 on its own fold              program 0.515  keyword 0.982  tool 0.931  field 0.857  constant 0.709
+wrote data_cache_d3/train_xdraft_s1.pt: 36000 rows

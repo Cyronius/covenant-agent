@@ -1,0 +1,46 @@
+
+C:/code/covenant-agent/models/tiny/runs/pod_staged/out/d3_D2Rp_s1_decoy.jsonl  (2000 tasks)
+  parse     95.8%
+  compile   76.5%
+  goal      33.6%
+  exact     25.4%
+  of the 2000 scored, 346 are segments of a paused task
+  decoy called  56.7% of 1531 decoyed tasks  (a signature-identical sibling, never in a reference)
+  passes   mean 23.4
+
+  slot accuracy against the reference canvas (same slot):
+    kw      89.2%  (n=25395)
+    tool    44.2%  (n=3377)
+    field   67.9%  (n=2623)
+    const   82.4%  (n=3544)
+    reg     91.6%  (n=9352)
+
+  CALL lines where both reference and generation CALL: 3285
+    same tool     46.2%   chance   2.1%
+      vs shape    46.2%   chance  41.9%  (uniform inside the signature group)
+    same effect   97.9%   chance  29.2%
+
+  by level:
+      0  n=  88  compile   92%  goal   34%
+      1  n=  93  compile   56%  goal   19%
+      2  n=  84  compile   74%  goal   10%
+      3  n=  89  compile   71%  goal    8%
+      4  n=  90  compile   64%  goal   12%
+      5  n= 117  compile   68%  goal   15%
+      6  n=  88  compile   51%  goal    5%
+      7  n= 124  compile   69%  goal   30%
+      8  n=  87  compile   75%  goal   38%
+      9  n=  89  compile   79%  goal   15%
+     10  n= 174  compile   87%  goal   34%
+     11  n= 108  compile   82%  goal   71%
+     12  n= 101  compile   59%  goal   16%
+     13  n=  99  compile   85%  goal   31%
+     14  n=  95  compile   78%  goal   78%
+     15  n=  97  compile   96%  goal   21%
+     16  n=  97  compile   99%  goal   99%
+     17  n=  97  compile   96%  goal   77%
+     18  n=  99  compile   84%  goal   43%
+     19  n=  84  compile   55%  goal    1%
+
+wrote C:\code\covenant-agent\models\tiny\runs\pod_staged\out\d3_D2Rp_s1_decoy.score.json
+d_staged\out\d3_D2Rp_s1_decoy.score.json

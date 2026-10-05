@@ -3,7 +3,7 @@ early exit reads, task types, and that a tiny staged model memorizes a
 handful of real rows through both of its readouts -- the refiner's and the
 draft's -- then reloads as the same model.
 
-  python -m pytest test_staged.py -q        # from models/tiny; CPU, about a minute
+  python -m pytest test_staged.py -q        # from models/tiny; CPU, about 12 minutes
 """
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from canvas import Layout, TaskCodec, load_keywords
 from evaluate import load_model
 from model import Config, build_model
 from sample import ar_sample
-from staged import fold_of, parse_stages, program_confidence, task_type
+from staged import commit_rule, fold_of, parse_stages, program_confidence, task_type
 from train import load_split, unpack
 
 HERE = Path(__file__).parent
@@ -212,6 +212,129 @@ def test_cross_fitted_drafts(tmp_path, monkeypatch):
         m.staged_loss(inputs, tgt)
         live = m.draft(inputs, mem := m._encode(inputs), m.slot_table(mem)).argmax(-1)
     assert torch.equal(seen[-1][0], live)
+
+
+def test_commit_rule_fixes_every_slot_once():
+    torch.manual_seed(0)
+    B, C, R = 3, 64, 5
+    open_ = torch.ones(B, C, dtype=torch.bool)
+    seen = torch.zeros(B, C, dtype=torch.long)
+    for r in range(R):
+        conf = torch.rand(B, C)
+        conf[:, :10] = 0.95                                   # sure slots go at once
+        take = commit_rule(conf, open_, R - r, 0.9)
+        assert not (take & ~open_).any()                      # only open slots
+        if r == 0:
+            assert take[:, :10].all()
+        share = (open_.sum(1) + (R - r) - 1) // (R - r)
+        assert (take.sum(1) >= share).all()                   # never under an even share
+        seen += take.long()
+        open_ &= ~take
+    assert (seen == 1).all()                                  # every slot exactly once
+
+
+@pytest.mark.skipif(not CACHE.exists(), reason="needs data_cache_smoke")
+def test_one_round_commit_is_the_plain_draft():
+    """One round commits everything at once: the committing draft must then
+    be today's draft, weight for weight -- the wiring, checked."""
+    torch.manual_seed(0)
+    ds = load_split(CACHE, "train", "structural", limit=4)
+    inputs, _ = unpack(tuple(ds.tensors), "structural", 0, ds.keys)
+    plain = build_model(_tiny("draft:2x1,refine:1x1"))
+    cfg = _tiny("draft:2x1,refine:1x1")
+    cfg.commit = True
+    com = build_model(cfg)
+    com.load_state_dict(plain.state_dict())
+    plain.eval(), com.eval()
+    with torch.no_grad():
+        a, b = plain.encode_inputs(inputs), com.encode_inputs(inputs)
+    assert torch.allclose(a.draft_logits, b.draft_logits, atol=1e-6)
+    assert (com.commit_round == 0).all()
+
+
+@pytest.mark.skipif(not CACHE.exists(), reason="needs data_cache_smoke")
+def test_committing_draft_memorizes():
+    # one thread: the result must not depend on the machine's thread count
+    # (a committing draft memorizes slowly enough that summation order
+    # decided pass or fail)
+    threads = torch.get_num_threads()
+    torch.set_num_threads(1)
+    try:
+        _committing_draft_memorizes()
+    finally:
+        torch.set_num_threads(threads)
+
+
+def _committing_draft_memorizes():
+    torch.manual_seed(0)
+    n = 12
+    ds = load_split(CACHE, "train", "structural", limit=n)
+    inputs, tgt = unpack(tuple(ds.tensors), "structural", 0, ds.keys)
+    cfg = _tiny("draft:1x3,refine:1x1")
+    cfg.commit = True
+    model = build_model(cfg)
+    opt = torch.optim.Adam(model.parameters(), lr=3e-3)
+    model.train()
+    for _ in range(800):                   # committing drafts learn slower (R28 point 12)
+        loss, _, _, _ = model.staged_loss(inputs, tgt)
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+    model.eval()
+    ref, dra = [], []
+    for i in range(n):
+        one = {k: v[i:i + 1] for k, v in inputs.items()}
+        with torch.no_grad():
+            ref.append(_program(ar_sample(model, one, _codec(i))[0]))
+            rounds = model.last["commit_round"]
+            with model.exiting():
+                dra.append(_program(ar_sample(model, one, _codec(i))[0]))
+        assert sorted(set(rounds)) <= [0, 1, 2] and -1 not in rounds
+    want = [_program(tgt[i:i + 1]) for i in range(n)]
+    assert sum(r == w for r, w in zip(ref, want)) >= n - 1, "the refiner did not memorize"
+    assert sum(d == w for d, w in zip(dra, want)) >= n - 2, "the committing draft did not memorize"
+
+
+@pytest.mark.skipif(not CACHE.exists(), reason="needs data_cache_smoke")
+def test_constant_picker():
+    """The picker's labels are the constants the reference uses; it learns
+    them; and its score reaches the constant pointers only."""
+    torch.manual_seed(0)
+    n = 12
+    ds = load_split(CACHE, "train", "structural", limit=n)
+    inputs, tgt = unpack(tuple(ds.tensors), "structural", 0, ds.keys)
+    cfg = _tiny("draft:1x2,refine:1x1")
+    cfg.pick = True
+    m = build_model(cfg)
+    c = m.c
+    o = c.n_kw + c.max_tool + c.max_field
+    want = torch.zeros(n, c.max_const, dtype=torch.bool)
+    for r in range(n):
+        for t in tgt[r].tolist():
+            if o <= t < o + c.max_const:
+                want[r, t - o] = True
+    live = torch.arange(c.max_const)[None] < inputs["n_const"][:, None]
+    assert want.any() and (want & live).sum() < live.sum()     # some constants are decoys
+
+    opt = torch.optim.Adam(m.parameters(), lr=3e-3)
+    m.train()
+    for _ in range(200):
+        loss, _, _, _ = m.staged_loss(inputs, tgt)
+        opt.zero_grad()
+        loss.backward()
+        opt.step()
+    m.eval()
+    with torch.no_grad():
+        mem = m.encode_inputs(inputs)
+        got = mem.pick_c > 0
+        assert ((got == want) | ~live).all(), "the picker did not learn which constants are used"
+        table = m.slot_table(mem)
+        h = torch.randn(n, c.canvas, c.d)
+        a = m.head(h, table, mem, inputs)
+        mem.pick_c = torch.zeros_like(mem.pick_c) - 5.0
+        b = m.head(h, table, mem, inputs)
+    differ = ((a != b) & torch.isfinite(a)).any(0).any(0)       # (J,)
+    assert differ[o:o + c.max_const].any() and not differ[:o].any() and not differ[o + c.max_const:].any()
 
 
 def test_old_checkpoint_loads_unchanged():

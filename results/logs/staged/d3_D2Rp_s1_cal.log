@@ -1,0 +1,14 @@
+{
+ "temp": 1.2311444140483876,
+ "thr": 0.6816223859786987,
+ "val": {
+  "n": 2000,
+  "thr": 0.6816223859786987,
+  "exit_share": 0.64,
+  "goal": 0.815,
+  "goal_refined": 0.815,
+  "goal_draft": 0.7525,
+  "exited_goal_draft": 0.96953125,
+  "exited_goal_refined": 0.96953125
+ }
+}

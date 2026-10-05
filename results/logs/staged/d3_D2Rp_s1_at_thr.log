@@ -1,0 +1,5 @@
+C:/code/covenant-agent/models/tiny/runs/pod_staged/out/d3_D2Rp_s1_plain.jsonl: n=2000 exit 54.2%  goal 63.4%  (refined 63.3%, draft 58.8%)
+C:/code/covenant-agent/models/tiny/runs/pod_staged/out/d3_D2Rp_s1_decoy.jsonl: n=2000 exit 12.6%  goal 33.5%  (refined 33.6%, draft 29.6%)
+C:/code/covenant-agent/models/tiny/runs/pod_staged/out/d3_D2Rp_s1_flip.jsonl: n=472 exit 3.2%  goal 18.4%  (refined 18.4%, draft 17.4%)
+C:/code/covenant-agent/models/tiny/runs/pod_staged/out/d3_D2Rp_s1_clut.jsonl: n=2000 exit 51.4%  goal 60.8%  (refined 60.5%, draft 56.0%)
+C:/code/covenant-agent/models/tiny/runs/pod_staged/out/d3_D2Rp_s1_test.jsonl: n=2000 exit 63.7%  goal 80.8%  (refined 81.0%, draft 75.6%)

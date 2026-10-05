@@ -125,6 +125,35 @@ class Split:
         return self.d["tgt"][i:i + 1].long()
 
 
+def oracle_const_block(c, tgt: torch.Tensor) -> torch.Tensor:
+    """(1, J) True at every constant id the reference program (`tgt`) does
+    not use: --oracle-consts, the ceiling of a perfect constant picker."""
+    o = c.n_kw + c.max_tool + c.max_field
+    block = torch.zeros(1, o + c.max_const + c.n_reg, dtype=torch.bool)
+    block[0, o:o + c.max_const] = True
+    used = tgt[(tgt >= o) & (tgt < o + c.max_const)]
+    block[0, used] = False
+    return block
+
+
+@torch.no_grad()
+def probe_const_bias(model, probe, inputs: dict, w: float) -> torch.Tensor:
+    """(1, J): w * log P(used) from pick_probe's frozen-encoder picker on the
+    constant ids, 0 elsewhere: --pick-probe, what a learned (imperfect)
+    picker buys without retraining the planner."""
+    from model import StructuralModel
+    c = model.c
+    mem = StructuralModel.encode_inputs(model, inputs)
+    a = c.max_tool + c.max_field
+    n_req = inputs["req_tok"].size(1)
+    logit = probe(mem.mem[:, a:a + c.max_const].float(), mem.pad[:, a:a + c.max_const],
+                  mem.mem[:, -n_req:].float(), mem.pad[:, -n_req:])
+    o = c.n_kw + a
+    bias = torch.zeros(1, o + c.max_const + c.n_reg, device=logit.device)
+    bias[:, o:o + c.max_const] = w * torch.nn.functional.logsigmoid(logit)
+    return bias
+
+
 def generate(args):
     device = torch.device(args.device)
     cache = Path(args.cache)
@@ -198,6 +227,13 @@ def generate(args):
         check = compile_check(cache, args.split)
     gen_rng = torch.Generator(device=args.device).manual_seed(0)
 
+    probe = None
+    if args.pick_probe:
+        from pick_probe import Picker
+        ck = torch.load(args.pick_probe, map_location=device)
+        probe = Picker(ck["d"]).to(device)
+        probe.load_state_dict(ck["state"])
+        probe.eval()
     out = []
     t0 = time.time()
     for k, i in enumerate(which):
@@ -206,6 +242,10 @@ def generate(args):
         tr = Trace()
         if args.oracle_route:
             model.set_oracle(split.meta[i]["world"])
+        if args.oracle_consts:
+            model.const_block = oracle_const_block(model.c, split.target(i))
+        if probe is not None:
+            model.const_bias = probe_const_bias(model, probe, inputs, args.pick_w)
         if arm == "diffusion":
             canvas, tr = diffusion_sample(model, inputs, ov, steps=args.steps,
                                           temperature=args.temperature, trace=tr,
@@ -243,6 +283,9 @@ def generate(args):
                       "draft_canvas_tokens": ov.decode(dcanvas[0].tolist())}
             if "expert" in info:
                 staged.update(expert=info["expert"], tried=info["tried"])
+            if "commit_round" in info:
+                # a committing draft (plan step 2c): the round each slot was fixed in
+                staged["commit_round"] = info["commit_round"]
         tgt = split.target(i)
         meta = {k: v for k, v in split.meta[i].items() if k != "syms"}
         out.append({
@@ -497,6 +540,13 @@ def main():
     ap.add_argument("--oracle-route", action="store_true",
                     help="expert bundles: route each task to its true type's "
                          "expert instead of asking the router")
+    ap.add_argument("--oracle-consts", action="store_true",
+                    help="analysis: a perfect constant picker -- block every constant "
+                         "the reference program doesn't use (plan step 2d's ceiling)")
+    ap.add_argument("--pick-probe", default=None, metavar="PT",
+                    help="analysis: add a frozen-encoder picker's log P(used) (pick_probe.py --save) "
+                         "to the constant pointers at run time")
+    ap.add_argument("--pick-w", type=float, default=1.0)
     ap.add_argument("--generate", action="store_true")
     ap.add_argument("--score", action="store_true")
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")

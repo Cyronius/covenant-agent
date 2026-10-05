@@ -1,0 +1,35 @@
+{
+ "ckpt": "runs/pod_staged/runs/d3_DR_s0/best.pt",
+ "train": {
+  "constants": 54861,
+  "decoys": 45110,
+  "right": 0.9497639536857605,
+  "decoys_let_through": 0.018975837156176567,
+  "used_dropped": 0.194851815700531,
+  "rows_all_right": 0.6393333077430725
+ },
+ "val (seen worlds)": {
+  "constants": 18253,
+  "decoys": 15103,
+  "right": 0.9250534176826477,
+  "decoys_let_through": 0.03317221626639366,
+  "used_dropped": 0.2752380967140198,
+  "rows_all_right": 0.5435000061988831
+ },
+ "test (seen worlds)": {
+  "constants": 18221,
+  "decoys": 14946,
+  "right": 0.9225069880485535,
+  "decoys_let_through": 0.035059548914432526,
+  "used_dropped": 0.2711450457572937,
+  "rows_all_right": 0.546999990940094
+ },
+ "plain (new worlds)": {
+  "constants": 10663,
+  "decoys": 7317,
+  "right": 0.9120322465896606,
+  "decoys_let_through": 0.05015716701745987,
+  "used_dropped": 0.17065152525901794,
+  "rows_all_right": 0.6535000205039978
+ }
+}

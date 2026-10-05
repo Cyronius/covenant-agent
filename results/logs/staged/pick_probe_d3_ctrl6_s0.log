@@ -1,0 +1,4 @@
+  train                constants  54861 (decoys 45110)  right  97.8%  decoys let through   1.1%  used dropped   7.3%  rows all right  83.6%
+  val (seen worlds)    constants  18253 (decoys 15103)  right  94.1%  decoys let through   3.5%  used dropped  17.4%  rows all right  63.1%
+  test (seen worlds)   constants  18221 (decoys 14946)  right  93.7%  decoys let through   3.7%  used dropped  18.0%  rows all right  62.8%
+  plain (new worlds)   constants  10663 (decoys  7317)  right  90.7%  decoys let through   5.9%  used dropped  16.8%  rows all right  61.9%

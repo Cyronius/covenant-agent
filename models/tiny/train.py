@@ -191,6 +191,10 @@ def batch_loss(model, inputs, tgt, arm: str, generator=None, pad_weight: float =
         parts = stage_losses(model, mem, inputs, tgt, aux.get("teacher"))
         extra = sum(aux.get(k.split("_")[0], 0.0) * v for k, v in parts.items())
         aux["last"] = {k: float(v) for k, v in parts.items()}
+    if getattr(model.c, "pick", False):
+        # the constant picker's own loss (plan step 2d)
+        mem = mem if mem is not None else model.encode_inputs(inputs)
+        extra = extra + model.pick_loss(mem, inputs, tgt)
     if arm == "diffusion":
         canvas, loss_mask, _ = mask_canvas(tgt, MASK_ID, generator)
         logits = model.decode(inputs, canvas, loops=loops, mem=mem)
@@ -398,6 +402,16 @@ def main():
     ap.add_argument("--types", default=None,
                     help="comma list of task types (staged.task_type): train and "
                          "validate on those rows only")
+    ap.add_argument("--pick", action="store_true",
+                    help="the constant picker: score whether the program uses each "
+                         "constant before decoding, and add it to the constant "
+                         "pointers (plan step 2d)")
+    ap.add_argument("--commit", action="store_true",
+                    help="the draft commits its surest slots after every loop, so "
+                         "later loops decide the rest knowing them (plan step 2c)")
+    ap.add_argument("--commit-conf", type=float, default=0.9,
+                    help="--commit: every open slot at least this confident is "
+                         "committed (and never fewer than an even share)")
     ap.add_argument("--fold", default=None, metavar="K/N",
                     help="train on fold K of N only (staged.fold_of, by episode): "
                          "a cross-fitting draft model's half (plan step 2b)")
@@ -476,6 +490,7 @@ def main():
             reader_lines=args.reader_lines, max_chunk=meta.get("max_chunk", 0),
             req_words=not args.no_req_words, reader_file=args.reader_file,
             stages=args.stages, draft_noise=args.draft_noise, draft_swap=args.draft_swap,
+            commit=args.commit, commit_conf=args.commit_conf, pick=args.pick,
             freeze_shared=args.freeze_shared, train_parts=args.train_parts,
         )
         if args.freeze_shared and not (args.stages and args.init_from):

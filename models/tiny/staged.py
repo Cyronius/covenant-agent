@@ -31,6 +31,13 @@ learned to copy it (R28). Cross-fitted drafts (plan step 2b) fix the input:
 two draft-only models each train on half the rows (`fold_of`), each drafts
 the other half (xdraft.py), and the refiner trains on those stored drafts
 (`xdraft_tok`, `xdraft_conf` columns) instead of its own draft stage's.
+
+Most of what is left is constants: the draft fills every slot at once, so its
+slots can't agree on which of several same-kind constants each takes, and the
+refiner keeps its pick (R28 point 11). `commit` (plan step 2c) makes every
+draft loop a round: read out, fix the surest slots as tokens (`commit_rule`),
+loop on, so the unsure slots are decided last, knowing the rest -- inside the
+same loaded stage. Training runs the same rounds on the model's own picks.
 """
 from __future__ import annotations
 
@@ -102,13 +109,35 @@ class Stage(nn.Module):
         self.layers = nn.ModuleList([DecoderLayer(c) for _ in range(layers)])
         self.loop_emb = nn.Embedding(loops, c.d) if loops > 1 else None
 
+    def step(self, x, mem, pad, mask, i: int):
+        """Loop i alone (a committing draft reads out between loops)."""
+        if self.loop_emb is not None:
+            x = x + self.loop_emb.weight[i]
+        for layer in self.layers:
+            x = layer(x, mem, pad, mask)
+        return x
+
     def forward(self, x, mem, pad, mask):
         for i in range(self.loops):
-            if self.loop_emb is not None:
-                x = x + self.loop_emb.weight[i]
-            for layer in self.layers:
-                x = layer(x, mem, pad, mask)
+            x = self.step(x, mem, pad, mask, i)
         return x
+
+
+def commit_rule(conf: torch.Tensor, open_: torch.Tensor, rounds_left: int,
+                thr: float) -> torch.Tensor:
+    """(B, C) bool: the open slots a committing draft fixes this round. Every
+    open slot at least `thr` confident, and never fewer than an even share of
+    what is still open (open / rounds left), most confident first; the last
+    round takes everything. Padding and easy keywords go early, the slots it
+    is unsure of -- the constants that must agree with each other -- last."""
+    if rounds_left <= 1:
+        return open_.clone()
+    cand = conf.masked_fill(~open_, -1.0)
+    n_open = open_.sum(1)
+    share = (n_open + rounds_left - 1) // rounds_left
+    k = torch.maximum(share, ((cand >= thr) & open_).sum(1))
+    rank = cand.argsort(1, descending=True).argsort(1)
+    return open_ & (rank < k.unsqueeze(1))
 
 
 def program_confidence(tok: torch.Tensor, conf: torch.Tensor) -> torch.Tensor:
@@ -196,15 +225,43 @@ class StagedModel(StructuralModel):
         x = table.gather(1, canvas.long().unsqueeze(-1).expand(-1, -1, self.c.d))
         return self.drop(x + self.out_pos + self.tag_emb.weight[TAG_CANVAS])
 
-    def draft(self, inputs: dict, mem, table):
-        """One trip through the draft stages from a blank canvas -> logits."""
+    def draft(self, inputs: dict, mem, table, rounds: list | None = None):
+        """One trip through the draft stages from a blank canvas -> logits.
+
+        With `commit` (plan step 2c) every loop of every draft stage is a
+        round: read every slot out, fix the ones `commit_rule` picks as tokens
+        (their vector replaces the blank one), and loop on. Each slot's output
+        is its read-out from the round it was committed in. `rounds`, when
+        given, collects (logits, open slots) per round for the loss."""
         blank = torch.full((table.size(0), self.c.canvas), MASK_ID,
                            dtype=torch.long, device=table.device)
         x = self._canvas_in(table, blank)
-        for st in self.dec:
-            if st.kind == "draft":
-                x = st(x, mem.mem, mem.pad, None)
-        return self.head(self.draft_norm(x), table, mem, inputs)
+        if not self.c.commit:
+            for st in self.dec:
+                if st.kind == "draft":
+                    x = st(x, mem.mem, mem.pad, None)
+            return self.head(self.draft_norm(x), table, mem, inputs)
+        steps = [(st, i) for st in self.dec if st.kind == "draft" for i in range(st.loops)]
+        open_ = torch.ones_like(blank, dtype=torch.bool)
+        when = torch.full_like(blank, -1)
+        blank_vec = table[:, MASK_ID].unsqueeze(1)                      # (B, 1, d)
+        out = None
+        for r, (st, i) in enumerate(steps):
+            x = st.step(x, mem.mem, mem.pad, None, i)
+            logits = self.head(self.draft_norm(x), table, mem, inputs)
+            if rounds is not None:
+                rounds.append((logits, open_))
+            with torch.no_grad():
+                conf, tok = logits.float().softmax(-1).max(-1)
+                take = commit_rule(conf, open_, len(steps) - r, self.c.commit_conf)
+            out = logits if out is None else torch.where(take.unsqueeze(-1), logits, out)
+            when = torch.where(take, r, when)
+            if r < len(steps) - 1:
+                vec = table.gather(1, tok.unsqueeze(-1).expand(-1, -1, self.c.d))
+                x = x + (vec - blank_vec) * take.unsqueeze(-1).to(x.dtype)
+            open_ = open_ & ~take
+        self.commit_round = when
+        return out
 
     def draft_rows(self, table, tok, conf):
         """The draft as extra context rows for the refiner: each slot's token
@@ -259,6 +316,8 @@ class StagedModel(StructuralModel):
         mem.exit = exit_
         self.last = {"draft": tok.detach(), "conf": float(pc[0]), "exit": bool(exit_[0]),
                      "cal_conf": float(mem.draft_pc[0])}
+        if self.c.commit:
+            self.last["commit_round"] = self.commit_round[0].tolist()
         return mem
 
     def decode(self, inputs: dict, canvas, mem=None, loops=None):
@@ -296,11 +355,25 @@ class StagedModel(StructuralModel):
         refiner), so train.evaluate's per-kind accuracy reads the output."""
         mem = self._encode(inputs)
         table = self.slot_table(mem)
-        dl = self.draft(inputs, mem, table)
+        rounds = [] if self.c.commit else None
+        dl = self.draft(inputs, mem, table, rounds)
         y = tgt.flatten()
-        per = F.cross_entropy(dl.flatten(0, 1).float(), y, reduction="none")
         w = torch.where(y == PAD_ID, pad_weight, 1.0)
-        l_draft = (per * w).sum() / w.sum().clamp(min=1e-6)
+        if rounds:
+            # a committing draft: each round's loss covers the slots still open
+            # as it began, so a slot is trained up to the round that fixes it
+            l_draft = 0.0
+            for logits, open_ in rounds:
+                per = F.cross_entropy(logits.flatten(0, 1).float(), y, reduction="none")
+                wr = w * open_.flatten()
+                l_draft = l_draft + (per * wr).sum() / wr.sum().clamp(min=1e-6)
+            l_draft = l_draft / len(rounds)
+        else:
+            per = F.cross_entropy(dl.flatten(0, 1).float(), y, reduction="none")
+            l_draft = (per * w).sum() / w.sum().clamp(min=1e-6)
+        if self.c.pick:
+            # the constant picker's own loss (model.py, plan step 2d)
+            l_draft = l_draft + self.pick_loss(mem, inputs, tgt)
         keep = stop_mask(tgt)
         if not self.n_refine:
             return l_draft, int(keep.sum()), dl, keep

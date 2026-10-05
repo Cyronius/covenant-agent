@@ -94,8 +94,9 @@ class Config:
     # by the t_desc / t_req columns. Off builds nothing new.
     reader: bool = False
     reader_w: int = 384
-    # which of the cache's reader tables: reader.pt is the shipped Ternlight,
-    # reader_role.pt the role-aware one (role-aware-reader.md, reader_table.py)
+    # which of the cache's reader tables: reader.pt is the ELECTRA reader's
+    # (reader_table.py; electra_cache.py for C0 caches), reader_role.pt the
+    # role-aware one (role-aware-reader.md)
     reader_file: str = "reader.pt"
     # C0 (tiny-general-agent-menu.md), on top of `reader`: its vectors for
     # every constant and field (t_const / t_field) and for the request in up
@@ -116,6 +117,9 @@ class Config:
     draft_swap: float = 0.0               # training: share of pointer slots swapped for another of the same kind
     freeze_shared: bool = False           # experts: the encoder and the output head stay fixed
     train_parts: str = "decoder"          # experts: "decoder" (every stage) or "draft"
+    commit: bool = False                  # the draft commits its surest slots after every loop (staged.py)
+    commit_conf: float = 0.9              # ...every open slot at least this confident, and an even share
+    pick: bool = False                    # the constant picker: P(the program uses it) per constant, before decoding
 
 
 def sinusoids(n: int, d: int) -> torch.Tensor:
@@ -356,6 +360,8 @@ class StructuralModel(nn.Module):
             raise ValueError("req_words=False without reader_lines leaves no request at all")
         if c.reader:
             self._build_reader(c)
+        if c.pick:
+            self._build_pick(c)
 
     def _build_reader(self, c: Config) -> None:
         """The reader's three ways in, built last so every other module draws
@@ -391,6 +397,24 @@ class StructuralModel(nn.Module):
             for m in (self.rd_const, self.rd_field, self.rd_chunk, self.chunk_pos, self.rd_cgate):
                 _init(m)
             nn.init.constant_(self.rd_cgate.bias, 5.0)
+
+    def _build_pick(self, c: Config) -> None:
+        """The constant picker (.claude/plans/staged-decoder-experts.md step
+        2d), built after the rest of StructuralModel so its modules draw the
+        same weights with the flag on or off. About 90% of wrong constants are decoys the program
+        doesn't use (R28 point 11). Once per program, each constant reads the
+        request and the other constants and scores whether the program uses
+        it; the head adds log P(used), gated, to its constant pointers, so
+        decoys start unlikely in every slot."""
+        d = c.d
+        self.pick_attn = nn.MultiheadAttention(d, c.heads, dropout=c.dropout, batch_first=True)
+        self.pick_n1, self.pick_n2 = nn.LayerNorm(d), nn.LayerNorm(d)
+        self.pick_ff = nn.Sequential(nn.Linear(d, c.ff), nn.GELU(), nn.Linear(c.ff, d))
+        self.pick_out = nn.Linear(d, 1)
+        self.pick_gate = nn.Linear(d, 1)
+        for m in (self.pick_ff, self.pick_out, self.pick_gate):
+            m.apply(_init)
+        nn.init.constant_(self.pick_gate.bias, 1.0)
 
     def set_reader_table(self, table: torch.Tensor) -> None:
         """The cache's reader table (`c.reader_file`, texts x reader_w). Data, not weights:
@@ -619,7 +643,35 @@ class StructuralModel(nn.Module):
                                inputs.get("n_reg_bound"), stage=stage, req_extra=req_extra,
                                req_extra_pad=req_pad, const_extra=const_extra)
         mem.read, mem.read_c = read, read_c
+        if self.c.pick:
+            mem.pick_c = self.pick_scores(mem, inputs)
         return mem
+
+    def pick_scores(self, mem: Memory, inputs: dict) -> torch.Tensor:
+        """(B, MC) logits: does the program use constant j. Region A is laid
+        out tools | fields | constants | ... | request tokens."""
+        c = self.c
+        a = c.max_tool + c.max_field
+        cv, cpad = mem.mem[:, a:a + c.max_const], mem.pad[:, a:a + c.max_const]
+        n_req = inputs["req_tok"].size(1) if c.req_words else 1
+        kv = torch.cat([mem.mem[:, -n_req:], cv], 1)
+        kpad = torch.cat([mem.pad[:, -n_req:], cpad], 1)
+        h = self.pick_n1(kv)
+        a_, _ = self.pick_attn(self.pick_n1(cv), h, h, key_padding_mask=kpad, need_weights=False)
+        x = cv + a_
+        x = x + self.pick_ff(self.pick_n2(x))
+        return self.pick_out(x).squeeze(-1)
+
+    def pick_loss(self, mem: Memory, inputs: dict, tgt: torch.Tensor) -> torch.Tensor:
+        """The picker's own loss: for every constant the task has, does the
+        reference program use it."""
+        c = self.c
+        idx = tgt.long() - (c.n_kw + c.max_tool + c.max_field)
+        hit = (idx >= 0) & (idx < c.max_const)
+        used = torch.zeros(tgt.size(0), c.max_const, device=tgt.device)
+        used.scatter_reduce_(1, idx.clamp(0, c.max_const - 1), hit.float(), reduce="amax")
+        live = torch.arange(c.max_const, device=tgt.device)[None] < inputs["n_const"].long()[:, None]
+        return F.binary_cross_entropy_with_logits(mem.pick_c[live].float(), used[live])
 
     # -- the canvas ------------------------------------------------------
 
@@ -690,8 +742,23 @@ class StructuralModel(nn.Module):
             w = F.softplus(self.rd_cgate(h))
             consts = ptr_logits[..., o:o + MC] + w * mem.read_c.unsqueeze(1)
             ptr_logits = torch.cat([ptr_logits[..., :o], consts, ptr_logits[..., o + MC:]], -1)
+        if c.pick:
+            o, MC = c.max_tool + c.max_field, c.max_const
+            w = F.softplus(self.pick_gate(h))                            # (B, C, 1)
+            consts = ptr_logits[..., o:o + MC] + w * F.logsigmoid(mem.pick_c.float()).unsqueeze(1).to(ptr_logits.dtype)
+            ptr_logits = torch.cat([ptr_logits[..., :o], consts, ptr_logits[..., o + MC:]], -1)
         logits = torch.cat([kw_logits, ptr_logits], -1)
         present = self.present_mask(inputs, logits.device)
+        bias = getattr(self, "const_bias", None)
+        if bias is not None:
+            # analysis only (evaluate.py --pick-probe): a frozen-encoder picker's
+            # log P(used), added to the constant pointers at run time
+            logits = logits + bias.to(logits.device, logits.dtype).unsqueeze(1)
+        block = getattr(self, "const_block", None)
+        if block is not None:
+            # analysis only (evaluate.py --oracle-consts): a perfect constant
+            # picker, blocking every constant the reference program doesn't use
+            present = present & ~block.to(present.device)
         return logits.masked_fill(~present.unsqueeze(1), float("-inf"))
 
     def _split_tool_logits(self, h, ptr_logits, stage):
