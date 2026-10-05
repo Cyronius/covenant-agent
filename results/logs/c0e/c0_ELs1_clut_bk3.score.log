@@ -1,0 +1,44 @@
+
+runs/pod_c0e/out/c0_ELs1_clut_bk3.jsonl  (2000 tasks)
+  parse     96.9%
+  compile   93.0%
+  goal      72.8%
+  exact     62.8%
+  of the 2000 scored, 346 are segments of a paused task
+  passes   mean 29.9
+
+  slot accuracy against the reference canvas (same slot):
+    kw      90.2%  (n=25395)
+    tool    91.2%  (n=3377)
+    field   73.2%  (n=2623)
+    const   83.1%  (n=3544)
+    reg     91.7%  (n=9352)
+
+  CALL lines where both reference and generation CALL: 3323
+    same tool     95.1%   chance   4.6%
+      vs shape    95.1%   chance 100.0%  (uniform inside the signature group)
+    same effect   97.9%   chance  31.5%
+
+  by level:
+      0  n=  88  compile  100%  goal   91%
+      1  n=  93  compile   94%  goal   90%
+      2  n=  84  compile   94%  goal   54%
+      3  n=  89  compile   94%  goal   27%
+      4  n=  90  compile   80%  goal   58%
+      5  n= 117  compile   88%  goal   50%
+      6  n=  88  compile   74%  goal   40%
+      7  n= 124  compile   83%  goal   69%
+      8  n=  87  compile   98%  goal   91%
+      9  n=  89  compile   98%  goal   30%
+     10  n= 174  compile   98%  goal   70%
+     11  n= 108  compile   96%  goal   81%
+     12  n= 101  compile   90%  goal   76%
+     13  n=  99  compile   97%  goal   80%
+     14  n=  95  compile   95%  goal   94%
+     15  n=  97  compile  100%  goal   99%
+     16  n=  97  compile  100%  goal   99%
+     17  n=  97  compile  100%  goal  100%
+     18  n=  99  compile  100%  goal  100%
+     19  n=  84  compile   76%  goal   50%
+
+wrote runs\pod_c0e\out\c0_ELs1_clut_bk3.score.json
