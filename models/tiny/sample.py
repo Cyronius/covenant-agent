@@ -322,6 +322,14 @@ def ar_backoff(model, inputs: dict, ov, check, tries: int, alts: int = 2,
     tr.tries, tr.backoff_at = 1, None
     if check(to_text(canvas, ov)):
         return canvas, tr
+    if getattr(model, "refine_on_fail", False) and (getattr(model, "last", None) or {}).get("exit"):
+        # a staged draft exited early and failed the check: its fixed logits
+        # can't re-decode around a runner-up tool, so run the refiner and back
+        # off on its program instead (results/R28.md point 15)
+        with model.refining():
+            canvas, tr = ar_backoff(model, inputs, ov, check, tries, alts, tr)
+        tr.refined_on_fail = True
+        return canvas, tr
     ids = canvas[0].tolist()
     tool = local_sets(ov)[6]
     cands = []

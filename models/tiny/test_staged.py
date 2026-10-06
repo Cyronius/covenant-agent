@@ -17,7 +17,7 @@ import torch
 from canvas import Layout, TaskCodec, load_keywords
 from evaluate import load_model
 from model import Config, build_model
-from sample import ar_sample
+from sample import ar_backoff, ar_sample
 from staged import commit_rule, fold_of, parse_stages, program_confidence, task_type
 from train import load_split, unpack
 
@@ -119,6 +119,32 @@ def test_memorizes_and_reloads(tmp_path):
         with torch.no_grad():
             assert _program(ar_sample(again, one, _codec(0))[0]) == ref[0]
             assert not again.last["exit"]
+    finally:
+        os.environ.pop("STAGED_EXIT", None)
+
+
+@pytest.mark.skipif(not CACHE.exists(), reason="needs data_cache_smoke")
+def test_exited_draft_that_fails_the_check_is_refined():
+    """sample.ar_backoff: when an early-exited draft fails the host's check,
+    the refiner's program is decoded and checked instead (R28 point 15)."""
+    torch.manual_seed(0)
+    ds = load_split(CACHE, "train", "structural", limit=1)
+    inputs, _ = unpack(tuple(ds.tensors), "structural", 0, ds.keys)
+    model = build_model(_tiny("draft:1x2,refine:1x1")).eval()
+    os.environ["STAGED_EXIT"] = "never"
+    try:
+        with torch.no_grad():
+            refined = _program(ar_sample(model, inputs, _codec(0))[0])
+        os.environ["STAGED_EXIT"] = "0"                      # every draft exits
+        with torch.no_grad():
+            seen = []
+            canvas, tr = ar_backoff(model, inputs, _codec(0), lambda t: seen.append(t) or len(seen) > 1, tries=2)
+            assert tr.refined_on_fail and not model.last["exit"]
+            assert _program(canvas) == refined
+            model.refine_on_fail = False
+            seen = []
+            _, tr = ar_backoff(model, inputs, _codec(0), lambda t: seen.append(t) or len(seen) > 1, tries=2)
+            assert not getattr(tr, "refined_on_fail", False) and model.last["exit"]
     finally:
         os.environ.pop("STAGED_EXIT", None)
 

@@ -53,6 +53,8 @@ class ModelPlanner:
         # seen through live_reader.py; `backoff` is evaluate.py --backoff
         self.reader, self.backoff = reader, backoff
         self.tries: list[int] = []
+        self.refined_on_fail: list[bool] = []
+        self.exits: list[bool] = []   # staged models: the program was the draft
         self.keywords, self.layout, self.dims = keywords, layout, dims
         self.syms = context_symbols(row["context"])
         self.request = row["request"]
@@ -80,6 +82,7 @@ class ModelPlanner:
                                         lambda text: bool(build(text, ctx).compile_ok),
                                         tries=self.backoff)
                 self.tries.append(tr.tries)
+                self.refined_on_fail.append(bool(getattr(tr, "refined_on_fail", False)))
             elif self.model.c.causal:
                 canvas, _ = ar_sample(self.model, inputs, codec)
             else:
@@ -87,6 +90,8 @@ class ModelPlanner:
                                              steps=self.steps)
         text = to_text(canvas, codec)
         self.programs.append(text)
+        if getattr(self.model, "n_refine", 0):
+            self.exits.append(bool((self.model.last or {}).get("exit")))
         return text
 
 
@@ -127,6 +132,13 @@ def main() -> int:
                     help="re-render rows not written typed under the S6 surface "
                          "(symbols typed, enums, kinds), as run_a.py and the demo "
                          "server do")
+    ap.add_argument("--pick-off", action="store_true",
+                    help="analysis: drop a --pick checkpoint's constant picker "
+                         "score from the pointers at run time")
+    ap.add_argument("--no-refine-on-fail", action="store_true",
+                    help="analysis: staged models with --backoff back off on an "
+                         "early-exited draft that fails the compile check, "
+                         "instead of running the refiner (the default)")
     args = ap.parse_args()
 
     # the generated theme worlds are registered at generation time, not baked
@@ -153,6 +165,9 @@ def main() -> int:
                                    "max_desc", "max_name", "name_words", "chunk_words", "electra_reader")
                if k in cfg}}
     model = load_model(Path(args.ckpt), device)
+    model.pick_off = args.pick_off
+    if args.no_refine_on_fail:
+        model.refine_on_fail = False
     if args.max_const and args.max_const > layout.max_const:
         import dataclasses
         layout = dataclasses.replace(layout, max_const=args.max_const)
@@ -213,7 +228,7 @@ def main() -> int:
             "goal_success": result["goal_success"],
             "status": result["status"], "segments": result["segments"],
             "segments_expected": segments_expected,
-            "programs": planner.programs, "tries": planner.tries,
+            "programs": planner.programs, "tries": planner.tries, "exits": planner.exits, "refined_on_fail": planner.refined_on_fail,
             "reference": row["reference"]["segments"],
         })
 

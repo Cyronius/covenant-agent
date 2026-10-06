@@ -189,6 +189,10 @@ class StagedModel(StructuralModel):
         _init(self.conf_proj)
         nn.init.normal_(self.draft_tag, std=0.02)
         self.force_exit = False
+        self.force_refine = False
+        # sample.ar_backoff: an early-exited draft that fails the host's compile
+        # check is refined instead of backed off on (results/R28.md point 15)
+        self.refine_on_fail = True
         self.last = None
 
     # -- what an expert trains (freeze_shared) -----------------------------
@@ -309,7 +313,7 @@ class StagedModel(StructuralModel):
         thr = _exit_override(cal.get("thr", self.c.exit_threshold))
         if self.force_exit or not self.n_refine or thr == "always":
             exit_ = torch.ones_like(pc, dtype=torch.bool)
-        elif thr is None or thr == "never":
+        elif self.force_refine or thr is None or thr == "never":
             exit_ = torch.zeros_like(pc, dtype=torch.bool)
         else:
             exit_ = pc >= float(thr)
@@ -339,6 +343,17 @@ class StagedModel(StructuralModel):
             yield self
         finally:
             self.force_exit = was
+
+    @contextmanager
+    def refining(self):
+        """Run the refiner, whatever the threshold (sample.ar_backoff, when an
+        exited draft fails the host's compile check)."""
+        was = self.force_refine
+        self.force_refine = True
+        try:
+            yield self
+        finally:
+            self.force_refine = was
 
     # -- training ------------------------------------------------------------
 

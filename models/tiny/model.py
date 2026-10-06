@@ -742,7 +742,7 @@ class StructuralModel(nn.Module):
             w = F.softplus(self.rd_cgate(h))
             consts = ptr_logits[..., o:o + MC] + w * mem.read_c.unsqueeze(1)
             ptr_logits = torch.cat([ptr_logits[..., :o], consts, ptr_logits[..., o + MC:]], -1)
-        if c.pick:
+        if c.pick and not getattr(self, "pick_off", False):   # pick_off: analysis only (play.py --pick-off)
             o, MC = c.max_tool + c.max_field, c.max_const
             w = F.softplus(self.pick_gate(h))                            # (B, C, 1)
             consts = ptr_logits[..., o:o + MC] + w * F.logsigmoid(mem.pick_c.float()).unsqueeze(1).to(ptr_logits.dtype)
