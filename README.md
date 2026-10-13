@@ -26,13 +26,13 @@ write-ups in [results/](results/)) and the demo that proves it end to end.
 | | idea | one line |
 |---|---|---|
 | 1 | [**A program, not a token stream**](#1-the-ir-agent-core) | the model emits Agent Core, a 16-register IR that compiles deterministically to JS |
-| 2 | [**Diffusion decoder**](#2-a-diffusion-decoder-with-a-correction-transformer) | the whole program is drafted in parallel on a fixed canvas, not left to right |
-| 3 | [**Correction transformer**](#2-a-diffusion-decoder-with-a-correction-transformer) | a left-to-right refiner fixes the draft, and is skipped when the draft is confident |
-| 4 | [**Bolted-on encoder**](#3-a-bolted-on-encoder) | a frozen pretrained ternary reader turns text into vectors; the planner only points at them |
-| 5 | [**Per-task experts**](#4-experts-and-a-router) | a router picks a small decoder per task type; new types bolt on without retraining old ones |
-| 6 | [**Built for the NPU**](#5-built-for-the-npu) | each stage fits in on-chip memory and loops there, so speed comes from compute, not memory bandwidth |
-| 7 | [**Code generation, not tool-call JSON**](#6-code-generation-and-the-harness) | the program is compiled to JS, type-checked and effect-checked before it runs |
-| 8 | [**Execution in the browser**](#7-execution-in-the-browser) | the compiled JS needs only an injected `rt`, so it runs in a worker with no ambient authority |
+| 2 | [**Diffusion decoder**](#2-a-diffusion-decoder) | the whole program is drafted in parallel on a fixed canvas, not left to right |
+| 3 | [**Correction transformer**](#3-a-correction-transformer) | a left-to-right refiner fixes the draft, and is skipped when the draft is confident |
+| 4 | [**Bolted-on encoder**](#4-a-bolted-on-encoder) | a frozen pretrained ternary reader turns text into vectors; the planner only points at them |
+| 5 | [**Per-task experts**](#5-experts-and-a-router) | a router picks a small decoder per task type; new types bolt on without retraining old ones |
+| 6 | [**Built for the NPU**](#6-built-for-the-npu) | each stage fits in on-chip memory and loops there, so speed comes from compute, not memory bandwidth |
+| 7 | [**Code generation, not tool-call JSON**](#7-code-generation-and-the-harness) | the program is compiled to JS, type-checked and effect-checked before it runs |
+| 8 | [**Execution in the browser**](#8-execution-in-the-browser) | the compiled JS needs only an injected `rt`, so it runs in a worker with no ambient authority |
 
 ## Architecture
 
@@ -122,7 +122,7 @@ Why a language rather than a function-calling format:
 - Programs are short (about 30 tokens at the median) over a vocabulary of a few
   hundred symbols, which is what makes the next piece possible.
 
-## 2. A diffusion decoder with a correction transformer
+## 2. A diffusion decoder
 
 [`models/tiny/`](models/tiny/README.md), [R8](results/R8.md), [R28](results/R28.md).
 
@@ -132,16 +132,18 @@ decoder predicts **every slot at once**, starting from a blank canvas. Each slot
 holds either a keyword (`CALL`, `FILTER`, ...) or a *pointer* at one of this
 task's tools, fields, constants or registers.
 
-Two stages, each with the decode order it measured best at:
+The draft stage is diffusion and looped: one small block applied many times to
+its own output, with the same weights. In [R8](results/R8.md), one layer looped
+16 times beat an unlooped block with 8x the parameters, and diffusion
+transferred best to a world it had never trained on.
 
-- **Draft (diffusion, looped).** One small block applied many times to its own
-  output, with the same weights. In [R8](results/R8.md), one layer looped 16
-  times beat an unlooped block with 8x the parameters, and diffusion transferred
-  best to a world it had never trained on.
-- **Correction transformer (left-to-right, not looped).** Reads the context and
-  the whole draft, with each slot's confidence, and rewrites it one slot at a
-  time. Left-to-right decoding was best on worlds it trained on, and looping hurt
-  it, so it doesn't loop.
+## 3. A correction transformer
+
+[R28](results/R28.md).
+
+The refiner is left-to-right and not looped. It reads the context and the whole
+draft, with each slot's confidence, and rewrites it one slot at a time.
+Left-to-right decoding was best on worlds it trained on, and looping hurt it.
 
 **Early exit.** Every slot carries a confidence. If the lowest one clears a
 calibrated threshold, the refiner is skipped. Most programs need one or two
@@ -154,7 +156,7 @@ about 3x faster in steps, and the working goal is to keep closing the accuracy
 gap rather than to win outright. Cross-fit drafts (so the refiner sees the
 draft's *real* mistakes) are the next experiment.
 
-## 3. A bolted-on encoder
+## 4. A bolted-on encoder
 
 [`.claude/plans/electra-only-reader.md`](.claude/plans/electra-only-reader.md),
 [R26](results/R26.md).
@@ -175,24 +177,35 @@ That is why the encoder is frozen and swappable: it is bolted onto a decoder
 that only cares about the vector interface. It is frozen so that experts trained
 on top of it don't move underneath each other.
 
-## 4. Experts and a router
+## 5. Experts and a router
 
 [`.claude/plans/staged-decoder-experts.md`](.claude/plans/staged-decoder-experts.md).
 
 Adding task kinds to one shared decoder cost 3 to 12 points on the old ones
 ([R24](results/R24.md)). The plan: a small **router** picks a task type once per
-request (observe-act games, page navigation, data queries, ...), and that type's
-**expert** (its own draft stage, and optionally its own refiner) writes the
-program. A new task type means training one new expert and retraining the
-router; the old experts never change. On the NPU, total capacity grows with the
-number of experts while each request loads only one.
+request, and that type's **expert** (its own draft stage, and optionally its own
+refiner) writes the program. A new task type means training one new expert and
+retraining the router; the old experts never change. On the NPU, total capacity
+grows with the number of experts while each request loads only one.
+
+Task types, from the task families in `.claude/plans/archive/task-families.md`:
+
+| type | family | what it covers |
+|---|---|---|
+| **observe-act** | A | games, the warehouse robot, elevator, cards |
+| **pages** | C | navigation and form filling |
+| **data** | levels 0-18, D, E | lookup, filter, foreach, compound filters, IF/ELSE, ask-or-act, recovery from an error |
+| report (later) | F | not built yet |
+| scheduling (later) | G | not built yet |
+
+Picking a tool by its description (family B) is not a type: every type needs it.
 
 Status: planned and partly tested. Step 0 (can a router tell the types apart,
 and is there interference to fix) comes before any expert is trained.
 
-## 5. Built for the NPU
+## 6. Built for the NPU
 
-[`.claude/plans/npu-native-planner.md`](.claude/plans/npu-native-planner.md),
+[`.claude/plans/archive/npu-native-planner.md`](.claude/plans/archive/npu-native-planner.md),
 [`models/npu/`](models/npu/README.md).
 
 The target is the XDNA2 NPU in AMD Strix Point / Halo laptops. It streams
@@ -215,7 +228,7 @@ model has been trained and measured on GPUs and pods; **no model runs on the NPU
 yet**. The throughput figures in the plan are our own kernels, treated as a
 floor on the hardware.
 
-## 6. Code generation and the harness
+## 7. Code generation and the harness
 
 [`core/`](core/), [`harness/`](harness/), [`runtime/`](runtime/).
 
@@ -246,7 +259,7 @@ reference program, injected failures), and success is judged by the world state
 after execution, not by matching a reference string. Failures are written to
 [results/](results/), not hidden by widening the bar.
 
-## 7. Execution in the browser
+## 8. Execution in the browser
 
 [`client/app/`](client/app/README.md).
 
